@@ -13,8 +13,6 @@ export const paymentRefundMailCopy = {
   windowPix: "O Pix cai na sua conta em instantes.",
   windowCard:
     "No cartão, o valor aparece na sua fatura em até 10 dias úteis, conforme o banco.",
-  feesStay:
-    "As taxas de pagamento não voltam: o valor devolvido é o que a Positiv recebeu, sem as taxas cobradas na hora do pagamento.",
   cta: "Ver meus eventos",
   footer: {
     reason: "Você recebeu este e-mail pois se candidatou a um evento da",

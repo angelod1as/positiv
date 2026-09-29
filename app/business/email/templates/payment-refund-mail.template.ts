@@ -33,8 +33,8 @@ export const paymentRefundMailTemplate = (
     input.refundAmount < input.amount
       ? paymentRefundMailCopy.partial(formatCurrency(input.amount))
       : ""
-  // Both sentences describe money Asaas returns. A manual payment carried no
-  // Asaas fee and may have been cash or a transfer, so neither is true of it.
+  // The window describes money Asaas returns. A manual payment may have been
+  // cash or a transfer, so it is not true of it.
   const throughAsaas = input.kind === "asaas"
   const window = !throughAsaas
     ? ""
@@ -108,10 +108,6 @@ export const paymentRefundMailTemplate = (
                 throughAsaas
                   ? `<p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
                 ${window}
-              </p>
-
-              <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0; color: #666;">
-                ${paymentRefundMailCopy.feesStay}
               </p>`
                   : ""
               }

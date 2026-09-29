@@ -257,43 +257,6 @@ export async function deleteAsaasPayment(paymentId: string): Promise<boolean> {
   return deleted
 }
 
-export async function refundAsaasPayment(
-  paymentId: string,
-  input: { amount: number | null; description: string | null },
-): Promise<void> {
-  const body: Record<string, unknown> = {}
-  if (input.amount !== null) body.value = centsToReais(input.amount)
-  if (input.description) body.description = input.description
-
-  await asaasRequest(
-    "POST",
-    `/payments/${paymentId}/refund`,
-    zod.object({ id: zod.string(), status: zod.string() }),
-    body,
-  )
-}
-
-/**
- * Gives back money from a card plan. Asaas refuses a refund on one charge of a
- * plan ("Não é possível estornar individualmente esta cobrança"), so a plan is
- * refunded through the plan: `value` is the total to give back, spread by Asaas
- * over its charges, and no value refunds all of it.
- */
-export async function refundAsaasInstallment(
-  installmentId: string,
-  input: { amount: number | null },
-): Promise<void> {
-  const body: Record<string, unknown> = {}
-  if (input.amount !== null) body.value = centsToReais(input.amount)
-
-  await asaasRequest(
-    "POST",
-    `/installments/${installmentId}/refund`,
-    zod.object({ id: zod.string() }),
-    body,
-  )
-}
-
 // A charge's or a plan's refunds, as Asaas lists them on the resource itself.
 // Only the two fields that say how much and how far along; the rest -- dates,
 // receipts, splits -- is for the dashboard.
@@ -351,6 +314,16 @@ export async function listAsaasAnticipations(
     }),
   )
   return data.map(({ status, fee }) => ({ status, fee: reaisToCents(fee) }))
+}
+
+/**
+ * The Asaas dashboard matching the API the app talks to, where an admin does
+ * what the site no longer does through the API -- refunds, above all.
+ */
+export function asaasDashboardOrigin(): string {
+  return ENV.ASAAS_API_URL?.includes("sandbox")
+    ? "https://sandbox.asaas.com"
+    : "https://www.asaas.com"
 }
 
 export function reaisToCents(reais: number): number {

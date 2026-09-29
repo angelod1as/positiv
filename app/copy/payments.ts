@@ -203,21 +203,7 @@ export const paymentsCopy = {
     confirm: "Confirmar reembolso?",
     success: "Reembolso registrado.",
     asaas: {
-      title: "Reembolsar",
-      confirm: "Reembolsar pelo Asaas?",
-      description:
-        "O Asaas devolve o dinheiro para a pessoa. A situação do pagamento muda quando o Asaas confirmar.",
-      feesStay:
-        "As taxas não voltam: a pessoa recebe o que a Positiv recebeu, sem as taxas que ela pagou.",
-      amount: "Valor devolvido",
-      amountHint: (received: string) =>
-        `A Positiv recebeu ${received}. Não é possível devolver mais que isso.`,
-      reason: "Motivo (opcional)",
-      windowPix: "Pix: o Asaas devolve na hora.",
-      windowCard: "Cartão: aparece na fatura da pessoa em até 10 dias úteis.",
-      awaitingNet:
-        "O Asaas ainda não informou quanto caiu na conta. Aguarde alguns instantes e recarregue.",
-      submit: "Solicitar reembolso",
+      title: "Reembolsar no Asaas",
       inProgress: "Reembolso solicitado — aguardando o Asaas confirmar.",
       denied: (reason: string | null) =>
         reason
@@ -237,14 +223,6 @@ export const paymentsCopy = {
   // What an Asaas refusal becomes before a person reads it. The technical
   // detail -- status, path, code -- stays in the log.
   asaasErrors: {
-    refundNextDay:
-      "Um pagamento por cartão só pode ser reembolsado em parte a partir do dia seguinte ao pagamento. Tente de novo amanhã.",
-    refundNoBalance:
-      "Não há saldo disponível no Asaas para devolver esse valor agora. Confira o saldo no painel do Asaas e tente de novo.",
-    refundTooMuch:
-      "O valor pedido é maior do que o Asaas ainda pode devolver deste pagamento.",
-    refundRefused: (description: string) =>
-      `O Asaas recusou o reembolso: ${description}`,
     checkoutCpf:
       "O sistema de pagamentos não aceitou o CPF da sua conta. Confira o CPF em Dados básicos ou fale com a organização.",
     checkoutRefused: (description: string) =>
@@ -271,16 +249,7 @@ export const paymentsCopy = {
       "Existe uma cobrança em aberto. Cancele-a antes de registrar um pagamento manual.",
     refundAmountRequired: "Informe um valor de reembolso maior que zero.",
     refundTooLarge: "O reembolso não pode ser maior que o valor pago.",
-    refundAboveReceived:
-      "O reembolso não pode ser maior que o que a Positiv recebeu, sem as taxas.",
-    refundNetNotReported:
-      "O Asaas ainda não informou quanto caiu na conta desta cobrança. Aguarde alguns instantes e tente de novo.",
     notRefundable: "Só é possível reembolsar um pagamento já confirmado.",
-    notAsaasRefundable:
-      "Este pagamento não passou pelo Asaas. Use 'Marcar como reembolsado'.",
-    refundAlreadyRequested: "O reembolso já foi solicitado.",
-    refundOutcomeUnknown:
-      "Não deu para confirmar se o Asaas fez o reembolso. Confira no painel do Asaas antes de tentar de novo.",
     notEditable: "Só é possível editar um pagamento manual confirmado.",
     notCancellable: "Só é possível cancelar uma cobrança em aberto.",
     notSyncable: "Só um pagamento feito pelo Asaas pode ser atualizado do Asaas.",

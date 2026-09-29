@@ -3,7 +3,7 @@ import { AsaasError } from "./asaas-client.server"
 
 const { asaasErrors } = paymentsCopy
 
-export type AsaasErrorContext = "refund" | "checkout" | "sync"
+export type AsaasErrorContext = "checkout" | "sync"
 
 // Refusals Asaas words the same way every time, matched on its code and a
 // phrase of its description: the code alone is too broad -- invalid_action
@@ -14,24 +14,6 @@ const KNOWN_REFUSALS: {
   phrase: RegExp
   message: string
 }[] = [
-  {
-    context: "refund",
-    code: "invalid_action",
-    phrase: /pr[oó]ximo dia/i,
-    message: asaasErrors.refundNextDay,
-  },
-  {
-    context: "refund",
-    code: "invalid_action",
-    phrase: /saldo/i,
-    message: asaasErrors.refundNoBalance,
-  },
-  {
-    context: "refund",
-    code: "invalid_value",
-    phrase: /excede/i,
-    message: asaasErrors.refundTooMuch,
-  },
   {
     context: "checkout",
     code: "invalid_cpfCnpj",
@@ -67,7 +49,6 @@ export function asaasErrorMessage(
 
     const [first] = error.errors
     if (!first) return asaasErrors.unavailable
-    if (context === "refund") return asaasErrors.refundRefused(first.description)
     if (context === "sync") return asaasErrors.syncRefused(first.description)
     return asaasErrors.checkoutRefused(first.description)
   }

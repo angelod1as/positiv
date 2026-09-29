@@ -14,6 +14,7 @@ import {
   updateEventListmonkList,
 } from "~/business/admin/event-listmonk-sync.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
+import { asaasDashboardOrigin } from "~/business/payment/asaas-client.server"
 import { getPaymentsForEvent } from "~/business/payment/payment-totals.server"
 import {
   isCardPaymentsEnabled,
@@ -160,6 +161,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     // The same origin the link email builds from, so the two channels cannot
     // hand the participant different urls for one charge.
     appOrigin: appOrigin(null),
+    asaasDashboardOrigin: asaasDashboardOrigin(),
     invites,
     demographics: demographics?.success ? demographics.data : undefined,
   }
@@ -190,6 +192,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
     cardPaymentsEnabled,
     paymentsEnabled,
     appOrigin: origin,
+    asaasDashboardOrigin: dashboardOrigin,
     demographics,
     invites,
   } = loaderData
@@ -254,6 +257,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
           }
           paymentsEnabled={paymentsEnabled}
           appOrigin={origin}
+          asaasDashboardOrigin={dashboardOrigin}
           spotType={managedParticipant.spot_type}
           ticketPrice={event.ticket_price}
           eventTitle={event.title ?? ""}

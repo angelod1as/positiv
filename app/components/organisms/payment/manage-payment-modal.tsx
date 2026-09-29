@@ -4,6 +4,7 @@ import { buildPaymentOptions } from "~/business/payment/pricing"
 import type { PaymentRow } from "~/business/payment/payment-totals.server"
 import type { ParticipantPaymentTotals } from "~types/database/entities.types"
 import { Button } from "~/components/atoms/button/button"
+import { buttonVariants } from "~/components/ui/button-variants"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -69,6 +70,7 @@ export type ManagePaymentModalProps = {
   eventTitle: string
   cardPaymentsEnabled: boolean
   appOrigin: string
+  asaasDashboardOrigin: string
 }
 
 /** The methods a payment taken by hand can have; card only ever runs through Asaas. */
@@ -245,97 +247,16 @@ const RefundDialog: FC<RefundDialogProps> = ({
   )
 }
 
-type AsaasRefundDialogProps = {
-  payment: PaymentRow
-  isSubmitting: boolean
-  onConfirm: (paymentId: string, amount: string, reason: string) => void
-}
-
 /**
- * Giving money back through Asaas, as opposed to writing down that it was
- * given back by hand. The field opens on `asaas_net` — what Positiv actually
- * received — because that is also the most Asaas will return without charging
- * Positiv the anticipation fee.
+ * Where an Asaas refund is done now: the charge in the Asaas dashboard, by
+ * hand. The site only records it, from the webhook or "Atualizar do Asaas".
+ * No admin page is known for a card plan, so a plan links to its first
+ * charge, and a charge with no number to the payments list.
  */
-const AsaasRefundDialog: FC<AsaasRefundDialogProps> = ({
-  payment,
-  isSubmitting,
-  onConfirm,
-}) => {
-  const received = payment.asaas_net ?? 0
-  const [amount, setAmount] = useState(centsToReaisText(received))
-  const [reason, setReason] = useState("")
-  const amountId = `asaas-refund-amount-${payment.id}`
-  const reasonId = `asaas-refund-reason-${payment.id}`
-
-  return (
-    <AlertDialog
-      onOpenChange={(open) => {
-        if (!open) return
-        setAmount(centsToReaisText(received))
-        setReason("")
-      }}
-    >
-      <AlertDialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          {refund.asaas.title}
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{refund.asaas.confirm}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {refund.asaas.description}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-
-        <p className="text-sm">{refund.asaas.feesStay}</p>
-
-        <div className="flex flex-col gap-2">
-          <Label htmlFor={amountId}>{refund.asaas.amount}</Label>
-          <Input
-            id={amountId}
-            name="amount"
-            type="text"
-            inputMode="decimal"
-            value={amount}
-            onChange={(event) => setAmount(event.target.value)}
-          />
-          <p className="text-muted-foreground text-sm">
-            {refund.asaas.amountHint(formatCurrency(received))}
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Label htmlFor={reasonId}>{refund.asaas.reason}</Label>
-          <Input
-            id={reasonId}
-            name="reason"
-            type="text"
-            value={reason}
-            onChange={(event) => setReason(event.target.value)}
-          />
-        </div>
-
-        <p className="text-muted-foreground text-sm">
-          {payment.method === "credit_card"
-            ? refund.asaas.windowCard
-            : refund.asaas.windowPix}
-        </p>
-
-        <AlertDialogFooter>
-          <AlertDialogCancel>{manage.close}</AlertDialogCancel>
-          <AlertDialogAction
-            disabled={isSubmitting}
-            onClick={() => onConfirm(payment.id, amount, reason)}
-          >
-            {refund.asaas.submit}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  )
-}
+const asaasChargeUrl = (origin: string, invoiceNumber: string | null) =>
+  invoiceNumber
+    ? `${origin}/payment/show/${invoiceNumber}`
+    : `${origin}/payment/list`
 
 type CancelDialogProps = {
   payment: PaymentRow
@@ -636,6 +557,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
   eventTitle,
   cardPaymentsEnabled,
   appOrigin,
+  asaasDashboardOrigin,
 }) => {
   const fetcher = useFetcher<{
     success?: boolean
@@ -849,13 +771,6 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                           <p className="text-muted-foreground text-sm">
                             {refund.asaas.inProgress}
                           </p>
-                        ) : payment.asaas_net === null ? (
-                          // Without the net there is nothing to offer: the
-                          // gross is a full refund, and Asaas keeps the
-                          // anticipation on one.
-                          <p className="text-muted-foreground text-sm">
-                            {refund.asaas.awaitingNet}
-                          </p>
                         ) : (
                           <div className="flex flex-col gap-2">
                             {/* Asaas denied the last attempt and the claim
@@ -868,18 +783,20 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                                 )}
                               </p>
                             )}
-                            <AsaasRefundDialog
-                              payment={payment}
-                              isSubmitting={isSubmitting}
-                              onConfirm={(paymentId, amount, reason) =>
-                                post({
-                                  intent: "payment-refund",
-                                  paymentId,
-                                  amount,
-                                  reason,
-                                })
-                              }
-                            />
+                            <a
+                              href={asaasChargeUrl(
+                                asaasDashboardOrigin,
+                                payment.asaas_invoice_number,
+                              )}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={buttonVariants({
+                                variant: "outline",
+                                size: "sm",
+                              })}
+                            >
+                              {refund.asaas.title}
+                            </a>
                           </div>
                         ))}
                       {payment.kind === "asaas" && payment.asaas_payment_id && (

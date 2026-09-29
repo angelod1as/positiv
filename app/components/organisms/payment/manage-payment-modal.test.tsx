@@ -57,6 +57,7 @@ const baseProps = {
   eventTitle: "Festa de Setembro",
   cardPaymentsEnabled: true,
   appOrigin: "https://www.positivparty.com",
+  asaasDashboardOrigin: "https://sandbox.asaas.com",
 }
 
 const paidAsaasCharge = (overrides: Partial<PaymentRow> = {}): PaymentRow =>
@@ -69,6 +70,7 @@ const paidAsaasCharge = (overrides: Partial<PaymentRow> = {}): PaymentRow =>
     amount: 22199,
     asaas_net: 21900,
     asaas_payment_id: "pay_1",
+    asaas_invoice_number: "00005101",
     refund_requested_at: null,
     ...overrides,
   })
@@ -429,88 +431,44 @@ describe("ManagePaymentModal", () => {
     expect(formData.get("paymentId")).toBe("p1")
   })
 
-  it("offers an Asaas refund on a paid Asaas row", async () => {
+  it("sends an Asaas refund to the charge in the Asaas dashboard", () => {
     render(
       <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
     )
 
-    await userEvent.click(screen.getByRole("button", { name: "Reembolsar" }))
-    await userEvent.click(
-      screen.getByRole("button", { name: "Solicitar reembolso" }),
+    const link = screen.getByRole("link", { name: /Reembolsar no Asaas/ })
+    expect(link).toHaveAttribute(
+      "href",
+      "https://sandbox.asaas.com/payment/show/00005101",
     )
-
-    const [formData] = submit.mock.calls.at(-1) ?? []
-    expect(formData.get("intent")).toBe("payment-refund")
-    expect(formData.get("paymentId")).toBe("asaas-1")
+    expect(link).toHaveAttribute("target", "_blank")
+    expect(submit).not.toHaveBeenCalled()
   })
 
-  it("offers to give back what Positiv received, not the gross", async () => {
+  it("falls back to the Asaas payments list for a charge with no number", () => {
     render(
-      <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
-    )
-
-    await userEvent.click(screen.getByRole("button", { name: "Reembolsar" }))
-
-    // 221,99 was the gross the participant paid; 219,00 is what landed.
-    expect(screen.getByLabelText("Valor devolvido")).toHaveValue("219,00")
-
-    await userEvent.click(
-      screen.getByRole("button", { name: "Solicitar reembolso" }),
-    )
-    const [formData] = submit.mock.calls.at(-1) ?? []
-    expect(formData.get("amount")).toBe("219,00")
-  })
-
-  it("sends a smaller amount and a reason when they are typed", async () => {
-    render(
-      <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
-    )
-
-    await userEvent.click(screen.getByRole("button", { name: "Reembolsar" }))
-    await userEvent.clear(screen.getByLabelText("Valor devolvido"))
-    await userEvent.type(screen.getByLabelText("Valor devolvido"), "50")
-    await userEvent.type(
-      screen.getByLabelText("Motivo (opcional)"),
-      "Desistiu",
-    )
-    await userEvent.click(
-      screen.getByRole("button", { name: "Solicitar reembolso" }),
-    )
-
-    const [formData] = submit.mock.calls.at(-1) ?? []
-    expect(formData.get("amount")).toBe("50")
-    expect(formData.get("reason")).toBe("Desistiu")
-  })
-
-  it("says the fees stay with the participant", async () => {
-    render(
-      <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
-    )
-
-    await userEvent.click(screen.getByRole("button", { name: "Reembolsar" }))
-
-    expect(screen.getByText(/as taxas não voltam/i)).toBeInTheDocument()
-  })
-
-  it("says how long the money takes to come back, by method", async () => {
-    const { rerender } = render(
-      <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
-    )
-
-    await userEvent.click(screen.getByRole("button", { name: "Reembolsar" }))
-    expect(screen.getByText(/devolve na hora/i)).toBeInTheDocument()
-    await userEvent.click(screen.getByRole("button", { name: "Fechar" }))
-
-    rerender(
       <ManagePaymentModal
         {...baseProps}
-        payments={[
-          paidAsaasCharge({ method: "credit_card", installment_count: 3 }),
-        ]}
+        payments={[paidAsaasCharge({ asaas_invoice_number: null })]}
       />,
     )
-    await userEvent.click(screen.getByRole("button", { name: "Reembolsar" }))
-    expect(screen.getByText(/em até 10 dias úteis/i)).toBeInTheDocument()
+
+    expect(
+      screen.getByRole("link", { name: /Reembolsar no Asaas/ }),
+    ).toHaveAttribute("href", "https://sandbox.asaas.com/payment/list")
+  })
+
+  it("offers the Asaas refund before Asaas reports the net", () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[paidAsaasCharge({ asaas_net: null })]}
+      />,
+    )
+
+    expect(
+      screen.getByRole("link", { name: /Reembolsar no Asaas/ }),
+    ).toBeInTheDocument()
   })
 
   it("says a refund is under way instead of offering another", () => {
@@ -527,7 +485,7 @@ describe("ManagePaymentModal", () => {
       screen.getByText(/aguardando o Asaas confirmar/i),
     ).toBeInTheDocument()
     expect(
-      screen.queryByRole("button", { name: "Reembolsar" }),
+      screen.queryByRole("link", { name: /Reembolsar no Asaas/ }),
     ).not.toBeInTheDocument()
   })
 
@@ -549,7 +507,9 @@ describe("ManagePaymentModal", () => {
         "O Asaas negou o último pedido de reembolso. Motivo: Falha ao processar a transferência. Você pode pedir de novo.",
       ),
     ).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Reembolsar" })).toBeInTheDocument()
+    expect(
+      screen.getByRole("link", { name: /Reembolsar no Asaas/ }),
+    ).toBeInTheDocument()
   })
 
   it("says a refund was denied even when Asaas gave no reason", () => {
@@ -634,22 +594,6 @@ describe("ManagePaymentModal", () => {
     ).not.toBeInTheDocument()
   })
 
-  it("waits for the net before offering an Asaas refund", () => {
-    render(
-      <ManagePaymentModal
-        {...baseProps}
-        payments={[paidAsaasCharge({ asaas_net: null })]}
-      />,
-    )
-
-    expect(
-      screen.getByText(/ainda não informou quanto caiu/i),
-    ).toBeInTheDocument()
-    expect(
-      screen.queryByRole("button", { name: "Reembolsar" }),
-    ).not.toBeInTheDocument()
-  })
-
   it("offers only the manual mark on a manual row", () => {
     render(<ManagePaymentModal {...baseProps} payments={[payment({})]} />)
 
@@ -657,7 +601,7 @@ describe("ManagePaymentModal", () => {
       screen.getByRole("button", { name: /marcar como reembolsado/i }),
     ).toBeInTheDocument()
     expect(
-      screen.queryByRole("button", { name: "Reembolsar" }),
+      screen.queryByRole("link", { name: /Reembolsar no Asaas/ }),
     ).not.toBeInTheDocument()
   })
 

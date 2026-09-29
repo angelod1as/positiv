@@ -138,6 +138,9 @@ describe("view event participant loader", () => {
       expect(result).toMatchObject({
         paymentsEnabled: enabled,
         cardPaymentsEnabled: true,
+        asaasDashboardOrigin: expect.stringMatching(
+          /^https:\/\/(www|sandbox)\.asaas\.com$/,
+        ),
       })
     },
   )
