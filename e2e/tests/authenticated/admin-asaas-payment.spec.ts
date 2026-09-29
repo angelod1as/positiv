@@ -142,26 +142,25 @@ test.describe('POS-532: an Asaas payment from the charge to the refund', () => {
     await page.getByRole('alertdialog').getByRole('button', { name: 'Solicitar reembolso' }).click()
     await expect(page.getByRole('alertdialog')).toBeHidden()
 
-    // A plan goes back one charge at a time, never as one full refund, and the
-    // shares add up to the net: the fees stay with the participant.
+    // A plan goes back through the plan -- Asaas refuses a refund on one of its
+    // charges -- as one call for the net: the fees stay with the participant.
     await expect
       .poll(async () =>
         (await getAsaasMockCalls()).filter((call) => call.path.endsWith('/refund')).length,
       )
-      .toBe(3)
-    const refunds = (await getAsaasMockCalls()).filter((call) => call.path.endsWith('/refund'))
-    const shares = refunds.map((call) => ({
-      id: call.path.split('/')[2],
-      value: Number(call.body?.value),
-    }))
-    expect(shares.reduce((total, share) => total + Math.round(share.value * 100), 0)).toBe(22000)
+      .toBe(1)
+    const [refund] = (await getAsaasMockCalls()).filter((call) => call.path.endsWith('/refund'))
+    expect(refund.path).toBe(`/installments/${installmentId}/refund`)
+    expect(Math.round(Number(refund.body?.value) * 100)).toBe(22000)
 
     const [requested] = await getParticipantPayments(participant.profileId, event.id)
     expect(requested.refund_requested_at).not.toBeNull()
 
-    // 5. Asaas confirms each refund.
+    // 5. Asaas spreads the refund over the plan's charges and reports each one.
+    let left = 22000
     for (const [index, charge] of plan.entries()) {
-      const share = shares.find((item) => item.id === charge.id)
+      const share = Math.min(Math.round(charge.value * 100), left)
+      left -= share
       if (!share) continue
       const refunded = buildWebhookEvent('PAYMENT_PARTIALLY_REFUNDED', {
         id: charge.id,
@@ -169,7 +168,7 @@ test.describe('POS-532: an Asaas payment from the charge to the refund', () => {
         netValue: nets[index],
         installment: installmentId,
         externalReference: pending.id,
-        refunds: [{ value: share.value, status: 'DONE' }],
+        refunds: [{ value: share / 100, status: 'DONE' }],
       })
       expect((await postWebhook(refunded)).status).toBe(200)
     }

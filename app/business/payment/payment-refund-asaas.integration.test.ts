@@ -11,12 +11,12 @@ import {
 } from "~/test/db-test-utils"
 
 const {
-  listAsaasInstallmentPayments,
+  refundAsaasInstallment,
   refundAsaasPayment,
   logger,
   onlinePayments,
 } = vi.hoisted(() => ({
-  listAsaasInstallmentPayments: vi.fn(),
+  refundAsaasInstallment: vi.fn(),
   refundAsaasPayment: vi.fn(),
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
   onlinePayments: { enabled: true },
@@ -25,7 +25,7 @@ const {
 vi.mock("./asaas-client.server", async (importOriginal) => {
   const original =
     await importOriginal<typeof import("./asaas-client.server")>()
-  return { ...original, listAsaasInstallmentPayments, refundAsaasPayment }
+  return { ...original, refundAsaasInstallment, refundAsaasPayment }
 })
 
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
@@ -50,7 +50,7 @@ describe("requestRefund", () => {
     counter += 1
     onlinePayments.enabled = true
     vi.clearAllMocks()
-    listAsaasInstallmentPayments.mockResolvedValue([])
+    refundAsaasInstallment.mockResolvedValue(undefined)
     refundAsaasPayment.mockResolvedValue(undefined)
 
     const testId = `${Date.now()}-${counter}`
@@ -159,19 +159,19 @@ describe("requestRefund", () => {
     })
   })
 
-  it("refunds a card plan one charge at a time", async () => {
-    listAsaasInstallmentPayments.mockResolvedValue([
-      { id: "pay_a", value: 7877 },
-      { id: "pay_b", value: 7877 },
-      { id: "pay_c", value: 7877 },
-    ])
-    const payment = await paidCharge({
+  const cardPlan = () =>
+    paidCharge({
       method: "credit_card",
       installment_count: 3,
       amount: 23631,
       asaas_net: 21900,
       asaas_installment_id: `inst_${counter}`,
     })
+
+  // Asaas refuses a refund on one charge of a plan, so the plan is refunded
+  // through the plan, with the total Positiv received.
+  it("refunds a card plan through the plan, never charge by charge", async () => {
+    const payment = await cardPlan()
 
     const result = await requestRefund({
       paymentId: payment.id,
@@ -180,12 +180,57 @@ describe("requestRefund", () => {
     })
 
     expect(result.success).toBe(true)
-    expect(listAsaasInstallmentPayments).toHaveBeenCalledWith(`inst_${counter}`)
-    expect(refundAsaasPayment.mock.calls).toEqual([
-      ["pay_a", { amount: 7300, description: null }],
-      ["pay_b", { amount: 7300, description: null }],
-      ["pay_c", { amount: 7300, description: null }],
-    ])
+    expect(refundAsaasInstallment).toHaveBeenCalledWith(`inst_${counter}`, {
+      amount: 21900,
+    })
+    expect(refundAsaasPayment).not.toHaveBeenCalled()
+    const after = await reload(payment.id)
+    expect(after.refund_requested_at).not.toBeNull()
+    expect(after.refund_requested_amount).toBe(21900)
+  })
+
+  it("asks a card plan for a smaller amount when one is given", async () => {
+    const payment = await cardPlan()
+
+    await requestRefund({ paymentId: payment.id, amount: "100", reason: null })
+
+    expect(refundAsaasInstallment).toHaveBeenCalledWith(`inst_${counter}`, {
+      amount: 10000,
+    })
+  })
+
+  it("releases a card plan's claim when Asaas refuses the refund", async () => {
+    refundAsaasInstallment.mockRejectedValueOnce(
+      new AsaasError(
+        400,
+        [{ code: "invalid_action", description: "Saldo insuficiente" }],
+        `/installments/inst_${counter}/refund`,
+      ),
+    )
+    const payment = await cardPlan()
+
+    const result = await requestRefund({
+      paymentId: payment.id,
+      amount: null,
+      reason: null,
+    })
+
+    expect(result.success).toBe(false)
+    expect((await reload(payment.id)).refund_requested_at).toBeNull()
+  })
+
+  it("keeps a card plan's claim when Asaas does not answer", async () => {
+    refundAsaasInstallment.mockRejectedValueOnce(new TypeError("fetch failed"))
+    const payment = await cardPlan()
+
+    const result = await requestRefund({
+      paymentId: payment.id,
+      amount: null,
+      reason: null,
+    })
+
+    expect(result.success).toBe(false)
+    expect((await reload(payment.id)).refund_requested_at).not.toBeNull()
   })
 
   it("asks Asaas once however many times it is clicked", async () => {
@@ -248,70 +293,6 @@ describe("requestRefund", () => {
     const after = await reload(payment.id)
     expect(after.refund_requested_at).not.toBeNull()
     expect(after.refund_requested_amount).toBe(21900)
-  })
-
-  it("releases the claim when the plan's charges cannot be listed", async () => {
-    listAsaasInstallmentPayments.mockRejectedValueOnce(new TypeError("fetch failed"))
-    const payment = await paidCharge({
-      method: "credit_card",
-      installment_count: 3,
-      amount: 23631,
-      asaas_net: 21900,
-      asaas_installment_id: `inst_${counter}`,
-    })
-
-    const result = await requestRefund({
-      paymentId: payment.id,
-      amount: null,
-      reason: null,
-    })
-
-    // Nothing was asked of Asaas to refund, so nothing can have moved.
-    expect(result.success).toBe(false)
-    expect(refundAsaasPayment).not.toHaveBeenCalled()
-    expect((await reload(payment.id)).refund_requested_at).toBeNull()
-  })
-
-  it("keeps the claim when part of a plan was already given back", async () => {
-    listAsaasInstallmentPayments.mockResolvedValue([
-      { id: "pay_a", value: 7877 },
-      { id: "pay_b", value: 7877 },
-      { id: "pay_c", value: 7877 },
-    ])
-    refundAsaasPayment
-      .mockResolvedValueOnce(undefined)
-      .mockRejectedValueOnce(new Error("Asaas 400 on /payments/pay_b/refund"))
-    const payment = await paidCharge({
-      method: "credit_card",
-      installment_count: 3,
-      amount: 23631,
-      asaas_net: 21900,
-      asaas_installment_id: `inst_${counter}`,
-    })
-
-    const result = await requestRefund({
-      paymentId: payment.id,
-      amount: null,
-      reason: null,
-    })
-
-    expect(result.success).toBe(false)
-    // Releasing it would let a second attempt refund pay_a twice.
-    const after = await reload(payment.id)
-    expect(after.refund_requested_at).not.toBeNull()
-    expect(after.refund_requested_amount).toBe(21900)
-    expect(after.status).toBe("paid")
-    expect(refundAsaasPayment).toHaveBeenCalledTimes(2)
-    // The charge Asaas refused, not the plan's first: that is the one someone
-    // has to go and look at in the dashboard.
-    expect(logger.error).toHaveBeenCalledWith(
-      "Asaas refused the refund",
-      expect.objectContaining({
-        asaasPaymentId: "pay_b",
-        asaasInstallmentId: `inst_${counter}`,
-        alreadyRefunded: 7300,
-      }),
-    )
   })
 
   it("refuses to give back more than Positiv received", async () => {

@@ -8,7 +8,7 @@ import {
   createAsaasPayment,
   deleteAsaasPayment,
   findAsaasCustomerByCpf,
-  listAsaasInstallmentPayments,
+  refundAsaasInstallment,
   refundAsaasPayment,
 } from "./asaas-client.server"
 
@@ -475,26 +475,25 @@ describe("charges", () => {
     expect(JSON.parse(String(initOf(0).body))).toEqual({ value: 50 })
   })
 
-  it("lists the payments that make up an installment plan", async () => {
+  it("refunds a card plan through the plan, sending the total in reais", async () => {
     fetchMock.mockResolvedValueOnce(
-      jsonResponse({
-        data: [
-          { id: "pay_1", value: 78.77, status: "CONFIRMED" },
-          { id: "pay_2", value: 78.77, status: "RECEIVED" },
-          { id: "pay_3", value: 78.77, status: "PENDING" },
-        ],
-      }),
+      jsonResponse({ id: "inst_1", refunds: [{ status: "PENDING", value: 219 }] }),
     )
 
-    const parts = await listAsaasInstallmentPayments("inst_1")
+    await refundAsaasInstallment("inst_1", { amount: 21900 })
 
     expect(fetchMock.mock.calls[0][0]).toBe(
-      "https://api-sandbox.asaas.com/v3/payments?installment=inst_1&limit=100",
+      "https://api-sandbox.asaas.com/v3/installments/inst_1/refund",
     )
-    // Only the ones whose money actually arrived can be given back.
-    expect(parts).toEqual([
-      { id: "pay_1", value: 7877 },
-      { id: "pay_2", value: 7877 },
-    ])
+    expect(initOf(0).method).toBe("POST")
+    expect(JSON.parse(String(initOf(0).body))).toEqual({ value: 219 })
+  })
+
+  it("refunds a whole card plan by sending no amount", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ id: "inst_1" }))
+
+    await refundAsaasInstallment("inst_1", { amount: null })
+
+    expect(JSON.parse(String(initOf(0).body))).toEqual({})
   })
 })

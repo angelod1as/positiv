@@ -226,6 +226,15 @@ async function handleApi(
     if (!["CONFIRMED", "RECEIVED"].includes(charge.status)) {
       return fail(response, 400, "invalid_action", "Esta cobrança não pode ser estornada.")
     }
+    // A card plan is refunded through the plan, never one charge at a time.
+    if (charge.installment && charge.billingType === "CREDIT_CARD") {
+      return fail(
+        response,
+        400,
+        "invalid_object",
+        "Não é possível estornar individualmente esta cobrança.",
+      )
+    }
     // Without a value Asaas gives back whatever the charge still holds; with
     // one, never more than that.
     const remaining = reaisToCents(charge.value) - charge.refunded
@@ -235,6 +244,36 @@ async function handleApi(
     }
     charge.refunded += requested
     return send(response, 200, publicCharge(charge, origin))
+  }
+
+  // `value` is the total to give back across the plan; without one, all of it.
+  // Where the money comes from among the charges is Asaas's business, so the
+  // mock simply takes it from the first charges that still hold some.
+  const planRefund = path.match(/^\/installments\/([^/]+)\/refund$/)
+  if (method === "POST" && planRefund) {
+    const plan = state.charges.filter(
+      (charge) => charge.installment === planRefund[1] && !charge.deleted,
+    )
+    if (!plan.length) return fail(response, 404, "not_found", "Parcelamento não encontrado.")
+    if (plan.some((charge) => !["CONFIRMED", "RECEIVED"].includes(charge.status))) {
+      return fail(response, 400, "invalid_action", "Este parcelamento não pode ser estornado.")
+    }
+    const holds = (charge: Charge) => reaisToCents(charge.value) - charge.refunded
+    const remaining = plan.reduce((total, charge) => total + holds(charge), 0)
+    const requested = body.value === undefined ? remaining : reaisToCents(Number(body.value))
+    if (remaining <= 0 || requested > remaining) {
+      return fail(response, 400, "invalid_value", "O valor do estorno excede o valor disponível.")
+    }
+    let left = requested
+    for (const charge of plan) {
+      const share = Math.min(holds(charge), left)
+      charge.refunded += share
+      left -= share
+    }
+    return send(response, 200, {
+      id: planRefund[1],
+      refunds: [{ status: "PENDING", value: requested / 100 }],
+    })
   }
 
   const single = path.match(/^\/payments\/([^/]+)$/)

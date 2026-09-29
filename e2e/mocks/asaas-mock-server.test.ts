@@ -153,6 +153,42 @@ describe("asaas mock server", () => {
     expect((await refund.json()).id).toBe(payment.id)
   })
 
+  it("refuses to refund one charge of a card plan, as Asaas does", async () => {
+    const payment = await createPayment({
+      billingType: "CREDIT_CARD",
+      installmentCount: 2,
+      totalValue: 100,
+    })
+    await call(`/sandbox/payment/${payment.id}/confirm`, { method: "POST", body: {} })
+
+    const refund = await call(`/payments/${payment.id}/refund`, { method: "POST", body: {} })
+
+    expect(refund.status).toBe(400)
+    expect((await refund.json()).errors[0]).toEqual({
+      code: "invalid_object",
+      description: "Não é possível estornar individualmente esta cobrança.",
+    })
+  })
+
+  it("refunds a confirmed card plan through the plan, never beyond what it billed", async () => {
+    const payment = await createPayment({
+      billingType: "CREDIT_CARD",
+      installmentCount: 2,
+      totalValue: 100,
+    })
+    const plan = `/installments/${payment.installment}/refund`
+
+    expect((await call(plan, { method: "POST", body: { value: 10 } })).status).toBe(400)
+
+    await call(`/sandbox/payment/${payment.id}/confirm`, { method: "POST", body: {} })
+    const partial = await call(plan, { method: "POST", body: { value: 60 } })
+    expect(partial.status).toBe(200)
+    expect((await partial.json()).id).toBe(payment.installment)
+
+    expect((await call(plan, { method: "POST", body: { value: 50 } })).status).toBe(400)
+    expect((await call(plan, { method: "POST", body: {} })).status).toBe(200)
+  })
+
   it("never gives back more than the charge still holds", async () => {
     const payment = await createPayment({ billingType: "PIX", value: 10 })
     await call(`/sandbox/payment/${payment.id}/confirm`, { method: "POST", body: {} })

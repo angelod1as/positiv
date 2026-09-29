@@ -270,40 +270,25 @@ export async function refundAsaasPayment(
   )
 }
 
-// The two statuses whose money is Positiv's to give back. A PENDING
-// installment has been billed to nobody yet, and asking to refund one
-// answers 400.
-const REFUNDABLE_STATUSES = ["CONFIRMED", "RECEIVED"]
-
-export type AsaasInstallmentPayment = { id: string; value: number }
-
 /**
- * The individual charges behind a card plan. A plan is refunded one charge at a
- * time: `/installments/{id}/refund` can only give the whole plan back, which is
- * a full refund, and a full refund costs Positiv the anticipation fee.
+ * Gives back money from a card plan. Asaas refuses a refund on one charge of a
+ * plan ("Não é possível estornar individualmente esta cobrança"), so a plan is
+ * refunded through the plan: `value` is the total to give back, spread by Asaas
+ * over its charges, and no value refunds all of it.
  */
-export async function listAsaasInstallmentPayments(
+export async function refundAsaasInstallment(
   installmentId: string,
-): Promise<AsaasInstallmentPayment[]> {
-  const { data } = await asaasRequest(
-    "GET",
-    // One page is the whole plan: a plan has at most MAX_INSTALLMENTS (6)
-    // charges, far below the page size.
-    `/payments?installment=${installmentId}&limit=100`,
-    zod.object({
-      data: zod.array(
-        zod.object({
-          id: zod.string(),
-          value: zod.number(),
-          status: zod.string(),
-        }),
-      ),
-    }),
-  )
+  input: { amount: number | null },
+): Promise<void> {
+  const body: Record<string, unknown> = {}
+  if (input.amount !== null) body.value = centsToReais(input.amount)
 
-  return data
-    .filter((payment) => REFUNDABLE_STATUSES.includes(payment.status))
-    .map((payment) => ({ id: payment.id, value: reaisToCents(payment.value) }))
+  await asaasRequest(
+    "POST",
+    `/installments/${installmentId}/refund`,
+    zod.object({ id: zod.string() }),
+    body,
+  )
 }
 
 // Only the fields the fee mapper reads are described. Everything Asaas ships

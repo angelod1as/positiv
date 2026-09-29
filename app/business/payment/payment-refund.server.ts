@@ -6,14 +6,13 @@ import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
 import {
   AsaasError,
-  listAsaasInstallmentPayments,
+  refundAsaasInstallment,
   refundAsaasPayment,
 } from "./asaas-client.server"
 import {
   deliverPaymentEmail,
   queuePaymentEmail,
 } from "./payment-email-outbox.server"
-import { splitRefund } from "./refund-split"
 
 export const markManualRefundedSchema = zod.object({
   paymentId: zod.string().uuid(),
@@ -139,8 +138,8 @@ export const requestRefundSchema = zod.object({
  *
  * What goes back is `asaas_net`, both by default and at most: refunding the
  * gross is a full refund to Asaas, and Asaas never returns the anticipation
- * fee. A card plan is refunded one charge at a time for the same reason —
- * `/installments/{id}/refund` can only give the whole plan back.
+ * fee. A card plan is refunded through the plan, with that amount as its
+ * total: Asaas refuses a refund on one charge of a plan.
  */
 export const requestRefund = applySchema(requestRefundSchema)(
   async (values) => {
@@ -202,50 +201,33 @@ export const requestRefund = applySchema(requestRefundSchema)(
     }
 
     const description = values.reason ?? null
-    let given = 0
-    // The charge being asked for at the moment it fails. On a plan that is one
-    // of several, and the plan's first is rarely the one Asaas refused.
-    let charge = payment.asaas_payment_id
-    // Whether a refund was ever put to Asaas. Before that, a failure -- the
-    // plan could not be listed, the split refused -- cannot have moved money.
+    // Whether a refund was ever put to Asaas. Before that, a failure cannot
+    // have moved money.
     let sent = false
 
     try {
       if (payment.asaas_installment_id) {
-        const parts = await listAsaasInstallmentPayments(
-          payment.asaas_installment_id,
-        )
-        // Sequentially: Asaas queues them anyway, and an ordered failure is
-        // the difference between "two of three went back" and a guess.
-        for (const share of splitRefund(amount, parts)) {
-          charge = share.id
-          sent = true
-          await refundAsaasPayment(share.id, {
-            amount: share.amount,
-            description,
-          })
-          given += share.amount
-        }
+        sent = true
+        await refundAsaasInstallment(payment.asaas_installment_id, { amount })
       } else if (payment.asaas_payment_id) {
         sent = true
         await refundAsaasPayment(payment.asaas_payment_id, {
           amount,
           description,
         })
-        given = amount
       } else {
         throw new Error(paymentsCopy.errors.notAsaasRefundable)
       }
     } catch (error) {
       // The claim is released only when no money can have moved: nothing was
-      // put to Asaas, or Asaas answered the first refund with a refusal. A
-      // timeout, a dropped connection, a 5xx or an answer that does not parse
-      // say nothing about whether the refund happened, and neither does half a
-      // plan going back. Releasing the claim on any of those would bring the
-      // button back, and the next click would refund the same money again.
+      // put to Asaas, or Asaas answered with a refusal. A timeout, a dropped
+      // connection, a 5xx or an answer that does not parse say nothing about
+      // whether the refund happened. Releasing the claim on any of those would
+      // bring the button back, and the next click would refund the same money
+      // again.
       const refused =
         error instanceof AsaasError && error.status >= 400 && error.status < 500
-      const nothingMoved = given === 0 && (!sent || refused)
+      const nothingMoved = !sent || refused
 
       if (nothingMoved) {
         await kyselyDb
@@ -257,18 +239,13 @@ export const requestRefund = applySchema(requestRefundSchema)(
 
       logger.error("Asaas refused the refund", {
         paymentId: payment.id,
-        asaasPaymentId: charge,
+        asaasPaymentId: payment.asaas_payment_id,
         asaasInstallmentId: payment.asaas_installment_id,
-        alreadyRefunded: given,
         error: error instanceof Error ? error.message : String(error),
       })
 
       if (nothingMoved) throw error
-      throw new Error(
-        given > 0
-          ? paymentsCopy.errors.refundPartiallyApplied
-          : paymentsCopy.errors.refundOutcomeUnknown,
-      )
+      throw new Error(paymentsCopy.errors.refundOutcomeUnknown)
     }
 
     return { requested: true as const }

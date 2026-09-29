@@ -214,18 +214,12 @@ export const paymentsCopy = {
       "O reembolso não pode ser maior que o que a Positiv recebeu, sem as taxas.",
     refundNetNotReported:
       "O Asaas ainda não informou quanto caiu na conta desta cobrança. Aguarde alguns instantes e tente de novo.",
-    refundExceedsPlan:
-      "O Asaas informa que este plano cobrou menos do que o reembolso pedido. Confira no painel do Asaas.",
-    refundNothingToRefund:
-      "O Asaas não encontrou parcelas reembolsáveis nesta cobrança.",
     notRefundable: "Só é possível reembolsar um pagamento já confirmado.",
     notAsaasRefundable:
       "Este pagamento não passou pelo Asaas. Use 'Marcar como reembolsado'.",
     refundAlreadyRequested: "O reembolso já foi solicitado.",
     refundOutcomeUnknown:
       "Não deu para confirmar se o Asaas fez o reembolso. Confira no painel do Asaas antes de tentar de novo.",
-    refundPartiallyApplied:
-      "Parte das parcelas foi reembolsada e uma falhou. Confira no painel do Asaas antes de tentar de novo.",
     notEditable: "Só é possível editar um pagamento manual confirmado.",
     notCancellable: "Só é possível cancelar uma cobrança em aberto.",
     invalidCpf: "Esse CPF não confere. Confira os números.",
