@@ -36,19 +36,21 @@ type State = {
   customers: { id: string; cpfCnpj: string }[]
   charges: Charge[]
   planRefunds: Record<string, Refund[]>
-  sequence: number
 }
 
 function emptyState(): State {
-  return { calls: [], customers: [], charges: [], planRefunds: {}, sequence: 0 }
+  return { calls: [], customers: [], charges: [], planRefunds: {} }
 }
 
 let state = emptyState()
 let server: Server | null = null
+// Outside the state on purpose: a reset forgets the mock's charges, not the
+// rows earlier specs wrote, and asaas_payment_id is unique in the database.
+let sequence = 0
 
 function nextId(prefix: string): string {
-  state.sequence += 1
-  return `${prefix}_${String(state.sequence).padStart(12, "0")}`
+  sequence += 1
+  return `${prefix}_${String(sequence).padStart(12, "0")}`
 }
 
 function send(response: ServerResponse, status: number, body: unknown) {

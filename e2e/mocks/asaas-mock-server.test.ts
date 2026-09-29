@@ -247,6 +247,16 @@ describe("asaas mock server", () => {
     expect(whole.status).toBe(400)
   })
 
+  // Every spec resets the mock, but the rows earlier specs wrote stay in the
+  // database, where asaas_payment_id is unique.
+  it("never hands out an id twice, even across a reset", async () => {
+    const before = await createPayment({ billingType: "PIX", value: 10 })
+    await fetch(`${origin}/__mock/reset`, { method: "POST" })
+    const after = await createPayment({ billingType: "PIX", value: 10 })
+
+    expect(after.id).not.toBe(before.id)
+  })
+
   it("records every api call for a spec to assert on, and forgets them on reset", async () => {
     await createCustomer()
 
