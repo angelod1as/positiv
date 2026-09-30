@@ -36,9 +36,9 @@ vi.mock("~/lib/helpers/is-prod.server", () => ({
   isCI: () => false,
 }))
 
-vi.mock("./asaas-client.server", async (importOriginal) => {
+vi.mock("./provider/asaas/asaas-client.server", async (importOriginal) => {
   const original =
-    await importOriginal<typeof import("./asaas-client.server")>()
+    await importOriginal<typeof import("./provider/asaas/asaas-client.server")>()
   return {
     ...original,
     createAsaasCustomer,
@@ -59,7 +59,7 @@ vi.mock("~/business/settings/app-settings.server", async (importOriginal) => ({
   isCardPaymentsEnabled: async () => cardEnabled.value,
 }))
 
-import { AsaasError } from "./asaas-client.server"
+import { AsaasError } from "./provider/asaas/asaas-client.server"
 import { pickOption } from "./payment-checkout.server"
 
 describe("pickOption", () => {

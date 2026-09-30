@@ -14,7 +14,7 @@ import {
   updateEventListmonkList,
 } from "~/business/admin/event-listmonk-sync.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
-import { asaasDashboardOrigin } from "~/business/payment/asaas-client.server"
+import { asaasDashboardOrigin } from "~/business/payment/provider/asaas/asaas-client.server"
 import { getPaymentsForEvent } from "~/business/payment/payment-totals.server"
 import {
   isCardPaymentsEnabled,

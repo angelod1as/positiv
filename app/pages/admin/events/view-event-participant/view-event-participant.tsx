@@ -11,7 +11,7 @@ import {
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
-import { asaasDashboardOrigin } from "~/business/payment/asaas-client.server"
+import { asaasDashboardOrigin } from "~/business/payment/provider/asaas/asaas-client.server"
 import { getPaymentsForParticipant } from "~/business/payment/payment-totals.server"
 import {
   isCardPaymentsEnabled,

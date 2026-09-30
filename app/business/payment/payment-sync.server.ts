@@ -7,8 +7,8 @@ import { logger } from "~/lib/logger/logger.server"
 import {
   getAsaasInstallmentRefunds,
   getAsaasPaymentRefunds,
-} from "./asaas-client.server"
-import { asaasErrorMessage } from "./asaas-error-message"
+} from "./provider/asaas/asaas-client.server"
+import { asaasErrorMessage } from "./provider/asaas/asaas-error-message"
 import { deliverPaymentEmail } from "./payment-email-outbox.server"
 import { applyRefundTally } from "./refund-apply.server"
 import { tallyRefunds } from "./refund-state"

@@ -15,10 +15,10 @@ const { deleteAsaasPayment, logger } = vi.hoisted(() => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
-vi.mock("~/business/payment/asaas-client.server", async (importOriginal) => {
+vi.mock("~/business/payment/provider/asaas/asaas-client.server", async (importOriginal) => {
   const original =
     await importOriginal<
-      typeof import("~/business/payment/asaas-client.server")
+      typeof import("~/business/payment/provider/asaas/asaas-client.server")
     >()
   return { ...original, deleteAsaasPayment }
 })

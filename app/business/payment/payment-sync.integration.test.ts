@@ -22,8 +22,8 @@ const {
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
-vi.mock("./asaas-client.server", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("./asaas-client.server")>()),
+vi.mock("./provider/asaas/asaas-client.server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./provider/asaas/asaas-client.server")>()),
   getAsaasPaymentRefunds,
   getAsaasInstallmentRefunds,
 }))

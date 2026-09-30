@@ -17,8 +17,8 @@ import {
   createAsaasPayment,
   deleteAsaasPayment,
   findAsaasCustomerByCpf,
-} from "./asaas-client.server"
-import { asaasErrorMessage } from "./asaas-error-message"
+} from "./provider/asaas/asaas-client.server"
+import { asaasErrorMessage } from "./provider/asaas/asaas-error-message"
 import { ACTIVE_PAYMENT_STATUSES } from "./payment-totals.server"
 import { isValidCpf } from "~/lib/helpers/cpf"
 import { isUniqueViolation } from "~/lib/helpers/is-unique-violation"

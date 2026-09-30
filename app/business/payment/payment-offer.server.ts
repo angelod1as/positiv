@@ -5,7 +5,7 @@ import { kyselyDb } from "~/kysely-db"
 import { reaisToCents } from "~/lib/helpers/format-currency"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
-import { deleteAsaasPayment } from "./asaas-client.server"
+import { deleteAsaasPayment } from "./provider/asaas/asaas-client.server"
 import { cancelPayment } from "./payment-cancel.server"
 import {
   deliverPaymentEmail,

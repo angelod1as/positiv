@@ -18,7 +18,7 @@ import {
   createAsaasPayment,
   findAsaasCustomerByCpf,
   reaisToCents,
-} from "../../app/business/payment/asaas-client.server"
+} from "../../app/business/payment/provider/asaas/asaas-client.server"
 import {
   buildPaymentOptions,
   type PaymentOption,

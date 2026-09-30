@@ -3,7 +3,7 @@ import { paymentsCopy } from "~/copy/payments"
 import { kyselyDb } from "~/kysely-db"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
-import { deleteAsaasPayment } from "./asaas-client.server"
+import { deleteAsaasPayment } from "./provider/asaas/asaas-client.server"
 import { ACTIVE_PAYMENT_STATUSES } from "./payment-totals.server"
 
 export const cancelPaymentSchema = zod.object({

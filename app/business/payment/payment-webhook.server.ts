@@ -5,7 +5,7 @@ import { kyselyDb } from "~/kysely-db"
 import type { Database } from "~types/database/kysely.types"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
-import { reaisToCents } from "./asaas-client.server"
+import { reaisToCents } from "./provider/asaas/asaas-client.server"
 import {
   deliverPaymentEmail,
   queuePaymentEmail,

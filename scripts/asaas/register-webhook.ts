@@ -5,7 +5,7 @@
 // webhook rather than adding a second one, because Asaas would then deliver
 // every event twice.
 import { ENV } from "varlock/env"
-import { asaasRequest } from "../../app/business/payment/asaas-client.server"
+import { asaasRequest } from "../../app/business/payment/provider/asaas/asaas-client.server"
 import { zod } from "../../app/lib/helpers/zod"
 
 export const WEBHOOK_NAME = "Positiv"
