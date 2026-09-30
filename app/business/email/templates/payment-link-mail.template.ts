@@ -1,7 +1,10 @@
 import { formatInTimeZone } from "date-fns-tz"
-import type { PaymentOption } from "~/business/payment/pricing"
-import { paymentsCopy } from "~/copy/payments"
+import {
+  PIX_DISCOUNT_PERCENT,
+  type PaymentOption,
+} from "~/business/payment/pricing"
 import { paymentLinkMailCopy } from "~/copy/emails/payment-link"
+import { formatCurrency } from "~/lib/helpers/format-currency"
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
 import { escapeHtml } from "~/lib/helpers/escape-html"
@@ -13,6 +16,46 @@ export type PaymentLinkMailInput = {
   paymentUrl: string
   dueAt: string
   options: PaymentOption[]
+}
+
+/**
+ * One line for Pix and one for the card, however many installment counts are
+ * on offer. Pix is discounted only when it sits beside a card priced higher;
+ * a resend after the participant chose restates just that choice.
+ */
+const summaryLines = (options: PaymentOption[]): string[] => {
+  const pix = options.find((option) => option.method === "pix")
+  const cards = options.filter((option) => option.method === "credit_card")
+  const lines: string[] = []
+
+  if (pix) {
+    const discounted = cards.length > 0 && pix.total < cards[0].total
+    lines.push(
+      paymentLinkMailCopy.pix(
+        formatCurrency(pix.total),
+        discounted ? PIX_DISCOUNT_PERCENT : null,
+      ),
+    )
+  }
+
+  if (cards.length > 1) {
+    const max = Math.max(...cards.map((card) => card.installmentCount ?? 1))
+    lines.push(
+      paymentLinkMailCopy.card(
+        paymentLinkMailCopy.installmentRange(max),
+        formatCurrency(cards[0].total),
+      ),
+    )
+  } else if (cards.length === 1) {
+    lines.push(
+      paymentLinkMailCopy.card(
+        paymentLinkMailCopy.installmentsChosen(cards[0].installmentCount ?? 1),
+        formatCurrency(cards[0].total),
+      ),
+    )
+  }
+
+  return lines
 }
 
 /**
@@ -80,17 +123,17 @@ export const paymentLinkMailTemplate = (input: PaymentLinkMailInput): string => 
                 ${paymentLinkMailCopy.intro(displayName, `${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}`)}
               </p>
 
-              <!-- Options -->
-              <h3 style="font-family: 'DM Sans', Arial, sans-serif; font-size: 20px; font-weight: 700; color: #333; margin: 0 0 12px 0;">
-                ${paymentLinkMailCopy.optionsHeading}
-              </h3>
+              <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
+                ${paymentLinkMailCopy.oneStepLeft}
+              </p>
 
+              <!-- Prices -->
               <div style="background-color: #f9f9f9; border-radius: 8px; padding: 16px; margin: 0 0 20px 0;">
-                ${input.options
+                ${summaryLines(input.options)
                   .map(
-                    (option) => `
-                <div style="margin-bottom: 8px; font-size: 14px; color: #333;">
-                  ${paymentsCopy.options.label(option)}
+                    (line) => `
+                <div style="margin-bottom: 8px; font-size: 16px; color: #333;">
+                  ${line}
                 </div>
                 `,
                   )

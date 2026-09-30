@@ -114,8 +114,8 @@ describe("sendPaymentLinkEmail", () => {
     expect(options.to).toContain("-link@example.com")
     expect(options.subject).toContain("Link Event")
     expect(options.html).toContain(`/pagamento/${payment.id}`)
-    expect(options.html).toContain("Pix —")
-    expect(options.text).toContain("Pix —")
+    expect(options.html).toContain("No Pix")
+    expect(options.text).toContain("No Pix")
   })
 
   it("prices every option the participant may choose", async () => {
@@ -125,9 +125,8 @@ describe("sendPaymentLinkEmail", () => {
 
     const [options] = sendEmail.mock.calls[0]
     // PIX at 10% off, plus the event price in 1x through 6x.
-    expect(options.html).toContain("Pix — R$ 198,00")
-    expect(options.html).toContain("Cartão à vista — R$ 220,00")
-    expect(options.html).toContain("Cartão 6x de R$ 36,66 (total R$ 220,00)")
+    expect(options.html).toContain("No Pix (10% de desconto): <strong>R$ 198,00</strong>")
+    expect(options.html).toContain("No cartão de crédito (1x a 6x sem juros): R$ 220,00")
   })
 
   it("offers Pix alone, at the full price, while card payments are off", async () => {
@@ -137,8 +136,8 @@ describe("sendPaymentLinkEmail", () => {
     await sendPaymentLinkEmail({ paymentId: payment.id })
 
     const [options] = sendEmail.mock.calls[0]
-    expect(options.html).toContain("Pix — R$ 220,00")
-    expect(options.html).not.toContain("Cartão")
+    expect(options.html).toContain("No Pix: <strong>R$ 220,00</strong>")
+    expect(options.html).not.toContain("cartão")
   })
 
   // profiles.email is NOT NULL, so the reachable version of "no mailbox" is a
@@ -161,8 +160,8 @@ describe("sendPaymentLinkEmail", () => {
     await sendPaymentLinkEmail({ paymentId: payment.id })
 
     const [options] = sendEmail.mock.calls[0]
-    expect(options.html).toContain("Pix — R$ 198,00")
-    expect(options.html).not.toContain("Cartão")
+    expect(options.html).toContain("No Pix: <strong>R$ 198,00</strong>")
+    expect(options.html).not.toContain("cartão")
   })
 
   // Frozen at the price it was created at, whatever the card switch says now.
@@ -183,7 +182,7 @@ describe("sendPaymentLinkEmail", () => {
     await sendPaymentLinkEmail({ paymentId: payment.id })
 
     const [options] = sendEmail.mock.calls[0]
-    expect(options.html).toContain("Cartão 6x de R$ 36,66 (total R$ 220,00)")
+    expect(options.html).toContain("No cartão de crédito (6x sem juros): R$ 220,00")
     expect(options.html).not.toContain("Pix")
   })
 
