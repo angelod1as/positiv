@@ -15,6 +15,7 @@ import { getToast, redirectWithError, redirectWithSuccess } from "remix-toast"
 import { toast as notify, Toaster } from "sonner"
 import { ENV } from "varlock/env"
 import { isValidCpf } from "~/lib/helpers/cpf"
+import { isValidPhone } from "~/lib/helpers/phone"
 import { Copy } from "~/components/atoms/copy/copy"
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import { TooltipProvider } from "~/components/ui/tooltip"
@@ -115,7 +116,11 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     const needsProfileUpdate = currentProfile
       ? !currentProfile.race_color ||
         currentProfile.race_color.length === 0 ||
-        !isValidCpf(currentProfile.cpf)
+        !isValidCpf(currentProfile.cpf) ||
+        !isValidPhone(
+          currentProfile.phone,
+          currentProfile.phone_is_international ?? false,
+        )
       : false
 
     let shouldShowNewsletterModal = false

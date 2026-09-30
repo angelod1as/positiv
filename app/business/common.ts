@@ -76,6 +76,7 @@ export const currentProfileSchema = zod.object({
   rg: zod.string().nullish(),
   cpf: zod.string().nullish(),
   phone: zod.number().nullish(),
+  phone_is_international: zod.boolean().nullish(),
   date_of_birth: zod.string().nullish(),
   gender: zod.array(zod.string()).nullish(),
   orientation: zod.array(zod.string()).nullish(),

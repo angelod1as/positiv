@@ -70,6 +70,21 @@ describe("ProfileUpdateGuard", () => {
     expect(screen.getByRole("alertdialog")).toBeInTheDocument()
   })
 
+  it("says the phone is one of the things to fix", () => {
+    render(
+      <ProfileUpdateGuard
+        currentProfile={mockProfile}
+        currentPath="/dashboard"
+        needsProfileUpdate={true}
+      />,
+      { wrapper },
+    )
+
+    expect(screen.getByRole("alertdialog")).toHaveTextContent(
+      /celular válido para falarmos com você pelo WhatsApp/,
+    )
+  })
+
   it("should not render modal on home page (exempt)", () => {
     render(
       <ProfileUpdateGuard
