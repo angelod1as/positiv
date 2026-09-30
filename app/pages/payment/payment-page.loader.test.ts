@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import * as authServer from "~/business/auth/auth.server"
-import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
+import {
+  isCardPaymentsEnabled,
+  isOnlinePaymentsEnabled,
+} from "~/business/settings/app-settings.server"
 import type { Route } from "./+types/payment-page"
 import { loader } from "./payment-page"
 import { loadPaymentPage } from "./payment-page.server"
@@ -10,6 +13,7 @@ vi.mock("~/business/auth/auth.server", () => ({
 }))
 
 vi.mock("~/business/settings/app-settings.server", () => ({
+  isCardPaymentsEnabled: vi.fn(),
   isOnlinePaymentsEnabled: vi.fn(),
 }))
 
@@ -35,10 +39,11 @@ describe("payment page loader", () => {
   })
 
   it.each([true, false])(
-    "hands the page the online payments switch (%s)",
+    "hands the page the online and card payments switches (%s)",
     async (enabled) => {
       vi.mocked(authServer.getUserContext).mockResolvedValue(context)
       vi.mocked(isOnlinePaymentsEnabled).mockResolvedValue(enabled)
+      vi.mocked(isCardPaymentsEnabled).mockResolvedValue(!enabled)
 
       await load()
 
@@ -46,6 +51,7 @@ describe("payment page loader", () => {
         paymentId: "payment-1",
         profileId: "profile-1",
         onlinePaymentsEnabled: enabled,
+        cardPaymentsEnabled: !enabled,
       })
     },
   )

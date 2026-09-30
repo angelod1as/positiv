@@ -293,7 +293,6 @@ describe("AdminViewEventParticipantsTable", () => {
           payment_status: "partially_refunded",
           paid_gross: 10000,
           refunded: 5000,
-          fee: 1000,
           net: 4000,
         }),
       ])

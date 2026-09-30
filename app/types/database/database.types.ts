@@ -11,18 +11,21 @@ export type Database = {
     Tables: {
       app_settings: {
         Row: {
+          card_payments_enabled: boolean
           id: boolean
           online_payments_enabled: boolean
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          card_payments_enabled?: boolean
           id?: boolean
           online_payments_enabled?: boolean
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          card_payments_enabled?: boolean
           id?: boolean
           online_payments_enabled?: boolean
           updated_at?: string
@@ -600,10 +603,9 @@ export type Database = {
       payments: {
         Row: {
           amount: number | null
-          anticipation_fee: number | null
-          anticipation_status: string | null
           asaas_customer_id: string | null
           asaas_installment_id: string | null
+          asaas_invoice_number: string | null
           asaas_invoice_url: string | null
           asaas_net: number | null
           asaas_payment_id: string | null
@@ -612,7 +614,6 @@ export type Database = {
           created_by: string | null
           due_at: string
           event_participant_id: string
-          fee_snapshot: Json | null
           id: string
           installment_count: number | null
           kind: Database["public"]["Enums"]["payment_kind"]
@@ -634,10 +635,9 @@ export type Database = {
         }
         Insert: {
           amount?: number | null
-          anticipation_fee?: number | null
-          anticipation_status?: string | null
           asaas_customer_id?: string | null
           asaas_installment_id?: string | null
+          asaas_invoice_number?: string | null
           asaas_invoice_url?: string | null
           asaas_net?: number | null
           asaas_payment_id?: string | null
@@ -646,7 +646,6 @@ export type Database = {
           created_by?: string | null
           due_at: string
           event_participant_id: string
-          fee_snapshot?: Json | null
           id?: string
           installment_count?: number | null
           kind: Database["public"]["Enums"]["payment_kind"]
@@ -668,10 +667,9 @@ export type Database = {
         }
         Update: {
           amount?: number | null
-          anticipation_fee?: number | null
-          anticipation_status?: string | null
           asaas_customer_id?: string | null
           asaas_installment_id?: string | null
+          asaas_invoice_number?: string | null
           asaas_invoice_url?: string | null
           asaas_net?: number | null
           asaas_payment_id?: string | null
@@ -680,7 +678,6 @@ export type Database = {
           created_by?: string | null
           due_at?: string
           event_participant_id?: string
-          fee_snapshot?: Json | null
           id?: string
           installment_count?: number | null
           kind?: Database["public"]["Enums"]["payment_kind"]
@@ -833,7 +830,6 @@ export type Database = {
           active_payment_id: string | null
           current_status: Database["public"]["Enums"]["payment_status"] | null
           event_participant_id: string | null
-          fee: number | null
           has_paid: boolean | null
           net: number | null
           paid_gross: number | null

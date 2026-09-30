@@ -64,3 +64,32 @@ export const setOnlinePaymentsEnabled = async ({
     .onConflict((oc) => oc.column("id").doUpdateSet(values))
     .execute()
 }
+
+export const isCardPaymentsEnabled = async () => {
+  const row = await kyselyDb
+    .selectFrom("app_settings")
+    .select("card_payments_enabled")
+    .executeTakeFirst()
+
+  return row?.card_payments_enabled ?? false
+}
+
+export const setCardPaymentsEnabled = async ({
+  enabled,
+  profileId,
+}: {
+  enabled: boolean
+  profileId: string | undefined
+}) => {
+  const values = {
+    card_payments_enabled: enabled,
+    updated_at: new Date().toISOString(),
+    updated_by: profileId ?? null,
+  }
+
+  await kyselyDb
+    .insertInto("app_settings")
+    .values({ id: true, ...values })
+    .onConflict((oc) => oc.column("id").doUpdateSet(values))
+    .execute()
+}

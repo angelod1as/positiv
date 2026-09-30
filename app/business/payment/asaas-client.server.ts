@@ -1,6 +1,6 @@
 import { formatInTimeZone } from "date-fns-tz"
 import { ENV } from "varlock/env"
-import type { z, ZodType } from "zod"
+import type { ZodType } from "zod"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
 import { normalizeCpf } from "~/lib/helpers/cpf"
@@ -191,6 +191,7 @@ export type CreatedAsaasPayment = {
   id: string
   status: string
   invoiceUrl: string | null
+  invoiceNumber: string | null
   installmentId: string | null
 }
 
@@ -198,6 +199,7 @@ const paymentResponse = zod.object({
   id: zod.string(),
   status: zod.string(),
   invoiceUrl: zod.string().nullable().optional(),
+  invoiceNumber: zod.string().nullable().optional(),
   installment: zod.string().nullable().optional(),
 })
 
@@ -241,6 +243,7 @@ export async function createAsaasPayment(input: {
     id: payment.id,
     status: payment.status,
     invoiceUrl: payment.invoiceUrl ?? null,
+    invoiceNumber: payment.invoiceNumber ?? null,
     installmentId: payment.installment ?? null,
   }
 }
@@ -252,43 +255,6 @@ export async function deleteAsaasPayment(paymentId: string): Promise<boolean> {
     zod.object({ deleted: zod.boolean(), id: zod.string() }),
   )
   return deleted
-}
-
-export async function refundAsaasPayment(
-  paymentId: string,
-  input: { amount: number | null; description: string | null },
-): Promise<void> {
-  const body: Record<string, unknown> = {}
-  if (input.amount !== null) body.value = centsToReais(input.amount)
-  if (input.description) body.description = input.description
-
-  await asaasRequest(
-    "POST",
-    `/payments/${paymentId}/refund`,
-    zod.object({ id: zod.string(), status: zod.string() }),
-    body,
-  )
-}
-
-/**
- * Gives back money from a card plan. Asaas refuses a refund on one charge of a
- * plan ("Não é possível estornar individualmente esta cobrança"), so a plan is
- * refunded through the plan: `value` is the total to give back, spread by Asaas
- * over its charges, and no value refunds all of it.
- */
-export async function refundAsaasInstallment(
-  installmentId: string,
-  input: { amount: number | null },
-): Promise<void> {
-  const body: Record<string, unknown> = {}
-  if (input.amount !== null) body.value = centsToReais(input.amount)
-
-  await asaasRequest(
-    "POST",
-    `/installments/${installmentId}/refund`,
-    zod.object({ id: zod.string() }),
-    body,
-  )
 }
 
 // A charge's or a plan's refunds, as Asaas lists them on the resource itself.
@@ -327,69 +293,14 @@ export async function getAsaasInstallmentRefunds(
   return (refunds ?? []).map(({ value, status }) => ({ value, status }))
 }
 
-export type AsaasAnticipation = { status: string; fee: number }
-
 /**
- * The anticipations of a charge or a plan, one per charge. Asaas charges the
- * anticipation fee here and not in the charge's netValue, so it is the only
- * place that says what advancing a card charge cost. One page is the whole
- * plan: a plan has at most MAX_INSTALLMENTS (6) charges.
+ * The Asaas dashboard matching the API the app talks to, where an admin does
+ * what the site no longer does through the API -- refunds, above all.
  */
-export async function listAsaasAnticipations(
-  of: { payment: string } | { installment: string },
-): Promise<AsaasAnticipation[]> {
-  const filter =
-    "payment" in of ? `payment=${of.payment}` : `installment=${of.installment}`
-  const { data } = await asaasRequest(
-    "GET",
-    `/anticipations?${filter}&limit=100`,
-    zod.object({
-      data: zod.array(zod.object({ status: zod.string(), fee: zod.number() })),
-    }),
-  )
-  return data.map(({ status, fee }) => ({ status, fee: reaisToCents(fee) }))
-}
-
-// Only the fields the fee mapper reads are described. Everything Asaas ships
-// alongside them — the boleto block, PIX credit allowances, the card-present
-// rates — is left out on purpose, so a change there cannot fail the parse.
-const accountFees = zod.object({
-  payment: zod.object({
-    creditCard: zod.object({
-      operationValue: zod.number(),
-      oneInstallmentPercentage: zod.number(),
-      upToSixInstallmentsPercentage: zod.number(),
-      discountOneInstallmentPercentage: zod.number().nullable().optional(),
-      discountUpToSixInstallmentsPercentage: zod.number().nullable().optional(),
-      hasValidDiscount: zod.boolean().nullable().optional(),
-    }),
-    // The percentage fields come back null whenever the account is on a fixed
-    // PIX fee, which is what the sandbox account uses today. Only that shape
-    // has been seen, so the fixed fee is nullable by symmetry rather than by
-    // observation: if a percentage-fee account reports it the same way, the
-    // alternative is the whole response failing to parse and every price
-    // quietly falling back to the list.
-    pix: zod.object({
-      fixedFeeValue: zod.number().nullable().optional(),
-      percentageFee: zod.number().nullable().optional(),
-    }),
-  }),
-  anticipation: zod
-    .object({
-      creditCard: zod
-        .object({
-          detachedMonthlyFeeValue: zod.number().nullable().optional(),
-          installmentMonthlyFeeValue: zod.number().nullable().optional(),
-        })
-        .optional(),
-    })
-    .optional(),
-})
-
-export type AsaasAccountFees = z.infer<typeof accountFees>
-
-export function getAsaasAccountFees(): Promise<AsaasAccountFees> {
-  return asaasRequest("GET", "/myAccount/fees/", accountFees)
+export function asaasDashboardOrigin(): string {
+  return ENV.ASAAS_API_URL?.includes("sandbox")
+    ? "https://sandbox.asaas.com"
+    : "https://www.asaas.com"
 }
 
 export function reaisToCents(reais: number): number {

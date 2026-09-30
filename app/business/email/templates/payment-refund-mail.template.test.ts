@@ -43,6 +43,21 @@ describe("paymentRefundMailTemplate", () => {
     expect(pix).not.toContain("10 dias úteis")
   })
 
+  // Positiv absorbs the fees, so nothing is held back from a refund for them.
+  it("says nothing about fees on an Asaas refund", () => {
+    const html = paymentRefundMailTemplate({
+      displayName: "Ana",
+      eventTitle: "Festa",
+      eventEmoji: null,
+      refundAmount: 22000,
+      amount: 22000,
+      method: "credit_card",
+      kind: "asaas",
+    })
+
+    expect(html).not.toMatch(/taxa/i)
+  })
+
   it("says it is partial when less than the payment came back", () => {
     const html = paymentRefundMailTemplate({
       displayName: "Ana",

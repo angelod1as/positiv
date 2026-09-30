@@ -10,10 +10,13 @@ import {
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
-import { getAsaasFeesIfEnabled } from "~/business/payment/asaas-fees.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
+import { asaasDashboardOrigin } from "~/business/payment/asaas-client.server"
 import { getPaymentsForParticipant } from "~/business/payment/payment-totals.server"
-import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
+import {
+  isCardPaymentsEnabled,
+  isOnlinePaymentsEnabled,
+} from "~/business/settings/app-settings.server"
 import { adminEventsCopy } from "~/copy/admin/events"
 import { appOrigin } from "~/lib/helpers/app-origin"
 import { logger } from "~/lib/logger/logger.server"
@@ -138,9 +141,9 @@ export async function loader({ params }: Route.LoaderArgs) {
   }
 
   const onlinePaymentsEnabled = await isOnlinePaymentsEnabled()
-  const [participantPayments, asaasFees] = await Promise.all([
+  const [participantPayments, cardPaymentsEnabled] = await Promise.all([
     getPaymentsForParticipant(eventParticipant.id),
-    getAsaasFeesIfEnabled(onlinePaymentsEnabled),
+    isCardPaymentsEnabled(),
   ])
 
   return {
@@ -149,11 +152,12 @@ export async function loader({ params }: Route.LoaderArgs) {
     fullHistory,
     eventId,
     participantPayments,
-    asaasFees,
+    cardPaymentsEnabled,
     paymentsEnabled: onlinePaymentsEnabled,
     // The same origin the link email builds from, so the two channels cannot
     // hand the participant different urls for one charge.
     appOrigin: appOrigin(null),
+    asaasDashboardOrigin: asaasDashboardOrigin(),
   }
 }
 
@@ -164,9 +168,10 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
     fullHistory,
     eventId,
     participantPayments,
-    asaasFees,
+    cardPaymentsEnabled,
     paymentsEnabled,
     appOrigin: origin,
+    asaasDashboardOrigin: dashboardOrigin,
   } = loaderData
 
   if (!profile) return null
@@ -180,9 +185,10 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
         eventId,
       }}
       payments={participantPayments}
-      asaasFees={asaasFees}
+      cardPaymentsEnabled={cardPaymentsEnabled}
       paymentsEnabled={paymentsEnabled}
       appOrigin={origin}
+      asaasDashboardOrigin={dashboardOrigin}
     />
   )
 }

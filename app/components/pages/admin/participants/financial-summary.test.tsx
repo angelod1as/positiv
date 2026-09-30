@@ -24,7 +24,6 @@ const createMockHistoryItem = (
   notes: null,
   paid_gross: 15000,
   net: 15000,
-  fee: 0,
   refunded: 0,
   payment_status: "paid",
   active_payment_id: null,
@@ -65,8 +64,7 @@ describe("FinancialSummary", () => {
     const history: ParticipantEventHistoryData[] = [
       createMockHistoryItem({
         paid_gross: 22000,
-        fee: 1000,
-        net: 16000,
+        net: 17000,
         refunded: 5000,
         payment_status: "partially_refunded",
         ticket_price: 20000,
@@ -75,8 +73,7 @@ describe("FinancialSummary", () => {
 
     render(<FinancialSummary participantHistory={history} />)
 
-    // gross minus the refund, fees left in: 22000 - 5000. Not net, which is
-    // 16000 here and has its own tile beside this one.
+    // What was paid, minus what went back: 22000 - 5000.
     expect(
       screen.getByText("Total pago").closest("div"),
     ).toHaveTextContent("R$ 170,00")
@@ -87,7 +84,6 @@ describe("FinancialSummary", () => {
     const history: ParticipantEventHistoryData[] = [
       createMockHistoryItem({
         paid_gross: 22000,
-        fee: 0,
         net: 0,
         refunded: 22000,
         payment_status: "refunded",
@@ -108,7 +104,6 @@ describe("FinancialSummary", () => {
     const history: ParticipantEventHistoryData[] = [
       createMockHistoryItem({
         paid_gross: 0,
-        fee: 0,
         net: 0,
         payment_status: "paid",
         spot_type: "staff",
@@ -128,7 +123,6 @@ describe("FinancialSummary", () => {
     const history: ParticipantEventHistoryData[] = [
       createMockHistoryItem({
         paid_gross: 0,
-        fee: 0,
         net: 0,
         payment_status: "awaiting_payment",
       }),
@@ -141,19 +135,18 @@ describe("FinancialSummary", () => {
     expect(container).toBeEmptyDOMElement()
   })
 
-  it("separates what was paid from what Positiv kept", () => {
+  // Fees are Asaas's to report: the summary counts what was paid.
+  it("sums what was paid, with no fees beside it", () => {
     const history: ParticipantEventHistoryData[] = [
       createMockHistoryItem({
         paid_gross: 23000,
-        fee: 1000,
-        net: 22000,
+        net: 23000,
         ticket_price: 20000,
       }),
       createMockHistoryItem({
         id: "2",
         paid_gross: 11000,
-        fee: 500,
-        net: 10500,
+        net: 11000,
         ticket_price: 10000,
       }),
     ]
@@ -161,17 +154,16 @@ describe("FinancialSummary", () => {
     render(<FinancialSummary participantHistory={history} />)
 
     expect(screen.getByText("R$ 340,00")).toBeInTheDocument() // total pago
-    expect(screen.getByText("R$ 15,00")).toBeInTheDocument() // taxas
-    expect(screen.getByText("R$ 325,00")).toBeInTheDocument() // líquido
-    expect(screen.getByText("R$ 162,50")).toBeInTheDocument() // média, do líquido
-    expect(screen.getByText("+R$ 25,00")).toBeInTheDocument() // diferença
+    expect(screen.getByText("R$ 170,00")).toBeInTheDocument() // média
+    expect(screen.getByText("+R$ 40,00")).toBeInTheDocument() // diferença
+    expect(screen.queryByText("Taxas")).not.toBeInTheDocument()
+    expect(screen.queryByText("Líquido")).not.toBeInTheDocument()
   })
 
   it("counts an event as paid when the ledger says so, even at zero surplus", () => {
     const history: ParticipantEventHistoryData[] = [
       createMockHistoryItem({
         paid_gross: 20000,
-        fee: 0,
         net: 20000,
         ticket_price: 20000,
       }),
@@ -200,8 +192,7 @@ describe("FinancialSummary", () => {
 
     render(<FinancialSummary participantHistory={history} />)
 
-    // no fees on these, so the gross tile and the net tile read the same
-    expect(screen.getAllByText("R$ 450,00")).toHaveLength(2)
+    expect(screen.getByText("R$ 450,00")).toBeInTheDocument()
   })
 
   it("should display correct count of paid events", () => {

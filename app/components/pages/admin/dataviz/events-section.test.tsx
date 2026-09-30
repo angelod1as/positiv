@@ -44,7 +44,6 @@ const makeRevenue = (count: number): EventRevenueDataPoint[] =>
     date: `2024-0${i + 1}-15`,
     faturamento_total: 5000 + i * 1000,
     faturamento_bruto: 5200 + i * 1000,
-    taxas: 200,
     ticket_price: 5000,
     num_pagantes: 100 + i * 10,
   }))

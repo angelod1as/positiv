@@ -4,7 +4,10 @@ import {
   cleanupListmonkTestCampaign,
   testListmonkConnection,
 } from "~/business/newsletter/test-listmonk-connection.server"
-import { setOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
+import {
+  setCardPaymentsEnabled,
+  setOnlinePaymentsEnabled,
+} from "~/business/settings/app-settings.server"
 import { action } from "./settings-page"
 
 vi.mock("~/business/admin/admin.server", () => ({
@@ -17,6 +20,7 @@ vi.mock("~/business/newsletter/test-listmonk-connection.server", () => ({
 }))
 
 vi.mock("~/business/settings/app-settings.server", () => ({
+  setCardPaymentsEnabled: vi.fn(),
   setOnlinePaymentsEnabled: vi.fn(),
 }))
 
@@ -43,6 +47,11 @@ const INTENTS = [
     intent: "set-online-payments",
     fields: { enabled: "false" },
     mutation: setOnlinePaymentsEnabled,
+  },
+  {
+    intent: "set-card-payments",
+    fields: { enabled: "false" },
+    mutation: setCardPaymentsEnabled,
   },
 ] as const
 
@@ -86,6 +95,21 @@ describe("SettingsPage action", () => {
       await runAction({ intent: "set-online-payments", enabled })
 
       expect(setOnlinePaymentsEnabled).toHaveBeenCalledWith({
+        enabled: expected,
+        profileId: "admin-1",
+      })
+    },
+  )
+
+  it.each([
+    ["true", true],
+    ["false", false],
+  ])(
+    "should switch card payments to %s on behalf of the admin",
+    async (enabled, expected) => {
+      await runAction({ intent: "set-card-payments", enabled })
+
+      expect(setCardPaymentsEnabled).toHaveBeenCalledWith({
         enabled: expected,
         profileId: "admin-1",
       })

@@ -9,11 +9,11 @@ import {
   createTestPayment,
   createTestProfile,
 } from "~/test/db-test-utils"
-import { FALLBACK_FEES } from "./asaas-fees.server"
 
 // Hoisted: vi.mock factories run before the module body, so a plain const
 // declared here would not exist yet when the factory reads it.
-const { sendEmail, logger, appUrl } = vi.hoisted(() => ({
+const { sendEmail, logger, appUrl, cardEnabled } = vi.hoisted(() => ({
+  cardEnabled: { value: true },
   sendEmail: vi.fn(),
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
   appUrl: { override: undefined as string | undefined },
@@ -37,9 +37,14 @@ vi.mock("varlock/env", async (importOriginal) => {
   }
 })
 
-// getAsaasFees is left real: with no ASAAS_API_KEY configured the lookup fails
-// and it answers with FALLBACK_FEES, which is what the assertions price
-// against.
+// The card switch, pinned per test. Everything else reads the real settings.
+vi.mock("~/business/settings/app-settings.server", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("~/business/settings/app-settings.server")
+  >()),
+  isCardPaymentsEnabled: async () => cardEnabled.value,
+}))
+
 import {
   sendPaymentLinkEmail,
   sendPaymentRefundEmail,
@@ -57,6 +62,7 @@ describe("sendPaymentLinkEmail", () => {
     sendEmail.mockReset()
     sendEmail.mockResolvedValue({ success: true })
     logger.error.mockClear()
+    cardEnabled.value = true
 
     const testId = `${Date.now()}-${counter}`
     const event = await createTestEvent(tracker, kysely, {
@@ -108,8 +114,8 @@ describe("sendPaymentLinkEmail", () => {
     expect(options.to).toContain("-link@example.com")
     expect(options.subject).toContain("Link Event")
     expect(options.html).toContain(`/pagamento/${payment.id}`)
-    expect(options.html).toContain("Pix —")
-    expect(options.text).toContain("Pix —")
+    expect(options.html).toContain("No Pix")
+    expect(options.text).toContain("No Pix")
   })
 
   it("prices every option the participant may choose", async () => {
@@ -118,11 +124,20 @@ describe("sendPaymentLinkEmail", () => {
     await sendPaymentLinkEmail({ paymentId: payment.id })
 
     const [options] = sendEmail.mock.calls[0]
-    // PIX plus one line per installment count, 1x through 6x.
-    expect(options.html).toContain("Cartão à vista")
-    expect(options.html).toContain("Cartão 6x")
-    // The participant pays the fees, so every option is above the base.
-    expect(options.html).not.toContain("R$ 220,00")
+    // PIX at 10% off, plus the event price in 1x through 6x.
+    expect(options.html).toContain("No Pix (10% de desconto): <strong>R$ 198,00</strong>")
+    expect(options.html).toContain("No cartão de crédito (1x a 6x sem juros): R$ 220,00")
+  })
+
+  it("offers Pix alone, at the full price, while card payments are off", async () => {
+    cardEnabled.value = false
+    const payment = await openCharge()
+
+    await sendPaymentLinkEmail({ paymentId: payment.id })
+
+    const [options] = sendEmail.mock.calls[0]
+    expect(options.html).toContain("No Pix: <strong>R$ 220,00</strong>")
+    expect(options.html).not.toContain("cartão")
   })
 
   // profiles.email is NOT NULL, so the reachable version of "no mailbox" is a
@@ -136,7 +151,7 @@ describe("sendPaymentLinkEmail", () => {
       kind: "asaas",
       status: "awaiting_payment",
       base_amount: 22000,
-      amount: 22199,
+      amount: 19800,
       method: "pix",
       paid_at: null,
       due_at: "2026-09-01T12:00:00Z",
@@ -145,8 +160,30 @@ describe("sendPaymentLinkEmail", () => {
     await sendPaymentLinkEmail({ paymentId: payment.id })
 
     const [options] = sendEmail.mock.calls[0]
-    expect(options.html).toContain("Pix — R$ 221,99")
-    expect(options.html).not.toContain("Cartão")
+    expect(options.html).toContain("No Pix: <strong>R$ 198,00</strong>")
+    expect(options.html).not.toContain("cartão")
+  })
+
+  // Frozen at the price it was created at, whatever the card switch says now.
+  it("restates a card plan the way Asaas charges it", async () => {
+    cardEnabled.value = false
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      status: "awaiting_payment",
+      base_amount: 22000,
+      amount: 22000,
+      method: "credit_card",
+      installment_count: 6,
+      paid_at: null,
+      due_at: "2026-09-01T12:00:00Z",
+    })
+
+    await sendPaymentLinkEmail({ paymentId: payment.id })
+
+    const [options] = sendEmail.mock.calls[0]
+    expect(options.html).toContain("No cartão de crédito (6x sem juros): R$ 220,00")
+    expect(options.html).not.toContain("Pix")
   })
 
   it("answers { success: false } when the profile has no email", async () => {
@@ -212,22 +249,6 @@ describe("sendPaymentLinkEmail", () => {
 
     expect(result.success).toBe(false)
     expect(sendEmail).not.toHaveBeenCalled()
-  })
-
-  it("uses the fee snapshot to gross the base up", async () => {
-    const payment = await openCharge()
-
-    await sendPaymentLinkEmail({ paymentId: payment.id })
-
-    // A PIX charge nets the base after a percentage and a fixed fee, so the
-    // participant sees strictly more than 220.
-    const [options] = sendEmail.mock.calls[0]
-    const expectedPix = Math.ceil(
-      (22000 + FALLBACK_FEES.pix.fixed) / (1 - FALLBACK_FEES.pix.percent),
-    )
-    expect(options.html).toContain(
-      `R$ ${(expectedPix / 100).toFixed(2).replace(".", ",")}`,
-    )
   })
 })
 

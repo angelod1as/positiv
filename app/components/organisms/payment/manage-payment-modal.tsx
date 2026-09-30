@@ -1,10 +1,10 @@
 import { useEffect, useState, type FC, type FormEvent } from "react"
 import { useFetcher } from "react-router"
-import type { AsaasFees } from "~/business/payment/pricing"
 import { buildPaymentOptions } from "~/business/payment/pricing"
 import type { PaymentRow } from "~/business/payment/payment-totals.server"
 import type { ParticipantPaymentTotals } from "~types/database/entities.types"
 import { Button } from "~/components/atoms/button/button"
+import { buttonVariants } from "~/components/ui/button-variants"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -68,8 +68,9 @@ export type ManagePaymentModalProps = {
   spotType: string | null
   ticketPrice: number | null
   eventTitle: string
-  fees: AsaasFees | null
+  cardPaymentsEnabled: boolean
   appOrigin: string
+  asaasDashboardOrigin: string
 }
 
 /** The methods a payment taken by hand can have; card only ever runs through Asaas. */
@@ -246,97 +247,16 @@ const RefundDialog: FC<RefundDialogProps> = ({
   )
 }
 
-type AsaasRefundDialogProps = {
-  payment: PaymentRow
-  isSubmitting: boolean
-  onConfirm: (paymentId: string, amount: string, reason: string) => void
-}
-
 /**
- * Giving money back through Asaas, as opposed to writing down that it was
- * given back by hand. The field opens on `asaas_net` — what Positiv actually
- * received — because that is also the most Asaas will return without charging
- * Positiv the anticipation fee.
+ * Where an Asaas refund is done now: the charge in the Asaas dashboard, by
+ * hand. The site only records it, from the webhook or "Atualizar do Asaas".
+ * No admin page is known for a card plan, so a plan links to its first
+ * charge, and a charge with no number to the payments list.
  */
-const AsaasRefundDialog: FC<AsaasRefundDialogProps> = ({
-  payment,
-  isSubmitting,
-  onConfirm,
-}) => {
-  const received = payment.asaas_net ?? 0
-  const [amount, setAmount] = useState(centsToReaisText(received))
-  const [reason, setReason] = useState("")
-  const amountId = `asaas-refund-amount-${payment.id}`
-  const reasonId = `asaas-refund-reason-${payment.id}`
-
-  return (
-    <AlertDialog
-      onOpenChange={(open) => {
-        if (!open) return
-        setAmount(centsToReaisText(received))
-        setReason("")
-      }}
-    >
-      <AlertDialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          {refund.asaas.title}
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{refund.asaas.confirm}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {refund.asaas.description}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-
-        <p className="text-sm">{refund.asaas.feesStay}</p>
-
-        <div className="flex flex-col gap-2">
-          <Label htmlFor={amountId}>{refund.asaas.amount}</Label>
-          <Input
-            id={amountId}
-            name="amount"
-            type="text"
-            inputMode="decimal"
-            value={amount}
-            onChange={(event) => setAmount(event.target.value)}
-          />
-          <p className="text-muted-foreground text-sm">
-            {refund.asaas.amountHint(formatCurrency(received))}
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Label htmlFor={reasonId}>{refund.asaas.reason}</Label>
-          <Input
-            id={reasonId}
-            name="reason"
-            type="text"
-            value={reason}
-            onChange={(event) => setReason(event.target.value)}
-          />
-        </div>
-
-        <p className="text-muted-foreground text-sm">
-          {payment.method === "credit_card"
-            ? refund.asaas.windowCard
-            : refund.asaas.windowPix}
-        </p>
-
-        <AlertDialogFooter>
-          <AlertDialogCancel>{manage.close}</AlertDialogCancel>
-          <AlertDialogAction
-            disabled={isSubmitting}
-            onClick={() => onConfirm(payment.id, amount, reason)}
-          >
-            {refund.asaas.submit}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  )
-}
+const asaasChargeUrl = (origin: string, invoiceNumber: string | null) =>
+  invoiceNumber
+    ? `${origin}/payment/show/${invoiceNumber}`
+    : `${origin}/payment/list`
 
 type CancelDialogProps = {
   payment: PaymentRow
@@ -374,18 +294,7 @@ const CancelDialog: FC<CancelDialogProps> = ({
 )
 
 /**
- * What Positiv keeps from a payment. Asaas charges the card anticipation fee
- * outside the charge's netValue, so it comes off asaas_net here; before the
- * webhook reports a net, the agreed base amount stands in for it.
- */
-const receivedBy = (payment: PaymentRow): number =>
-  payment.asaas_net === null
-    ? payment.base_amount
-    : payment.asaas_net - (payment.anticipation_fee ?? 0)
-
-/**
- * Where a payment's refund and anticipation stand, as Asaas last reported
- * them -- under its status, so the admin does not have to open Asaas to know
+ * Where a payment's refund stands, as Asaas last reported it -- under its status, so the admin does not have to open Asaas to know
  * whether the rest of a refund is still on its way.
  */
 const PaymentProgress: FC<{ payment: PaymentRow }> = ({ payment }) => {
@@ -399,14 +308,6 @@ const PaymentProgress: FC<{ payment: PaymentRow }> = ({ payment }) => {
     (payment.refund_cancelled_amount ?? 0) > 0 &&
       manage.refundLines.cancelled(
         formatCurrency(payment.refund_cancelled_amount ?? 0),
-      ),
-    payment.anticipation_status &&
-      manage.anticipation.line(
-        manage.anticipation.statuses[payment.anticipation_status] ??
-          payment.anticipation_status,
-        payment.anticipation_fee
-          ? formatCurrency(payment.anticipation_fee)
-          : null,
       ),
     payment.refunds_synced_at &&
       manage.sync.syncedAt(
@@ -434,7 +335,7 @@ type ChargeSectionProps = {
   participantName: string
   eventTitle: string
   ticketPrice: number | null
-  fees: AsaasFees
+  cardPaymentsEnabled: boolean
   appOrigin: string
   isSubmitting: boolean
   justCreated: boolean
@@ -454,7 +355,7 @@ const ChargeSection: FC<ChargeSectionProps> = ({
   participantName,
   eventTitle,
   ticketPrice,
-  fees,
+  cardPaymentsEnabled,
   appOrigin,
   isSubmitting,
   justCreated,
@@ -510,7 +411,9 @@ const ChargeSection: FC<ChargeSectionProps> = ({
       // channels must hand the participant the same link.
       paymentUrl,
       dueAt: active.due_at,
-      options: buildPaymentOptions(active.base_amount, fees),
+      options: buildPaymentOptions(active.base_amount, {
+        cardEnabled: cardPaymentsEnabled,
+      }),
     })
     void navigator.clipboard.writeText(message)
     setCopied(true)
@@ -550,9 +453,16 @@ const ChargeSection: FC<ChargeSectionProps> = ({
           <p className="text-muted-foreground text-sm break-all">
             {paymentUrl}
           </p>
-          <Button className="self-start" onClick={copyMessage}>
-            {charge.copyMessage}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={copyMessage}>{charge.copyMessage}</Button>
+            <Button
+              variant="outline"
+              disabled={isSubmitting}
+              onClick={() => onResend(active.id)}
+            >
+              {charge.resendEmail}
+            </Button>
+          </div>
           {copied && (
             <p role="status" className="text-muted-foreground text-sm">
               {charge.copied}
@@ -607,15 +517,6 @@ const ChargeSection: FC<ChargeSectionProps> = ({
           </Button>
         )}
 
-        {active && (
-          <Button
-            variant="outline"
-            disabled={isSubmitting}
-            onClick={() => onResend(active.id)}
-          >
-            {charge.resendEmail}
-          </Button>
-        )}
       </div>
     </section>
   )
@@ -633,8 +534,9 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
   spotType,
   ticketPrice,
   eventTitle,
-  fees,
+  cardPaymentsEnabled,
   appOrigin,
+  asaasDashboardOrigin,
 }) => {
   const fetcher = useFetcher<{
     success?: boolean
@@ -701,20 +603,12 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <dl className="grid grid-cols-3 gap-2">
           <div>
             <dt className="text-muted-foreground text-sm">
               {manage.totals.gross}
             </dt>
-            <dd className="font-bold">
-              {formatCurrency(totals.paid_gross - totals.refunded)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground text-sm">
-              {manage.totals.fee}
-            </dt>
-            <dd className="font-bold">{formatCurrency(totals.fee)}</dd>
+            <dd className="font-bold">{formatCurrency(totals.paid_gross)}</dd>
           </div>
           <div>
             <dt className="text-muted-foreground text-sm">
@@ -760,7 +654,6 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                 <TableHead>{manage.columns.kind}</TableHead>
                 <TableHead>{manage.columns.method}</TableHead>
                 <TableHead>{manage.columns.amount}</TableHead>
-                <TableHead>{manage.columns.fees}</TableHead>
                 <TableHead>{manage.columns.date}</TableHead>
                 <TableHead>{manage.columns.actions}</TableHead>
               </TableRow>
@@ -787,25 +680,11 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                       ? manage.methods[payment.method]
                       : manage.noMethod}
                   </TableCell>
-                  {/* Two columns because they are two different people's
-                      money. "Valor" is Positiv's: what was agreed while the
-                      charge is open, and what actually landed once Asaas
-                      reports it -- never `amount`, which is the gross the
-                      participant pays and lands on the row as soon as they
-                      pick a method, long before asaas_net exists. "Taxas" is
-                      their share, known from the same moment. */}
+                  {/* What the participant pays: the event price until they
+                      pick an option, the option's price from then on. What
+                      Asaas kept is Asaas's to report. */}
                   <TableCell className="whitespace-nowrap">
-                    {formatCurrency(receivedBy(payment))}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground whitespace-nowrap">
-                    {payment.kind === "asaas" && payment.amount !== null
-                      ? // Against asaas_net once the webhook reports it, and
-                        // against the base until then: a paid row is allowed
-                        // to exist without asaas_net, and the estimate the
-                        // participant was quoted beats showing no fee at all
-                        // on a charge that certainly had one.
-                        formatCurrency(payment.amount - receivedBy(payment))
-                      : manage.noAmount}
+                    {formatCurrency(payment.amount ?? payment.base_amount)}
                   </TableCell>
                   <TableCell>
                     {formatDateTime(payment.paid_at, "numeric").date ??
@@ -848,13 +727,6 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                           <p className="text-muted-foreground text-sm">
                             {refund.asaas.inProgress}
                           </p>
-                        ) : payment.asaas_net === null ? (
-                          // Without the net there is nothing to offer: the
-                          // gross is a full refund, and Asaas keeps the
-                          // anticipation on one.
-                          <p className="text-muted-foreground text-sm">
-                            {refund.asaas.awaitingNet}
-                          </p>
                         ) : (
                           <div className="flex flex-col gap-2">
                             {/* Asaas denied the last attempt and the claim
@@ -867,18 +739,20 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                                 )}
                               </p>
                             )}
-                            <AsaasRefundDialog
-                              payment={payment}
-                              isSubmitting={isSubmitting}
-                              onConfirm={(paymentId, amount, reason) =>
-                                post({
-                                  intent: "payment-refund",
-                                  paymentId,
-                                  amount,
-                                  reason,
-                                })
-                              }
-                            />
+                            <a
+                              href={asaasChargeUrl(
+                                asaasDashboardOrigin,
+                                payment.asaas_invoice_number,
+                              )}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={buttonVariants({
+                                variant: "outline",
+                                size: "sm",
+                              })}
+                            >
+                              {refund.asaas.title}
+                            </a>
                           </div>
                         ))}
                       {payment.kind === "asaas" && payment.asaas_payment_id && (
@@ -937,7 +811,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
           </p>
         )}
 
-        {paymentsEnabled && spotType === "regular" && fees && (
+        {paymentsEnabled && spotType === "regular" && (
           <ChargeSection
             // Remounts when the charge does, so the amount field re-seeds from
             // whatever is open now. Cancelling one used to leave its value in
@@ -947,7 +821,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
             participantName={participantName}
             eventTitle={eventTitle}
             ticketPrice={ticketPrice}
-            fees={fees}
+            cardPaymentsEnabled={cardPaymentsEnabled}
             appOrigin={appOrigin}
             isSubmitting={isSubmitting}
             justCreated={

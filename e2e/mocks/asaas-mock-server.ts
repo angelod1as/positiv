@@ -13,30 +13,6 @@ import type { AddressInfo } from "node:net"
 export const E2E_ASAAS_API_KEY = "e2e-asaas-api-key"
 export const E2E_ASAAS_WEBHOOK_TOKEN = "e2e-asaas-webhook-token-0123456789abcdef"
 
-// The sandbox account's GET /v3/myAccount/fees/, recorded in POS-519.
-const SANDBOX_FEES = {
-  payment: {
-    pix: {
-      fixedFeeValue: 1.99,
-      percentageFee: null,
-      minimumFeeValue: null,
-      maximumFeeValue: null,
-      type: "FIXED",
-    },
-    creditCard: {
-      operationValue: 0.49,
-      oneInstallmentPercentage: 2.99,
-      upToSixInstallmentsPercentage: 3.49,
-      discountOneInstallmentPercentage: 1.99,
-      discountUpToSixInstallmentsPercentage: 2.49,
-      hasValidDiscount: false,
-    },
-  },
-  anticipation: {
-    creditCard: { detachedMonthlyFeeValue: 1.15, installmentMonthlyFeeValue: 1.6 },
-  },
-}
-
 type Call = { method: string; path: string; body: unknown }
 
 type Charge = {
@@ -60,19 +36,21 @@ type State = {
   customers: { id: string; cpfCnpj: string }[]
   charges: Charge[]
   planRefunds: Record<string, Refund[]>
-  sequence: number
 }
 
 function emptyState(): State {
-  return { calls: [], customers: [], charges: [], planRefunds: {}, sequence: 0 }
+  return { calls: [], customers: [], charges: [], planRefunds: {} }
 }
 
 let state = emptyState()
 let server: Server | null = null
+// Outside the state on purpose: a reset forgets the mock's charges, not the
+// rows earlier specs wrote, and asaas_payment_id is unique in the database.
+let sequence = 0
 
 function nextId(prefix: string): string {
-  state.sequence += 1
-  return `${prefix}_${String(state.sequence).padStart(12, "0")}`
+  sequence += 1
+  return `${prefix}_${String(sequence).padStart(12, "0")}`
 }
 
 function send(response: ServerResponse, status: number, body: unknown) {
@@ -123,6 +101,7 @@ function publicCharge(charge: Charge, origin: string) {
     installment: charge.installment,
     externalReference: charge.externalReference,
     invoiceUrl: `${origin}/i/${charge.id}`,
+    invoiceNumber: String(state.charges.indexOf(charge) + 1).padStart(8, "0"),
     deleted: charge.deleted,
   }
 }
@@ -214,10 +193,6 @@ async function handleApi(
     return createCharge(body, response, origin)
   }
 
-  if (method === "GET" && path === "/myAccount/fees/") {
-    return send(response, 200, SANDBOX_FEES)
-  }
-
   const sandboxConfirm = path.match(/^\/sandbox\/payment\/([^/]+)\/confirm$/)
   if (method === "POST" && sandboxConfirm) {
     const charge = findCharge(sandboxConfirm[1])
@@ -255,6 +230,8 @@ async function handleApi(
     return send(response, 200, publicCharge(charge, origin))
   }
 
+  // The app never asks Asaas for a refund -- the admin does it in the Asaas
+  // dashboard -- so specs call these two to stand in for that.
   // `value` is the total to give back across the plan; without one, all of it.
   // Where the money comes from among the charges is Asaas's business, so the
   // mock simply takes it from the first charges that still hold some.
@@ -294,10 +271,6 @@ async function handleApi(
       return fail(response, 404, "not_found", "Parcelamento não encontrado.")
     }
     return send(response, 200, { id: plan[1], refunds: state.planRefunds[plan[1]] ?? [] })
-  }
-
-  if (method === "GET" && path === "/anticipations") {
-    return send(response, 200, { data: [] })
   }
 
   const single = path.match(/^\/payments\/([^/]+)$/)

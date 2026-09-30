@@ -26,7 +26,6 @@ payments are on is the admin switch (section 8).
 | `ASAAS_API_URL` | Base URL including `/v3` | differs |
 | `ASAAS_API_KEY` | API key, shown once by Asaas when generated | differs |
 | `ASAAS_WEBHOOK_TOKEN` | At least 32 characters; Asaas echoes it in `asaas-access-token` | use a fresh one per environment |
-| `ASAAS_ANTICIPATION_DETACHED_MONTHLY_RATE`, `ASAAS_ANTICIPATION_INSTALLMENT_MONTHLY_RATE` | Optional overrides, as fractions (`0.0115`). Empty: the rates come from `GET /myAccount/fees/` | normally empty in both |
 
 ## 2. Registering the webhook
 
@@ -134,30 +133,27 @@ SELECT count(*) FROM payments
 
 ## 7. Refunds
 
-"Reembolsar" in the payment modal gives back what Positiv received (`asaas_net`),
-not what the participant paid. The fees stay with the participant.
+Refunds of Asaas payments are done in the Asaas dashboard, by hand. The site
+does not ask Asaas for them; it records them when Asaas reports them.
 
-- PIX can be refunded up to 90 days after payment. It needs the money to be
-  available in the Asaas account, and Asaas answers 400 when it is not.
-- A card can be refunded up to 365 days after payment. The money shows on the
+- "Reembolsar no Asaas" in the payment modal opens the charge in the dashboard,
+  at `/payment/show/{invoiceNumber}` (sandbox or production, following
+  `ASAAS_API_URL`). A card plan opens its first charge; a charge with no stored
+  number opens the payments list.
+- PIX can be refunded up to 90 days after payment, if the money is available in
+  the Asaas account. A card up to 365 days; the money shows on the
   participant's statement within about 10 working days.
-- A card plan is refunded through the plan (`POST /v3/installments/{id}/refund`)
-  with the amount as `value`: Asaas refuses a refund on one charge of a plan
-  ("Não é possível estornar individualmente esta cobrança") and spreads the
-  plan's refund over its charges itself.
 - Asaas may hold a refund until someone authorises it in the dashboard (it
-  asks for a code). Until then nothing reaches the webhook.
+  asks for a code).
 - The row turns `refunded` or `partially_refunded` when Asaas confirms through
-  the webhook, or when the refund sync reads it from Asaas. Until then the
-  modal says the refund was requested.
+  the webhook, or when the refund sync reads it from Asaas. Only `DONE` refunds
+  count as returned. While Asaas reports one in progress the modal says so.
 - Under each payment the modal lists what Asaas last reported: given back
-  (DONE), still on its way (PENDING and the AWAITING_* authorisations),
-  cancelled, and the card anticipation with its fee. "Atualizar do Asaas"
-  reads it on demand.
+  (DONE), still on its way (PENDING and the AWAITING_* authorisations) and
+  cancelled. "Atualizar do Asaas" reads it on demand.
 - The `sync-payment-refunds` cron job reads the payments Asaas may still have
-  news about every 15 minutes: an incomplete refund, a refund on its way, a
-  card whose anticipation is pending (for 30 days) or not yet created (for 3
-  days). To confirm the job exists in production:
+  news about every 15 minutes: an incomplete refund, or a refund on its way.
+  To confirm the job exists in production:
   `select jobname, schedule, active from cron.job where jobname = 'sync-payment-refunds';`
 - Asaas never deletes a charge that was paid. A paid charge can only be
   refunded.
@@ -173,8 +169,8 @@ takes effect on the next request, with no deploy. Off means:
 - no payment-link email or resend goes out.
 
 What keeps working: open charges stay open on Asaas and can still be paid on
-the invoice page, the webhook records them, and refunds of Asaas payments go
-through as usual. Nothing is cancelled. Turning the switch back on needs no
+the invoice page, the webhook records them, and refunds of Asaas payments are
+still done in the dashboard and recorded here. Nothing is cancelled. Turning the switch back on needs no
 migration.
 
 The switch cannot be turned on while `ASAAS_API_URL`, `ASAAS_API_KEY` or
@@ -207,24 +203,21 @@ The switch cannot be turned on while `ASAAS_API_URL`, `ASAAS_API_KEY` or
    generator, any future expiry date and CCV `123`, or use "Confirmar pagamento"
    in the sandbox dashboard. The webhook marks the row paid and the
    confirmation email goes out.
-8. Try a refund from the modal, and a manual payment on another participant.
+8. Refund it in the Asaas dashboard through "Reembolsar no Asaas", and record a
+   manual payment on another participant.
 9. Close the tunnel when done. It publishes the whole local app.
 
-### Checking the prices against the sandbox
+### Checking the installments against the sandbox
 
 ```bash
 pnpm asaas:smoke
 ```
 
-It opens a PIX charge and a card 3x charge for R$ 220, confirms them, and prints
-what Asaas kept next to what `pricing.ts` predicted. It exits non-zero on a gap
-above R$ 0,50.
+It opens a PIX charge and a card 6x charge for R$ 250, confirms them, and prints
+each installment Asaas charged next to what the payment page shows. It exits
+non-zero when they differ: R$ 250 in 6x does not divide, so it checks that Asaas
+puts the remainder on the last installment, as `splitInstallments` assumes.
 
 The tunnel and webhook from above are optional. With them in place the script
 also waits for each confirmation to reach `payment_webhook_events`, and fails if
 one does not. Without a registered webhook it says so and skips that check.
-
-The anticipation fee is booked apart from the charge, under `/v3/anticipations`,
-and the sandbox may never book one. When it does not, the script says the
-anticipation was not measurable. That part of the formula is checked on a real
-production charge (POS-560).

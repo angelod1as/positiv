@@ -45,6 +45,7 @@ async function createPayment(body: Record<string, unknown>) {
     id: string
     status: string
     invoiceUrl: string
+    invoiceNumber: string
     installment: string | null
   }
 }
@@ -81,6 +82,15 @@ describe("asaas mock server", () => {
     expect(payment.installment).toBeNull()
     expect(payment.invoiceUrl).toBe(`${origin}/i/${payment.id}`)
     expect((await fetch(payment.invoiceUrl)).status).toBe(200)
+  })
+
+  it("numbers every charge, as the Asaas dashboard does", async () => {
+    const first = await createPayment({ billingType: "PIX", value: 10 })
+    const second = await createPayment({ billingType: "PIX", value: 10 })
+
+    expect(first.invoiceNumber).toMatch(/^\d+$/)
+    expect(second.invoiceNumber).toMatch(/^\d+$/)
+    expect(second.invoiceNumber).not.toBe(first.invoiceNumber)
   })
 
   it("refuses a charge for a customer it does not know", async () => {
@@ -220,12 +230,6 @@ describe("asaas mock server", () => {
     expect(charge.refunds).toEqual([{ value: 5, status: "DONE" }])
   })
 
-  it("reports no anticipations", async () => {
-    const response = await call("/anticipations?installment=inst_1&limit=100")
-
-    expect(await response.json()).toEqual({ data: [] })
-  })
-
   it("never gives back more than the charge still holds", async () => {
     const payment = await createPayment({ billingType: "PIX", value: 10 })
     await call(`/sandbox/payment/${payment.id}/confirm`, { method: "POST", body: {} })
@@ -243,20 +247,14 @@ describe("asaas mock server", () => {
     expect(whole.status).toBe(400)
   })
 
-  it("reports the sandbox fee snapshot", async () => {
-    const fees = await (await call("/myAccount/fees/")).json()
+  // Every spec resets the mock, but the rows earlier specs wrote stay in the
+  // database, where asaas_payment_id is unique.
+  it("never hands out an id twice, even across a reset", async () => {
+    const before = await createPayment({ billingType: "PIX", value: 10 })
+    await fetch(`${origin}/__mock/reset`, { method: "POST" })
+    const after = await createPayment({ billingType: "PIX", value: 10 })
 
-    expect(fees.payment.pix).toMatchObject({ fixedFeeValue: 1.99, percentageFee: null })
-    expect(fees.payment.creditCard).toMatchObject({
-      operationValue: 0.49,
-      oneInstallmentPercentage: 2.99,
-      upToSixInstallmentsPercentage: 3.49,
-      hasValidDiscount: false,
-    })
-    expect(fees.anticipation.creditCard).toEqual({
-      detachedMonthlyFeeValue: 1.15,
-      installmentMonthlyFeeValue: 1.6,
-    })
+    expect(after.id).not.toBe(before.id)
   })
 
   it("records every api call for a spec to assert on, and forgets them on reset", async () => {

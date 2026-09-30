@@ -4,8 +4,17 @@ export const paymentLinkMailCopy = {
   heading: "Hora de garantir sua vaga",
   subject: (eventName: string) => `Seu pagamento da ${eventName}`,
   intro: (displayName: string, eventName: string) =>
-    `${displayName}, sua vaga na <strong>${eventName}</strong> está reservada! Escolha como prefere pagar e conclua abaixo.`,
-  optionsHeading: "Formas de pagamento",
+    `${displayName}, sua vaga na <strong>${eventName}</strong> está reservada!`,
+  oneStepLeft: "Para garanti-la, só falta um passo: o pagamento.",
+  pix: (value: string, discountPercent: number | null) =>
+    discountPercent
+      ? `No Pix (${discountPercent}% de desconto): <strong>${value}</strong>`
+      : `No Pix: <strong>${value}</strong>`,
+  card: (installments: string, value: string) =>
+    `No cartão de crédito (${installments}): ${value}`,
+  installmentRange: (max: number) => `1x a ${max}x sem juros`,
+  installmentsChosen: (count: number) =>
+    count === 1 ? "à vista" : `${count}x sem juros`,
   cta: "Pagar agora",
   dueAt: (date: string) => `O link vale até ${date}.`,
   afterDue:

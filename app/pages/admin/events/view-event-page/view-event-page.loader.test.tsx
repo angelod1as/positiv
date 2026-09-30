@@ -5,7 +5,6 @@ import {
   getRejectedEventParticipants,
 } from "~/business/admin/admin.server"
 import { listInvitesForEvent } from "~/business/admin/event-invites.server"
-import { getAsaasFeesIfEnabled } from "~/business/payment/asaas-fees.server"
 import { getPaymentsForEvent } from "~/business/payment/payment-totals.server"
 import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
 import { loader } from "./view-event-page"
@@ -25,15 +24,12 @@ vi.mock("~/business/admin/admin.server", () => ({
 }))
 
 vi.mock("~/business/settings/app-settings.server", () => ({
+  isCardPaymentsEnabled: vi.fn(async () => true),
   isOnlinePaymentsEnabled: vi.fn(),
 }))
 
 vi.mock("~/business/admin/event-invites.server", () => ({
   listInvitesForEvent: vi.fn(),
-}))
-
-vi.mock("~/business/payment/asaas-fees.server", () => ({
-  getAsaasFeesIfEnabled: vi.fn(),
 }))
 
 vi.mock("~/business/payment/payment-totals.server", () => ({
@@ -61,7 +57,6 @@ describe("view event page loader", () => {
       errors: [],
     } as unknown as Awaited<ReturnType<typeof getProfilesWithExtraDataById>>)
     vi.mocked(getPaymentsForEvent).mockResolvedValue({})
-    vi.mocked(getAsaasFeesIfEnabled).mockResolvedValue(null)
     vi.mocked(listInvitesForEvent).mockResolvedValue([])
   })
 
@@ -79,15 +74,20 @@ describe("view event page loader", () => {
   })
 
   it.each([true, false])(
-    "hands the fee lookup and the payment modal the online payments switch (%s)",
+    "hands the payment modal the online and card payments switches (%s)",
     async (enabled) => {
       vi.mocked(isOnlinePaymentsEnabled).mockResolvedValue(enabled)
       vi.mocked(getRejectedEventParticipants).mockResolvedValue([])
 
       const result = await runLoader()
 
-      expect(getAsaasFeesIfEnabled).toHaveBeenCalledWith(enabled)
-      expect(result).toMatchObject({ paymentsEnabled: enabled })
+      expect(result).toMatchObject({
+        paymentsEnabled: enabled,
+        cardPaymentsEnabled: true,
+        asaasDashboardOrigin: expect.stringMatching(
+          /^https:\/\/(www|sandbox)\.asaas\.com$/,
+        ),
+      })
     },
   )
 })

@@ -61,8 +61,6 @@ export const adminParticipantsCopy = {
   financialSummary: {
     title: "Resumo Financeiro",
     totalInvested: "Total pago",
-    totalFees: "Taxas",
-    totalNet: "Líquido",
     paidEvents: "Eventos pagos",
     averagePerEvent: "Média por evento",
     totalSurplus: "Diferença total",

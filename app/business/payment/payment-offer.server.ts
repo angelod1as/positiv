@@ -251,9 +251,8 @@ export const resendPaymentOfferSchema = zod.object({
  */
 export const resendPaymentOffer = applySchema(resendPaymentOfferSchema)(
   async (values) => {
-    // The link email prices every option, which means reading the Asaas fee
-    // table. With the switch off nothing may talk to Asaas, so this path is
-    // gated like the one that opens a charge.
+    // The link email offers options no charge could be created against with
+    // the switch off, so this path is gated like the one that opens a charge.
     if (!(await isOnlinePaymentsEnabled())) {
       return { reason: "disabled" }
     }

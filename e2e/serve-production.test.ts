@@ -105,17 +105,6 @@ describe('the Asaas the server under test talks to', () => {
     expect(spawn.mock.calls[0][2].env.ASAAS_API_KEY).toBe('e2e-key')
   })
 
-  it('prices with the fees the mock reports, not a local anticipation override', async () => {
-    fakeServerProcess()
-    const { startProductionServer } = await import('./serve-production')
-
-    void startProductionServer()
-
-    const { env } = spawn.mock.calls[0][2]
-    expect(env.ASAAS_ANTICIPATION_DETACHED_MONTHLY_RATE).toBe('')
-    expect(env.ASAAS_ANTICIPATION_INSTALLMENT_MONTHLY_RATE).toBe('')
-  })
-
   it('reaches the server, which resolves its own environment instead of inheriting the one resolved before the overrides', async () => {
     // `pnpm test:e2e` runs under `varlock run`, which hands its children the
     // environment it resolved as one serialized blob. A server that reads the

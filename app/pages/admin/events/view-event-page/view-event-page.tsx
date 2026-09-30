@@ -13,10 +13,13 @@ import {
   listmonkSyncFiltersSchema,
   updateEventListmonkList,
 } from "~/business/admin/event-listmonk-sync.server"
-import { getAsaasFeesIfEnabled } from "~/business/payment/asaas-fees.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
+import { asaasDashboardOrigin } from "~/business/payment/asaas-client.server"
 import { getPaymentsForEvent } from "~/business/payment/payment-totals.server"
-import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
+import {
+  isCardPaymentsEnabled,
+  isOnlinePaymentsEnabled,
+} from "~/business/settings/app-settings.server"
 import { InviteParticipantSection } from "~/components/organisms/event-invite-modal/invite-participant-section"
 import { ManagePaymentModal } from "~/components/organisms/payment/manage-payment-modal"
 import { AdminViewEventParticipantsTable } from "~/components/organisms/tables/admin/participants-table/view-event-participants-table"
@@ -134,7 +137,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     participants,
     rejectedParticipants,
     paymentsByParticipant,
-    asaasFees,
+    cardPaymentsEnabled,
     invites,
   ] =
     await Promise.all([
@@ -144,7 +147,7 @@ export async function loader({ params }: Route.LoaderArgs) {
         return []
       }),
       getPaymentsForEvent(eventId),
-      getAsaasFeesIfEnabled(onlinePaymentsEnabled),
+      isCardPaymentsEnabled(),
       listInvitesForEvent(eventId),
     ])
 
@@ -153,11 +156,12 @@ export async function loader({ params }: Route.LoaderArgs) {
     participants,
     rejectedParticipants,
     paymentsByParticipant,
-    asaasFees,
+    cardPaymentsEnabled,
     paymentsEnabled: onlinePaymentsEnabled,
     // The same origin the link email builds from, so the two channels cannot
     // hand the participant different urls for one charge.
     appOrigin: appOrigin(null),
+    asaasDashboardOrigin: asaasDashboardOrigin(),
     invites,
     demographics: demographics?.success ? demographics.data : undefined,
   }
@@ -185,9 +189,10 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
     participants,
     rejectedParticipants,
     paymentsByParticipant,
-    asaasFees,
+    cardPaymentsEnabled,
     paymentsEnabled,
     appOrigin: origin,
+    asaasDashboardOrigin: dashboardOrigin,
     demographics,
     invites,
   } = loaderData
@@ -252,10 +257,11 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
           }
           paymentsEnabled={paymentsEnabled}
           appOrigin={origin}
+          asaasDashboardOrigin={dashboardOrigin}
           spotType={managedParticipant.spot_type}
           ticketPrice={event.ticket_price}
           eventTitle={event.title ?? ""}
-          fees={asaasFees}
+          cardPaymentsEnabled={cardPaymentsEnabled}
         />
       )}
 

@@ -1,6 +1,5 @@
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { FALLBACK_FEES } from "~/business/payment/asaas-fees.server"
 import type { PaymentRow } from "~/business/payment/payment-totals.server"
 import { render, screen, within } from "~/test/test-utils"
 import { ManagePaymentModal } from "./manage-payment-modal"
@@ -46,7 +45,6 @@ const baseProps = {
   totals: {
     paid_gross: 0,
     refunded: 0,
-    fee: 0,
     net: 0,
     payment_status: null,
     active_payment_id: null,
@@ -56,8 +54,9 @@ const baseProps = {
   spotType: "regular" as const,
   ticketPrice: 22000,
   eventTitle: "Festa de Setembro",
-  fees: FALLBACK_FEES,
+  cardPaymentsEnabled: true,
   appOrigin: "https://www.positivparty.com",
+  asaasDashboardOrigin: "https://sandbox.asaas.com",
 }
 
 const paidAsaasCharge = (overrides: Partial<PaymentRow> = {}): PaymentRow =>
@@ -70,6 +69,7 @@ const paidAsaasCharge = (overrides: Partial<PaymentRow> = {}): PaymentRow =>
     amount: 22199,
     asaas_net: 21900,
     asaas_payment_id: "pay_1",
+    asaas_invoice_number: "00005101",
     refund_requested_at: null,
     ...overrides,
   })
@@ -288,7 +288,7 @@ describe("ManagePaymentModal", () => {
     expect(screen.getByLabelText("Data do pagamento")).toHaveValue("2026-08-20")
   })
 
-  it("counts what was given back out of the total paid", () => {
+  it("shows what was paid, what went back and what is left", () => {
     render(
       <ManagePaymentModal
         {...baseProps}
@@ -305,16 +305,22 @@ describe("ManagePaymentModal", () => {
           ...baseProps.totals,
           paid_gross: 10000,
           refunded: 5000,
-          fee: 1000,
-          net: 4000,
+          net: 5000,
           payment_status: "partially_refunded",
         }}
       />,
     )
 
     expect(screen.getByText("Total pago").closest("div")).toHaveTextContent(
+      "R$ 100,00",
+    )
+    expect(screen.getByText("Reembolsado").closest("div")).toHaveTextContent(
       "R$ 50,00",
     )
+    expect(screen.getByText("Líquido").closest("div")).toHaveTextContent(
+      "R$ 50,00",
+    )
+    expect(screen.queryByText("Taxas")).not.toBeInTheDocument()
   })
 
   it("records a courtesy spot settled at zero", async () => {
@@ -430,88 +436,44 @@ describe("ManagePaymentModal", () => {
     expect(formData.get("paymentId")).toBe("p1")
   })
 
-  it("offers an Asaas refund on a paid Asaas row", async () => {
+  it("sends an Asaas refund to the charge in the Asaas dashboard", () => {
     render(
       <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
     )
 
-    await userEvent.click(screen.getByRole("button", { name: "Reembolsar" }))
-    await userEvent.click(
-      screen.getByRole("button", { name: "Solicitar reembolso" }),
+    const link = screen.getByRole("link", { name: /Reembolsar no Asaas/ })
+    expect(link).toHaveAttribute(
+      "href",
+      "https://sandbox.asaas.com/payment/show/00005101",
     )
-
-    const [formData] = submit.mock.calls.at(-1) ?? []
-    expect(formData.get("intent")).toBe("payment-refund")
-    expect(formData.get("paymentId")).toBe("asaas-1")
+    expect(link).toHaveAttribute("target", "_blank")
+    expect(submit).not.toHaveBeenCalled()
   })
 
-  it("offers to give back what Positiv received, not the gross", async () => {
+  it("falls back to the Asaas payments list for a charge with no number", () => {
     render(
-      <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
-    )
-
-    await userEvent.click(screen.getByRole("button", { name: "Reembolsar" }))
-
-    // 221,99 was the gross the participant paid; 219,00 is what landed.
-    expect(screen.getByLabelText("Valor devolvido")).toHaveValue("219,00")
-
-    await userEvent.click(
-      screen.getByRole("button", { name: "Solicitar reembolso" }),
-    )
-    const [formData] = submit.mock.calls.at(-1) ?? []
-    expect(formData.get("amount")).toBe("219,00")
-  })
-
-  it("sends a smaller amount and a reason when they are typed", async () => {
-    render(
-      <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
-    )
-
-    await userEvent.click(screen.getByRole("button", { name: "Reembolsar" }))
-    await userEvent.clear(screen.getByLabelText("Valor devolvido"))
-    await userEvent.type(screen.getByLabelText("Valor devolvido"), "50")
-    await userEvent.type(
-      screen.getByLabelText("Motivo (opcional)"),
-      "Desistiu",
-    )
-    await userEvent.click(
-      screen.getByRole("button", { name: "Solicitar reembolso" }),
-    )
-
-    const [formData] = submit.mock.calls.at(-1) ?? []
-    expect(formData.get("amount")).toBe("50")
-    expect(formData.get("reason")).toBe("Desistiu")
-  })
-
-  it("says the fees stay with the participant", async () => {
-    render(
-      <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
-    )
-
-    await userEvent.click(screen.getByRole("button", { name: "Reembolsar" }))
-
-    expect(screen.getByText(/as taxas não voltam/i)).toBeInTheDocument()
-  })
-
-  it("says how long the money takes to come back, by method", async () => {
-    const { rerender } = render(
-      <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
-    )
-
-    await userEvent.click(screen.getByRole("button", { name: "Reembolsar" }))
-    expect(screen.getByText(/devolve na hora/i)).toBeInTheDocument()
-    await userEvent.click(screen.getByRole("button", { name: "Fechar" }))
-
-    rerender(
       <ManagePaymentModal
         {...baseProps}
-        payments={[
-          paidAsaasCharge({ method: "credit_card", installment_count: 3 }),
-        ]}
+        payments={[paidAsaasCharge({ asaas_invoice_number: null })]}
       />,
     )
-    await userEvent.click(screen.getByRole("button", { name: "Reembolsar" }))
-    expect(screen.getByText(/em até 10 dias úteis/i)).toBeInTheDocument()
+
+    expect(
+      screen.getByRole("link", { name: /Reembolsar no Asaas/ }),
+    ).toHaveAttribute("href", "https://sandbox.asaas.com/payment/list")
+  })
+
+  it("offers the Asaas refund before Asaas reports the net", () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[paidAsaasCharge({ asaas_net: null })]}
+      />,
+    )
+
+    expect(
+      screen.getByRole("link", { name: /Reembolsar no Asaas/ }),
+    ).toBeInTheDocument()
   })
 
   it("says a refund is under way instead of offering another", () => {
@@ -528,7 +490,7 @@ describe("ManagePaymentModal", () => {
       screen.getByText(/aguardando o Asaas confirmar/i),
     ).toBeInTheDocument()
     expect(
-      screen.queryByRole("button", { name: "Reembolsar" }),
+      screen.queryByRole("link", { name: /Reembolsar no Asaas/ }),
     ).not.toBeInTheDocument()
   })
 
@@ -550,7 +512,9 @@ describe("ManagePaymentModal", () => {
         "O Asaas negou o último pedido de reembolso. Motivo: Falha ao processar a transferência. Você pode pedir de novo.",
       ),
     ).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Reembolsar" })).toBeInTheDocument()
+    expect(
+      screen.getByRole("link", { name: /Reembolsar no Asaas/ }),
+    ).toBeInTheDocument()
   })
 
   it("says a refund was denied even when Asaas gave no reason", () => {
@@ -591,28 +555,6 @@ describe("ManagePaymentModal", () => {
     expect(screen.getByText(/Cancelado pelo Asaas: R\$\s?10,00/)).toBeInTheDocument()
   })
 
-  it("counts what anticipation costs out of what Positiv receives", () => {
-    render(
-      <ManagePaymentModal
-        {...baseProps}
-        payments={[
-          paidAsaasCharge({
-            method: "credit_card",
-            amount: 23430,
-            asaas_net: 22566,
-            anticipation_fee: 578,
-            anticipation_status: "PENDING",
-          }),
-        ]}
-      />,
-    )
-
-    expect(screen.getByText(/R\$\s?219,88/)).toBeInTheDocument()
-    expect(
-      screen.getByText(/Antecipação em análise · taxa R\$\s?5,78/),
-    ).toBeInTheDocument()
-  })
-
   it("brings an Asaas payment up to date from Asaas", async () => {
     render(
       <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
@@ -635,22 +577,6 @@ describe("ManagePaymentModal", () => {
     ).not.toBeInTheDocument()
   })
 
-  it("waits for the net before offering an Asaas refund", () => {
-    render(
-      <ManagePaymentModal
-        {...baseProps}
-        payments={[paidAsaasCharge({ asaas_net: null })]}
-      />,
-    )
-
-    expect(
-      screen.getByText(/ainda não informou quanto caiu/i),
-    ).toBeInTheDocument()
-    expect(
-      screen.queryByRole("button", { name: "Reembolsar" }),
-    ).not.toBeInTheDocument()
-  })
-
   it("offers only the manual mark on a manual row", () => {
     render(<ManagePaymentModal {...baseProps} payments={[payment({})]} />)
 
@@ -658,7 +584,7 @@ describe("ManagePaymentModal", () => {
       screen.getByRole("button", { name: /marcar como reembolsado/i }),
     ).toBeInTheDocument()
     expect(
-      screen.queryByRole("button", { name: "Reembolsar" }),
+      screen.queryByRole("link", { name: /Reembolsar no Asaas/ }),
     ).not.toBeInTheDocument()
   })
 
@@ -825,12 +751,13 @@ describe("ManagePaymentModal - the Cobrança section", () => {
     expect(
       within(share).getByRole("button", { name: "Copiar mensagem" }),
     ).toBeInTheDocument()
-    // Copying is the errand; the actions that change the charge live apart.
+    // Resending the email is another way to share the same link, so it sits
+    // beside the copy; the actions that change the charge live apart.
+    expect(
+      within(share).getByRole("button", { name: "Reenviar email" }),
+    ).toBeInTheDocument()
     expect(
       within(share).queryByRole("button", { name: "Reenviar com outro valor" }),
-    ).not.toBeInTheDocument()
-    expect(
-      within(share).queryByRole("button", { name: "Reenviar email" }),
     ).not.toBeInTheDocument()
   })
 
@@ -962,6 +889,45 @@ describe("ManagePaymentModal - the Cobrança section", () => {
     expect(copied).toContain("01/09/2026")
   })
 
+  it("prices the WhatsApp message flat, from the charge's event price", async () => {
+    const charge = { ...openCharge, base_amount: 25000 }
+    render(
+      <ManagePaymentModal {...baseProps} payments={[charge]} active={charge} />,
+    )
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Copiar mensagem" }),
+    )
+
+    const [copied] = vi.mocked(navigator.clipboard.writeText).mock.calls.at(
+      -1,
+    ) ?? [""]
+    expect(copied).toContain("Pix — R$ 225,00")
+    expect(copied).toContain("Cartão 6x de R$ 41,66 (total R$ 250,00)")
+  })
+
+  it("offers Pix alone in the WhatsApp message while card payments are off", async () => {
+    const charge = { ...openCharge, base_amount: 25000 }
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        cardPaymentsEnabled={false}
+        payments={[charge]}
+        active={charge}
+      />,
+    )
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Copiar mensagem" }),
+    )
+
+    const [copied] = vi.mocked(navigator.clipboard.writeText).mock.calls.at(
+      -1,
+    ) ?? [""]
+    expect(copied).toContain("Pix — R$ 250,00")
+    expect(copied).not.toContain("Cartão")
+  })
+
   it("says so when the charge opened but the email did not go out", () => {
     fetcherData = { success: true, intent: "payment-offer", emailSent: false }
 
@@ -1053,39 +1019,38 @@ describe("ManagePaymentModal - the table's dates and amounts", () => {
     ).toBeInTheDocument()
   })
 
-  it("shows what Positiv is owed on a charge nobody has chosen an option for", () => {
+  it("shows the event price on a charge nobody has chosen an option for", () => {
     render(
       <ManagePaymentModal {...baseProps} payments={[sentOn]} active={sentOn} />,
     )
 
     const row = screen.getByRole("row", { name: /Aguardando escolha/ })
     expect(within(row).getByText("R$ 220,00")).toBeInTheDocument()
-    // No option picked means no method and so no fee yet.
+    // No option picked means no method yet.
     expect(within(row).getAllByText("—").length).toBeGreaterThan(0)
   })
 
-  // POS-529 writes `amount` the moment the participant picks a method: the
-  // gross they will pay. `asaas_net` stays null until the webhook confirms it,
-  // so neither column may wait on it.
-  it("keeps the gross out of Positiv's column once a method is picked", () => {
+  // `amount` is written the moment the participant picks an option: from
+  // then on it is the price they pay, 10% off on Pix.
+  it("shows the price of the option the participant picked", () => {
     const picked = payment({
       ...sentOn,
       id: "picked-1",
       status: "awaiting_payment",
       method: "pix",
-      amount: 22199,
+      amount: 19800,
       asaas_net: null,
     })
 
     render(<ManagePaymentModal {...baseProps} payments={[picked]} />)
 
     const row = screen.getByRole("row", { name: /Aguardando pagamento/ })
-    expect(within(row).getByText("R$ 220,00")).toBeInTheDocument()
-    expect(within(row).getByText("R$ 1,99")).toBeInTheDocument()
-    expect(within(row).queryByText("R$ 221,99")).not.toBeInTheDocument()
+    expect(within(row).getByText("R$ 198,00")).toBeInTheDocument()
+    expect(within(row).queryByText("R$ 220,00")).not.toBeInTheDocument()
   })
 
-  it("splits what Positiv kept from what the fees took", () => {
+  // What Asaas kept is Asaas's to report.
+  it("shows what the participant paid, not what Asaas kept", () => {
     const paidByCard = payment({
       id: "paid-card",
       kind: "asaas",
@@ -1093,32 +1058,23 @@ describe("ManagePaymentModal - the table's dates and amounts", () => {
       method: "credit_card",
       installment_count: 3,
       base_amount: 22000,
-      amount: 23454,
-      asaas_net: 21900,
+      amount: 22000,
+      asaas_net: 21000,
     })
 
     render(<ManagePaymentModal {...baseProps} payments={[paidByCard]} />)
 
     const row = screen.getByRole("row", { name: /Pago/ })
-    // What landed in the account, and what the participant paid on top of it.
-    expect(within(row).getByText("R$ 219,00")).toBeInTheDocument()
-    expect(within(row).getByText("R$ 15,54")).toBeInTheDocument()
-  })
-
-  it("charges no fee to a payment that never went through Asaas", () => {
-    render(<ManagePaymentModal {...baseProps} payments={[payment({})]} />)
-
-    const row = screen.getByRole("row", { name: /Pago/ })
     expect(within(row).getByText("R$ 220,00")).toBeInTheDocument()
-    expect(within(row).getAllByText("—").length).toBeGreaterThan(0)
+    expect(within(row).queryByText("R$ 210,00")).not.toBeInTheDocument()
   })
 
-  it("names the fee column", () => {
+  it("has no fee column", () => {
     render(<ManagePaymentModal {...baseProps} payments={[payment({})]} />)
 
     expect(
-      screen.getByRole("columnheader", { name: "Taxas" }),
-    ).toBeInTheDocument()
+      screen.queryByRole("columnheader", { name: "Taxas" }),
+    ).not.toBeInTheDocument()
   })
 
   it("never writes the fees into the amount column", () => {

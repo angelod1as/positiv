@@ -29,8 +29,6 @@ type EnvSchemaItem = { isSensitive?: boolean; isDynamic?: boolean }
 const MUST_RESOLVE_AT_RUNTIME = [
   "APP_ENV",
   "APP_URL",
-  "ASAAS_ANTICIPATION_DETACHED_MONTHLY_RATE",
-  "ASAAS_ANTICIPATION_INSTALLMENT_MONTHLY_RATE",
   "ASAAS_API_URL",
   "CI",
   "E2E_MODE",

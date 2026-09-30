@@ -49,25 +49,17 @@ export const adminSettingsCopy = {
 } as const
 
 export const onlinePaymentsSettingCopy = {
-  title: "Pagamentos online",
-  description:
-    "Ligados, a equipe pode abrir cobranças pelo Asaas e cada participante paga pelo link que recebe por email. Desligados, só entram pagamentos registrados à mão.",
-  whatStays:
-    "Desligar não cancela nada: quem já está na página do Asaas ainda consegue pagar, e pagamentos e reembolsos do Asaas continuam sendo registrados.",
-  on: "Ligados",
-  off: "Desligados",
+  title: "Pagamentos",
+  online: "Pagamentos online",
+  onlineHelp: "Cobranças pelo Asaas, pagas pelo link do email.",
+  card: "Cartão de crédito",
+  cardHelp: "1x a 6x. Com cartão, o Pix tem 10% de desconto.",
   notConfigured:
     "O Asaas não está configurado neste ambiente. Os pagamentos online ficam desligados até as chaves serem cadastradas.",
   lastChange: (when: string, name: string) => `Alterado por ${name} em ${when}`,
-  turnOn: "Ligar pagamentos online",
-  turnOff: "Desligar pagamentos online",
-  confirmOnTitle: "Ligar pagamentos online?",
-  confirmOnDescription:
-    "A equipe volta a poder abrir cobranças pelo Asaas, e os links de pagamento voltam a mostrar as opções.",
-  confirmOn: "Ligar",
   confirmOffTitle: "Desligar pagamentos online?",
   confirmOffDescription:
-    "Nenhuma cobrança nova pode ser aberta, e os links de pagamento passam a pedir que a pessoa fale com a organização. Cobranças já abertas no Asaas continuam pagáveis.",
+    "Nenhuma cobrança nova pode ser aberta, e os links de pagamento passam a pedir que a pessoa fale com a organização. Isso não cancela pagamentos em andamento ou já feitos: cobranças abertas no Asaas continuam pagáveis.",
   confirmOff: "Desligar",
 } as const
 

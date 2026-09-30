@@ -49,7 +49,6 @@ describe("getPaymentsForParticipant", () => {
     expect(result.totals).toMatchObject({
       paid_gross: 0,
       net: 0,
-      fee: 0,
       payment_status: null,
     })
     expect(result.active).toBeNull()

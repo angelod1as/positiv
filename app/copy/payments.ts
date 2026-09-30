@@ -1,4 +1,7 @@
-import type { PaymentOption } from "~/business/payment/pricing"
+import {
+  PIX_DISCOUNT_PERCENT,
+  type PaymentOption,
+} from "~/business/payment/pricing"
 import { formatInTimeZone } from "date-fns-tz"
 import { formatCurrency } from "~/lib/helpers/format-currency"
 
@@ -13,15 +16,17 @@ export const paymentsCopy = {
       }
       return `Cartão ${option.installmentCount}x de ${formatCurrency(option.perInstallment)} (total ${formatCurrency(option.total)})`
     },
-    // The payment page's cards: the name here, the total beside it, and where
-    // the total comes from on the line below.
+    // The payment page's cards: the name here, the total beside it.
     title: (option: PaymentOption) => {
       if (option.method === "pix") return "Pix"
-      if (option.installmentCount === 1) return "Cartão à vista"
-      return `Cartão ${option.installmentCount}x de ${formatCurrency(option.perInstallment)}`
+      if (option.installmentCount === 1) return "Cartão de crédito — à vista"
+      return `Cartão de crédito — ${option.installmentCount}x de ${formatCurrency(option.perInstallment)}`
     },
+    // Only a discounted Pix says anything more; a card's title already does.
     breakdown: (baseAmount: number, option: PaymentOption) =>
-      `${formatCurrency(baseAmount)} do evento + ${formatCurrency(option.total - baseAmount)} de taxas`,
+      option.method === "pix" && option.total < baseAmount
+        ? `${PIX_DISCOUNT_PERCENT}% de desconto sobre ${formatCurrency(baseAmount)}`
+        : null,
   },
   // Plain text, not Markdown: this one is pasted into WhatsApp, which renders
   // none of it. The four-digit year is deliberate — a deadline read on a phone
@@ -50,8 +55,8 @@ export const paymentsCopy = {
     heading: (eventTitle: string) => `Pagamento — ${eventTitle}`,
     notYours: "Este link de pagamento não é seu.",
     chooseOption: "Como você quer pagar?",
-    feesIntro: (baseAmount: number) =>
-      `O valor do evento é ${formatCurrency(baseAmount)}. As taxas do meio de pagamento ficam por sua conta e mudam conforme a forma e o número de parcelas.`,
+    priceIntro: (baseAmount: number) =>
+      `O valor do evento é ${formatCurrency(baseAmount)}.`,
     pay: "Pagar",
     dueAt: (date: string) => `Este link vale até ${date}.`,
     paidTitle: "Pagamento confirmado",
@@ -82,7 +87,6 @@ export const paymentsCopy = {
     close: "Fechar",
     totals: {
       gross: "Total pago",
-      fee: "Taxas",
       net: "Líquido",
       refunded: "Reembolsado",
     },
@@ -91,31 +95,17 @@ export const paymentsCopy = {
       kind: "Origem",
       method: "Forma",
       amount: "Valor",
-      fees: "Taxas",
       sentAt: "Enviada em",
       date: "Data pagto",
       actions: "Ações",
     },
     kinds: { asaas: "Asaas", manual: "Manual" },
-    // The lines under a payment's status: where its refund and its
-    // anticipation stand, as Asaas last reported them.
+    // The lines under a payment's status: where its refund stands, as Asaas
+    // last reported it.
     refundLines: {
       refunded: (amount: string) => `Devolvido ${amount}`,
       pending: (amount: string) => `Em andamento no Asaas: ${amount}`,
       cancelled: (amount: string) => `Cancelado pelo Asaas: ${amount}`,
-    },
-    anticipation: {
-      line: (status: string, fee: string | null) =>
-        fee ? `Antecipação ${status} · taxa ${fee}` : `Antecipação ${status}`,
-      statuses: {
-        PENDING: "em análise",
-        SCHEDULED: "agendada",
-        CREDITED: "creditada",
-        DEBITED: "concluída",
-        CANCELLED: "cancelada",
-        DENIED: "negada",
-        OVERDUE: "vencida",
-      } as Record<string, string>,
     },
     sync: {
       button: "Atualizar do Asaas",
@@ -128,7 +118,6 @@ export const paymentsCopy = {
       transfer: "Transferência",
       other: "Outro",
     },
-    noAmount: "—",
     noMethod: "—",
     noDate: "—",
   },
@@ -190,21 +179,7 @@ export const paymentsCopy = {
     confirm: "Confirmar reembolso?",
     success: "Reembolso registrado.",
     asaas: {
-      title: "Reembolsar",
-      confirm: "Reembolsar pelo Asaas?",
-      description:
-        "O Asaas devolve o dinheiro para a pessoa. A situação do pagamento muda quando o Asaas confirmar.",
-      feesStay:
-        "As taxas não voltam: a pessoa recebe o que a Positiv recebeu, sem as taxas que ela pagou.",
-      amount: "Valor devolvido",
-      amountHint: (received: string) =>
-        `A Positiv recebeu ${received}. Não é possível devolver mais que isso.`,
-      reason: "Motivo (opcional)",
-      windowPix: "Pix: o Asaas devolve na hora.",
-      windowCard: "Cartão: aparece na fatura da pessoa em até 10 dias úteis.",
-      awaitingNet:
-        "O Asaas ainda não informou quanto caiu na conta. Aguarde alguns instantes e recarregue.",
-      submit: "Solicitar reembolso",
+      title: "Reembolsar no Asaas",
       inProgress: "Reembolso solicitado — aguardando o Asaas confirmar.",
       denied: (reason: string | null) =>
         reason
@@ -224,14 +199,6 @@ export const paymentsCopy = {
   // What an Asaas refusal becomes before a person reads it. The technical
   // detail -- status, path, code -- stays in the log.
   asaasErrors: {
-    refundNextDay:
-      "Um pagamento por cartão só pode ser reembolsado em parte a partir do dia seguinte ao pagamento. Tente de novo amanhã.",
-    refundNoBalance:
-      "Não há saldo disponível no Asaas para devolver esse valor agora. Confira o saldo no painel do Asaas e tente de novo.",
-    refundTooMuch:
-      "O valor pedido é maior do que o Asaas ainda pode devolver deste pagamento.",
-    refundRefused: (description: string) =>
-      `O Asaas recusou o reembolso: ${description}`,
     checkoutCpf:
       "O sistema de pagamentos não aceitou o CPF da sua conta. Confira o CPF em Dados básicos ou fale com a organização.",
     checkoutRefused: (description: string) =>
@@ -258,16 +225,7 @@ export const paymentsCopy = {
       "Existe uma cobrança em aberto. Cancele-a antes de registrar um pagamento manual.",
     refundAmountRequired: "Informe um valor de reembolso maior que zero.",
     refundTooLarge: "O reembolso não pode ser maior que o valor pago.",
-    refundAboveReceived:
-      "O reembolso não pode ser maior que o que a Positiv recebeu, sem as taxas.",
-    refundNetNotReported:
-      "O Asaas ainda não informou quanto caiu na conta desta cobrança. Aguarde alguns instantes e tente de novo.",
     notRefundable: "Só é possível reembolsar um pagamento já confirmado.",
-    notAsaasRefundable:
-      "Este pagamento não passou pelo Asaas. Use 'Marcar como reembolsado'.",
-    refundAlreadyRequested: "O reembolso já foi solicitado.",
-    refundOutcomeUnknown:
-      "Não deu para confirmar se o Asaas fez o reembolso. Confira no painel do Asaas antes de tentar de novo.",
     notEditable: "Só é possível editar um pagamento manual confirmado.",
     notCancellable: "Só é possível cancelar uma cobrança em aberto.",
     notSyncable: "Só um pagamento feito pelo Asaas pode ser atualizado do Asaas.",

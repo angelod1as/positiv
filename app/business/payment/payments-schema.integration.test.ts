@@ -323,10 +323,10 @@ describe("payments schema", () => {
         .where("event_participant_id", "=", otherParticipantId)
         .executeTakeFirstOrThrow()
 
+      expect(row).not.toHaveProperty("fee")
       expect(row).toMatchObject({
         paid_gross: 0,
         refunded: 0,
-        fee: 0,
         net: 0,
         has_paid: false,
         current_status: null,
@@ -352,13 +352,13 @@ describe("payments schema", () => {
       expect(row).toMatchObject({
         paid_gross: 0,
         net: 0,
-        fee: 0,
         has_paid: true,
         current_status: "paid",
       })
     })
 
-    it("splits gross, fee and net for an Asaas payment", async () => {
+    // What Asaas kept is Asaas's to report: the site counts what was paid.
+    it("counts what the participant paid through Asaas, not what Asaas kept", async () => {
       await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
         kind: "asaas",
@@ -376,13 +376,12 @@ describe("payments schema", () => {
         .executeTakeFirstOrThrow()
 
       expect(row.paid_gross).toBe(23454)
-      expect(row.fee).toBe(1444)
-      expect(row.net).toBe(22010)
+      expect(row.net).toBe(23454)
       expect(row.has_paid).toBe(true)
       expect(row.current_status).toBe("paid")
     })
 
-    it("treats a manual payment as fee-free", async () => {
+    it("counts a manual payment at what was paid", async () => {
       await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
         kind: "manual",
@@ -396,7 +395,6 @@ describe("payments schema", () => {
         .where("event_participant_id", "=", participantId)
         .executeTakeFirstOrThrow()
 
-      expect(row.fee).toBe(0)
       expect(row.net).toBe(22000)
     })
 
@@ -423,7 +421,7 @@ describe("payments schema", () => {
       expect(row.has_paid).toBe(true)
     })
 
-    it("keeps net at the gross when Asaas never reported a net", async () => {
+    it("counts net the same before Asaas reports one", async () => {
       await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
         kind: "asaas",
@@ -438,7 +436,6 @@ describe("payments schema", () => {
         .where("event_participant_id", "=", participantId)
         .executeTakeFirstOrThrow()
 
-      expect(row.fee).toBe(0)
       expect(row.net).toBe(22000)
     })
 
@@ -548,44 +545,18 @@ describe("payments schema", () => {
     })
   })
 
-  describe("fee_snapshot", () => {
-    it("keeps the fee table the price was built from", async () => {
-      const snapshot = {
-        pix: { fixed: 199, percent: 0 },
-        card: { fixed: 49, percentOneInstallment: 0.0299, percentUpToSix: 0.0349 },
-        anticipation: { detachedMonthlyRate: 0.0115, installmentMonthlyRate: 0.016 },
-      }
+  describe("payments", () => {
+    // Fees and anticipation are Asaas's to report; the site keeps neither.
+    it("no longer carries the fee and anticipation columns", async () => {
+      const { rows } = await sql<{ column_name: string }>`
+        SELECT column_name
+          FROM information_schema.columns
+         WHERE table_schema = 'public'
+           AND table_name = 'payments'
+           AND column_name IN ('fee_snapshot', 'anticipation_fee', 'anticipation_status')
+      `.execute(kysely)
 
-      const payment = await createTestPayment(tracker, kysely, {
-        event_participant_id: participantId,
-        status: "awaiting_payment",
-        kind: "asaas",
-        amount: 22199,
-        paid_at: null,
-        fee_snapshot: snapshot,
-      })
-
-      const row = await kysely
-        .selectFrom("payments")
-        .select("fee_snapshot")
-        .where("id", "=", payment.id)
-        .executeTakeFirstOrThrow()
-
-      expect(row.fee_snapshot).toEqual(snapshot)
-    })
-
-    it("leaves it empty for a row that was never priced", async () => {
-      const payment = await createTestPayment(tracker, kysely, {
-        event_participant_id: otherParticipantId,
-      })
-
-      const row = await kysely
-        .selectFrom("payments")
-        .select("fee_snapshot")
-        .where("id", "=", payment.id)
-        .executeTakeFirstOrThrow()
-
-      expect(row.fee_snapshot).toBeNull()
+      expect(rows).toEqual([])
     })
   })
 

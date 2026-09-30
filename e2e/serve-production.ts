@@ -96,8 +96,6 @@ async function startProductionServer() {
         ASAAS_API_URL: `${asaasUrl}/v3`,
         ASAAS_API_KEY: E2E_ASAAS_API_KEY,
         ASAAS_WEBHOOK_TOKEN: E2E_ASAAS_WEBHOOK_TOKEN,
-        ASAAS_ANTICIPATION_DETACHED_MONTHLY_RATE: "",
-        ASAAS_ANTICIPATION_INSTALLMENT_MONTHLY_RATE: "",
         // Likewise for Sanity: the project and dataset are the mock's, so a
         // developer's .env can never point the suite at a real dataset.
         SANITY_API_HOST: sanityUrl,

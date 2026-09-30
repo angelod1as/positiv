@@ -38,7 +38,6 @@ export async function getPaymentsForParticipant(
     totals: {
       paid_gross: totals?.paid_gross ?? 0,
       refunded: totals?.refunded ?? 0,
-      fee: totals?.fee ?? 0,
       net: totals?.net ?? 0,
       payment_status: totals?.current_status ?? null,
       active_payment_id: totals?.active_payment_id ?? null,

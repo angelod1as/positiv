@@ -1,23 +1,11 @@
 import { describe, expect, it } from "vitest"
-import type { PaymentOption } from "~/business/payment/pricing"
+import {
+  buildPaymentOptions,
+  type PaymentOption,
+} from "~/business/payment/pricing"
 import { paymentLinkMailTemplate } from "./payment-link-mail.template"
 
-const options: PaymentOption[] = [
-  {
-    id: "pix",
-    method: "pix",
-    installmentCount: null,
-    perInstallment: 22199,
-    total: 22199,
-  },
-  {
-    id: "card_3",
-    method: "credit_card",
-    installmentCount: 3,
-    perInstallment: 7818,
-    total: 23454,
-  },
-]
+const options = buildPaymentOptions(22000, { cardEnabled: true })
 
 const base = {
   displayName: "Ana",
@@ -29,11 +17,59 @@ const base = {
 }
 
 describe("paymentLinkMailTemplate", () => {
-  it("lists every option with its price", () => {
+  const textOf = (html: string) => html.replace(/\s+/g, " ")
+
+  it("says the spot is reserved and one step is left", () => {
+    const html = textOf(paymentLinkMailTemplate(base))
+
+    expect(html).toContain("sua vaga na <strong>🎉&nbsp;Festa de Setembro</strong> está reservada!")
+    expect(html).toContain("Para garanti-la, só falta um passo: o pagamento.")
+    expect(html).not.toContain("Escolha como prefere pagar")
+    expect(html).not.toContain("Formas de pagamento")
+  })
+
+  it("sums up Pix with its discount in bold and the card from 1x to 6x", () => {
+    const html = textOf(paymentLinkMailTemplate(base))
+
+    expect(html).toContain("No Pix (10% de desconto): <strong>R$ 198,00</strong>")
+    expect(html).toContain("No cartão de crédito (1x a 6x sem juros): R$ 220,00")
+    expect(html).not.toContain("Cartão 3x")
+  })
+
+  it("offers Pix alone, with no discount, while card payments are off", () => {
+    const html = textOf(
+      paymentLinkMailTemplate({
+        ...base,
+        options: buildPaymentOptions(22000, { cardEnabled: false }),
+      }),
+    )
+
+    expect(html).toContain("No Pix: <strong>R$ 220,00</strong>")
+    expect(html).not.toContain("desconto")
+    expect(html).not.toContain("cartão")
+  })
+
+  // A resend after the participant picked restates that one choice.
+  it("restates a card plan already chosen", () => {
+    const chosen: PaymentOption[] = [
+      {
+        id: "card_3",
+        method: "credit_card",
+        installmentCount: 3,
+        perInstallment: 7333,
+        total: 22000,
+      },
+    ]
+    const html = textOf(paymentLinkMailTemplate({ ...base, options: chosen }))
+
+    expect(html).toContain("No cartão de crédito (3x sem juros): R$ 220,00")
+    expect(html).not.toContain("Pix")
+  })
+
+  it("puts the summary before the button", () => {
     const html = paymentLinkMailTemplate(base)
 
-    expect(html).toContain("Pix — R$ 221,99")
-    expect(html).toContain("Cartão 3x de R$ 78,18 (total R$ 234,54)")
+    expect(html.indexOf("No Pix")).toBeLessThan(html.indexOf("Pagar agora"))
   })
 
   it("links to the payment page", () => {

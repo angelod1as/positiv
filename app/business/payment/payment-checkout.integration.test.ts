@@ -18,6 +18,7 @@ const {
   deleteAsaasPayment,
   logger,
   paymentsEnabled,
+  cardEnabled,
   prod,
 } = vi.hoisted(() => ({
   createAsaasCustomer: vi.fn(),
@@ -26,6 +27,7 @@ const {
   deleteAsaasPayment: vi.fn(),
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
   paymentsEnabled: { value: true },
+  cardEnabled: { value: true },
   prod: { value: false },
 }))
 
@@ -46,23 +48,18 @@ vi.mock("./asaas-client.server", async (importOriginal) => {
   }
 })
 
-vi.mock("./asaas-fees.server", async (importOriginal) => {
-  const original = await importOriginal<typeof import("./asaas-fees.server")>()
-  return { ...original, getAsaasFees: async () => original.FALLBACK_FEES }
-})
-
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
 
-// The admin switch, pinned per test. Everything else reads the real settings.
+// The admin switches, pinned per test. Everything else reads the real settings.
 vi.mock("~/business/settings/app-settings.server", async (importOriginal) => ({
   ...(await importOriginal<
     typeof import("~/business/settings/app-settings.server")
   >()),
   isOnlinePaymentsEnabled: async () => paymentsEnabled.value,
+  isCardPaymentsEnabled: async () => cardEnabled.value,
 }))
 
 import { AsaasError } from "./asaas-client.server"
-import { FALLBACK_FEES } from "./asaas-fees.server"
 import { pickOption } from "./payment-checkout.server"
 
 describe("pickOption", () => {
@@ -75,6 +72,7 @@ describe("pickOption", () => {
   beforeEach(async () => {
     vi.clearAllMocks()
     paymentsEnabled.value = true
+    cardEnabled.value = true
     prod.value = false
     createAsaasCustomer.mockResolvedValue("cus_new")
     findAsaasCustomerByCpf.mockResolvedValue(null)
@@ -82,6 +80,7 @@ describe("pickOption", () => {
       id: "pay_1",
       status: "PENDING",
       invoiceUrl: "https://sandbox.asaas.com/i/pay_1",
+      invoiceNumber: "00005101",
       installmentId: null,
     })
     deleteAsaasPayment.mockResolvedValue(true)
@@ -241,7 +240,7 @@ describe("pickOption", () => {
     expect(profile.asaas_customer_id).toBe("cus_existing")
   })
 
-  it("charges the gross of the chosen option and records what came back", async () => {
+  it("charges the event price on the card and records what came back", async () => {
     const payment = await openCharge()
 
     const result = await pickOption({
@@ -253,6 +252,7 @@ describe("pickOption", () => {
     expect(createAsaasPayment).toHaveBeenCalledWith(
       expect.objectContaining({
         method: "credit_card",
+        amount: 22000,
         installmentCount: 3,
         externalReference: payment.id,
         customerId: "cus_new",
@@ -267,21 +267,49 @@ describe("pickOption", () => {
       asaas_customer_id: "cus_new",
       asaas_payment_id: "pay_1",
       asaas_invoice_url: "https://sandbox.asaas.com/i/pay_1",
+      asaas_invoice_number: "00005101",
     })
-    expect(after.amount).toBeGreaterThan(after.base_amount)
+    expect(after.amount).toBe(22000)
     expect(result.success && result.data.invoiceUrl).toBe(
       "https://sandbox.asaas.com/i/pay_1",
     )
   })
 
-  it("writes down the fee table the price was built from", async () => {
+  it("charges Pix at 10% off while card payments are on", async () => {
     const payment = await openCharge()
 
     await pickOption({ paymentId: payment.id, profileId, optionId: "pix" })
 
-    const after = await rowOf(payment.id)
-    expect(after.fee_snapshot).toEqual(FALLBACK_FEES)
-    expect(after.amount).toBe(22199)
+    expect(createAsaasPayment).toHaveBeenCalledWith(
+      expect.objectContaining({ method: "pix", amount: 19800 }),
+    )
+    expect((await rowOf(payment.id)).amount).toBe(19800)
+  })
+
+  it("charges Pix at the full price while card payments are off", async () => {
+    cardEnabled.value = false
+    const payment = await openCharge()
+
+    await pickOption({ paymentId: payment.id, profileId, optionId: "pix" })
+
+    expect(createAsaasPayment).toHaveBeenCalledWith(
+      expect.objectContaining({ method: "pix", amount: 22000 }),
+    )
+    expect((await rowOf(payment.id)).amount).toBe(22000)
+  })
+
+  it("refuses a card option while card payments are off", async () => {
+    cardEnabled.value = false
+    const payment = await openCharge()
+
+    const result = await pickOption({
+      paymentId: payment.id,
+      profileId,
+      optionId: "card_1",
+    })
+
+    expect(result.success).toBe(false)
+    expect(createAsaasPayment).not.toHaveBeenCalled()
   })
 
   it("returns the same invoice when the same option is picked twice", async () => {

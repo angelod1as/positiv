@@ -7,15 +7,18 @@ export class AdminSettingsPage extends BasePage {
     await this.waitForPageLoad()
   }
 
+  private onlinePaymentsSwitch() {
+    return this.page.getByRole("switch", { name: "Pagamentos online" })
+  }
+
   async turnOnlinePaymentsOff(): Promise<void> {
-    await this.page.getByRole("button", { name: "Desligar pagamentos online" }).click()
+    await this.onlinePaymentsSwitch().click()
     await this.page.getByRole("alertdialog").getByRole("button", { name: "Desligar" }).click()
-    await expect(this.page.getByText("Desligados", { exact: true })).toBeVisible()
+    await expect(this.onlinePaymentsSwitch()).not.toBeChecked()
   }
 
   async turnOnlinePaymentsOn(): Promise<void> {
-    await this.page.getByRole("button", { name: "Ligar pagamentos online" }).click()
-    await this.page.getByRole("alertdialog").getByRole("button", { name: "Ligar" }).click()
-    await expect(this.page.getByText("Ligados", { exact: true })).toBeVisible()
+    await this.onlinePaymentsSwitch().click()
+    await expect(this.onlinePaymentsSwitch()).toBeChecked()
   }
 }

@@ -12,30 +12,6 @@ const refused = (code: string, description: string, status = 400) =>
 const { asaasErrors } = paymentsCopy
 
 describe("asaasErrorMessage", () => {
-  it("explains that a card is refunded in part only from the next day", () => {
-    const error = refused(
-      "invalid_action",
-      "Esta transação só pode ser estornada parcialmente no próximo dia.",
-    )
-
-    expect(asaasErrorMessage(error, "refund")).toBe(asaasErrors.refundNextDay)
-  })
-
-  it("explains a refund Asaas has no balance for", () => {
-    const error = refused("invalid_action", "Saldo insuficiente para realizar o estorno.")
-
-    expect(asaasErrorMessage(error, "refund")).toBe(asaasErrors.refundNoBalance)
-  })
-
-  it("explains a refund larger than what is left to give back", () => {
-    const error = refused(
-      "invalid_value",
-      "O valor do estorno excede o valor disponível.",
-    )
-
-    expect(asaasErrorMessage(error, "refund")).toBe(asaasErrors.refundTooMuch)
-  })
-
   it("explains a CPF Asaas refuses at checkout", () => {
     const error = refused("invalid_cpfCnpj", "O CPF/CNPJ informado é inválido.")
 

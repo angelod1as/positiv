@@ -13,13 +13,11 @@ import {
 const {
   getAsaasPaymentRefunds,
   getAsaasInstallmentRefunds,
-  listAsaasAnticipations,
   sendPaymentRefundEmail,
   logger,
 } = vi.hoisted(() => ({
   getAsaasPaymentRefunds: vi.fn(),
   getAsaasInstallmentRefunds: vi.fn(),
-  listAsaasAnticipations: vi.fn(),
   sendPaymentRefundEmail: vi.fn(),
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
@@ -28,7 +26,6 @@ vi.mock("./asaas-client.server", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./asaas-client.server")>()),
   getAsaasPaymentRefunds,
   getAsaasInstallmentRefunds,
-  listAsaasAnticipations,
 }))
 
 vi.mock("./payment-emails.server", async (importOriginal) => ({
@@ -52,7 +49,6 @@ describe("syncPaymentFromAsaas", () => {
     vi.clearAllMocks()
     getAsaasPaymentRefunds.mockResolvedValue([])
     getAsaasInstallmentRefunds.mockResolvedValue([])
-    listAsaasAnticipations.mockResolvedValue([])
     sendPaymentRefundEmail.mockResolvedValue({ success: true })
 
     const testId = `${Date.now()}-${counter}`
@@ -100,14 +96,10 @@ describe("syncPaymentFromAsaas", () => {
       .where("id", "=", id)
       .executeTakeFirstOrThrow()
 
-  it("reads a plan's refunds and anticipation from Asaas onto the row", async () => {
+  it("reads a plan's refunds from Asaas onto the row", async () => {
     getAsaasInstallmentRefunds.mockResolvedValue([
       { value: 117.15, status: "DONE" },
       { value: 108.51, status: "PENDING" },
-    ])
-    listAsaasAnticipations.mockResolvedValue([
-      { status: "PENDING", fee: 625 },
-      { status: "PENDING", fee: 817 },
     ])
     const payment = await cardPlan()
 
@@ -115,15 +107,10 @@ describe("syncPaymentFromAsaas", () => {
 
     expect(result.success).toBe(true)
     expect(getAsaasInstallmentRefunds).toHaveBeenCalledWith(`inst_${counter}`)
-    expect(listAsaasAnticipations).toHaveBeenCalledWith({
-      installment: `inst_${counter}`,
-    })
     const after = await reload(payment.id)
     expect(after.status).toBe("partially_refunded")
     expect(after.refund_amount).toBe(11715)
     expect(after.refund_pending_amount).toBe(10851)
-    expect(after.anticipation_fee).toBe(1442)
-    expect(after.anticipation_status).toBe("PENDING")
     expect(after.refunds_synced_at).not.toBeNull()
     expect(sendPaymentRefundEmail).not.toHaveBeenCalled()
   })
@@ -162,25 +149,7 @@ describe("syncPaymentFromAsaas", () => {
     await syncPaymentFromAsaas({ paymentId: payment.id })
 
     expect(getAsaasPaymentRefunds).toHaveBeenCalledWith(`pay_${counter}`)
-    // A Pix is never anticipated, so there is nothing to ask about.
-    expect(listAsaasAnticipations).not.toHaveBeenCalled()
     expect((await reload(payment.id)).refund_amount).toBe(22000)
-  })
-
-  it("still records the anticipation of a payment already refunded in full", async () => {
-    listAsaasAnticipations.mockResolvedValue([{ status: "CANCELLED", fee: 625 }])
-    const payment = await cardPlan({
-      status: "refunded",
-      refund_amount: 23430,
-      refunded_at: new Date().toISOString(),
-    })
-
-    await syncPaymentFromAsaas({ paymentId: payment.id })
-
-    const after = await reload(payment.id)
-    expect(after.status).toBe("refunded")
-    expect(after.anticipation_status).toBe("CANCELLED")
-    expect(after.refunds_synced_at).not.toBeNull()
   })
 
   it("refuses a payment that did not go through Asaas", async () => {
@@ -222,12 +191,12 @@ describe("syncPaymentFromAsaas", () => {
         refund_requested_at: new Date().toISOString(),
         refund_requested_amount: 22000,
       })
-      const anticipating = await cardPlan({
-        asaas_payment_id: `pay_anticipating_${counter}`,
-        asaas_installment_id: `inst_anticipating_${counter}`,
+      const onItsWay = await cardPlan({
+        asaas_payment_id: `pay_on_its_way_${counter}`,
+        asaas_installment_id: `inst_on_its_way_${counter}`,
         refund_requested_at: null,
         refund_requested_amount: null,
-        anticipation_status: "PENDING",
+        refund_pending_amount: 10851,
       })
       const settled = await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
@@ -257,7 +226,7 @@ describe("syncPaymentFromAsaas", () => {
         ...getAsaasInstallmentRefunds.mock.calls.map(([id]) => id),
       ]
       expect(read).toContain(refunding.asaas_payment_id)
-      expect(read).toContain(anticipating.asaas_installment_id)
+      expect(read).toContain(onItsWay.asaas_installment_id)
       expect(read).not.toContain(settled.asaas_payment_id)
       // Read a moment ago: the next run gets it.
       expect(read).not.toContain(justRead.asaas_payment_id)
@@ -322,31 +291,21 @@ describe("syncPaymentFromAsaas", () => {
       expect(after.refunds_synced_at).toBeNull()
     })
 
-    it("stops looking for an anticipation a few days after the payment", async () => {
-      const daysAgo = (days: number) =>
-        new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
-      const recent = await cardPlan({
-        asaas_payment_id: `pay_recent_${counter}`,
-        asaas_installment_id: `inst_recent_${counter}`,
+    // Anticipation is Asaas's business now, like every other money figure: a
+    // card with no refund on its way has nothing left to tell the site.
+    it("leaves alone a card payment with no refund on its way", async () => {
+      const quiet = await cardPlan({
+        asaas_payment_id: `pay_quiet_${counter}`,
+        asaas_installment_id: `inst_quiet_${counter}`,
         refund_requested_at: null,
         refund_requested_amount: null,
-        paid_at: daysAgo(1),
-      })
-      const older = await cardPlan({
-        asaas_payment_id: `pay_older_${counter}`,
-        asaas_installment_id: `inst_older_${counter}`,
-        refund_requested_at: null,
-        refund_requested_amount: null,
-        paid_at: daysAgo(5),
+        paid_at: new Date().toISOString(),
       })
 
       await syncOpenPayments()
 
       const read = getAsaasInstallmentRefunds.mock.calls.map(([id]) => id)
-      // Asaas anticipates within two working days; after that, a card with
-      // no anticipation will not get one.
-      expect(read).toContain(recent.asaas_installment_id)
-      expect(read).not.toContain(older.asaas_installment_id)
+      expect(read).not.toContain(quiet.asaas_installment_id)
     })
   })
 })

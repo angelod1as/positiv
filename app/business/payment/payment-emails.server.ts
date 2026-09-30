@@ -9,8 +9,8 @@ import { kyselyDb } from "~/kysely-db"
 import { appOrigin } from "~/lib/helpers/app-origin"
 import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
-import { getAsaasFees } from "./asaas-fees.server"
-import { buildPaymentOptions } from "./pricing"
+import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
+import { buildPaymentOptions, splitInstallments } from "./pricing"
 import type { PaymentOption, PaymentOptionId } from "./pricing"
 
 type CommittedRow = {
@@ -28,14 +28,13 @@ function committedOption(row: CommittedRow): PaymentOption[] | null {
   if (row.method !== "pix" && row.method !== "credit_card") return null
 
   const installmentCount = row.installment_count
+  const installments = splitInstallments(row.amount, installmentCount ?? 1)
   return [
     {
       id: installmentCount ? (`card_${installmentCount}` as PaymentOptionId) : "pix",
       method: row.method,
       installmentCount,
-      perInstallment: installmentCount
-        ? Math.ceil(row.amount / installmentCount)
-        : row.amount,
+      perInstallment: installments[0],
       total: row.amount,
     },
   ]
@@ -44,9 +43,9 @@ function committedOption(row: CommittedRow): PaymentOption[] | null {
 /**
  * The link a participant is emailed when a charge opens, and again whenever an
  * admin resends it. The prices are computed at send time rather than stored:
- * the row carries the base amount Positiv nets, and what each way of paying
- * costs follows from the fee snapshot, which the payment page recomputes the
- * same way when the participant actually picks one.
+ * the row carries the event price, and what each way of paying costs follows
+ * from the card switch, which the payment page reads the same way when the
+ * participant actually picks one.
  */
 export async function sendPaymentLinkEmail({
   paymentId,
@@ -90,8 +89,7 @@ export async function sendPaymentLinkEmail({
   // an internal sentence in the admin's face. Two things in here can raise.
   // The template refuses a url it cannot vouch for, and APP_URL is not a
   // required variable -- without one appOrigin answers nothing and the url
-  // arrives schemeless. And the gross-up refuses a fee table that leaves
-  // nothing to receive, which a mistyped anticipation rate produces.
+  // arrives schemeless. And reading the card switch can fail with the database.
   let mail: { html: string; text: string }
   try {
     // Once the participant has picked, the price is settled and the Asaas
@@ -102,7 +100,9 @@ export async function sendPaymentLinkEmail({
     const committed = committedOption(payment)
     const options =
       committed ??
-      buildPaymentOptions(payment.base_amount, await getAsaasFees())
+      buildPaymentOptions(payment.base_amount, {
+        cardEnabled: await isCardPaymentsEnabled(),
+      })
 
     mail = await formatPaymentLinkMail({
       displayName: payment.social_name || payment.full_name || "",

@@ -1,8 +1,9 @@
 // Usage: pnpm asaas:smoke
 //
-// Checks the pricing engine against the Asaas sandbox: opens a PIX charge and
-// a card 3x charge for the same base, confirms them, and compares what Asaas
-// kept with what pricing.ts predicted. Run it with the webhook registered
+// Checks the flat prices against the Asaas sandbox: opens a PIX charge and a
+// card 6x charge for the same event price, confirms them, and compares what
+// Asaas charged, installment by installment, with what pricing.ts shows the
+// participant. Run it with the webhook registered
 // against a tunnel to the local production build (docs/payments-runbook.md),
 // so it can also say whether each confirmation reached the inbox.
 //
@@ -18,12 +19,15 @@ import {
   findAsaasCustomerByCpf,
   reaisToCents,
 } from "../../app/business/payment/asaas-client.server"
-import { getAsaasFees } from "../../app/business/payment/asaas-fees.server"
-import { buildPaymentOptions, type PaymentOption } from "../../app/business/payment/pricing"
+import {
+  buildPaymentOptions,
+  type PaymentOption,
+  splitInstallments,
+} from "../../app/business/payment/pricing"
 import { WEBHOOK_NAME } from "./register-webhook"
-import { calibrate, expectedNet } from "./smoke-calibration"
 
-const BASE = 22000
+// Not divisible by 6, so the card plan has a last installment that differs.
+const BASE = 25000
 // A valid test CPF, the one the E2E fixtures use.
 const TEST_CPF = "52998224725"
 const CONFIRMED = ["CONFIRMED", "RECEIVED"]
@@ -35,7 +39,7 @@ const charge = zod.object({
   id: zod.string(),
   status: zod.string(),
   value: zod.number(),
-  netValue: zod.number().nullable().optional(),
+  installmentNumber: zod.number().nullable().optional(),
   invoiceUrl: zod.string().nullable().optional(),
 })
 
@@ -43,10 +47,6 @@ const chargeList = zod.object({ data: zod.array(charge) })
 
 const webhookList = zod.object({
   data: zod.array(zod.object({ name: zod.string(), url: zod.string(), interrupted: zod.boolean().nullable().optional() })),
-})
-
-const anticipationList = zod.object({
-  data: zod.array(zod.object({ fee: zod.number(), status: zod.string() })),
 })
 
 function sleep(ms: number) {
@@ -115,22 +115,7 @@ async function waitForWebhooks(chargeIds: string[]) {
   }
 }
 
-// Anticipation is booked apart from the charge. The sandbox may never book
-// one, and then there is nothing to measure — which is reported, not passed.
-async function anticipationFee(paymentId: string, installmentId: string | null) {
-  const query = installmentId ? `installment=${installmentId}` : `payment=${paymentId}`
-  const { data } = await asaasRequest("GET", `/anticipations?${query}`, anticipationList)
-  const booked = data.filter((item) => !["DENIED", "CANCELLED"].includes(item.status))
-  if (booked.length === 0) return null
-  return booked.reduce((total, item) => total + reaisToCents(item.fee), 0)
-}
-
-async function run(
-  option: PaymentOption,
-  customerId: string,
-  fees: Awaited<ReturnType<typeof getAsaasFees>>,
-  checkWebhooks: boolean,
-) {
+async function run(option: PaymentOption, customerId: string, checkWebhooks: boolean) {
   const created = await createAsaasPayment({
     customerId,
     method: option.method,
@@ -147,22 +132,17 @@ async function run(
   const charges = await waitUntilConfirmed(created.id, created.installmentId)
   const webhooks = checkWebhooks ? await waitForWebhooks(charges.map((item) => item.id)) : null
 
-  const reportedNet = charges.reduce(
-    (total, item) => total + reaisToCents(item.netValue ?? 0),
-    0,
-  )
-  const reportedAnticipation = await anticipationFee(created.id, created.installmentId)
-  const expected = expectedNet(option, fees)
+  const charged = [...charges]
+    .sort((a, b) => (a.installmentNumber ?? 0) - (b.installmentNumber ?? 0))
+    .map((item) => reaisToCents(item.value))
+  const expected = splitInstallments(option.total, option.installmentCount ?? 1)
 
   return {
     option: option.id,
-    value: charges.reduce((total, item) => total + reaisToCents(item.value), 0),
-    expectedNet: expected.beforeAnticipation,
-    netValue: reportedNet,
-    expectedAnticipation: expected.anticipation,
-    anticipation: reportedAnticipation,
+    expected,
+    charged,
     webhooks,
-    ...calibrate({ expected, reportedNet, reportedAnticipation }),
+    ok: expected.join() === charged.join(),
   }
 }
 
@@ -171,9 +151,8 @@ async function main() {
     throw new Error(`ASAAS_API_URL must point at the sandbox, got ${ENV.ASAAS_API_URL}`)
   }
 
-  const fees = await getAsaasFees()
-  const options = buildPaymentOptions(BASE, fees).filter(
-    (option) => option.id === "pix" || option.id === "card_3",
+  const options = buildPaymentOptions(BASE, { cardEnabled: true }).filter(
+    (option) => option.id === "pix" || option.id === "card_6",
   )
 
   const customerId =
@@ -195,19 +174,14 @@ async function main() {
     )
   }
 
-  for (const option of options) results.push(await run(option, customerId, fees, webhook !== null))
+  for (const option of options) results.push(await run(option, customerId, webhook !== null))
 
   for (const result of results) {
     console.info(
       [
-        `\n${result.option}${result.ok ? "" : "  <-- OUTSIDE TOLERANCE"}`,
-        `  value                   R$ ${reais(result.value)}`,
-        `  expected net            R$ ${reais(result.expectedNet)}`,
-        `  netValue                R$ ${reais(result.netValue)}   diff R$ ${reais(result.feeDifference)}`,
-        `  expected anticipation   R$ ${reais(result.expectedAnticipation)}`,
-        result.anticipation === null
-          ? "  anticipation            not measurable in sandbox"
-          : `  anticipation            R$ ${reais(result.anticipation)}   diff R$ ${reais(result.anticipationDifference)}`,
+        `\n${result.option}${result.ok ? "" : "  <-- DIFFERS FROM THE PAGE"}`,
+        `  expected                ${result.expected.map(reais).join(" + ")}`,
+        `  charged                 ${result.charged.map(reais).join(" + ")}`,
         `  webhook                 ${result.webhooks === null ? "not checked" : result.webhooks ? "received" : "NOT received"}`,
       ].join("\n"),
     )

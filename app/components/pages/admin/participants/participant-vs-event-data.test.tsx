@@ -48,7 +48,6 @@ const mockEventParticipant: EventParticipantWithEvent = {
   spot_type: "regular",
   paid_gross: 0,
   net: 0,
-  fee: 0,
   refunded: 0,
   payment_status: null,
   active_payment_id: null,

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
 import {
+  asaasDashboardOrigin,
   AsaasError,
   asaasRequest,
   createAsaasCustomer,
@@ -10,9 +11,6 @@ import {
   findAsaasCustomerByCpf,
   getAsaasInstallmentRefunds,
   getAsaasPaymentRefunds,
-  listAsaasAnticipations,
-  refundAsaasInstallment,
-  refundAsaasPayment,
 } from "./asaas-client.server"
 
 const env = vi.hoisted<Record<string, unknown>>(() => ({
@@ -187,6 +185,18 @@ describe("asaasRequest", () => {
   })
 })
 
+describe("asaasDashboardOrigin", () => {
+  it("points at the sandbox dashboard from the sandbox api", () => {
+    env.ASAAS_API_URL = "https://api-sandbox.asaas.com/v3"
+    expect(asaasDashboardOrigin()).toBe("https://sandbox.asaas.com")
+  })
+
+  it("points at the production dashboard from the production api", () => {
+    env.ASAAS_API_URL = "https://api.asaas.com/v3"
+    expect(asaasDashboardOrigin()).toBe("https://www.asaas.com")
+  })
+})
+
 describe("customers", () => {
   it("creates a customer with notifications off and the profile id as external reference", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ id: "cus_9" }))
@@ -343,6 +353,7 @@ describe("charges", () => {
         id: "pay_1",
         status: "PENDING",
         invoiceUrl: "https://sandbox.asaas.com/i/pay_1",
+        invoiceNumber: "00005101",
         installment: null,
       }),
     )
@@ -353,6 +364,7 @@ describe("charges", () => {
       id: "pay_1",
       status: "PENDING",
       invoiceUrl: "https://sandbox.asaas.com/i/pay_1",
+      invoiceNumber: "00005101",
       installmentId: null,
     })
     expect(fetchMock.mock.calls[0][0]).toBe("https://api-sandbox.asaas.com/v3/payments")
@@ -459,39 +471,6 @@ describe("charges", () => {
     expect(initOf(0).method).toBe("DELETE")
   })
 
-  it("refunds a charge in full, sending only the reason", async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({ id: "pay_1", status: "REFUND_REQUESTED" }))
-
-    await refundAsaasPayment("pay_1", { amount: null, description: "Cancelou" })
-
-    expect(fetchMock.mock.calls[0][0]).toBe(
-      "https://api-sandbox.asaas.com/v3/payments/pay_1/refund",
-    )
-    expect(JSON.parse(String(initOf(0).body))).toEqual({ description: "Cancelou" })
-  })
-
-  it("refunds a charge in part, sending the amount in reais", async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({ id: "pay_1", status: "REFUND_REQUESTED" }))
-
-    await refundAsaasPayment("pay_1", { amount: 5000, description: null })
-
-    expect(JSON.parse(String(initOf(0).body))).toEqual({ value: 50 })
-  })
-
-  it("refunds a card plan through the plan, sending the total in reais", async () => {
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({ id: "inst_1", refunds: [{ status: "PENDING", value: 219 }] }),
-    )
-
-    await refundAsaasInstallment("inst_1", { amount: 21900 })
-
-    expect(fetchMock.mock.calls[0][0]).toBe(
-      "https://api-sandbox.asaas.com/v3/installments/inst_1/refund",
-    )
-    expect(initOf(0).method).toBe("POST")
-    expect(JSON.parse(String(initOf(0).body))).toEqual({ value: 219 })
-  })
-
   it("reads a charge's refunds with their status", async () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse({
@@ -535,42 +514,4 @@ describe("charges", () => {
     ])
   })
 
-  it("lists the anticipations of a card plan", async () => {
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({
-        data: [
-          { id: "ant_1", status: "PENDING", fee: 6.25, netValue: 110.9 },
-          { id: "ant_2", status: "PENDING", fee: 8.17, netValue: 108.98 },
-        ],
-      }),
-    )
-
-    const anticipations = await listAsaasAnticipations({ installment: "inst_1" })
-
-    expect(fetchMock.mock.calls[0][0]).toBe(
-      "https://api-sandbox.asaas.com/v3/anticipations?installment=inst_1&limit=100",
-    )
-    expect(anticipations).toEqual([
-      { status: "PENDING", fee: 625 },
-      { status: "PENDING", fee: 817 },
-    ])
-  })
-
-  it("lists the anticipations of a single charge", async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({ data: [] }))
-
-    await listAsaasAnticipations({ payment: "pay_1" })
-
-    expect(fetchMock.mock.calls[0][0]).toBe(
-      "https://api-sandbox.asaas.com/v3/anticipations?payment=pay_1&limit=100",
-    )
-  })
-
-  it("refunds a whole card plan by sending no amount", async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({ id: "inst_1" }))
-
-    await refundAsaasInstallment("inst_1", { amount: null })
-
-    expect(JSON.parse(String(initOf(0).body))).toEqual({})
-  })
 })
