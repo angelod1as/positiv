@@ -1,5 +1,5 @@
 import {
-  AllCommunityModule,
+  ClientSideRowModelModule,
   type ColDef,
   ModuleRegistry,
 } from "ag-grid-community"
@@ -10,7 +10,7 @@ let modulesRegistered = false
 
 function ensureModulesRegistered() {
   if (!modulesRegistered) {
-    ModuleRegistry.registerModules([AllCommunityModule])
+    ModuleRegistry.registerModules([ClientSideRowModelModule])
     modulesRegistered = true
   }
 }
