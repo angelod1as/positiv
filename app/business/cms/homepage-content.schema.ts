@@ -10,6 +10,11 @@ const spanSchema = zod.object({
 
 const decorators = ["strong", "em"]
 
+const hrefSchema = zod.union([
+  zod.string().regex(/^\/(?![/\\])/),
+  zod.url({ protocol: /^https$/ }),
+])
+
 const blockSchema = zod
   .object({
     _type: zod.literal("block"),
@@ -18,7 +23,11 @@ const blockSchema = zod
     listItem: zod.never().optional(),
     markDefs: zod
       .array(
-        zod.looseObject({ _type: zod.literal("link"), _key: zod.string() }),
+        zod.object({
+          _type: zod.literal("link"),
+          _key: zod.string(),
+          href: hrefSchema,
+        }),
       )
       .optional(),
     children: zod.array(spanSchema),

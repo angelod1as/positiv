@@ -86,6 +86,42 @@ describe("portableTextSchema", () => {
     expect(result.success).toBe(false)
   })
 
+  const linked = (markDef: Omit<MarkDef, "_key">) => [
+    block([{ text: "Veja", marks: ["l1"] }], {
+      markDefs: [{ _key: "l1", ...markDef }],
+    }),
+  ]
+
+  it.each(["/", "/eventos", "/sobre/equipe", "https://instagram.com/positiv"])(
+    "accepts a link to %s",
+    (href) => {
+      const value = linked({ _type: "link", href })
+
+      expect(portableTextSchema.parse(value)).toEqual(value)
+    },
+  )
+
+  it("rejects a link without an address", () => {
+    const result = portableTextSchema.safeParse(linked({ _type: "link" }))
+
+    expect(result.success).toBe(false)
+  })
+
+  it.each([
+    "http://instagram.com/positiv",
+    "//evil.example",
+    "/\\evil.example",
+    "javascript:alert(1)",
+    "mailto:oi@positiv.party",
+    "eventos",
+    "https://",
+    "",
+  ])("rejects a link to %j", (href) => {
+    const result = portableTextSchema.safeParse(linked({ _type: "link", href }))
+
+    expect(result.success).toBe(false)
+  })
+
   it("rejects a child that is not a span", () => {
     const result = portableTextSchema.safeParse([
       {
