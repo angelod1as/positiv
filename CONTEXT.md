@@ -27,14 +27,41 @@ _Avoid_: Admin, author, content manager
 ### Public Site content
 
 **Page**:
-A Public Site document addressed by a URL, made of an ordered list of
-Sections. The **Homepage** is the Page at `/`.
+A Public Site document addressed by a URL, opened by a Page Header and made of
+an ordered list of Sections. Its address is unique, may be nested
+(`/sobre/equipe`), and its first segment never matches a Platform route. The
+**Homepage** is the Page whose address is `/`.
 _Avoid_: Landing, screen
 
+**Page Header**:
+The one element that opens every Page and carries its main title. It is not a
+Section: a Page has exactly one, and no Section repeats its role. It takes one
+of three forms: the **Homepage Hero**, only ever on the Homepage; the **Hero**,
+a lesser version for other Pages; or a plain **Title**.
+_Avoid_: Hero (as the general term), title section
+
 **Section**:
-A self-contained block of a Page — a hero, the about section, the testimonials.
-Each kind of Section can appear on any Page.
+A self-contained block of a Page — the about section, the testimonials, a run
+of formatted text. Each kind of Section can appear on any Page, in any order,
+and most can repeat.
 _Avoid_: Block, module, component, slice
+
+**Site Settings**:
+The Public Site values that belong to no single Page — the Navigation, the
+footer, the Notice — edited once and shown everywhere, Platform pages included.
+_Avoid_: Global config, settings (alone)
+
+**Navigation**:
+The ordered links Editors place in the header, each pointing to a Page or to
+any URL. The Platform's own buttons — log in, dashboard, account — are not
+part of it.
+_Avoid_: Menu
+
+**Notice**:
+A short message shown across the top of every page until the visitor dismisses
+it. A new Notice shows again to everyone. When the editorial system is
+unreachable, a fixed Notice says so and cannot be dismissed.
+_Avoid_: Banner, warning, alert
 
 **Embedded Section**:
 A Section whose wording belongs to Editors but whose data comes from the
