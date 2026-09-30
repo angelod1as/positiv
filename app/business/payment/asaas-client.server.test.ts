@@ -238,6 +238,7 @@ describe("customers", () => {
     ["a landline", "1133334444"],
     ["a mobile missing its ninth digit", "1196741102"],
     ["a foreign number", "46707381160"],
+    ["a mobile under a DDD that does not exist", "23999998888"],
   ])("leaves out %s, which Asaas would refuse", async (_, mobilePhone) => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ id: "cus_9" }))
 

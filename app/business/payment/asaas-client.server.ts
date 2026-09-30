@@ -4,6 +4,7 @@ import type { ZodType } from "zod"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
 import { normalizeCpf } from "~/lib/helpers/cpf"
+import { isBrazilianMobile } from "~/lib/helpers/phone"
 
 // Asaas rejects a request without a User-Agent. The package is private and
 // carries no version field, so the client names itself and the environment it
@@ -143,7 +144,7 @@ export async function createAsaasCustomer(input: {
     notificationDisabled: true,
   }
   const mobilePhone =
-    input.mobilePhone && BRAZILIAN_MOBILE.test(input.mobilePhone)
+    input.mobilePhone && isBrazilianMobile(input.mobilePhone)
       ? input.mobilePhone
       : undefined
 
@@ -167,10 +168,6 @@ export async function createAsaasCustomer(input: {
     return id
   }
 }
-
-// A DDD, then the nine digits of a mobile. Landlines, numbers still missing the
-// ninth digit and foreign numbers are all refused by Asaas.
-const BRAZILIAN_MOBILE = /^[1-9]{2}9\d{8}$/
 
 export async function findAsaasCustomerByCpf(cpf: string): Promise<string | null> {
   const { data } = await asaasRequest(
