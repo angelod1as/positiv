@@ -720,7 +720,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                         }
                       />
                     )}
-                      {payment.kind === "asaas" &&
+                      {payment.kind === "online" &&
                         payment.status === "paid" &&
                         (payment.amount ?? 0) > 0 &&
                         (payment.refund_requested_at ? (
@@ -742,7 +742,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                             <a
                               href={asaasChargeUrl(
                                 asaasDashboardOrigin,
-                                payment.asaas_invoice_number,
+                                payment.provider_dashboard_ref,
                               )}
                               target="_blank"
                               rel="noopener noreferrer"
@@ -755,7 +755,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                             </a>
                           </div>
                         ))}
-                      {payment.kind === "asaas" && payment.asaas_payment_id && (
+                      {payment.kind === "online" && payment.provider_charge_id && (
                         <Button
                           variant="outline"
                           size="sm"

@@ -26,11 +26,11 @@ export const syncPaymentFromProvider = applySchema(syncPaymentSchema)(
   async (values) => {
     const payment = await kyselyDb
       .selectFrom("payments")
-      .select(["kind", "asaas_payment_id", "asaas_installment_id"])
+      .select(["kind", "provider_charge_id", "provider_plan_id"])
       .where("id", "=", values.paymentId)
       .executeTakeFirst()
 
-    if (!payment || payment.kind !== "asaas" || !payment.asaas_payment_id) {
+    if (!payment || payment.kind !== "online" || !payment.provider_charge_id) {
       throw new Error(paymentsCopy.errors.notSyncable)
     }
 
@@ -45,8 +45,8 @@ export const syncPaymentFromProvider = applySchema(syncPaymentSchema)(
     let refunds: ProviderRefund[]
     try {
       refunds = await paymentProvider().fetchRefunds({
-        chargeId: payment.asaas_payment_id,
-        planId: payment.asaas_installment_id,
+        chargeId: payment.provider_charge_id,
+        planId: payment.provider_plan_id,
       })
     } catch (error) {
       logger.error("Could not read the payment from the payment provider", {
@@ -125,8 +125,8 @@ export async function syncOpenPayments(): Promise<{
   const candidates = await kyselyDb
     .selectFrom("payments")
     .select("id")
-    .where("kind", "=", "asaas")
-    .where("asaas_payment_id", "is not", null)
+    .where("kind", "=", "online")
+    .where("provider_charge_id", "is not", null)
     .where("status", "in", ["paid", "partially_refunded"])
     .where((eb) =>
       eb.or([

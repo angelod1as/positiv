@@ -53,7 +53,7 @@ describe("loadPaymentPage", () => {
   const openCharge = () =>
     createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "pending",
       amount: null,
       method: null,
@@ -167,7 +167,7 @@ describe("loadPaymentPage", () => {
   it("says the link is closed for an expired charge", async () => {
     const expired = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "expired",
       amount: null,
       method: null,
@@ -187,12 +187,12 @@ describe("loadPaymentPage", () => {
   it("keeps offering the options after the participant already picked one", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "awaiting_payment",
       amount: 22199,
       method: "pix",
       paid_at: null,
-      asaas_invoice_url: "https://sandbox.asaas.com/i/pay_1",
+      provider_checkout_url: "https://sandbox.asaas.com/i/pay_1",
     })
 
     const result = await loadPaymentPage({
@@ -211,13 +211,13 @@ describe("loadPaymentPage", () => {
   it("remembers a card plan the participant picked", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "awaiting_payment",
       amount: 23730,
       method: "credit_card",
       installment_count: 3,
       paid_at: null,
-      asaas_invoice_url: "https://sandbox.asaas.com/i/pay_2",
+      provider_checkout_url: "https://sandbox.asaas.com/i/pay_2",
     })
 
     const result = await loadPaymentPage({
@@ -295,7 +295,7 @@ describe("loadPaymentPage", () => {
     it("says the link is closed for an expired charge", async () => {
       const expired = await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
-        kind: "asaas",
+        kind: "online",
         status: "expired",
         amount: null,
         method: null,

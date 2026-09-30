@@ -105,7 +105,7 @@ export const paymentsCopy = {
       date: "Data pagto",
       actions: "Ações",
     },
-    kinds: { asaas: "Asaas", manual: "Manual" },
+    kinds: { online: "Asaas", manual: "Manual" },
     // The lines under a payment's status: where its refund stands, as Asaas
     // last reported it.
     refundLines: {

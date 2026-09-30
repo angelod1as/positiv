@@ -104,11 +104,11 @@ async function waitForWebhooks(chargeIds: string[]) {
   for (;;) {
     const rows = await db
       .selectFrom("payment_webhook_events")
-      .select("asaas_payment_id")
-      .where("asaas_payment_id", "in", chargeIds)
+      .select("provider_charge_id")
+      .where("provider_charge_id", "in", chargeIds)
       .where("event_type", "in", ["PAYMENT_CONFIRMED", "PAYMENT_RECEIVED"])
       .execute()
-    const arrived = new Set(rows.map((row) => row.asaas_payment_id))
+    const arrived = new Set(rows.map((row) => row.provider_charge_id))
     if (chargeIds.every((id) => arrived.has(id))) return true
     if (Date.now() > deadline) return false
     await sleep(POLL_MS)

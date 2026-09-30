@@ -76,14 +76,13 @@ describe("syncPaymentFromProvider", () => {
   const cardPlan = (overrides: Record<string, unknown> = {}) =>
     createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "credit_card",
       installment_count: 2,
       base_amount: 22000,
       amount: 23430,
-      asaas_net: 22566,
-      asaas_payment_id: `pay_${counter}`,
-      asaas_installment_id: `inst_${counter}`,
+      provider_charge_id: `pay_${counter}`,
+      provider_plan_id: `inst_${counter}`,
       refund_requested_at: new Date().toISOString(),
       refund_requested_amount: 22566,
       ...overrides,
@@ -139,11 +138,10 @@ describe("syncPaymentFromProvider", () => {
     getAsaasPaymentRefunds.mockResolvedValue([{ value: 220, status: "DONE" }])
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "pix",
       amount: 22199,
-      asaas_net: 22000,
-      asaas_payment_id: `pay_${counter}`,
+      provider_charge_id: `pay_${counter}`,
     })
 
     await syncPaymentFromProvider({ paymentId: payment.id })
@@ -183,36 +181,33 @@ describe("syncPaymentFromProvider", () => {
     it("reads only the payments Asaas still has news about", async () => {
       const refunding = await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
-        kind: "asaas",
+        kind: "online",
         method: "pix",
         amount: 22199,
-        asaas_net: 22000,
-        asaas_payment_id: `pay_refunding_${counter}`,
+        provider_charge_id: `pay_refunding_${counter}`,
         refund_requested_at: new Date().toISOString(),
         refund_requested_amount: 22000,
       })
       const onItsWay = await cardPlan({
-        asaas_payment_id: `pay_on_its_way_${counter}`,
-        asaas_installment_id: `inst_on_its_way_${counter}`,
+        provider_charge_id: `pay_on_its_way_${counter}`,
+        provider_plan_id: `inst_on_its_way_${counter}`,
         refund_requested_at: null,
         refund_requested_amount: null,
         refund_pending_amount: 10851,
       })
       const settled = await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
-        kind: "asaas",
+        kind: "online",
         method: "pix",
         amount: 22199,
-        asaas_net: 22000,
-        asaas_payment_id: `pay_settled_${counter}`,
+        provider_charge_id: `pay_settled_${counter}`,
       })
       const justRead = await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
-        kind: "asaas",
+        kind: "online",
         method: "pix",
         amount: 22199,
-        asaas_net: 22000,
-        asaas_payment_id: `pay_read_${counter}`,
+        provider_charge_id: `pay_read_${counter}`,
         refund_requested_at: new Date().toISOString(),
         refund_requested_amount: 22000,
         refunds_synced_at: new Date().toISOString(),
@@ -225,11 +220,11 @@ describe("syncPaymentFromProvider", () => {
         ...getAsaasPaymentRefunds.mock.calls.map(([id]) => id),
         ...getAsaasInstallmentRefunds.mock.calls.map(([id]) => id),
       ]
-      expect(read).toContain(refunding.asaas_payment_id)
-      expect(read).toContain(onItsWay.asaas_installment_id)
-      expect(read).not.toContain(settled.asaas_payment_id)
+      expect(read).toContain(refunding.provider_charge_id)
+      expect(read).toContain(onItsWay.provider_plan_id)
+      expect(read).not.toContain(settled.provider_charge_id)
       // Read a moment ago: the next run gets it.
-      expect(read).not.toContain(justRead.asaas_payment_id)
+      expect(read).not.toContain(justRead.provider_charge_id)
       expect(stats.failed).toBe(0)
       expect(stats.synced).toBeGreaterThanOrEqual(2)
     })
@@ -238,21 +233,19 @@ describe("syncPaymentFromProvider", () => {
       getAsaasPaymentRefunds.mockRejectedValueOnce(new TypeError("fetch failed"))
       await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
-        kind: "asaas",
+        kind: "online",
         method: "pix",
         amount: 22199,
-        asaas_net: 22000,
-        asaas_payment_id: `pay_first_${counter}`,
+        provider_charge_id: `pay_first_${counter}`,
         refund_requested_at: new Date().toISOString(),
         refund_requested_amount: 22000,
       })
       await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
-        kind: "asaas",
+        kind: "online",
         method: "pix",
         amount: 22199,
-        asaas_net: 22000,
-        asaas_payment_id: `pay_second_${counter}`,
+        provider_charge_id: `pay_second_${counter}`,
         refund_requested_at: new Date().toISOString(),
         refund_requested_amount: 22000,
       })
@@ -269,11 +262,10 @@ describe("syncPaymentFromProvider", () => {
       getAsaasPaymentRefunds.mockRejectedValue(new TypeError("fetch failed"))
       const failing = await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
-        kind: "asaas",
+        kind: "online",
         method: "pix",
         amount: 22199,
-        asaas_net: 22000,
-        asaas_payment_id: `pay_failing_${counter}`,
+        provider_charge_id: `pay_failing_${counter}`,
         refund_requested_at: new Date().toISOString(),
         refund_requested_amount: 22000,
       })
@@ -283,7 +275,7 @@ describe("syncPaymentFromProvider", () => {
       await syncOpenPayments()
 
       expect(getAsaasPaymentRefunds).not.toHaveBeenCalledWith(
-        failing.asaas_payment_id,
+        failing.provider_charge_id,
       )
       const after = await reload(failing.id)
       expect(after.refunds_sync_attempted_at).not.toBeNull()
@@ -295,8 +287,8 @@ describe("syncPaymentFromProvider", () => {
     // card with no refund on its way has nothing left to tell the site.
     it("leaves alone a card payment with no refund on its way", async () => {
       const quiet = await cardPlan({
-        asaas_payment_id: `pay_quiet_${counter}`,
-        asaas_installment_id: `inst_quiet_${counter}`,
+        provider_charge_id: `pay_quiet_${counter}`,
+        provider_plan_id: `inst_quiet_${counter}`,
         refund_requested_at: null,
         refund_requested_amount: null,
         paid_at: new Date().toISOString(),
@@ -305,7 +297,7 @@ describe("syncPaymentFromProvider", () => {
       await syncOpenPayments()
 
       const read = getAsaasInstallmentRefunds.mock.calls.map(([id]) => id)
-      expect(read).not.toContain(quiet.asaas_installment_id)
+      expect(read).not.toContain(quiet.provider_plan_id)
     })
   })
 })

@@ -53,7 +53,7 @@ describe("getNextEvents - Query Optimization Integration Tests", () => {
       })
       const payment = await createTestPayment(tracker, kysely, {
         event_participant_id: participant.id,
-        kind: "asaas",
+        kind: "online",
         status: "pending",
         amount: null,
         method: null,

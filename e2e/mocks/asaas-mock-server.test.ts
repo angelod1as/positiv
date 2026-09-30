@@ -248,7 +248,7 @@ describe("asaas mock server", () => {
   })
 
   // Every spec resets the mock, but the rows earlier specs wrote stay in the
-  // database, where asaas_payment_id is unique.
+  // database, where provider_charge_id is unique.
   it("never hands out an id twice, even across a reset", async () => {
     const before = await createPayment({ billingType: "PIX", value: 10 })
     await fetch(`${origin}/__mock/reset`, { method: "POST" })

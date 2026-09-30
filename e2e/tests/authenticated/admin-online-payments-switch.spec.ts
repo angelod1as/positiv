@@ -69,7 +69,7 @@ test.describe('POS-565: switching online payments off and back on from the admin
 
     const [awaiting] = await getParticipantPayments(participant.profileId, event.id)
     expect(awaiting.status).toBe('awaiting_payment')
-    const chargeId = awaiting.asaas_payment_id
+    const chargeId = awaiting.provider_charge_id
     if (!chargeId) throw new Error('The Pix charge was not recorded on the row')
     const [charge] = (await getAsaasMockCalls()).filter(
       (call) => call.method === 'POST' && call.path === '/payments',

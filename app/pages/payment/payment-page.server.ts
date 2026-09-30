@@ -57,7 +57,7 @@ async function findOwnPayment(paymentId: string, profileId: string) {
       "p.installment_count",
       "p.due_at",
       "p.paid_at",
-      "p.asaas_invoice_url",
+      "p.provider_checkout_url",
       "e.title as event_title",
       "e.emoji as event_emoji",
       "pr.id as profile_id",
@@ -129,7 +129,7 @@ export async function loadPaymentPage({
     baseAmount: payment.base_amount,
     options,
     chosen: findChosen(options, payment.method, payment.installment_count),
-    invoiceUrl: payment.asaas_invoice_url,
+    invoiceUrl: payment.provider_checkout_url,
   }
 }
 

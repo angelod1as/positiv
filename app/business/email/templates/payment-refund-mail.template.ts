@@ -11,7 +11,7 @@ export type PaymentRefundMailInput = {
   refundAmount: number
   amount: number
   method: string | null
-  kind: "asaas" | "manual"
+  kind: "online" | "manual"
 }
 
 const methodNames: Record<string, string> = paymentsCopy.manage.methods
@@ -35,8 +35,8 @@ export const paymentRefundMailTemplate = (
       : ""
   // The window describes money Asaas returns. A manual payment may have been
   // cash or a transfer, so it is not true of it.
-  const throughAsaas = input.kind === "asaas"
-  const window = !throughAsaas
+  const throughProvider = input.kind === "online"
+  const window = !throughProvider
     ? ""
     : input.method === "credit_card"
       ? paymentRefundMailCopy.windowCard
@@ -105,7 +105,7 @@ export const paymentRefundMailTemplate = (
               </div>
 
               ${
-                throughAsaas
+                throughProvider
                   ? `<p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
                 ${window}
               </p>`

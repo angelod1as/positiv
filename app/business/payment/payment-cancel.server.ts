@@ -24,29 +24,29 @@ export const cancelPayment = applySchema(cancelPaymentSchema)(async (values) => 
     .set({ status: "cancelled" })
     .where("id", "=", values.paymentId)
     .where("status", "in", [...ACTIVE_PAYMENT_STATUSES])
-    .returning(["id", "asaas_payment_id"])
+    .returning(["id", "provider_charge_id"])
     .executeTakeFirst()
 
   if (!cancelled) {
     throw new Error(paymentsCopy.errors.notCancellable)
   }
 
-  if (cancelled.asaas_payment_id) {
+  if (cancelled.provider_charge_id) {
     try {
       // A refusal comes back as false, not as an error.
       const deleted = await paymentProvider().cancelCharge(
-        cancelled.asaas_payment_id,
+        cancelled.provider_charge_id,
       )
       if (!deleted) {
         logger.error("The payment provider refused to delete the cancelled charge", {
           paymentId: cancelled.id,
-          chargeId: cancelled.asaas_payment_id,
+          chargeId: cancelled.provider_charge_id,
         })
       }
     } catch (error) {
       logger.error("Could not delete the cancelled charge at the payment provider", {
         paymentId: cancelled.id,
-        chargeId: cancelled.asaas_payment_id,
+        chargeId: cancelled.provider_charge_id,
         error: error instanceof Error ? error.message : String(error),
       })
     }

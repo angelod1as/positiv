@@ -31,7 +31,6 @@ export const webhookEventSchema = zod.looseObject({
       id: zod.string(),
       status: zod.string().optional(),
       value: zod.number().optional(),
-      netValue: zod.number().nullable().optional(),
       installment: zod.string().nullable().optional(),
       externalReference: zod.string().nullable().optional(),
       paymentDate: zod.string().nullable().optional(),
@@ -72,12 +71,12 @@ export async function recordWebhookEvent(
   const inserted = await kyselyDb
     .insertInto("payment_webhook_events")
     .values({
-      asaas_event_id: event.id,
+      provider_event_id: event.id,
       event_type: event.event,
-      asaas_payment_id: event.payment?.id ?? null,
+      provider_charge_id: event.payment?.id ?? null,
       payload: JSON.stringify(event),
     })
-    .onConflict((oc) => oc.column("asaas_event_id").doNothing())
+    .onConflict((oc) => oc.column("provider_event_id").doNothing())
     .returning("id")
     .executeTakeFirst()
 
@@ -86,7 +85,7 @@ export async function recordWebhookEvent(
   const existing = await kyselyDb
     .selectFrom("payment_webhook_events")
     .select(["id", "processed_at"])
-    .where("asaas_event_id", "=", event.id)
+    .where("provider_event_id", "=", event.id)
     .executeTakeFirstOrThrow()
 
   return {
@@ -142,7 +141,7 @@ async function findPayment(db: Kysely<Database>, event: AsaasWebhookEvent) {
   const byId = await db
     .selectFrom("payments")
     .selectAll()
-    .where("asaas_payment_id", "=", payment.id)
+    .where("provider_charge_id", "=", payment.id)
     .forUpdate()
     .executeTakeFirst()
   if (byId) return byId
@@ -150,13 +149,13 @@ async function findPayment(db: Kysely<Database>, event: AsaasWebhookEvent) {
   if (payment.installment) {
     // One payments row per Asaas installment plan: a resend or a re-pick opens
     // a new plan rather than joining this one. The column carries a plain
-    // index, not a unique one like asaas_payment_id, so this is an invariant
+    // index, not a unique one like provider_charge_id, so this is an invariant
     // the code keeps and the schema does not -- two rows sharing a plan would
     // make the row picked here arbitrary.
     const byInstallment = await db
       .selectFrom("payments")
       .selectAll()
-      .where("asaas_installment_id", "=", payment.installment)
+      .where("provider_plan_id", "=", payment.installment)
       .forUpdate()
       .executeTakeFirst()
     if (byInstallment) return byInstallment
@@ -196,11 +195,10 @@ function eventRefunds(
 /**
  * Every refund of a card plan the inbox knows about.
  *
- * The same shape as the net below, for the same reason: Asaas reports a plan's
- * refund as one event per charge, each listing only that charge's refunds. The
- * latest event per Asaas payment id carries that charge's whole list, so taking
- * it once per charge is what keeps a redelivery -- or a second refund of the
- * same charge -- from counting twice.
+ * Asaas reports a plan's refund as one event per charge, each listing only
+ * that charge's refunds. The latest event per Asaas payment id carries that
+ * charge's whole list, so taking it once per charge is what keeps a
+ * redelivery -- or a second refund of the same charge -- from counting twice.
  */
 async function installmentRefunds(
   db: Kysely<Database>,
@@ -222,34 +220,6 @@ async function installmentRefunds(
         row.payload.payment?.value ?? null,
       ) ?? [],
   )
-}
-
-/**
- * What a card plan has actually netted so far, in cents.
- *
- * Asaas bills an installment plan as one payment per installment and sends an
- * event for each, so the plan's net is a sum rather than a single number. It is
- * recomputed from the inbox rather than added up as events arrive: the same
- * installment is described by both CONFIRMED and RECEIVED, and counting the
- * latest net once per Asaas payment id is what keeps either of them, in any
- * order, from being counted twice.
- */
-async function installmentNetCents(
-  db: Kysely<Database>,
-  installmentId: string,
-): Promise<number> {
-  const result = await sql<{ net: string }>`
-    SELECT COALESCE(SUM(net), 0)::text AS net FROM (
-      SELECT DISTINCT ON (payload->'payment'->>'id')
-             (payload->'payment'->>'netValue')::numeric AS net
-        FROM payment_webhook_events
-       WHERE payload->'payment'->>'installment' = ${installmentId}
-         AND event_type IN ('PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED')
-         AND payload->'payment'->>'netValue' IS NOT NULL
-       ORDER BY payload->'payment'->>'id', received_at DESC
-    ) AS per_installment`.execute(db)
-
-  return Math.round(Number(result.rows[0]?.net ?? 0) * 100)
 }
 
 type TransitionResult = {
@@ -388,16 +358,9 @@ async function applyToPayment(
     const amount =
       payment.amount ??
       (event.payment?.value ? reaisToCents(event.payment.value) : null)
-    const installmentId = payment.asaas_installment_id
-    const net = installmentId
-      ? await installmentNetCents(db, installmentId)
-      : event.payment?.netValue != null
-        ? reaisToCents(event.payment.netValue)
-        : null
-
     const updated = await db
       .updateTable("payments")
-      .set({ status: "paid", paid_at: now, amount, asaas_net: net })
+      .set({ status: "paid", paid_at: now, amount })
       .where("id", "=", payment.id)
       .where("status", "in", PAYABLE)
       .returning("id")
@@ -405,22 +368,8 @@ async function applyToPayment(
 
     // No row means it was already paid — a redelivery, the second event of the
     // CONFIRMED/RECEIVED pair, or a later installment of a plan the first one
-    // already settled. The email has been sent once already; the money the
-    // later installments bring in is still ours to record.
-    if (!updated) {
-      if (installmentId) {
-        await db
-          .updateTable("payments")
-          .set({ asaas_net: net })
-          .where("id", "=", payment.id)
-          // Guarded like every other write here. A plan keeps billing after a
-          // refund or a cancellation, and a settled row whose net still moves
-          // contradicts the refunded_at beside it.
-          .where("status", "=", "paid")
-          .execute()
-      }
-      return { applied: false, reason: "already_paid" }
-    }
+    // already settled. The email has been sent once already.
+    if (!updated) return { applied: false, reason: "already_paid" }
 
     // Queued inside the transaction, so the receipt is owed the moment the
     // row says paid. A send that never happens is then a row the sweep finds.
@@ -469,8 +418,8 @@ async function applyToPayment(
     event.event === "PAYMENT_REFUNDED" ||
     event.event === "PAYMENT_PARTIALLY_REFUNDED"
   ) {
-    const refunds = payment.asaas_installment_id
-      ? await installmentRefunds(db, payment.asaas_installment_id)
+    const refunds = payment.provider_plan_id
+      ? await installmentRefunds(db, payment.provider_plan_id)
       : eventRefunds(
           event,
           payment.amount === null ? null : payment.amount / 100,

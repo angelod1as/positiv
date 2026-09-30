@@ -66,7 +66,7 @@ describe("RecentProfilesTable", () => {
       flag_notes: null,
       general_notes: null,
       race_color: null,
-      asaas_customer_id: null,
+      provider_customer_id: null,
       phone_is_international: false,
     } as ProfileGlobal,
     {
@@ -100,7 +100,7 @@ describe("RecentProfilesTable", () => {
       flag_notes: null,
       general_notes: null,
       race_color: null,
-      asaas_customer_id: null,
+      provider_customer_id: null,
       phone_is_international: false,
     } as ProfileGlobal,
   ]

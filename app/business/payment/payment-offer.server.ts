@@ -79,30 +79,30 @@ export const createPaymentOfferSchema = zod.object({
 })
 
 async function deleteReplacedCharges(
-  replaced: { id: string; asaas_payment_id: string | null }[],
+  replaced: { id: string; provider_charge_id: string | null }[],
 ) {
   // Outside the transaction on purpose: an HTTP call inside one holds a row
   // lock for as long as the network takes, and a charge the provider refuses
   // to delete must not undo the row the admin just created. The old charge is
   // unpaid either way and will simply go overdue there.
   for (const old of replaced) {
-    if (!old.asaas_payment_id) continue
+    if (!old.provider_charge_id) continue
     try {
       // A refusal is not always an error, so the return value is the only
       // place it shows. An undeleted charge stays payable
       // through the invoice the participant already has, and PR 11 cannot mark
       // a cancelled row paid -- the money would arrive and go unrecorded.
-      const deleted = await paymentProvider().cancelCharge(old.asaas_payment_id)
+      const deleted = await paymentProvider().cancelCharge(old.provider_charge_id)
       if (!deleted) {
         logger.error("The payment provider refused to delete the replaced charge", {
           paymentId: old.id,
-          chargeId: old.asaas_payment_id,
+          chargeId: old.provider_charge_id,
         })
       }
     } catch (error) {
       logger.error("Could not delete the replaced charge at the payment provider", {
         paymentId: old.id,
-        chargeId: old.asaas_payment_id,
+        chargeId: old.provider_charge_id,
         error: error instanceof Error ? error.message : String(error),
       })
     }
@@ -197,14 +197,14 @@ export const createPaymentOffer = applySchema(createPaymentOfferSchema)(
           .set({ status: "cancelled" })
           .where("event_participant_id", "=", values.eventParticipantId)
           .where("status", "in", [...ACTIVE_PAYMENT_STATUSES])
-          .returning(["id", "asaas_payment_id"])
+          .returning(["id", "provider_charge_id"])
           .execute()
 
         const payment = await trx
           .insertInto("payments")
           .values({
             event_participant_id: values.eventParticipantId,
-            kind: "asaas",
+            kind: "online",
             status: "pending",
             base_amount: baseAmount,
             due_at: dueAt,

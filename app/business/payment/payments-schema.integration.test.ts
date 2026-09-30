@@ -109,10 +109,10 @@ describe("payments schema", () => {
       await expect(
         createTestPayment(tracker, kysely, {
           event_participant_id: participantId,
-          kind: "asaas",
+          kind: "online",
           method: "cash",
         }),
-      ).rejects.toThrow(/payments_asaas_shape/)
+      ).rejects.toThrow(/payments_online_shape/)
     })
 
     // Two rules forbid this row — a full refund must return the whole amount,
@@ -156,7 +156,7 @@ describe("payments schema", () => {
       await expect(
         createTestPayment(tracker, kysely, {
           event_participant_id: participantId,
-          kind: "asaas",
+          kind: "online",
           status: "pending",
           amount: null,
           method: null,
@@ -170,7 +170,7 @@ describe("payments schema", () => {
       await expect(
         createTestPayment(tracker, kysely, {
           event_participant_id: participantId,
-          kind: "asaas",
+          kind: "online",
           status: "pending",
           amount: null,
           method: null,
@@ -178,17 +178,6 @@ describe("payments schema", () => {
           installment_count: 3,
         }),
       ).rejects.toThrow(/payments_installments_only_on_card/)
-    })
-
-    it("refuses a manual row carrying an Asaas net", async () => {
-      await expect(
-        createTestPayment(tracker, kysely, {
-          event_participant_id: participantId,
-          kind: "manual",
-          method: "pix",
-          asaas_net: 22050,
-        }),
-      ).rejects.toThrow(/payments_manual_shape/)
     })
 
     it("refuses a manual row that does not say how it was paid", async () => {
@@ -201,12 +190,12 @@ describe("payments schema", () => {
       ).rejects.toThrow(/payments_manual_shape/)
     })
 
-    it("refuses a manual row carrying an Asaas payment id", async () => {
+    it("refuses a manual row carrying a provider charge id", async () => {
       await expect(
         createTestPayment(tracker, kysely, {
           event_participant_id: participantId,
           kind: "manual",
-          asaas_payment_id: "pay_1",
+          provider_charge_id: "pay_1",
         }),
       ).rejects.toThrow(/payments_manual_shape/)
     })
@@ -215,7 +204,7 @@ describe("payments schema", () => {
       await expect(
         createTestPayment(tracker, kysely, {
           event_participant_id: participantId,
-          kind: "asaas",
+          kind: "online",
           method: "pix",
           installment_count: 3,
         }),
@@ -225,7 +214,7 @@ describe("payments schema", () => {
     it("refuses a second open charge for the same participant", async () => {
       await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
-        kind: "asaas",
+        kind: "online",
         status: "pending",
         amount: null,
         method: null,
@@ -235,7 +224,7 @@ describe("payments schema", () => {
       await expect(
         createTestPayment(tracker, kysely, {
           event_participant_id: participantId,
-          kind: "asaas",
+          kind: "online",
           status: "awaiting_payment",
           amount: null,
           method: null,
@@ -247,7 +236,7 @@ describe("payments schema", () => {
     it("allows a new charge once the previous one is cancelled", async () => {
       const first = await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
-        kind: "asaas",
+        kind: "online",
         status: "pending",
         amount: null,
         method: null,
@@ -263,7 +252,7 @@ describe("payments schema", () => {
       await expect(
         createTestPayment(tracker, kysely, {
           event_participant_id: participantId,
-          kind: "asaas",
+          kind: "online",
           status: "pending",
           amount: null,
           method: null,
@@ -361,12 +350,11 @@ describe("payments schema", () => {
     it("counts what the participant paid through Asaas, not what Asaas kept", async () => {
       await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
-        kind: "asaas",
+        kind: "online",
         method: "credit_card",
         installment_count: 3,
         base_amount: 22000,
         amount: 23454,
-        asaas_net: 22010,
       })
 
       const row = await kysely
@@ -424,10 +412,9 @@ describe("payments schema", () => {
     it("counts net the same before Asaas reports one", async () => {
       await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
-        kind: "asaas",
+        kind: "online",
         method: "pix",
         amount: 22000,
-        asaas_net: null,
       })
 
       const row = await kysely
@@ -489,7 +476,7 @@ describe("payments schema", () => {
         amount: null,
         paid_at: null,
         method: null,
-        kind: "asaas",
+        kind: "online",
       })
       const active = await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
@@ -497,7 +484,7 @@ describe("payments schema", () => {
         amount: null,
         paid_at: null,
         method: null,
-        kind: "asaas",
+        kind: "online",
       })
 
       const row = await kysely
@@ -515,7 +502,7 @@ describe("payments schema", () => {
     it("expires an overdue open charge and leaves everything else alone", async () => {
       const overdue = await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
-        kind: "asaas",
+        kind: "online",
         status: "pending",
         amount: null,
         method: null,

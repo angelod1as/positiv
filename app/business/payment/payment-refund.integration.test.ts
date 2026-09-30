@@ -123,7 +123,7 @@ describe("markManualRefunded", () => {
   it("refuses to mark an Asaas payment refunded by hand", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       amount: 20000,
       base_amount: 20000,
       method: "pix",
@@ -235,7 +235,7 @@ describe("markManualRefunded", () => {
   it("refuses to refund a payment that is not paid", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "pending",
       amount: null,
       method: null,
@@ -300,7 +300,7 @@ describe("cancelPayment", () => {
   it("cancels an open charge", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "pending",
       amount: null,
       method: null,
@@ -339,7 +339,7 @@ describe("cancelPayment", () => {
   it("frees the participant to receive a new charge", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "pending",
       amount: null,
       method: null,
@@ -351,7 +351,7 @@ describe("cancelPayment", () => {
     await expect(
       createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
-        kind: "asaas",
+        kind: "online",
         status: "pending",
         amount: null,
         method: null,
@@ -364,12 +364,12 @@ describe("cancelPayment", () => {
     const asaasPaymentId = `pay_cancel_${Date.now()}`
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "awaiting_payment",
       amount: 20000,
       method: "pix",
       paid_at: null,
-      asaas_payment_id: asaasPaymentId,
+      provider_charge_id: asaasPaymentId,
     })
 
     await cancelPayment({ paymentId: payment.id })
@@ -380,7 +380,7 @@ describe("cancelPayment", () => {
   it("calls Asaas for nothing when the charge never reached it", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "pending",
       amount: null,
       method: null,
@@ -396,12 +396,12 @@ describe("cancelPayment", () => {
     deleteAsaasPayment.mockRejectedValue(new Error("asaas is down"))
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "awaiting_payment",
       amount: 20000,
       method: "pix",
       paid_at: null,
-      asaas_payment_id: `pay_cancel_fail_${Date.now()}`,
+      provider_charge_id: `pay_cancel_fail_${Date.now()}`,
     })
 
     const result = await cancelPayment({ paymentId: payment.id })
@@ -421,7 +421,7 @@ describe("cancelPayment", () => {
       event_participant_id: participantId,
       amount: 20000,
       base_amount: 20000,
-      asaas_payment_id: null,
+      provider_charge_id: null,
     })
 
     await cancelPayment({ paymentId: payment.id })

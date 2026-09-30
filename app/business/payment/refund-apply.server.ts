@@ -7,7 +7,7 @@ export type RefundablePayment = {
   id: string
   amount: number | null
   status: string
-  asaas_installment_id: string | null
+  provider_plan_id: string | null
   refund_amount: number | null
   refunded_at: string | null
   refund_requested_at: string | null
@@ -34,7 +34,7 @@ export async function applyRefundTally(
     previousRefunded,
     requested: payment.refund_requested_amount,
     claimed: payment.refund_requested_at !== null,
-    isPlan: payment.asaas_installment_id !== null,
+    isPlan: payment.provider_plan_id !== null,
     tally,
   })
 

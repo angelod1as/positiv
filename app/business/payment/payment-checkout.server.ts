@@ -30,7 +30,7 @@ export const pickOptionSchema = zod.object({
  */
 async function ensureProviderCustomer(profile: {
   id: string
-  asaas_customer_id: string | null
+  provider_customer_id: string | null
   full_name: string | null
   social_name: string | null
   email: string | null
@@ -38,7 +38,7 @@ async function ensureProviderCustomer(profile: {
   phone: number | null
   phone_is_international: boolean
 }): Promise<string> {
-  if (profile.asaas_customer_id) return profile.asaas_customer_id
+  if (profile.provider_customer_id) return profile.provider_customer_id
 
   const customerId = await paymentProvider().findOrCreateCustomer({
     profileId: profile.id,
@@ -57,33 +57,33 @@ async function ensureProviderCustomer(profile: {
   // up naming different ones.
   const written = await kyselyDb
     .updateTable("profiles")
-    .set({ asaas_customer_id: customerId })
+    .set({ provider_customer_id: customerId })
     .where("id", "=", profile.id)
-    .where("asaas_customer_id", "is", null)
-    .returning("asaas_customer_id")
+    .where("provider_customer_id", "is", null)
+    .returning("provider_customer_id")
     .executeTakeFirst()
     .catch((error: unknown) => {
       // The customer the provider holds for this CPF is already another profile's --
       // one that carried the CPF before. Which of them it belongs to is a
       // question for a person, and charging either on a guess is worse.
-      if (isUniqueViolation(error, "profiles_asaas_customer_id")) {
+      if (isUniqueViolation(error, "profiles_provider_customer_id")) {
         throw new Error(paymentsCopy.errors.customerTaken)
       }
       throw error
     })
 
-  if (written?.asaas_customer_id) return written.asaas_customer_id
+  if (written?.provider_customer_id) return written.provider_customer_id
 
   // Another pick got there first. Its customer is the one every charge must
   // name, so the one created here is abandoned at the provider: it holds no
   // money and is attached to no charge.
   const winner = await kyselyDb
     .selectFrom("profiles")
-    .select("asaas_customer_id")
+    .select("provider_customer_id")
     .where("id", "=", profile.id)
     .executeTakeFirst()
 
-  return winner?.asaas_customer_id ?? customerId
+  return winner?.provider_customer_id ?? customerId
 }
 
 /**
@@ -109,11 +109,11 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
       "p.due_at",
       "p.method",
       "p.installment_count",
-      "p.asaas_payment_id",
-      "p.asaas_invoice_url",
+      "p.provider_charge_id",
+      "p.provider_checkout_url",
       "e.title as event_title",
       "pr.id as profile_id",
-      "pr.asaas_customer_id",
+      "pr.provider_customer_id",
       "pr.full_name",
       "pr.social_name",
       "pr.email",
@@ -154,13 +154,13 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
   const sameOption =
     payment.method === option.method &&
     payment.installment_count === option.installmentCount
-  if (sameOption && payment.asaas_invoice_url) {
-    return { invoiceUrl: payment.asaas_invoice_url }
+  if (sameOption && payment.provider_checkout_url) {
+    return { invoiceUrl: payment.provider_checkout_url }
   }
 
   const customerId = await ensureProviderCustomer({
     id: payment.profile_id,
-    asaas_customer_id: payment.asaas_customer_id,
+    provider_customer_id: payment.provider_customer_id,
     full_name: payment.full_name,
     social_name: payment.social_name,
     email: payment.email,
@@ -205,11 +205,11 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
       method: option.method,
       installment_count: option.installmentCount,
       amount: option.total,
-      asaas_customer_id: customerId,
-      asaas_payment_id: charge.chargeId,
-      asaas_installment_id: charge.planId,
-      asaas_invoice_url: charge.checkoutUrl,
-      asaas_invoice_number: charge.dashboardRef,
+      provider_customer_id: customerId,
+      provider_charge_id: charge.chargeId,
+      provider_plan_id: charge.planId,
+      provider_checkout_url: charge.checkoutUrl,
+      provider_dashboard_ref: charge.dashboardRef,
     })
     .where("id", "=", payment.id)
     .where("status", "in", [...ACTIVE_PAYMENT_STATUSES])
@@ -219,7 +219,7 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
     // naming it. A row lock would close the race too, but it would be held
     // across the provider call above; see the note in payment-offer.server.ts.
     .where(
-      sql<boolean>`asaas_payment_id IS NOT DISTINCT FROM ${payment.asaas_payment_id}`,
+      sql<boolean>`provider_charge_id IS NOT DISTINCT FROM ${payment.provider_charge_id}`,
     )
     .returning("id")
     .executeTakeFirst()
@@ -236,11 +236,11 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
     // handed back is the one the row actually names, so both tabs land on the
     // charge that is being tracked.
     if (
-      winner?.asaas_invoice_url &&
+      winner?.provider_checkout_url &&
       winner.method === option.method &&
       winner.installment_count === option.installmentCount
     ) {
-      return { invoiceUrl: winner.asaas_invoice_url }
+      return { invoiceUrl: winner.provider_checkout_url }
     }
 
     throw new Error(paymentsCopy.errors.chargeClosed)
@@ -248,8 +248,8 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
 
   // Only now the replaced one, if the participant changed their mind. Deleting
   // it earlier would leave them with nothing to pay had the new charge failed.
-  if (payment.asaas_payment_id && payment.asaas_payment_id !== charge.chargeId) {
-    await deleteOrphanCharge(payment.id, payment.asaas_payment_id)
+  if (payment.provider_charge_id && payment.provider_charge_id !== charge.chargeId) {
+    await deleteOrphanCharge(payment.id, payment.provider_charge_id)
   }
 
   return { invoiceUrl: charge.checkoutUrl }
@@ -273,7 +273,7 @@ export const pickOption = applySchema(pickOptionSchema)(async (values) => {
 function readChargeAfterRace(paymentId: string) {
   return kyselyDb
     .selectFrom("payments")
-    .select(["method", "installment_count", "asaas_invoice_url"])
+    .select(["method", "installment_count", "provider_checkout_url"])
     .where("id", "=", paymentId)
     .where("status", "in", [...ACTIVE_PAYMENT_STATUSES])
     .executeTakeFirst()
