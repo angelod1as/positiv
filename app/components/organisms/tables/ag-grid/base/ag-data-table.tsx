@@ -46,6 +46,8 @@ import { useGridState } from "./use-grid-state"
 
 let modulesRegistered = false
 
+// A grid feature not covered here fails at runtime: register its module and
+// exercise it in ag-data-table.modules.test.tsx.
 function ensureModulesRegistered() {
   if (!modulesRegistered) {
     ModuleRegistry.registerModules([
