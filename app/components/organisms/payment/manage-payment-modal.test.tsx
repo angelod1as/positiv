@@ -751,12 +751,13 @@ describe("ManagePaymentModal - the Cobrança section", () => {
     expect(
       within(share).getByRole("button", { name: "Copiar mensagem" }),
     ).toBeInTheDocument()
-    // Copying is the errand; the actions that change the charge live apart.
+    // Resending the email is another way to share the same link, so it sits
+    // beside the copy; the actions that change the charge live apart.
+    expect(
+      within(share).getByRole("button", { name: "Reenviar email" }),
+    ).toBeInTheDocument()
     expect(
       within(share).queryByRole("button", { name: "Reenviar com outro valor" }),
-    ).not.toBeInTheDocument()
-    expect(
-      within(share).queryByRole("button", { name: "Reenviar email" }),
     ).not.toBeInTheDocument()
   })
 

@@ -453,9 +453,16 @@ const ChargeSection: FC<ChargeSectionProps> = ({
           <p className="text-muted-foreground text-sm break-all">
             {paymentUrl}
           </p>
-          <Button className="self-start" onClick={copyMessage}>
-            {charge.copyMessage}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={copyMessage}>{charge.copyMessage}</Button>
+            <Button
+              variant="outline"
+              disabled={isSubmitting}
+              onClick={() => onResend(active.id)}
+            >
+              {charge.resendEmail}
+            </Button>
+          </div>
           {copied && (
             <p role="status" className="text-muted-foreground text-sm">
               {charge.copied}
@@ -510,15 +517,6 @@ const ChargeSection: FC<ChargeSectionProps> = ({
           </Button>
         )}
 
-        {active && (
-          <Button
-            variant="outline"
-            disabled={isSubmitting}
-            onClick={() => onResend(active.id)}
-          >
-            {charge.resendEmail}
-          </Button>
-        )}
       </div>
     </section>
   )
