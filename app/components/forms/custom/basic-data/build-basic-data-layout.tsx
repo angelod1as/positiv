@@ -13,6 +13,7 @@ export function buildBasicDataLayout(): GridSlot[] {
     { kind: "question", id: "date_of_birth", span: 3 },
     { kind: "question", id: "where_lives", span: 6 },
     { kind: "question", id: "how_came_to_us", span: 6 },
+    { kind: "question", id: "phone_is_international", span: 12 },
     { kind: "question", id: "phone", span: 6 },
     { kind: "question", id: "confirm_phone", span: 6 },
     {

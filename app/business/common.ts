@@ -4,6 +4,7 @@ import { basicDataValidation, changePasswordValidation } from "~/copy/account"
 import { registerCopy } from "~/copy/auth"
 import { agreeToTermsValidation } from "~/copy/dashboard"
 import { PHONE_REGEXP } from "~/lib/constants/constants"
+import { isBrazilianMobile, isValidPhone } from "~/lib/helpers/phone"
 import { normalizeName } from "~/lib/helpers/strings"
 import { validationMessages } from "~/lib/helpers/validation-messages"
 import { zod } from "~/lib/helpers/zod"
@@ -173,6 +174,7 @@ export const basicDataFieldsSchema = zod.object({
     .refine((value) => PHONE_REGEXP.test(value.toString()), {
       message: basicDataValidation.invalidPhone,
     }),
+  phone_is_international: zod.boolean().default(false),
   how_came_to_us: zod.string().optional(),
   where_lives: zod.string().optional(),
 })
@@ -184,6 +186,17 @@ export const basicDataSchema = basicDataFieldsSchema
     message: basicDataValidation.phoneMismatch,
     path: ["confirm_phone"],
   })
+  .refine((data) => data.phone_is_international || isBrazilianMobile(data.phone), {
+    message: basicDataValidation.notAMobile,
+    path: ["phone"],
+  })
+  .refine(
+    (data) => !data.phone_is_international || isValidPhone(data.phone, true),
+    {
+      message: basicDataValidation.invalidInternationalPhone,
+      path: ["phone"],
+    },
+  )
   .refine(
     (data) => {
       if (!data.social_name) return true

@@ -7,6 +7,7 @@ type ProfileLike = {
   where_lives?: string | null
   how_came_to_us?: string | null
   phone?: number | null
+  phone_is_international?: boolean | null
   cpf?: string | null
   rg?: string | null
   rg_issuer?: string | null
@@ -62,6 +63,8 @@ export function toBasicDataAnswers(profile: ProfileLike | null): Answers {
     answers.phone = String(profile.phone)
     answers.confirm_phone = String(profile.phone)
   }
+
+  if (profile.phone_is_international) answers.phone_is_international = true
 
   return answers
 }
