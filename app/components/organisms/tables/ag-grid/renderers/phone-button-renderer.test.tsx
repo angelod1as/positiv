@@ -6,11 +6,12 @@ import { PhoneButtonRenderer } from "./phone-button-renderer"
 
 function createMockParams(
   phone: number | null | undefined,
+  phone_is_international = false,
 ): ICellRendererParams {
   return {
     value: phone,
     valueFormatted: String(phone ?? ""),
-    data: { id: "1", phone },
+    data: { id: "1", phone, phone_is_international },
     node: {} as ICellRendererParams["node"],
     colDef: { field: "phone" },
     column: {} as ICellRendererParams["column"],
@@ -58,6 +59,15 @@ describe("PhoneButtonRenderer", () => {
 
       const link = screen.getByRole("link")
       expect(link).toHaveAttribute("href", "https://wa.me/5511999887766")
+    })
+
+    it("links an international number without Brazil's country code", () => {
+      const params = createMockParams(12125551234, true)
+
+      renderWithRouter(<PhoneButtonRenderer {...params} />)
+
+      const link = screen.getByRole("link")
+      expect(link).toHaveAttribute("href", "https://wa.me/12125551234")
     })
 
     it("opens link in new tab", () => {

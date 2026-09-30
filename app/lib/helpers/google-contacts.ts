@@ -57,6 +57,7 @@ export function formatParticipantNameForGoogleContacts(
 export function generateGoogleContactsUrl(
   email: string,
   phone: string | number | null,
+  isInternational = false,
 ): string {
   const params = []
   params.push("hl=pt-BR")
@@ -66,7 +67,7 @@ export function generateGoogleContactsUrl(
   }
 
   if (phone) {
-    params.push(`phone=${phone.toString()}`)
+    params.push(`phone=${isInternational ? "%2B" : ""}${phone.toString()}`)
   }
 
   return `https://contacts.google.com/u/0/new?${params.join("&")}`

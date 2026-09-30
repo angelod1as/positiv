@@ -82,6 +82,24 @@ describe('BasicData', () => {
     })
   })
 
+  it('should link an international phone to WhatsApp and Google Contacts as international', async () => {
+    const { AddToGoogleContactsButton } = await import('~/components/atoms/buttons/add-to-google-contacts-button')
+    const MockedButton = vi.mocked(AddToGoogleContactsButton)
+    MockedButton.mockClear()
+
+    renderWithRouter(
+      <BasicData
+        profile={{ ...mockProfile, phone: 12125551234, phone_is_international: true }}
+      />,
+    )
+
+    expect(screen.getByRole('link')).toHaveAttribute('href', 'https://wa.me/12125551234')
+    expect(MockedButton.mock.calls[0][0]).toMatchObject({
+      phone: 12125551234,
+      isInternational: true,
+    })
+  })
+
   it('should render basic data correctly', () => {
     renderWithRouter(<BasicData profile={mockProfile} />)
 

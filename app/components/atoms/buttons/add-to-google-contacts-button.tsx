@@ -13,12 +13,14 @@ type AddToGoogleContactsButtonProps = {
   profile: ProfileForGoogleContacts
   email: string
   phone: string | number | null
+  isInternational?: boolean
 } & Omit<ButtonProps, 'onClick'>
 
 export function AddToGoogleContactsButton({
   profile,
   email,
   phone,
+  isInternational,
   className,
   ...props
 }: AddToGoogleContactsButtonProps) {
@@ -33,7 +35,7 @@ export function AddToGoogleContactsButton({
       toast.error(googleContactsCopy.copyFailed)
     }
     
-    const googleContactsUrl = generateGoogleContactsUrl(email, phone)
+    const googleContactsUrl = generateGoogleContactsUrl(email, phone, isInternational)
     window.open(googleContactsUrl, '_blank')
   }
 
