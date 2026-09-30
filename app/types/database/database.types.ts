@@ -866,6 +866,7 @@ export type Database = {
           is_admin: boolean
           orientation: string[]
           phone: number
+          phone_is_international: boolean
           pronouns: string[]
           race_color: string[]
           rg: string
