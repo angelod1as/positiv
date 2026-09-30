@@ -1,11 +1,14 @@
 import { ENV } from "varlock/env"
-import type { PaymentProvider } from "../../payment-provider"
+import type { PaymentProvider, ProviderRefund } from "../../payment-provider"
 import {
   asaasDashboardOrigin,
   createAsaasCustomer,
   createAsaasPayment,
   deleteAsaasPayment,
   findAsaasCustomerByCpf,
+  getAsaasInstallmentRefunds,
+  getAsaasPaymentRefunds,
+  reaisToCents,
 } from "./asaas-client.server"
 
 export const asaasConnector: PaymentProvider = {
@@ -49,6 +52,16 @@ export const asaasConnector: PaymentProvider = {
   // Asaas answers a refusal with `deleted: false` and a 200, not an error.
   cancelCharge: (chargeId) => deleteAsaasPayment(chargeId),
 
+  // A plan is refunded through the plan, and Asaas lists each installment's
+  // share there -- including one still "em progresso" that no charge event has
+  // reported.
+  fetchRefunds: async ({ chargeId, planId }) =>
+    asaasRefunds(
+      planId
+        ? await getAsaasInstallmentRefunds(planId)
+        : await getAsaasPaymentRefunds(chargeId),
+    ),
+
   // No admin page is known for a card plan, so a plan links to its first
   // charge, and a charge with no number to the payments list.
   chargeDashboardUrl: (dashboardRef) =>
@@ -56,3 +69,23 @@ export const asaasConnector: PaymentProvider = {
       ? `${asaasDashboardOrigin()}/payment/show/${dashboardRef}`
       : `${asaasDashboardOrigin()}/payment/list`,
 }
+
+/** One entry of Asaas's `refunds` list, on a charge or on a whole plan. */
+export type AsaasRefund = { value?: number | null; status?: string | null }
+
+/**
+ * Only DONE is money back: "a existência do array refunds não significa que o
+ * valor já foi devolvido" (docs, Estornos). CANCELLED never will be. Anything
+ * else -- PENDING, the AWAITING_* authorisations, or a status we do not know
+ * -- is on its way, and never counted as given back on a guess.
+ */
+export const asaasRefunds = (entries: AsaasRefund[]): ProviderRefund[] =>
+  entries.map((entry) => ({
+    amount: reaisToCents(entry.value ?? 0),
+    state:
+      entry.status === "DONE"
+        ? "done"
+        : entry.status === "CANCELLED"
+          ? "cancelled"
+          : "pending",
+  }))

@@ -11,7 +11,11 @@ import {
   queuePaymentEmail,
 } from "./payment-email-outbox.server"
 import { applyRefundTally, type RefundablePayment } from "./refund-apply.server"
-import { tallyRefunds, type AsaasRefund } from "./refund-state"
+import { tallyRefunds } from "./refund-state"
+import {
+  asaasRefunds,
+  type AsaasRefund,
+} from "./provider/asaas/asaas-connector.server"
 
 /**
  * Deliberately permissive. Asaas adds fields without warning, and the docs say
@@ -478,7 +482,7 @@ async function applyToPayment(
     const { applied, refundEmailId } = await applyRefundTally(
       db,
       payment,
-      tallyRefunds(refunds),
+      tallyRefunds(asaasRefunds(refunds)),
     )
 
     return {

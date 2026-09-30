@@ -2,39 +2,19 @@ import { describe, expect, it } from "vitest"
 import { nextRefundState, tallyRefunds } from "./refund-state"
 
 describe("tallyRefunds", () => {
-  it("counts only DONE as given back, as the Asaas docs say", () => {
+  it("adds the refunds up by where they stand", () => {
     expect(
       tallyRefunds([
-        { value: 117.15, status: "DONE" },
-        { value: 108.51, status: "PENDING" },
+        { amount: 11715, state: "done" },
+        { amount: 5000, state: "pending" },
+        { amount: 5851, state: "pending" },
+        { amount: 1000, state: "cancelled" },
       ]),
-    ).toEqual({ done: 11715, pending: 10851, cancelled: 0 })
+    ).toEqual({ done: 11715, pending: 10851, cancelled: 1000 })
   })
 
-  it("counts a refund waiting for an authorisation as still on its way", () => {
-    expect(
-      tallyRefunds([
-        { value: 50, status: "AWAITING_CRITICAL_ACTION_AUTHORIZATION" },
-        { value: 10, status: "AWAITING_CUSTOMER_EXTERNAL_AUTHORIZATION" },
-      ]),
-    ).toEqual({ done: 0, pending: 6000, cancelled: 0 })
-  })
-
-  it("keeps a cancelled refund apart", () => {
-    expect(
-      tallyRefunds([
-        { value: 50, status: "DONE" },
-        { value: 10, status: "CANCELLED" },
-      ]),
-    ).toEqual({ done: 5000, pending: 0, cancelled: 1000 })
-  })
-
-  it("does not count a refund of unknown status as money back", () => {
-    expect(tallyRefunds([{ value: 20 }])).toEqual({
-      done: 0,
-      pending: 2000,
-      cancelled: 0,
-    })
+  it("adds nothing up to zero everywhere", () => {
+    expect(tallyRefunds([])).toEqual({ done: 0, pending: 0, cancelled: 0 })
   })
 })
 

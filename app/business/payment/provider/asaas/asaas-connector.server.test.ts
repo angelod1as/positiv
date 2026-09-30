@@ -4,8 +4,10 @@ import {
   createAsaasPayment,
   deleteAsaasPayment,
   findAsaasCustomerByCpf,
+  getAsaasInstallmentRefunds,
+  getAsaasPaymentRefunds,
 } from "./asaas-client.server"
-import { asaasConnector } from "./asaas-connector.server"
+import { asaasConnector, asaasRefunds } from "./asaas-connector.server"
 
 const env = vi.hoisted<Record<string, unknown>>(() => ({}))
 
@@ -17,6 +19,8 @@ vi.mock("./asaas-client.server", async (importOriginal) => ({
   createAsaasPayment: vi.fn(),
   deleteAsaasPayment: vi.fn(),
   findAsaasCustomerByCpf: vi.fn(),
+  getAsaasInstallmentRefunds: vi.fn(),
+  getAsaasPaymentRefunds: vi.fn(),
 }))
 
 beforeEach(() => {
@@ -146,5 +150,69 @@ describe("asaasConnector", () => {
         "https://sandbox.asaas.com/payment/list",
       )
     })
+  })
+
+  describe("fetchRefunds", () => {
+    it("reads a single charge's refunds from the charge", async () => {
+      vi.mocked(getAsaasPaymentRefunds).mockResolvedValue([
+        { value: 117.15, status: "DONE" },
+      ])
+
+      expect(
+        await asaasConnector.fetchRefunds({ chargeId: "pay_1", planId: null }),
+      ).toEqual([{ amount: 11715, state: "done" }])
+      expect(getAsaasPaymentRefunds).toHaveBeenCalledWith("pay_1")
+      expect(getAsaasInstallmentRefunds).not.toHaveBeenCalled()
+    })
+
+    it("reads a card plan's refunds from the plan, not its charge", async () => {
+      vi.mocked(getAsaasInstallmentRefunds).mockResolvedValue([
+        { value: 50, status: "PENDING" },
+      ])
+
+      expect(
+        await asaasConnector.fetchRefunds({ chargeId: "pay_1", planId: "ins_1" }),
+      ).toEqual([{ amount: 5000, state: "pending" }])
+      expect(getAsaasInstallmentRefunds).toHaveBeenCalledWith("ins_1")
+      expect(getAsaasPaymentRefunds).not.toHaveBeenCalled()
+    })
+  })
+})
+
+describe("asaasRefunds", () => {
+  it("counts only DONE as given back, as the Asaas docs say", () => {
+    expect(
+      asaasRefunds([
+        { value: 117.15, status: "DONE" },
+        { value: 108.51, status: "PENDING" },
+      ]),
+    ).toEqual([
+      { amount: 11715, state: "done" },
+      { amount: 10851, state: "pending" },
+    ])
+  })
+
+  it("counts a refund waiting for an authorisation as still on its way", () => {
+    expect(
+      asaasRefunds([
+        { value: 50, status: "AWAITING_CRITICAL_ACTION_AUTHORIZATION" },
+        { value: 10, status: "AWAITING_CUSTOMER_EXTERNAL_AUTHORIZATION" },
+      ]),
+    ).toEqual([
+      { amount: 5000, state: "pending" },
+      { amount: 1000, state: "pending" },
+    ])
+  })
+
+  it("keeps a cancelled refund apart", () => {
+    expect(asaasRefunds([{ value: 10, status: "CANCELLED" }])).toEqual([
+      { amount: 1000, state: "cancelled" },
+    ])
+  })
+
+  it("does not count a refund of unknown status as money back", () => {
+    expect(asaasRefunds([{ value: 20 }])).toEqual([
+      { amount: 2000, state: "pending" },
+    ])
   })
 })

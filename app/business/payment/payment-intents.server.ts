@@ -1,7 +1,7 @@
 import { editManualPayment, registerManualPayment } from "./manual-payment.server"
 import { createPaymentOffer, resendPaymentOffer } from "./payment-offer.server"
 import { cancelPayment } from "./payment-cancel.server"
-import { syncPaymentFromAsaas } from "./payment-sync.server"
+import { syncPaymentFromProvider } from "./payment-sync.server"
 import { markManualRefunded } from "./payment-refund.server"
 
 type PaymentIntentResult = {
@@ -71,7 +71,7 @@ export async function handlePaymentIntent(
   }
 
   if (intent === "payment-sync") {
-    return toIntentResult(intent, await syncPaymentFromAsaas(values))
+    return toIntentResult(intent, await syncPaymentFromProvider(values))
   }
 
   if (intent === "payment-manual") {

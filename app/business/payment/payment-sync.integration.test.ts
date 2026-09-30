@@ -36,9 +36,9 @@ vi.mock("./payment-emails.server", async (importOriginal) => ({
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
 
 import { paymentsCopy } from "~/copy/payments"
-import { syncOpenPayments, syncPaymentFromAsaas } from "./payment-sync.server"
+import { syncOpenPayments, syncPaymentFromProvider } from "./payment-sync.server"
 
-describe("syncPaymentFromAsaas", () => {
+describe("syncPaymentFromProvider", () => {
   const { tracker, kysely } = setupIntegrationTest()
   let participantId: string
   let counter = 0
@@ -103,7 +103,7 @@ describe("syncPaymentFromAsaas", () => {
     ])
     const payment = await cardPlan()
 
-    const result = await syncPaymentFromAsaas({ paymentId: payment.id })
+    const result = await syncPaymentFromProvider({ paymentId: payment.id })
 
     expect(result.success).toBe(true)
     expect(getAsaasInstallmentRefunds).toHaveBeenCalledWith(`inst_${counter}`)
@@ -126,8 +126,8 @@ describe("syncPaymentFromAsaas", () => {
       refunded_at: new Date().toISOString(),
     })
 
-    await syncPaymentFromAsaas({ paymentId: payment.id })
-    await syncPaymentFromAsaas({ paymentId: payment.id })
+    await syncPaymentFromProvider({ paymentId: payment.id })
+    await syncPaymentFromProvider({ paymentId: payment.id })
 
     const after = await reload(payment.id)
     expect(after.refund_amount).toBe(22566)
@@ -146,7 +146,7 @@ describe("syncPaymentFromAsaas", () => {
       asaas_payment_id: `pay_${counter}`,
     })
 
-    await syncPaymentFromAsaas({ paymentId: payment.id })
+    await syncPaymentFromProvider({ paymentId: payment.id })
 
     expect(getAsaasPaymentRefunds).toHaveBeenCalledWith(`pay_${counter}`)
     expect((await reload(payment.id)).refund_amount).toBe(22000)
@@ -160,7 +160,7 @@ describe("syncPaymentFromAsaas", () => {
       amount: 22000,
     })
 
-    const result = await syncPaymentFromAsaas({ paymentId: payment.id })
+    const result = await syncPaymentFromProvider({ paymentId: payment.id })
 
     expect(result.success === false && result.errors[0]?.message).toBe(
       paymentsCopy.errors.notSyncable,
@@ -171,7 +171,7 @@ describe("syncPaymentFromAsaas", () => {
     getAsaasInstallmentRefunds.mockRejectedValue(new TypeError("fetch failed"))
     const payment = await cardPlan()
 
-    const result = await syncPaymentFromAsaas({ paymentId: payment.id })
+    const result = await syncPaymentFromProvider({ paymentId: payment.id })
 
     expect(result.success === false && result.errors[0]?.message).toBe(
       paymentsCopy.asaasErrors.unavailable,

@@ -16,8 +16,25 @@ export type PaymentProvider = {
   createCharge(input: ChargeInput): Promise<CreatedCharge>
   /** Calls off an unpaid charge. False when the provider refused. */
   cancelCharge(chargeId: string): Promise<boolean>
+  /**
+   * Every refund of a charge as the provider lists it now -- a card plan's
+   * from the plan. Refunds are done in the provider's dashboard; the site only
+   * reads them.
+   */
+  fetchRefunds(charge: { chargeId: string; planId: string | null }): Promise<
+    ProviderRefund[]
+  >
   /** Where an admin sees this charge in the provider's own dashboard. */
   chargeDashboardUrl(dashboardRef: string | null): string
+}
+
+/**
+ * One refund, in cents. Only `done` is money back; `pending` is on its way and
+ * `cancelled` never will be.
+ */
+export type ProviderRefund = {
+  amount: number
+  state: "done" | "pending" | "cancelled"
 }
 
 export type CustomerInput = {
