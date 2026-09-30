@@ -8,6 +8,8 @@ import {
 
 import { reservedAddresses } from "../../reserved-addresses"
 
+export const HOMEPAGE_PAGE_ID = "page-home"
+
 const segment = /^[a-z0-9-]+$/
 
 function addressProblem(address: string) {
