@@ -73,10 +73,3 @@ describe("shouldRetrySubscription", () => {
     expect(shouldRetrySubscription(twentyFiveHoursAgo, 5)).toBe(true)
   })
 })
-
-describe("processFailedSyncRetries", () => {
-  it("should return zero counts when no failed subscriptions exist", async () => {
-    // Skip this test as it requires database connection
-    // Integration tests will cover this
-  })
-})
