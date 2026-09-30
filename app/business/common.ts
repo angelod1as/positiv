@@ -187,10 +187,13 @@ export const basicDataSchema = basicDataFieldsSchema
     message: basicDataValidation.phoneMismatch,
     path: ["confirm_phone"],
   })
-  .refine((data) => data.phone_is_international || isBrazilianMobile(data.phone), {
-    message: basicDataValidation.notAMobile,
-    path: ["phone"],
-  })
+  .refine(
+    (data) => data.phone_is_international || isBrazilianMobile(data.phone),
+    {
+      message: basicDataValidation.notAMobile,
+      path: ["phone"],
+    },
+  )
   .refine(
     (data) => !data.phone_is_international || isValidPhone(data.phone, true),
     {
