@@ -10,7 +10,8 @@
     "dev": "sanity dev",
     "start": "sanity start",
     "lint": "tsc --noEmit && eslint .",
-    "test": "vitest --run"
+    "test": "vitest --run",
+    "seed": "sanity exec seed/cli.ts --with-user-token"
   },
   "dependencies": {
     "@sanity/icons": "^5.2.2",
