@@ -3,6 +3,13 @@
 Every user-visible string on the site lives here. Editing text means editing one
 file in this folder — never a component.
 
+The one exception is the Public Site's marketing content — the homepage's
+Sections, from the hero to the founders. It lives in Sanity and Editors change
+it in the Studio; the repository keeps no copy of it (see
+[No repository fallback for Public Site content](../../docs/architecture/decisions/20260924-no-repository-fallback-for-public-site-content.md)
+and [`studio/README.md`](../../studio/README.md)). `homepage.ts` holds only the
+labels the Platform owns there: buttons, registration statuses, alt text.
+
 ## Editing an existing string
 
 1. Find the module for the area you are changing — `homepage.ts`, `events.ts`,
@@ -90,8 +97,8 @@ inside the string, and rendered with the `Copy` component.
 the text can span lines:
 
 ```ts
-// app/copy/homepage.ts
-export const homepageCopy = {
+// app/copy/example.ts
+export const exampleCopy = {
   about: {
     title: "Como assim?",
     body: `Nossos eventos são tipo um **piquenique** entre amigues.
@@ -110,12 +117,12 @@ Dúvidas? [Fale com a gente](/contato).`,
 
 ```tsx
 import { Copy } from "~/components/atoms/copy/copy"
-import { homepageCopy } from "~/copy/homepage"
+import { exampleCopy } from "~/copy/example"
 
 export const About = () => (
   <section>
-    <h2>{homepageCopy.about.title}</h2>
-    <Copy>{homepageCopy.about.body}</Copy>
+    <h2>{exampleCopy.about.title}</h2>
+    <Copy>{exampleCopy.about.body}</Copy>
   </section>
 )
 ```
@@ -232,24 +239,24 @@ entry here and nothing else.
 
 Sometimes a section is a small, fixed number of items, each of which needs to
 pair with something the copy file has no business knowing about — an icon, an
-image import. The homepage's "about" cards are the example: three fixed
-cards, keyed, each matched to an icon component in `about.tsx`.
+image import. Say, three fixed feature cards, keyed, each matched to an icon
+component in the Section that renders them.
 
 Keep the copy a plain keyed object — with `as const satisfies` shape-checking,
 as described under Rules below — and iterate it in the component with
 `Object.entries`, keying an adjacent lookup object with the same keys:
 
 ```tsx
-const ICONS: Record<keyof typeof homepageCopy.about.cards, ReactElement> = {
-  notAMess: <UsersIcon />,
-  affection: <HeartIcon />,
-  forWhom: <SparklesIcon />,
+const ICONS: Record<keyof typeof exampleCopy.features.cards, ReactElement> = {
+  community: <UsersIcon />,
+  care: <HeartIcon />,
+  freedom: <SparklesIcon />,
 }
 
-{Object.entries(homepageCopy.about.cards).map(([key, card]) => (
-  <AboutCard key={key} icon={ICONS[key as keyof typeof ICONS]} title={card.title}>
+{Object.entries(exampleCopy.features.cards).map(([key, card]) => (
+  <FeatureCard key={key} icon={ICONS[key as keyof typeof ICONS]} title={card.title}>
     <Copy>{card.body}</Copy>
-  </AboutCard>
+  </FeatureCard>
 ))}
 ```
 
@@ -260,7 +267,7 @@ matching icon is a compile error, not a runtime crash.
 This **iterated keyed object** pattern is different from the array form
 above: reach for it when the set is fixed and every entry pairs with
 something in the component (an icon, an image). Reach for the array form
-instead when the number of items varies (testimonials, events).
+instead when the number of items varies (rules sections, events).
 
 ## Rules
 

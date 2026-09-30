@@ -17,7 +17,6 @@ pnpm workspace package, deployed to Sanity's hosting at
 | `schemas/documents/`            | `homepage` (a singleton) and `person`                                  |
 | `schemas/sections/`             | One object type per Section of the homepage                            |
 | `structure.ts`, `singletons.ts` | The desk: "Página inicial" opens the singleton, "Pessoas" lists people |
-| `seed/`                         | The seed command and the pure `buildSeed` behind it                    |
 | `migrations/`                   | Content migrations — see below                                         |
 
 ## Run it locally
@@ -50,26 +49,44 @@ builds a Studio that opens `development`.
 well; inside it, `pnpm --filter studio lint`, `test` and `build` run each on
 its own.
 
-## Seed
+## Content
 
-The seed command writes today's homepage copy (`app/copy/homepage.ts`) and the
-founders' photos into a dataset, then regenerates
-`e2e/fixtures/homepage-content.json` from it:
+Sanity is the source of truth for the Public Site's content: Editors change it
+in the Studio, and the repository keeps no copy of it — see
+[No repository fallback for Public Site content](../docs/architecture/decisions/20260924-no-repository-fallback-for-public-site-content.md).
+
+### Refresh development from production
+
+Only if `development` has drifted too far to be useful. The export reads
+production; the import writes to `development` alone, replacing documents with
+the same ids:
 
 ```bash
-pnpm --filter studio seed --dataset development
+cd studio
+pnpm exec sanity datasets export production production.tar.gz
+pnpm exec sanity datasets import production.tar.gz --dataset development --replace
+rm production.tar.gz
 ```
 
-- It runs through `sanity exec --with-user-token`, so it writes as whoever is
-  logged in to the CLI. No token to create or store.
-- `--dataset` is required. `production` is refused unless
-  `--allow-production` comes with it — seeding overwrites the homepage and both
-  people with the copy in the repository, discarding whatever Editors published.
-- It is idempotent: fixed document ids, `createOrReplace`, and Sanity reuses an
-  asset with the same content. Running it twice changes nothing.
-- It prints the project and dataset it resolved before writing. Read that line.
+Check the dataset name on the import line twice. Never import into
+`production`.
 
-Commit the regenerated fixture when it changes.
+### Update the e2e fixture
+
+`e2e/fixtures/homepage-content.json` is what the app's `homepageQuery` returns
+from `development`. It feeds the e2e Sanity mock and the unit tests. When the
+query or the content changes, regenerate it with a read-only, anonymous query:
+
+From the repository root:
+
+```bash
+pnpm --filter studio exec sanity documents query \
+  "$(pnpm exec tsx -e 'import { homepageQuery } from "./app/business/cms/homepage-query"; process.stdout.write(homepageQuery)')" \
+  --dataset development --anonymous --api-version 2026-09-24 \
+  > e2e/fixtures/homepage-content.json
+```
+
+Commit the fixture when it changes.
 
 ## Deploy
 

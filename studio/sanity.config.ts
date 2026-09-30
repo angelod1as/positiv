@@ -9,7 +9,7 @@ import { structure } from "./structure"
 
 export default defineConfig({
   name: "default",
-  title: "Positiv",
+  title: dataset === "production" ? "Positiv" : `Positiv (${dataset})`,
 
   projectId: "8ojkallk",
   dataset,
