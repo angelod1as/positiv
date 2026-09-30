@@ -16,25 +16,17 @@ export const paymentsCopy = {
       }
       return `Cartão ${option.installmentCount}x de ${formatCurrency(option.perInstallment)} (total ${formatCurrency(option.total)})`
     },
-    // The payment page's cards: the name here, the total beside it, and what
-    // sets the option apart on the line below, when anything does.
+    // The payment page's cards: the name here, the total beside it.
     title: (option: PaymentOption) => {
       if (option.method === "pix") return "Pix"
       if (option.installmentCount === 1) return "Cartão de crédito — à vista"
       return `Cartão de crédito — ${option.installmentCount}x de ${formatCurrency(option.perInstallment)}`
     },
-    breakdown: (baseAmount: number, option: PaymentOption) => {
-      if (option.method === "pix") {
-        return option.total < baseAmount
-          ? `${PIX_DISCOUNT_PERCENT}% de desconto sobre ${formatCurrency(baseAmount)}`
-          : null
-      }
-      if (option.installmentCount === 1) return null
-      if (option.lastInstallment !== option.perInstallment) {
-        return `Sem juros. A última parcela é de ${formatCurrency(option.lastInstallment)}.`
-      }
-      return "Sem juros."
-    },
+    // Only a discounted Pix says anything more; a card's title already does.
+    breakdown: (baseAmount: number, option: PaymentOption) =>
+      option.method === "pix" && option.total < baseAmount
+        ? `${PIX_DISCOUNT_PERCENT}% de desconto sobre ${formatCurrency(baseAmount)}`
+        : null,
   },
   // Plain text, not Markdown: this one is pasted into WhatsApp, which renders
   // none of it. The four-digit year is deliberate — a deadline read on a phone

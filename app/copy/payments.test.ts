@@ -7,7 +7,6 @@ const pix: PaymentOption = {
   method: "pix",
   installmentCount: null,
   perInstallment: 22500,
-  lastInstallment: 22500,
   total: 22500,
 }
 
@@ -16,7 +15,6 @@ const cardOnce: PaymentOption = {
   method: "credit_card",
   installmentCount: 1,
   perInstallment: 25000,
-  lastInstallment: 25000,
   total: 25000,
 }
 
@@ -25,7 +23,6 @@ const cardFiveTimes: PaymentOption = {
   method: "credit_card",
   installmentCount: 5,
   perInstallment: 5000,
-  lastInstallment: 5000,
   total: 25000,
 }
 
@@ -34,7 +31,6 @@ const cardSixTimes: PaymentOption = {
   method: "credit_card",
   installmentCount: 6,
   perInstallment: 4166,
-  lastInstallment: 4170,
   total: 25000,
 }
 
@@ -84,20 +80,11 @@ describe("paymentsCopy.options.breakdown", () => {
     ).toBeNull()
   })
 
-  it("says nothing about a card paid at once", () => {
+  // The card's title already says how it is paid; nothing more goes under it.
+  it("says nothing about a card option, however it is split", () => {
     expect(paymentsCopy.options.breakdown(25000, cardOnce)).toBeNull()
-  })
-
-  it("says installments carry no interest", () => {
-    expect(paymentsCopy.options.breakdown(25000, cardFiveTimes)).toBe(
-      "Sem juros.",
-    )
-  })
-
-  it("names a last installment that differs from the rest", () => {
-    expect(paymentsCopy.options.breakdown(25000, cardSixTimes)).toBe(
-      "Sem juros. A última parcela é de R$ 41,70.",
-    )
+    expect(paymentsCopy.options.breakdown(25000, cardFiveTimes)).toBeNull()
+    expect(paymentsCopy.options.breakdown(25000, cardSixTimes)).toBeNull()
   })
 })
 

@@ -71,9 +71,8 @@ describe("PaymentPage", () => {
 
     expect(
       screen.getByRole("radio", { name: /^Cartão de crédito — 6x de R\$\s?41,66 R\$\s?250,00$/ }),
-    ).toHaveAccessibleDescription(
-      /Sem juros\. A última parcela é de R\$\s?41,70\./,
-    )
+    ).toHaveAccessibleDescription("")
+    expect(screen.queryByText(/juros|última parcela/i)).not.toBeInTheDocument()
 
     expect(
       screen.getByRole("radio", { name: /^Cartão de crédito — à vista R\$\s?250,00$/ }),

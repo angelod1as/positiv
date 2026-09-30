@@ -50,7 +50,6 @@ export type PaymentOption = {
   method: PaymentMethod
   installmentCount: number | null
   perInstallment: number
-  lastInstallment: number
   total: number
 }
 
@@ -70,7 +69,6 @@ export function buildPaymentOptions(
       method: "pix",
       installmentCount: null,
       perInstallment: pixTotal,
-      lastInstallment: pixTotal,
       total: pixTotal,
     },
   ]
@@ -84,7 +82,6 @@ export function buildPaymentOptions(
       method: "credit_card",
       installmentCount: n,
       perInstallment: installments[0],
-      lastInstallment: installments[n - 1],
       total: base,
     })
   }

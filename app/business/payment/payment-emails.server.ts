@@ -35,7 +35,6 @@ function committedOption(row: CommittedRow): PaymentOption[] | null {
       method: row.method,
       installmentCount,
       perInstallment: installments[0],
-      lastInstallment: installments[installments.length - 1],
       total: row.amount,
     },
   ]

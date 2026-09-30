@@ -57,7 +57,6 @@ describe("paymentLinkMailTemplate", () => {
         method: "credit_card",
         installmentCount: 3,
         perInstallment: 7333,
-        lastInstallment: 7334,
         total: 22000,
       },
     ]

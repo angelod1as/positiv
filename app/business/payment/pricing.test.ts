@@ -48,7 +48,6 @@ describe("buildPaymentOptions", () => {
         method: "pix",
         installmentCount: null,
         perInstallment: 22500,
-        lastInstallment: 22500,
         total: 22500,
       })
     })
@@ -65,13 +64,11 @@ describe("buildPaymentOptions", () => {
         id: "card_1",
         installmentCount: 1,
         perInstallment: 25000,
-        lastInstallment: 25000,
       })
       expect(options[6]).toMatchObject({
         id: "card_6",
         installmentCount: 6,
         perInstallment: 4166,
-        lastInstallment: 4170,
       })
     })
   })
@@ -84,7 +81,6 @@ describe("buildPaymentOptions", () => {
           method: "pix",
           installmentCount: null,
           perInstallment: 25000,
-          lastInstallment: 25000,
           total: 25000,
         },
       ])
