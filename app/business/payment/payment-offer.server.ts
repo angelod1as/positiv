@@ -5,7 +5,7 @@ import { kyselyDb } from "~/kysely-db"
 import { reaisToCents } from "~/lib/helpers/format-currency"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
-import { deleteAsaasPayment } from "./provider/asaas/asaas-client.server"
+import { paymentProvider } from "./payment-provider.server"
 import { cancelPayment } from "./payment-cancel.server"
 import {
   deliverPaymentEmail,
@@ -82,27 +82,27 @@ async function deleteReplacedCharges(
   replaced: { id: string; asaas_payment_id: string | null }[],
 ) {
   // Outside the transaction on purpose: an HTTP call inside one holds a row
-  // lock for as long as the network takes, and a charge Asaas refuses to
-  // delete must not undo the row the admin just created. The old charge is
+  // lock for as long as the network takes, and a charge the provider refuses
+  // to delete must not undo the row the admin just created. The old charge is
   // unpaid either way and will simply go overdue there.
   for (const old of replaced) {
     if (!old.asaas_payment_id) continue
     try {
-      // Asaas answers a refusal with `deleted: false` and a 200, so the return
-      // value is the only place it shows. An undeleted charge stays payable
+      // A refusal is not always an error, so the return value is the only
+      // place it shows. An undeleted charge stays payable
       // through the invoice the participant already has, and PR 11 cannot mark
       // a cancelled row paid -- the money would arrive and go unrecorded.
-      const deleted = await deleteAsaasPayment(old.asaas_payment_id)
+      const deleted = await paymentProvider().cancelCharge(old.asaas_payment_id)
       if (!deleted) {
-        logger.error("Asaas refused to delete the replaced charge", {
+        logger.error("The payment provider refused to delete the replaced charge", {
           paymentId: old.id,
-          asaasPaymentId: old.asaas_payment_id,
+          chargeId: old.asaas_payment_id,
         })
       }
     } catch (error) {
-      logger.error("Could not delete the replaced Asaas charge", {
+      logger.error("Could not delete the replaced charge at the payment provider", {
         paymentId: old.id,
-        asaasPaymentId: old.asaas_payment_id,
+        chargeId: old.asaas_payment_id,
         error: error instanceof Error ? error.message : String(error),
       })
     }

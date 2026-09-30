@@ -1,12 +1,11 @@
-import { ENV } from "varlock/env"
 import { kyselyDb } from "~/kysely-db"
+import { paymentProvider } from "~/business/payment/payment-provider.server"
 
 /**
- * The secrets say whether Asaas can be reached at all. The admin switch says
- * whether it should be. Online payments need both.
+ * The secrets say whether the payment provider can be reached at all. The
+ * admin switch says whether it should be. Online payments need both.
  */
-export const isAsaasConfigured = () =>
-  Boolean(ENV.ASAAS_API_URL && ENV.ASAAS_API_KEY && ENV.ASAAS_WEBHOOK_TOKEN)
+export const isAsaasConfigured = () => paymentProvider().isConfigured()
 
 export const getOnlinePaymentsSetting = async () => {
   const row = await kyselyDb

@@ -3,7 +3,7 @@ import { paymentsCopy } from "~/copy/payments"
 import { kyselyDb } from "~/kysely-db"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
-import { deleteAsaasPayment } from "./provider/asaas/asaas-client.server"
+import { paymentProvider } from "./payment-provider.server"
 import { ACTIVE_PAYMENT_STATUSES } from "./payment-totals.server"
 
 export const cancelPaymentSchema = zod.object({
@@ -14,9 +14,9 @@ export const cancelPaymentSchema = zod.object({
  * Calls off a charge nobody has paid. Guarded on the open statuses so a payment
  * confirmed a moment ago cannot be cancelled out from under the money.
  *
- * Asaas is told only after the row is ours, and a refusal there is logged
- * rather than raised: the charge is unpaid and will go overdue on their side
- * anyway, and the admin's cancellation is not worth undoing over it.
+ * The provider is told only after the row is ours, and a refusal there is
+ * logged rather than raised: the charge is unpaid and will go overdue on their
+ * side anyway, and the admin's cancellation is not worth undoing over it.
  */
 export const cancelPayment = applySchema(cancelPaymentSchema)(async (values) => {
   const cancelled = await kyselyDb
@@ -33,18 +33,20 @@ export const cancelPayment = applySchema(cancelPaymentSchema)(async (values) => 
 
   if (cancelled.asaas_payment_id) {
     try {
-      // A refusal comes back as `deleted: false` on a 200, not as an error.
-      const deleted = await deleteAsaasPayment(cancelled.asaas_payment_id)
+      // A refusal comes back as false, not as an error.
+      const deleted = await paymentProvider().cancelCharge(
+        cancelled.asaas_payment_id,
+      )
       if (!deleted) {
-        logger.error("Asaas refused to delete the cancelled charge", {
+        logger.error("The payment provider refused to delete the cancelled charge", {
           paymentId: cancelled.id,
-          asaasPaymentId: cancelled.asaas_payment_id,
+          chargeId: cancelled.asaas_payment_id,
         })
       }
     } catch (error) {
-      logger.error("Could not delete the cancelled Asaas charge", {
+      logger.error("Could not delete the cancelled charge at the payment provider", {
         paymentId: cancelled.id,
-        asaasPaymentId: cancelled.asaas_payment_id,
+        chargeId: cancelled.asaas_payment_id,
         error: error instanceof Error ? error.message : String(error),
       })
     }

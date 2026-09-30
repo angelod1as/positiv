@@ -12,12 +12,7 @@ import {
   isCardPaymentsEnabled,
   isOnlinePaymentsEnabled,
 } from "~/business/settings/app-settings.server"
-import {
-  createAsaasCustomer,
-  createAsaasPayment,
-  deleteAsaasPayment,
-  findAsaasCustomerByCpf,
-} from "./provider/asaas/asaas-client.server"
+import { paymentProvider } from "./payment-provider.server"
 import { asaasErrorMessage } from "./provider/asaas/asaas-error-message"
 import { ACTIVE_PAYMENT_STATUSES } from "./payment-totals.server"
 import { isValidCpf } from "~/lib/helpers/cpf"
@@ -31,11 +26,10 @@ export const pickOptionSchema = zod.object({
 })
 
 /**
- * One Asaas customer per person, reused across events. Asaas does not dedupe by
- * CPF on its side, so without this every charge would leave another customer
- * behind for the same person.
+ * One provider customer per person, reused across events, so a charge never
+ * leaves another customer behind for the same person.
  */
-async function ensureAsaasCustomer(profile: {
+async function ensureProviderCustomer(profile: {
   id: string
   asaas_customer_id: string | null
   full_name: string | null
@@ -47,19 +41,16 @@ async function ensureAsaasCustomer(profile: {
 }): Promise<string> {
   if (profile.asaas_customer_id) return profile.asaas_customer_id
 
-  const cpf = profile.cpf ?? ""
-  const customerId =
-    (await findAsaasCustomerByCpf(cpf)) ??
-    (await createAsaasCustomer({
-      name: profile.full_name || profile.social_name || profile.email || "",
-      cpf,
-      email: profile.email ?? "",
-      mobilePhone:
-        profile.phone && !profile.phone_is_international
-          ? String(profile.phone)
-          : undefined,
-      externalReference: profile.id,
-    }))
+  const customerId = await paymentProvider().findOrCreateCustomer({
+    profileId: profile.id,
+    name: profile.full_name || profile.social_name || profile.email || "",
+    cpf: profile.cpf ?? "",
+    email: profile.email ?? "",
+    phone:
+      profile.phone && !profile.phone_is_international
+        ? String(profile.phone)
+        : undefined,
+  })
 
   // Written only while the column is still empty, for the same reason the
   // charge below is: two picks racing both find nothing and both create a
@@ -73,7 +64,7 @@ async function ensureAsaasCustomer(profile: {
     .returning("asaas_customer_id")
     .executeTakeFirst()
     .catch((error: unknown) => {
-      // The customer Asaas holds for this CPF is already another profile's --
+      // The customer the provider holds for this CPF is already another profile's --
       // one that carried the CPF before. Which of them it belongs to is a
       // question for a person, and charging either on a guess is worse.
       if (isUniqueViolation(error, "profiles_asaas_customer_id")) {
@@ -85,8 +76,8 @@ async function ensureAsaasCustomer(profile: {
   if (written?.asaas_customer_id) return written.asaas_customer_id
 
   // Another pick got there first. Its customer is the one every charge must
-  // name, so the one created here is abandoned at Asaas: it holds no money, is
-  // attached to no charge, and the API offers no delete for it.
+  // name, so the one created here is abandoned at the provider: it holds no
+  // money and is attached to no charge.
   const winner = await kyselyDb
     .selectFrom("profiles")
     .select("asaas_customer_id")
@@ -97,7 +88,8 @@ async function ensureAsaasCustomer(profile: {
 }
 
 /**
- * The participant picks how to pay, and only then does a charge exist at Asaas.
+ * The participant picks how to pay, and only then does a charge exist at the
+ * provider.
  * The price is frozen on the row here: switching card payments later leaves a
  * charge already created at the figure it was created at.
  */
@@ -143,7 +135,7 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
 
   // The page gates on this before it offers an option, but the action is
   // reachable on its own. Refused here with the sentence the gate uses, rather
-  // than as whatever Asaas answers to a customer it will not accept.
+  // than as whatever the provider answers to a customer it will not accept.
   if (!isValidCpf(payment.cpf)) {
     throw new Error(paymentsCopy.errors.invalidCpf)
   }
@@ -167,7 +159,7 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
     return { invoiceUrl: payment.asaas_invoice_url }
   }
 
-  const customerId = await ensureAsaasCustomer({
+  const customerId = await ensureProviderCustomer({
     id: payment.profile_id,
     asaas_customer_id: payment.asaas_customer_id,
     full_name: payment.full_name,
@@ -178,32 +170,32 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
     phone_is_international: payment.phone_is_international,
   })
 
-  // Asaas refuses a callback whose domain does not match the commercial data on
-  // the account, and fails the whole charge with invalid_callback rather than
-  // just dropping the redirect. Only production has a domain that matches, so
-  // everywhere else sends none and the participant stays on the Asaas page
-  // when they are done.
+  // The provider refuses a callback whose domain does not match the commercial
+  // data on the account, and fails the whole charge rather than just dropping
+  // the redirect. Only production has a domain that matches, so everywhere
+  // else sends none and the participant stays on the provider's page when they
+  // are done.
   const origin = isProd() ? appOrigin(null) : ""
   const successUrl = origin
     ? `${origin}${paths.payment.PAYMENT_THANKS(payment.id)}`
     : null
 
-  const charge = await createAsaasPayment({
+  const charge = await paymentProvider().createCharge({
     customerId,
     method: option.method,
     amount: option.total,
     installmentCount: option.installmentCount,
     dueDate: new Date(payment.due_at),
     description: paymentsCopy.chargeDescription(payment.event_title ?? ""),
-    externalReference: payment.id,
+    reference: payment.id,
     successUrl,
   })
 
   // Before the row is touched: a charge with no invoice is one the participant
   // cannot reach, and recording it would leave money able to arrive against a
   // link nobody has. Deleted here rather than left for the next pick to tidy.
-  if (!charge.invoiceUrl) {
-    await deleteOrphanCharge(payment.id, charge.id)
+  if (!charge.checkoutUrl) {
+    await deleteOrphanCharge(payment.id, charge.chargeId)
     throw new Error(paymentsCopy.errors.noInvoiceUrl)
   }
 
@@ -215,18 +207,18 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
       installment_count: option.installmentCount,
       amount: option.total,
       asaas_customer_id: customerId,
-      asaas_payment_id: charge.id,
-      asaas_installment_id: charge.installmentId,
-      asaas_invoice_url: charge.invoiceUrl,
-      asaas_invoice_number: charge.invoiceNumber,
+      asaas_payment_id: charge.chargeId,
+      asaas_installment_id: charge.planId,
+      asaas_invoice_url: charge.checkoutUrl,
+      asaas_invoice_number: charge.dashboardRef,
     })
     .where("id", "=", payment.id)
     .where("status", "in", [...ACTIVE_PAYMENT_STATUSES])
     // Compare-and-swap on the charge this call decided against. Without it two
     // picks racing both match -- awaiting_payment is itself an open status --
-    // and the loser's charge stays live at Asaas with the row no longer naming
-    // it. A row lock would close the race too, but it would be held across the
-    // Asaas call above; see the note in payment-offer.server.ts.
+    // and the loser's charge stays live at the provider with the row no longer
+    // naming it. A row lock would close the race too, but it would be held
+    // across the provider call above; see the note in payment-offer.server.ts.
     .where(
       sql<boolean>`asaas_payment_id IS NOT DISTINCT FROM ${payment.asaas_payment_id}`,
     )
@@ -238,7 +230,7 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
     // it — or another pick got there first. Either way the charge just created
     // is one nobody can reach through the app and nothing would ever mark paid,
     // so it must not survive.
-    await deleteOrphanCharge(payment.id, charge.id)
+    await deleteOrphanCharge(payment.id, charge.chargeId)
 
     const winner = await readChargeAfterRace(payment.id)
     // Losing to the same option is a double click, not a decision. The invoice
@@ -257,16 +249,16 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
 
   // Only now the replaced one, if the participant changed their mind. Deleting
   // it earlier would leave them with nothing to pay had the new charge failed.
-  if (payment.asaas_payment_id && payment.asaas_payment_id !== charge.id) {
+  if (payment.asaas_payment_id && payment.asaas_payment_id !== charge.chargeId) {
     await deleteOrphanCharge(payment.id, payment.asaas_payment_id)
   }
 
-  return { invoiceUrl: charge.invoiceUrl }
+  return { invoiceUrl: charge.checkoutUrl }
 }
 
-// Everything above can fail at Asaas, and what reaches the participant is a
-// sentence, not "Asaas 400 on /customers" or "fetch failed". The detail is in
-// the log already.
+// Everything above can fail at the provider, and what reaches the participant
+// is a sentence, not an HTTP status or "fetch failed". The detail is in the log
+// already.
 export const pickOption = applySchema(pickOptionSchema)(async (values) => {
   try {
     return await pick(values)
@@ -289,22 +281,22 @@ function readChargeAfterRace(paymentId: string) {
 }
 
 /**
- * A charge the row no longer points at. Asaas answers a refusal with
- * `deleted: false` and a 200, so the return value is the only place it shows.
+ * A charge the row no longer points at. A refusal is not always an error, so
+ * the return value is the only place it shows.
  */
-async function deleteOrphanCharge(paymentId: string, asaasPaymentId: string) {
+async function deleteOrphanCharge(paymentId: string, chargeId: string) {
   try {
-    const deleted = await deleteAsaasPayment(asaasPaymentId)
+    const deleted = await paymentProvider().cancelCharge(chargeId)
     if (!deleted) {
-      logger.error("Asaas refused to delete the charge", {
+      logger.error("The payment provider refused to delete the charge", {
         paymentId,
-        asaasPaymentId,
+        chargeId,
       })
     }
   } catch (error) {
-    logger.error("Could not delete the Asaas charge", {
+    logger.error("Could not delete the charge at the payment provider", {
       paymentId,
-      asaasPaymentId,
+      chargeId,
       error: error instanceof Error ? error.message : String(error),
     })
   }
