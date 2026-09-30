@@ -43,4 +43,11 @@ export default defineConfig({
     devtoolsJson(),
   ],
   optimizeDeps: { include: lazilyReachedDeps },
+  /**
+   * ag-grid's core alone minifies to about 585 kB, so the admin tables' chunk
+   * (about 906 kB with the modules ag-data-table.tsx registers) can never meet
+   * Vite's 500 kB default. The limit sits just above it: a warning now means
+   * that chunk grew or something else got this heavy.
+   */
+  build: { chunkSizeWarningLimit: 950 },
 })
