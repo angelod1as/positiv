@@ -42,9 +42,6 @@ export const adminTablesCopy = {
     viewTitle: "View Text",
     cancel: "Cancel",
     save: "Save",
-    discardChanges: "Você tem alterações não salvas. Deseja descartá-las?",
-    saveFailed: "Erro ao salvar alteração",
-    unknownError: "Erro desconhecido",
   },
   renderers: {
     lastAttendedSeparator: " - ",

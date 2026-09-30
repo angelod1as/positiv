@@ -1,6 +1,26 @@
 import { AG_GRID_LOCALE_BR } from "@ag-grid-community/locale"
 import {
-  AllCommunityModule,
+  CellStyleModule,
+  CheckboxEditorModule,
+  ClientSideRowModelModule,
+  ColumnApiModule,
+  ColumnAutoSizeModule,
+  CustomFilterModule,
+  EventApiModule,
+  ExternalFilterModule,
+  GridStateModule,
+  LargeTextEditorModule,
+  LocaleModule,
+  PaginationModule,
+  QuickFilterModule,
+  RenderApiModule,
+  RowApiModule,
+  RowSelectionModule,
+  RowStyleModule,
+  SelectEditorModule,
+  TextEditorModule,
+  TooltipModule,
+  ValidationModule,
   ModuleRegistry,
   themeQuartz,
   type CellClassParams,
@@ -26,9 +46,33 @@ import { useGridState } from "./use-grid-state"
 
 let modulesRegistered = false
 
+// A grid feature not covered here fails at runtime: register its module and
+// exercise it in ag-data-table.modules.test.tsx.
 function ensureModulesRegistered() {
   if (!modulesRegistered) {
-    ModuleRegistry.registerModules([AllCommunityModule])
+    ModuleRegistry.registerModules([
+      CellStyleModule,
+      CheckboxEditorModule,
+      ClientSideRowModelModule,
+      ColumnApiModule,
+      ColumnAutoSizeModule,
+      CustomFilterModule,
+      EventApiModule,
+      ExternalFilterModule,
+      GridStateModule,
+      LargeTextEditorModule,
+      LocaleModule,
+      PaginationModule,
+      QuickFilterModule,
+      RenderApiModule,
+      RowApiModule,
+      RowSelectionModule,
+      RowStyleModule,
+      SelectEditorModule,
+      TextEditorModule,
+      TooltipModule,
+      ...(import.meta.env.DEV ? [ValidationModule] : []),
+    ])
     modulesRegistered = true
   }
 }

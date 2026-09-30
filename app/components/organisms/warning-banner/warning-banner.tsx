@@ -1,5 +1,3 @@
-"use client"
-
 import { X } from "lucide-react"
 import { useEffect, useState } from "react"
 import { ENV } from "varlock/env"

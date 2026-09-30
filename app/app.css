@@ -77,7 +77,7 @@
   }
 
   .bg-image {
-    background-image: url("./assets/brand/bg.jpg");
+    background-image: url("./assets/brand/bg.webp");
     background-color: var(--color-purple);
     background-size: cover;
     background-position: top;

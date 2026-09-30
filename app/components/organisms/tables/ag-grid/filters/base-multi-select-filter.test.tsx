@@ -1,5 +1,5 @@
 import userEvent from "@testing-library/user-event"
-import type { IRowNode } from "ag-grid-community"
+import type { GridApi, IRowNode } from "ag-grid-community"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { render, screen } from "~/test/test-utils"
 
@@ -611,6 +611,7 @@ describe("BaseMultiSelectFilter", () => {
       },
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
+      isDestroyed: () => false,
     })
 
     it("only shows options that exist in data when filterToExistingValues=true (default)", () => {
@@ -776,6 +777,41 @@ describe("BaseMultiSelectFilter", () => {
 
       expect(screen.getByText("Com notas")).toBeInTheDocument()
       expect(screen.getByText("Sem notas")).toBeInTheDocument()
+    })
+  })
+
+  describe("Row data listener", () => {
+    const mockApi = (destroyed: boolean) =>
+      ({
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        forEachNode: vi.fn(),
+        isDestroyed: () => destroyed,
+      }) as unknown as GridApi
+
+    it("stops listening for row data when unmounted", () => {
+      const api = mockApi(false)
+      const { unmount } = render(
+        <BaseMultiSelectFilter {...defaultProps} api={api} />,
+      )
+
+      unmount()
+
+      expect(api.removeEventListener).toHaveBeenCalledWith(
+        "rowDataUpdated",
+        expect.any(Function),
+      )
+    })
+
+    it("leaves a destroyed grid alone when unmounted", () => {
+      const api = mockApi(true)
+      const { unmount } = render(
+        <BaseMultiSelectFilter {...defaultProps} api={api} />,
+      )
+
+      unmount()
+
+      expect(api.removeEventListener).not.toHaveBeenCalled()
     })
   })
 })

@@ -58,6 +58,7 @@ export function BaseMultiSelectFilter({
 
     api.addEventListener("rowDataUpdated", onRowDataUpdated)
     return () => {
+      if (api.isDestroyed()) return
       api.removeEventListener("rowDataUpdated", onRowDataUpdated)
     }
   }, [api, filterToExistingValues])
