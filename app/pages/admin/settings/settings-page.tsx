@@ -11,6 +11,7 @@ import {
 } from "~/business/settings/app-settings.server"
 import { ListmonkDiagnosticSection } from "~/components/pages/admin/listmonk-diagnostic-section"
 import { OnlinePaymentsSection } from "~/components/pages/admin/online-payments-section"
+import { CenteredLayout } from "~/components/layouts/centered-layout"
 import { Separator } from "~/components/ui/separator"
 import { adminSettingsCopy } from "~/copy/admin"
 import { metaCopy } from "~/copy/meta"
@@ -66,7 +67,7 @@ export async function loader() {
 
 const SettingsPage = ({ loaderData }: Route.ComponentProps) => {
   return (
-    <>
+    <CenteredLayout>
       <h1>{adminSettingsCopy.title}</h1>
 
       <OnlinePaymentsSection
@@ -77,7 +78,7 @@ const SettingsPage = ({ loaderData }: Route.ComponentProps) => {
       <Separator />
 
       <ListmonkDiagnosticSection />
-    </>
+    </CenteredLayout>
   )
 }
 
