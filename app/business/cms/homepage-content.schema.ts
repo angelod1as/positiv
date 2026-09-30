@@ -8,14 +8,39 @@ const spanSchema = zod.object({
   marks: zod.array(zod.string()).optional(),
 })
 
-const blockSchema = zod.object({
-  _type: zod.literal("block"),
-  _key: zod.string(),
-  style: zod.literal("normal"),
-  listItem: zod.never().optional(),
-  markDefs: zod.array(zod.looseObject({ _key: zod.string() })).optional(),
-  children: zod.array(spanSchema),
-})
+const decorators = ["strong", "em"]
+
+const blockSchema = zod
+  .object({
+    _type: zod.literal("block"),
+    _key: zod.string(),
+    style: zod.literal("normal"),
+    listItem: zod.never().optional(),
+    markDefs: zod
+      .array(
+        zod.looseObject({ _type: zod.literal("link"), _key: zod.string() }),
+      )
+      .optional(),
+    children: zod.array(spanSchema),
+  })
+  .superRefine((block, context) => {
+    const allowed = [
+      ...decorators,
+      ...(block.markDefs ?? []).map((markDef) => markDef._key),
+    ]
+
+    block.children.forEach((span, spanIndex) => {
+      span.marks?.forEach((mark, markIndex) => {
+        if (!allowed.includes(mark)) {
+          context.addIssue({
+            code: "custom",
+            message: `Unknown mark "${mark}"`,
+            path: ["children", spanIndex, "marks", markIndex],
+          })
+        }
+      })
+    })
+  })
 
 export const portableTextSchema = zod.array(blockSchema).min(1)
 

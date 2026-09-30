@@ -60,6 +60,32 @@ describe("portableTextSchema", () => {
     expect(result.success).toBe(false)
   })
 
+  it("rejects a span with a decorator other than bold or italic", () => {
+    const result = portableTextSchema.safeParse([
+      block([{ text: "sublinhado", marks: ["underline"] }]),
+    ])
+
+    expect(result.success).toBe(false)
+  })
+
+  it("rejects a span that points at a mark definition the block lacks", () => {
+    const result = portableTextSchema.safeParse([
+      block([{ text: "Veja", marks: ["l1"] }]),
+    ])
+
+    expect(result.success).toBe(false)
+  })
+
+  it("rejects a mark definition other than a link", () => {
+    const result = portableTextSchema.safeParse([
+      block([{ text: "Veja", marks: ["c1"] }], {
+        markDefs: [{ _key: "c1", _type: "comment" }],
+      }),
+    ])
+
+    expect(result.success).toBe(false)
+  })
+
   it("rejects a child that is not a span", () => {
     const result = portableTextSchema.safeParse([
       {
