@@ -23,11 +23,7 @@ const about: HomepageContent["about"] = {
       title: "segundo card",
       body: [paragraph("b0", "texto dois"), paragraph("b1", "mais texto")],
     },
-    {
-      _key: "c",
-      title: "terceiro card",
-      body: [paragraph("b0", "texto três")],
-    },
+    { _key: "c", title: "terceiro card", body: [paragraph("b0", "texto três")] },
   ],
 }
 

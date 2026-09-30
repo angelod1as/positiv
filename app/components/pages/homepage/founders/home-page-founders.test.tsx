@@ -27,10 +27,7 @@ const founders: HomepageContent["founders"] = {
       name: "Bia Souza",
       pronouns: "ela/dela",
       instagram: "bia.souza",
-      bio: [
-        paragraph("b0", "Primeiro parágrafo."),
-        paragraph("b1", "Segundo."),
-      ],
+      bio: [paragraph("b0", "Primeiro parágrafo."), paragraph("b1", "Segundo.")],
       photo: {
         url: "https://cdn.sanity.io/images/p/d/bia.jpg?w=320&h=320",
         alt: "Bia sorrindo",
