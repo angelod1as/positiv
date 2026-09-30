@@ -1,7 +1,9 @@
 import { redirectWithError } from "remix-toast"
 import { getUserContext } from "~/business/auth/auth.server"
+import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
 import { Button } from "~/components/atoms/button/button"
 import { Copy } from "~/components/atoms/copy/copy"
+import { PaymentBetaNotice } from "~/components/molecules/payment-beta-notice/payment-beta-notice"
 import {
   Card,
   CardContent,
@@ -37,10 +39,12 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     throw await redirectWithError(paths.dash.DASHBOARD, page.notYours)
   }
 
-  return loadPaymentThanks({
+  const data = await loadPaymentThanks({
     paymentId: params.paymentId,
     profileId: currentProfile.id,
   })
+
+  return { ...data, betaNotice: await isOnlinePaymentsEnabled() }
 }
 
 /**
@@ -59,7 +63,8 @@ function thanksMessage(data: PaymentThanksData) {
 }
 
 const PaymentThanksPage = ({ loaderData }: Route.ComponentProps) => {
-  const { title, body } = thanksMessage(loaderData as PaymentThanksData)
+  const data = loaderData as PaymentThanksData & { betaNotice: boolean }
+  const { title, body } = thanksMessage(data)
 
   return (
     <Card className="my-12">
@@ -69,6 +74,7 @@ const PaymentThanksPage = ({ loaderData }: Route.ComponentProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
+        {data.betaNotice && <PaymentBetaNotice eventTitle={data.eventTitle} />}
         <Copy>{body}</Copy>
       </CardContent>
       <CardFooter>
