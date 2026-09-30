@@ -30,11 +30,11 @@ vi.mock("~/business/payment/payment-webhook.server", async (importOriginal) => {
   }
 })
 
-import { action } from "./api.asaas-webhook"
+import { action } from "./api.payment-webhook"
 
 function post(body: unknown, token?: string) {
   return action({
-    request: new Request("http://localhost/api/asaas/webhook", {
+    request: new Request("http://localhost/api/payment/webhook", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -64,7 +64,7 @@ beforeEach(() => {
   logger.warn.mockClear()
 })
 
-describe("POST /api/asaas/webhook", () => {
+describe("POST /api/payment/webhook", () => {
   // A participant already on the Asaas invoice page can still pay after an
   // admin switches online payments off. Refusing the confirmation would lose
   // the payment, and fifteen refusals interrupt the whole Asaas queue.
@@ -150,7 +150,7 @@ describe("POST /api/asaas/webhook", () => {
 
   it("answers 400 for a body that is not json at all", async () => {
     const response = await action({
-      request: new Request("http://localhost/api/asaas/webhook", {
+      request: new Request("http://localhost/api/payment/webhook", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

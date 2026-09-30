@@ -34,7 +34,7 @@ export function buildWebhookEvent(event: string, payment: WebhookCharge) {
 }
 
 export function postWebhook(body: ReturnType<typeof buildWebhookEvent>): Promise<Response> {
-  return fetch(`${getBaseUrl()}/api/asaas/webhook`, {
+  return fetch(`${getBaseUrl()}/api/payment/webhook`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

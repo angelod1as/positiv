@@ -87,7 +87,7 @@ export async function registerAsaasWebhook(
 
   const body = {
     name: WEBHOOK_NAME,
-    url: `${origin.replace(/\/+$/, "")}/api/asaas/webhook`,
+    url: `${origin.replace(/\/+$/, "")}/api/payment/webhook`,
     email: "contato@positivparty.com",
     enabled: true,
     interrupted: false,

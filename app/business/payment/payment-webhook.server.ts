@@ -1,80 +1,38 @@
-import { fromZonedTime } from "date-fns-tz"
 import { sql, type Kysely } from "kysely"
-import type { z } from "zod"
 import { kyselyDb } from "~/kysely-db"
 import type { Database } from "~types/database/kysely.types"
-import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
-import { reaisToCents } from "./provider/asaas/asaas-client.server"
+import type { PaymentEvent, ProviderRefund } from "./payment-provider"
 import {
   deliverPaymentEmail,
   queuePaymentEmail,
 } from "./payment-email-outbox.server"
 import { applyRefundTally, type RefundablePayment } from "./refund-apply.server"
 import { tallyRefunds } from "./refund-state"
-import {
-  asaasRefunds,
-  type AsaasRefund,
-} from "./provider/asaas/asaas-refunds"
 
 /**
- * Deliberately permissive. Asaas adds fields without warning, and the docs say
- * so: a body that carries something new must still be processed, not rejected.
- * Only `id` and `event` are required, because they are what dedupes and routes.
- */
-export const webhookEventSchema = zod.looseObject({
-  id: zod.string().min(1),
-  event: zod.string().min(1),
-  dateCreated: zod.string().optional(),
-  payment: zod
-    .looseObject({
-      id: zod.string(),
-      status: zod.string().optional(),
-      value: zod.number().optional(),
-      installment: zod.string().nullable().optional(),
-      externalReference: zod.string().nullable().optional(),
-      paymentDate: zod.string().nullable().optional(),
-      confirmedDate: zod.string().nullable().optional(),
-      dueDate: zod.string().nullable().optional(),
-      refunds: zod
-        .array(
-          zod.looseObject({
-            value: zod.number().optional(),
-            status: zod.string().optional(),
-          }),
-        )
-        .nullable()
-        .optional(),
-    })
-    .optional(),
-  // Not in the documented payload, but sent: PAYMENT_REFUND_DENIED carries the
-  // reason here.
-  additionalInfo: zod
-    .looseObject({ denialReason: zod.string().nullable().optional() })
-    .nullable()
-    .optional(),
-})
-
-export type AsaasWebhookEvent = z.infer<typeof webhookEventSchema>
-
-/**
- * Writes the delivery to the inbox and says whether there is work to do.
+ * Writes the delivery to the inbox and says whether there is work to do. The
+ * provider's raw payload is kept for auditing, the translated event for what
+ * the domain reads back.
  *
  * A row exists from the first delivery onwards, so its mere presence does not
  * mean the event was handled: an attempt that threw leaves the row behind with
- * `error` set and `processed_at` still null, and Asaas retries exactly because
- * nothing was applied. Only a processed row makes a redelivery a no-op.
+ * `error` set and `processed_at` still null, and the provider retries exactly
+ * because nothing was applied. Only a processed row makes a redelivery a no-op.
  */
 export async function recordWebhookEvent(
-  event: AsaasWebhookEvent,
+  event: PaymentEvent,
+  payload: unknown,
 ): Promise<{ isNew: boolean; alreadyProcessed: boolean; id: string }> {
   const inserted = await kyselyDb
     .insertInto("payment_webhook_events")
     .values({
-      provider_event_id: event.id,
-      event_type: event.event,
-      provider_charge_id: event.payment?.id ?? null,
-      payload: JSON.stringify(event),
+      provider_event_id: event.eventId,
+      event_type: event.providerType,
+      provider_charge_id: event.chargeId,
+      provider_plan_id: event.planId,
+      payload: JSON.stringify(payload),
+      event: JSON.stringify(event),
     })
     .onConflict((oc) => oc.column("provider_event_id").doNothing())
     .returning("id")
@@ -85,7 +43,7 @@ export async function recordWebhookEvent(
   const existing = await kyselyDb
     .selectFrom("payment_webhook_events")
     .select(["id", "processed_at"])
-    .where("provider_event_id", "=", event.id)
+    .where("provider_event_id", "=", event.eventId)
     .executeTakeFirstOrThrow()
 
   return {
@@ -95,77 +53,52 @@ export async function recordWebhookEvent(
   }
 }
 
-const PAID_EVENTS = ["PAYMENT_CONFIRMED", "PAYMENT_RECEIVED"]
-const ALARM_EVENTS = [
-  "PAYMENT_CHARGEBACK_REQUESTED",
-  "PAYMENT_CHARGEBACK_DISPUTE",
-  "PAYMENT_AWAITING_CHARGEBACK_REVERSAL",
-  "PAYMENT_CREDIT_CARD_CAPTURE_REFUSED",
-  "PAYMENT_REPROVED_BY_RISK_ANALYSIS",
-  "PAYMENT_REFUND_DENIED",
-]
-
-/** Statuses a charge can still be paid from — including expired: Asaas lets
- *  someone pay a Pix after the due date, and the money is real. */
+/** Statuses a charge can still be paid from — including expired: a provider
+ *  may let someone pay a Pix after the due date, and the money is real. */
 const PAYABLE = ["pending", "awaiting_payment", "expired"] as const
-
-// Asaas dates a charge by the calendar day in Brazil and it stays payable
-// through the end of that day, which is what `due_at` has to mean here: the
-// expiry cron and PAYMENT_OVERDUE both read this column.
-const CHARGE_TIME_ZONE = "America/Sao_Paulo"
-const ASAAS_DATE = /^\d{4}-\d{2}-\d{2}$/
-
-function dueAtFromAsaas(dueDate: string | null | undefined): string | null {
-  if (!dueDate || !ASAAS_DATE.test(dueDate)) return null
-  return fromZonedTime(
-    `${dueDate}T23:59:59`,
-    CHARGE_TIME_ZONE,
-  ).toISOString()
-}
 
 // `payments.id` is a uuid column, and Postgres throws on a value it cannot
 // cast rather than answering no rows. A charge opened by another system on the
-// same Asaas account carries that system's reference, and an event about it
-// has to leave as the 200 it deserves, not as a 500 Asaas keeps retrying.
-const UUID =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+// same provider account carries that system's reference, and an event about it
+// has to leave as the 200 it deserves, not as a 500 the provider keeps
+// retrying.
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-// Locked for the rest of the event's transaction. Asaas delivers one event at a
-// time, but a plan's refund is decided from a total several events share, and
-// two of them applied at once would each read the row before the other wrote
-// it -- and each send the email.
-async function findPayment(db: Kysely<Database>, event: AsaasWebhookEvent) {
-  const payment = event.payment
-  if (!payment) return null
-
-  const byId = await db
-    .selectFrom("payments")
-    .selectAll()
-    .where("provider_charge_id", "=", payment.id)
-    .forUpdate()
-    .executeTakeFirst()
-  if (byId) return byId
-
-  if (payment.installment) {
-    // One payments row per Asaas installment plan: a resend or a re-pick opens
-    // a new plan rather than joining this one. The column carries a plain
-    // index, not a unique one like provider_charge_id, so this is an invariant
-    // the code keeps and the schema does not -- two rows sharing a plan would
-    // make the row picked here arbitrary.
-    const byInstallment = await db
+// Locked for the rest of the event's transaction. The provider delivers one
+// event at a time, but a plan's refund is decided from a total several events
+// share, and two of them applied at once would each read the row before the
+// other wrote it -- and each send the email.
+async function findPayment(db: Kysely<Database>, event: PaymentEvent) {
+  if (event.chargeId) {
+    const byId = await db
       .selectFrom("payments")
       .selectAll()
-      .where("provider_plan_id", "=", payment.installment)
+      .where("provider_charge_id", "=", event.chargeId)
       .forUpdate()
       .executeTakeFirst()
-    if (byInstallment) return byInstallment
+    if (byId) return byId
   }
 
-  if (payment.externalReference && UUID.test(payment.externalReference)) {
+  if (event.planId) {
+    // One payments row per installment plan: a resend or a re-pick opens a new
+    // plan rather than joining this one. The column carries a plain index, not
+    // a unique one like provider_charge_id, so this is an invariant the code
+    // keeps and the schema does not -- two rows sharing a plan would make the
+    // row picked here arbitrary.
+    const byPlan = await db
+      .selectFrom("payments")
+      .selectAll()
+      .where("provider_plan_id", "=", event.planId)
+      .forUpdate()
+      .executeTakeFirst()
+    if (byPlan) return byPlan
+  }
+
+  if (event.reference && UUID.test(event.reference)) {
     const byReference = await db
       .selectFrom("payments")
       .selectAll()
-      .where("id", "=", payment.externalReference)
+      .where("id", "=", event.reference)
       .forUpdate()
       .executeTakeFirst()
     if (byReference) return byReference
@@ -175,51 +108,25 @@ async function findPayment(db: Kysely<Database>, event: AsaasWebhookEvent) {
 }
 
 /**
- * The refunds a charge-level event describes. A PAYMENT_REFUNDED that lists
- * nothing gave the charge back whole, which is `wholeValue`. A partial one
- * without a list says nothing about how much moved, and reading it as the
- * whole amount would close the row as fully refunded -- so it answers null.
- */
-function eventRefunds(
-  event: AsaasWebhookEvent,
-  wholeValue: number | null,
-): AsaasRefund[] | null {
-  const listed = event.payment?.refunds
-  if (listed?.length) return listed
-  if (event.event === "PAYMENT_REFUNDED" && wholeValue != null) {
-    return [{ value: wholeValue, status: "DONE" }]
-  }
-  return null
-}
-
-/**
  * Every refund of a card plan the inbox knows about.
  *
- * Asaas reports a plan's refund as one event per charge, each listing only
- * that charge's refunds. The latest event per Asaas payment id carries that
- * charge's whole list, so taking it once per charge is what keeps a
- * redelivery -- or a second refund of the same charge -- from counting twice.
+ * A plan's refund arrives as one event per charge, each listing only that
+ * charge's refunds. The latest event per charge carries that charge's whole
+ * list, so taking it once per charge is what keeps a redelivery -- or a second
+ * refund of the same charge -- from counting twice.
  */
-async function installmentRefunds(
+async function planRefunds(
   db: Kysely<Database>,
-  installmentId: string,
-): Promise<AsaasRefund[]> {
-  const result = await sql<{ event_type: string; payload: AsaasWebhookEvent }>`
-    SELECT DISTINCT ON (payload->'payment'->>'id') event_type, payload
+  planId: string,
+): Promise<ProviderRefund[]> {
+  const result = await sql<{ refunds: ProviderRefund[] | null }>`
+    SELECT DISTINCT ON (provider_charge_id) event->'refunds' AS refunds
       FROM payment_webhook_events
-     WHERE payload->'payment'->>'installment' = ${installmentId}
-       AND event_type IN ('PAYMENT_REFUNDED', 'PAYMENT_PARTIALLY_REFUNDED')
-     ORDER BY payload->'payment'->>'id', received_at DESC`.execute(db)
+     WHERE provider_plan_id = ${planId}
+       AND event->>'type' IN ('refunded', 'partially_refunded')
+     ORDER BY provider_charge_id, received_at DESC`.execute(db)
 
-  // A charge given back whole without a list is its own value -- not the
-  // plan's.
-  return result.rows.flatMap(
-    (row) =>
-      eventRefunds(
-        { ...row.payload, event: row.event_type },
-        row.payload.payment?.value ?? null,
-      ) ?? [],
-  )
+  return result.rows.flatMap((row) => row.refunds ?? [])
 }
 
 type TransitionResult = {
@@ -233,7 +140,7 @@ type TransitionResult = {
 
 export async function applyWebhookEvent(
   inboxId: string,
-  event: AsaasWebhookEvent,
+  event: PaymentEvent,
 ): Promise<{ applied: boolean; reason?: string }> {
   let result: TransitionResult
 
@@ -246,12 +153,12 @@ export async function applyWebhookEvent(
       const payment = await findPayment(trx, event)
 
       if (!payment) {
-        // A charge created straight in the Asaas dashboard, or one from another
-        // system on the same account. Retrying will not make it ours.
-        logger.warn("Asaas webhook about an unknown charge", {
-          asaasEventId: event.id,
-          event: event.event,
-          asaasPaymentId: event.payment?.id,
+        // A charge created straight in the provider's dashboard, or one from
+        // another system on the same account. Retrying will not make it ours.
+        logger.warn("Payment webhook about an unknown charge", {
+          providerEventId: event.eventId,
+          event: event.providerType,
+          chargeId: event.chargeId,
         })
         await markProcessed(trx, inboxId, null)
         return { applied: false, reason: "unknown_payment" }
@@ -268,7 +175,7 @@ export async function applyWebhookEvent(
       await markProcessed(kyselyDb, inboxId, message)
     } catch {
       // The inbox is unreachable too. The throw below is what matters — it is
-      // what makes Asaas retry the whole thing.
+      // what makes the provider retry the whole thing.
     }
     throw error
   }
@@ -278,7 +185,10 @@ export async function applyWebhookEvent(
   // failure here costs nothing but time — the row the transaction queued is
   // still owed, and the sweep sends it late rather than never.
   const owed = [
-    [result.confirmEmailId, "Payment confirmed, but the receipt could not be sent"],
+    [
+      result.confirmEmailId,
+      "Payment confirmed, but the receipt could not be sent",
+    ],
     [result.refundEmailId, "Money went back, but the notice could not be sent"],
   ] as const
 
@@ -289,7 +199,7 @@ export async function applyWebhookEvent(
     } catch (error) {
       logger.error(failure, {
         paymentEmailId: emailId,
-        asaasEventId: event.id,
+        providerEventId: event.eventId,
         error: error instanceof Error ? error.message : String(error),
       })
     }
@@ -315,34 +225,38 @@ async function markProcessed(
 async function applyToPayment(
   db: Kysely<Database>,
   payment: RefundablePayment,
-  event: AsaasWebhookEvent,
+  event: PaymentEvent,
 ): Promise<TransitionResult> {
   const now = new Date().toISOString()
 
-  if (ALARM_EVENTS.includes(event.event)) {
-    // A chargeback, a denied refund or a capture refused by risk analysis
-    // needs a person, not a status, so none of them moves the row.
-    logger.error("Asaas raised an alarm on a payment", {
-      paymentId: payment.id,
-      event: event.event,
-      asaasPaymentId: event.payment?.id,
-    })
+  switch (event.type) {
+    case "alarm":
+    case "refund_denied": {
+      // A chargeback, a denied refund or a capture refused by risk analysis
+      // needs a person, not a status, so none of them moves the row.
+      logger.error("The payment provider raised an alarm on a payment", {
+        paymentId: payment.id,
+        event: event.providerType,
+        chargeId: event.chargeId,
+      })
 
-    // Asaas takes a refund request and can refuse it afterwards -- the sandbox
-    // does when it cannot make the transfer, and it waits for someone to
-    // authorise the refund in the dashboard first. A refund is one request,
-    // on a charge or on a whole plan, so a denial means nothing moved: the
-    // claim goes back and the admin can ask again, told why. Guarded on
-    // paid, so a denial arriving after a refund that did go through is
-    // ignored.
-    if (event.event === "PAYMENT_REFUND_DENIED") {
+      if (event.type === "alarm") {
+        return { applied: false, reason: "alarm_logged" }
+      }
+
+      // A provider takes a refund request and can refuse it afterwards -- when
+      // it cannot make the transfer, or while it waits for someone to
+      // authorise the refund in its dashboard. A refund is one request, on a
+      // charge or on a whole plan, so a denial means nothing moved: the claim
+      // goes back and the admin can ask again, told why. Guarded on paid, so a
+      // denial arriving after a refund that did go through is ignored.
       const released = await db
         .updateTable("payments")
         .set({
           refund_requested_at: null,
           refund_requested_amount: null,
           refund_denied_at: now,
-          refund_denial_reason: event.additionalInfo?.denialReason ?? null,
+          refund_denial_reason: event.reason,
         })
         .where("id", "=", payment.id)
         .where("status", "=", "paid")
@@ -351,138 +265,135 @@ async function applyToPayment(
       return { applied: Boolean(released), reason: "alarm_logged" }
     }
 
-    return { applied: false, reason: "alarm_logged" }
-  }
+    case "paid": {
+      const amount = payment.amount ?? (event.amount || null)
+      const updated = await db
+        .updateTable("payments")
+        .set({ status: "paid", paid_at: now, amount })
+        .where("id", "=", payment.id)
+        .where("status", "in", PAYABLE)
+        .returning("id")
+        .executeTakeFirst()
 
-  if (PAID_EVENTS.includes(event.event)) {
-    const amount =
-      payment.amount ??
-      (event.payment?.value ? reaisToCents(event.payment.value) : null)
-    const updated = await db
-      .updateTable("payments")
-      .set({ status: "paid", paid_at: now, amount })
-      .where("id", "=", payment.id)
-      .where("status", "in", PAYABLE)
-      .returning("id")
-      .executeTakeFirst()
+      // No row means it was already paid — a redelivery, a second event about
+      // the same payment, or a later installment of a plan the first one
+      // already settled. The email has been sent once already.
+      if (!updated) return { applied: false, reason: "already_paid" }
 
-    // No row means it was already paid — a redelivery, the second event of the
-    // CONFIRMED/RECEIVED pair, or a later installment of a plan the first one
-    // already settled. The email has been sent once already.
-    if (!updated) return { applied: false, reason: "already_paid" }
+      // Queued inside the transaction, so the receipt is owed the moment the
+      // row says paid. A send that never happens is then a row the sweep
+      // finds.
+      const confirmEmailId = await queuePaymentEmail(db, {
+        paymentId: payment.id,
+        kind: "confirmation",
+      })
 
-    // Queued inside the transaction, so the receipt is owed the moment the
-    // row says paid. A send that never happens is then a row the sweep finds.
-    const confirmEmailId = await queuePaymentEmail(db, {
-      paymentId: payment.id,
-      kind: "confirmation",
-    })
-
-    return { applied: true, confirmEmailId }
-  }
-
-  if (event.event === "PAYMENT_OVERDUE") {
-    const updated = await db
-      .updateTable("payments")
-      .set({ status: "expired" })
-      .where("id", "=", payment.id)
-      .where("status", "in", ["pending", "awaiting_payment"])
-      .returning("id")
-      .executeTakeFirst()
-    return { applied: Boolean(updated) }
-  }
-
-  if (event.event === "PAYMENT_DELETED") {
-    const updated = await db
-      .updateTable("payments")
-      .set({ status: "cancelled" })
-      .where("id", "=", payment.id)
-      .where("status", "in", ["pending", "awaiting_payment", "expired"])
-      .returning("id")
-      .executeTakeFirst()
-    return { applied: Boolean(updated) }
-  }
-
-  if (event.event === "PAYMENT_RESTORED") {
-    const updated = await db
-      .updateTable("payments")
-      .set({ status: "awaiting_payment" })
-      .where("id", "=", payment.id)
-      .where("status", "in", ["cancelled", "expired"])
-      .returning("id")
-      .executeTakeFirst()
-    return { applied: Boolean(updated) }
-  }
-
-  if (
-    event.event === "PAYMENT_REFUNDED" ||
-    event.event === "PAYMENT_PARTIALLY_REFUNDED"
-  ) {
-    const refunds = payment.provider_plan_id
-      ? await installmentRefunds(db, payment.provider_plan_id)
-      : eventRefunds(
-          event,
-          payment.amount === null ? null : payment.amount / 100,
-        )
-    if (!refunds?.length) {
-      return { applied: false, reason: "no_refund_amount" }
+      return { applied: true, confirmEmailId }
     }
 
-    const { applied, refundEmailId } = await applyRefundTally(
-      db,
-      payment,
-      tallyRefunds(asaasRefunds(refunds)),
-    )
-
-    return {
-      applied,
-      reason: applied ? undefined : "not_refundable",
-      refundEmailId,
-    }
-  }
-
-  if (event.event === "PAYMENT_REFUND_IN_PROGRESS") {
-    const updated = await db
-      .updateTable("payments")
-      .set({ refund_requested_at: now })
-      .where("id", "=", payment.id)
-      .where("refund_requested_at", "is", null)
-      .returning("id")
-      .executeTakeFirst()
-    return { applied: Boolean(updated) }
-  }
-
-  if (event.event === "PAYMENT_UPDATED") {
-    const value = event.payment?.value
-    const amount = value == null ? null : reaisToCents(value)
-    const dueAt = dueAtFromAsaas(event.payment?.dueDate)
-
-    // `payments.amount` is CHECK (amount > 0), so a zero or negative figure is
-    // refused here rather than thrown back by the database as a 500 Asaas
-    // would retry forever.
-    const changes = {
-      ...(amount != null && amount > 0 ? { amount } : {}),
-      ...(dueAt ? { due_at: dueAt } : {}),
-    }
-    if (!Object.keys(changes).length) {
-      return { applied: false, reason: "nothing_to_sync" }
+    case "overdue": {
+      const updated = await db
+        .updateTable("payments")
+        .set({ status: "expired" })
+        .where("id", "=", payment.id)
+        .where("status", "in", ["pending", "awaiting_payment"])
+        .returning("id")
+        .executeTakeFirst()
+      return { applied: Boolean(updated) }
     }
 
-    const updated = await db
-      .updateTable("payments")
-      .set(changes)
-      .where("id", "=", payment.id)
-      // Expired belongs here: Asaas can move the due date of a charge that
-      // lapsed, and a charge it still considers payable is one this row has
-      // to keep following.
-      .where("status", "in", ["pending", "awaiting_payment", "expired"])
-      .returning("id")
-      .executeTakeFirst()
+    case "cancelled": {
+      const updated = await db
+        .updateTable("payments")
+        .set({ status: "cancelled" })
+        .where("id", "=", payment.id)
+        .where("status", "in", ["pending", "awaiting_payment", "expired"])
+        .returning("id")
+        .executeTakeFirst()
+      return { applied: Boolean(updated) }
+    }
 
-    return { applied: Boolean(updated) }
+    case "restored": {
+      const updated = await db
+        .updateTable("payments")
+        .set({ status: "awaiting_payment" })
+        .where("id", "=", payment.id)
+        .where("status", "in", ["cancelled", "expired"])
+        .returning("id")
+        .executeTakeFirst()
+      return { applied: Boolean(updated) }
+    }
+
+    case "refunded":
+    case "partially_refunded": {
+      // A single charge given back whole without saying how much is the whole
+      // row. A partial one that says nothing stays unknown: reading it as the
+      // whole amount would close the row as fully refunded.
+      const refunds = payment.provider_plan_id
+        ? await planRefunds(db, payment.provider_plan_id)
+        : (event.refunds ??
+          (event.type === "refunded" && payment.amount !== null
+            ? [{ amount: payment.amount, state: "done" as const }]
+            : null))
+      if (!refunds?.length) {
+        return { applied: false, reason: "no_refund_amount" }
+      }
+
+      const { applied, refundEmailId } = await applyRefundTally(
+        db,
+        payment,
+        tallyRefunds(refunds),
+      )
+
+      return {
+        applied,
+        reason: applied ? undefined : "not_refundable",
+        refundEmailId,
+      }
+    }
+
+    case "refund_in_progress": {
+      const updated = await db
+        .updateTable("payments")
+        .set({ refund_requested_at: now })
+        .where("id", "=", payment.id)
+        .where("refund_requested_at", "is", null)
+        .returning("id")
+        .executeTakeFirst()
+      return { applied: Boolean(updated) }
+    }
+
+    case "updated": {
+      // `payments.amount` is CHECK (amount > 0), so a zero or negative figure
+      // is refused here rather than thrown back by the database as a 500 the
+      // provider would retry forever.
+      const changes = {
+        ...(event.amount != null && event.amount > 0
+          ? { amount: event.amount }
+          : {}),
+        ...(event.dueAt ? { due_at: event.dueAt } : {}),
+      }
+      if (!Object.keys(changes).length) {
+        return { applied: false, reason: "nothing_to_sync" }
+      }
+
+      const updated = await db
+        .updateTable("payments")
+        .set(changes)
+        .where("id", "=", payment.id)
+        // Expired belongs here: a provider can move the due date of a charge
+        // that lapsed, and a charge it still considers payable is one this row
+        // has to keep following.
+        .where("status", "in", ["pending", "awaiting_payment", "expired"])
+        .returning("id")
+        .executeTakeFirst()
+
+      return { applied: Boolean(updated) }
+    }
+
+    case "ignored":
+      // A charge created, a checkout viewed and everything else: recorded,
+      // nothing to do.
+      return { applied: false, reason: "ignored" }
   }
-
-  // PAYMENT_CREATED, PAYMENT_CHECKOUT_VIEWED and everything else: recorded,
-  // nothing to do.
-  return { applied: false, reason: "ignored" }
 }

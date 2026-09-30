@@ -85,6 +85,15 @@ describe("asaasConnector.readWebhook", () => {
       expect(reading).toMatchObject({ ok: false, status: 400 })
     })
 
+    it.each([
+      ["an id", { event: "PAYMENT_RECEIVED" }],
+      ["an event", { id: "evt_1" }],
+    ])("refuses with 400 a body without %s", async (_, body) => {
+      const reading = await asaasConnector.readWebhook(delivery(body))
+
+      expect(reading).toMatchObject({ ok: false, status: 400 })
+    })
+
     it("accepts fields it was not told about, and keeps the raw payload", async () => {
       const body = {
         id: "evt_1",
