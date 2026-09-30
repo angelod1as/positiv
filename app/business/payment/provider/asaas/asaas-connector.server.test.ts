@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { paymentsCopy } from "~/copy/payments"
 import {
+  AsaasError,
   createAsaasCustomer,
   createAsaasPayment,
   deleteAsaasPayment,
@@ -148,6 +150,32 @@ describe("asaasConnector", () => {
     it("falls back to the payments list for a charge with no number", () => {
       expect(asaasConnector.chargeDashboardUrl(null)).toBe(
         "https://sandbox.asaas.com/payment/list",
+      )
+    })
+  })
+
+  describe("errorMessage", () => {
+    it("turns an Asaas refusal into a sentence a person can read", () => {
+      const error = new AsaasError(
+        400,
+        [{ code: "invalid_cpfCnpj", description: "O CPF/CNPJ informado é inválido." }],
+        "/customers",
+      )
+
+      expect(asaasConnector.errorMessage(error, "checkout")).toBe(
+        paymentsCopy.providerErrors.checkoutCpf,
+      )
+    })
+
+    it("names Asaas when it refuses to be read", () => {
+      const error = new AsaasError(
+        404,
+        [{ code: "invalid_action", description: "Cobrança não encontrada." }],
+        "/payments/pay_1",
+      )
+
+      expect(asaasConnector.errorMessage(error, "sync")).toBe(
+        "O Asaas não deixou atualizar este pagamento: Cobrança não encontrada.",
       )
     })
   })

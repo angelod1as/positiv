@@ -26,7 +26,15 @@ export type PaymentProvider = {
   >
   /** Where an admin sees this charge in the provider's own dashboard. */
   chargeDashboardUrl(dashboardRef: string | null): string
+  /**
+   * What a person reads when a call to the provider fails. The technical
+   * detail stays in the log; anything that is not the provider's is the app's
+   * own sentence and passes through as it is.
+   */
+  errorMessage(error: unknown, context: ProviderErrorContext): string
 }
+
+export type ProviderErrorContext = "checkout" | "sync"
 
 /**
  * One refund, in cents. Only `done` is money back; `pending` is on its way and

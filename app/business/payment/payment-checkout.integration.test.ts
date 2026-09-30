@@ -238,7 +238,7 @@ describe("pickOption", () => {
     })
 
     expect(result.success === false && result.errors[0]?.message).toBe(
-      paymentsCopy.asaasErrors.checkoutCpf,
+      paymentsCopy.providerErrors.checkoutCpf,
     )
   })
 
@@ -253,7 +253,7 @@ describe("pickOption", () => {
     })
 
     expect(result.success === false && result.errors[0]?.message).toBe(
-      paymentsCopy.asaasErrors.unavailable,
+      paymentsCopy.providerErrors.unavailable,
     )
   })
 

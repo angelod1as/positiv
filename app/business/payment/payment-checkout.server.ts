@@ -13,7 +13,6 @@ import {
   isOnlinePaymentsEnabled,
 } from "~/business/settings/app-settings.server"
 import { paymentProvider } from "./payment-provider.server"
-import { asaasErrorMessage } from "./provider/asaas/asaas-error-message"
 import { ACTIVE_PAYMENT_STATUSES } from "./payment-totals.server"
 import { isValidCpf } from "~/lib/helpers/cpf"
 import { isUniqueViolation } from "~/lib/helpers/is-unique-violation"
@@ -263,7 +262,7 @@ export const pickOption = applySchema(pickOptionSchema)(async (values) => {
   try {
     return await pick(values)
   } catch (error) {
-    throw new Error(asaasErrorMessage(error, "checkout"))
+    throw new Error(paymentProvider().errorMessage(error, "checkout"))
   }
 })
 

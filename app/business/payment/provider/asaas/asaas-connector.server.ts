@@ -10,6 +10,7 @@ import {
   getAsaasPaymentRefunds,
   reaisToCents,
 } from "./asaas-client.server"
+import { asaasErrorMessage } from "./asaas-error-message"
 
 export const asaasConnector: PaymentProvider = {
   name: "Asaas",
@@ -68,6 +69,8 @@ export const asaasConnector: PaymentProvider = {
     dashboardRef
       ? `${asaasDashboardOrigin()}/payment/show/${dashboardRef}`
       : `${asaasDashboardOrigin()}/payment/list`,
+
+  errorMessage: asaasErrorMessage,
 }
 
 /** One entry of Asaas's `refunds` list, on a charge or on a whole plan. */

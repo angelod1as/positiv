@@ -174,7 +174,7 @@ describe("syncPaymentFromProvider", () => {
     const result = await syncPaymentFromProvider({ paymentId: payment.id })
 
     expect(result.success === false && result.errors[0]?.message).toBe(
-      paymentsCopy.asaasErrors.unavailable,
+      paymentsCopy.providerErrors.unavailable,
     )
     expect((await reload(payment.id)).refunds_synced_at).toBeNull()
   })

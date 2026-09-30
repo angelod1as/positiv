@@ -202,17 +202,17 @@ export const paymentsCopy = {
     submit: "Confirmar cancelamento",
     success: "Cobrança cancelada.",
   },
-  // What an Asaas refusal becomes before a person reads it. The technical
-  // detail -- status, path, code -- stays in the log.
-  asaasErrors: {
+  // What a payment provider's refusal becomes before a person reads it. The
+  // technical detail -- status, path, code -- stays in the log.
+  providerErrors: {
     checkoutCpf:
       "O sistema de pagamentos não aceitou o CPF da sua conta. Confira o CPF em Dados básicos ou fale com a organização.",
     checkoutRefused: (description: string) =>
       `O sistema de pagamentos recusou a cobrança: ${description}`,
     unavailable:
       "O sistema de pagamentos não respondeu. Tente de novo em alguns minutos.",
-    syncRefused: (description: string) =>
-      `O Asaas não deixou atualizar este pagamento: ${description}`,
+    syncRefused: (provider: string, description: string) =>
+      `O ${provider} não deixou atualizar este pagamento: ${description}`,
   },
   errors: {
     participantNotFound: "Participante não encontrade.",

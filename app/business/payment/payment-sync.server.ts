@@ -6,7 +6,6 @@ import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
 import type { ProviderRefund } from "./payment-provider"
 import { paymentProvider } from "./payment-provider.server"
-import { asaasErrorMessage } from "./provider/asaas/asaas-error-message"
 import { deliverPaymentEmail } from "./payment-email-outbox.server"
 import { applyRefundTally } from "./refund-apply.server"
 import { tallyRefunds } from "./refund-state"
@@ -54,7 +53,7 @@ export const syncPaymentFromProvider = applySchema(syncPaymentSchema)(
         paymentId: values.paymentId,
         error: error instanceof Error ? error.message : String(error),
       })
-      throw new Error(asaasErrorMessage(error, "sync"))
+      throw new Error(paymentProvider().errorMessage(error, "sync"))
     }
 
     const syncedAt = new Date().toISOString()
