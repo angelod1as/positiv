@@ -9,7 +9,6 @@ import {
   setCardPaymentsEnabled,
   setOnlinePaymentsEnabled,
 } from "~/business/settings/app-settings.server"
-import { CardPaymentsSection } from "~/components/pages/admin/card-payments-section"
 import { ListmonkDiagnosticSection } from "~/components/pages/admin/listmonk-diagnostic-section"
 import { OnlinePaymentsSection } from "~/components/pages/admin/online-payments-section"
 import { Separator } from "~/components/ui/separator"
@@ -70,11 +69,10 @@ const SettingsPage = ({ loaderData }: Route.ComponentProps) => {
     <>
       <h1>{adminSettingsCopy.title}</h1>
 
-      <OnlinePaymentsSection setting={loaderData.onlinePayments} />
-
-      <Separator />
-
-      <CardPaymentsSection enabled={loaderData.cardPayments} />
+      <OnlinePaymentsSection
+        setting={loaderData.onlinePayments}
+        cardEnabled={loaderData.cardPayments}
+      />
 
       <Separator />
 
