@@ -15,7 +15,7 @@ import { tallyRefunds } from "./refund-state"
 import {
   asaasRefunds,
   type AsaasRefund,
-} from "./provider/asaas/asaas-connector.server"
+} from "./provider/asaas/asaas-refunds"
 
 /**
  * Deliberately permissive. Asaas adds fields without warning, and the docs say

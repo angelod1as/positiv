@@ -21,9 +21,10 @@ export type PaymentProvider = {
    * from the plan. Refunds are done in the provider's dashboard; the site only
    * reads them.
    */
-  fetchRefunds(charge: { chargeId: string; planId: string | null }): Promise<
-    ProviderRefund[]
-  >
+  fetchRefunds(charge: {
+    chargeId: string
+    planId: string | null
+  }): Promise<ProviderRefund[]>
   /** Where an admin sees this charge in the provider's own dashboard. */
   chargeDashboardUrl(dashboardRef: string | null): string
   /**
@@ -32,7 +33,44 @@ export type PaymentProvider = {
    * own sentence and passes through as it is.
    */
   errorMessage(error: unknown, context: ProviderErrorContext): string
+  /**
+   * Authenticates a webhook delivery and translates it into our own event.
+   * Refusals carry the HTTP status to answer with.
+   */
+  readWebhook(request: Request): Promise<WebhookReading>
 }
+
+export type WebhookReading =
+  | { ok: true; event: PaymentEvent; payload: unknown }
+  | { ok: false; status: 400 | 401 | 503; error: string }
+
+/**
+ * What a provider's webhook means for a payment, in our terms. Amounts are
+ * cents; `providerType` is the provider's own name for the event, kept for the
+ * inbox and the logs.
+ */
+export type PaymentEvent = {
+  eventId: string
+  providerType: string
+  chargeId: string | null
+  /** The card plan the charge belongs to, when it is billed per installment. */
+  planId: string | null
+  /** Our payments.id, when the provider carried it back. */
+  reference: string | null
+} & (
+  | { type: "paid"; amount: number | null }
+  | { type: "overdue" | "cancelled" | "restored" | "refund_in_progress" }
+  | { type: "updated"; amount: number | null; dueAt: string | null }
+  | {
+      type: "refunded" | "partially_refunded"
+      /** Null when the provider did not say how much moved. */
+      refunds: ProviderRefund[] | null
+    }
+  | { type: "refund_denied"; reason: string | null }
+  /** A chargeback or a refused capture: needs a person, not a status. */
+  | { type: "alarm" }
+  | { type: "ignored" }
+)
 
 export type ProviderErrorContext = "checkout" | "sync"
 

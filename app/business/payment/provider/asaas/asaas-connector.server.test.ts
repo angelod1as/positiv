@@ -9,7 +9,8 @@ import {
   getAsaasInstallmentRefunds,
   getAsaasPaymentRefunds,
 } from "./asaas-client.server"
-import { asaasConnector, asaasRefunds } from "./asaas-connector.server"
+import { asaasConnector } from "./asaas-connector.server"
+import { asaasRefunds } from "./asaas-refunds"
 
 const env = vi.hoisted<Record<string, unknown>>(() => ({}))
 
@@ -63,7 +64,9 @@ describe("asaasConnector", () => {
     it("reuses the customer Asaas already holds for the CPF", async () => {
       vi.mocked(findAsaasCustomerByCpf).mockResolvedValue("cus_existing")
 
-      expect(await asaasConnector.findOrCreateCustomer(person)).toBe("cus_existing")
+      expect(await asaasConnector.findOrCreateCustomer(person)).toBe(
+        "cus_existing",
+      )
       expect(findAsaasCustomerByCpf).toHaveBeenCalledWith("52998224725")
       expect(createAsaasCustomer).not.toHaveBeenCalled()
     })
@@ -158,7 +161,12 @@ describe("asaasConnector", () => {
     it("turns an Asaas refusal into a sentence a person can read", () => {
       const error = new AsaasError(
         400,
-        [{ code: "invalid_cpfCnpj", description: "O CPF/CNPJ informado é inválido." }],
+        [
+          {
+            code: "invalid_cpfCnpj",
+            description: "O CPF/CNPJ informado é inválido.",
+          },
+        ],
         "/customers",
       )
 
@@ -199,7 +207,10 @@ describe("asaasConnector", () => {
       ])
 
       expect(
-        await asaasConnector.fetchRefunds({ chargeId: "pay_1", planId: "ins_1" }),
+        await asaasConnector.fetchRefunds({
+          chargeId: "pay_1",
+          planId: "ins_1",
+        }),
       ).toEqual([{ amount: 5000, state: "pending" }])
       expect(getAsaasInstallmentRefunds).toHaveBeenCalledWith("ins_1")
       expect(getAsaasPaymentRefunds).not.toHaveBeenCalled()
