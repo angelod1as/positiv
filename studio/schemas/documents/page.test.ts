@@ -1,9 +1,12 @@
 import { SanityClient } from "@sanity/client"
+import { createSchema } from "sanity"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { pathsOf } from "../../test/errors"
 import { paragraphs } from "../../test/portable-text"
+import { sections } from "../../test/sections"
 import { validateDocumentOf } from "../../test/validate"
+import { schemaTypes } from "../schema-types"
 
 const headers = {
   homepageHero: {
@@ -25,6 +28,12 @@ const page = {
   title: "Sobre",
   address: "/sobre",
   header: [headers.pageTitle],
+  sections: [sections.about],
+  seo: {
+    _type: "seo",
+    description:
+      "Quem somos, como nascemos e por que fazemos eventos naturistas para pessoas queer.",
+  },
 }
 
 const homepage = {
@@ -32,6 +41,7 @@ const homepage = {
   title: "Início",
   address: "/",
   header: [headers.homepageHero],
+  sections: Object.values(sections),
 }
 
 type CountQuery = { fetch(query: string, params: object): Promise<number> }
@@ -65,14 +75,17 @@ describe("page", () => {
     expect(await validateDocumentOf("page", homepage)).toEqual([])
   })
 
-  it.each(["title", "address", "header"])("requires the %s", async (field) => {
-    const errors = await validateDocumentOf("page", {
-      ...page,
-      [field]: undefined,
-    })
+  it.each(["title", "address", "header", "sections", "seo"])(
+    "requires the %s",
+    async (field) => {
+      const errors = await validateDocumentOf("page", {
+        ...page,
+        [field]: undefined,
+      })
 
-    expect(pathsOf(errors)).toContain(field)
-  })
+      expect(pathsOf(errors)).toContain(field)
+    },
+  )
 
   describe("address", () => {
     it.each(["/", "/sobre", "/sobre/equipe", "/2026-verao", "/a/b/c"])(
@@ -185,5 +198,79 @@ describe("page", () => {
 
       expect(pathsOf(errors)).toContain("header.h.title")
     })
+  })
+
+  describe("sections", () => {
+    it("offers every Section type except the old hero", () => {
+      const pageType = createSchema({ name: "page", types: schemaTypes }).get(
+        "page",
+      ) as { fields: { name: string; type: { of: { name: string }[] } }[] }
+
+      const sectionsField = pageType.fields.find(
+        (field) => field.name === "sections",
+      )
+
+      expect(sectionsField?.type.of.map((type) => type.name)).toEqual([
+        "nextEvents",
+        "about",
+        "testimonials",
+        "ctaBanner",
+        "founders",
+        "feedback",
+      ])
+    })
+
+    it("requires at least one section", async () => {
+      const errors = await validateDocumentOf("page", {
+        ...page,
+        sections: [],
+      })
+
+      expect(pathsOf(errors)).toContain("sections")
+    })
+
+    it("lets a section repeat, in any order", async () => {
+      expect(
+        await validateDocumentOf("page", {
+          ...page,
+          sections: [
+            sections.feedback,
+            sections.about,
+            { ...sections.about, _key: "about-2" },
+          ],
+        }),
+      ).toEqual([])
+    })
+
+    it("allows at most one Next Events section", async () => {
+      const errors = await validateDocumentOf("page", {
+        ...page,
+        sections: [
+          sections.nextEvents,
+          sections.about,
+          { ...sections.nextEvents, _key: "next-events-2" },
+        ],
+      })
+
+      expect(pathsOf(errors)).toContain("sections")
+    })
+
+    it("validates the sections it holds", async () => {
+      const errors = await validateDocumentOf("page", {
+        ...page,
+        sections: [{ ...sections.about, title: undefined }],
+      })
+
+      expect(pathsOf(errors)).toContain("sections.about.title")
+    })
+  })
+
+  it("validates its SEO", async () => {
+    const errors = await validateDocumentOf("page", {
+      ...page,
+      seo: { _type: "seo" },
+    })
+
+    expect(pathsOf(errors)).toContain("seo.description")
   })
 })

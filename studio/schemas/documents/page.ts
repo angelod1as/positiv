@@ -40,6 +40,16 @@ function headerProblem(form: string | undefined, address: unknown) {
   return undefined
 }
 
+function nextEventsProblem(sections: { _type: string }[] | undefined) {
+  const nextEvents = (sections ?? []).filter(
+    (section) => section._type === "nextEvents",
+  )
+
+  return nextEvents.length > 1
+    ? "Uma página pode ter só uma seção de Próximos eventos"
+    : undefined
+}
+
 export const page = defineType({
   name: "page",
   title: "Página",
@@ -103,6 +113,33 @@ export const page = defineType({
               headerProblem(header?.[0]?._type, context.document?.address) ??
               true,
           ),
+    }),
+    defineField({
+      name: "sections",
+      title: "Seções",
+      description: "Os blocos da página, na ordem em que aparecem",
+      type: "array",
+      of: [
+        defineArrayMember({ type: "nextEvents" }),
+        defineArrayMember({ type: "about" }),
+        defineArrayMember({ type: "testimonials" }),
+        defineArrayMember({ type: "ctaBanner" }),
+        defineArrayMember({ type: "founders" }),
+        defineArrayMember({ type: "feedback" }),
+      ],
+      validation: (rule) =>
+        rule
+          .required()
+          .min(1)
+          .custom<{ _type: string }[]>(
+            (sections) => nextEventsProblem(sections) ?? true,
+          ),
+    }),
+    defineField({
+      name: "seo",
+      title: "SEO",
+      type: "seo",
+      validation: (rule) => rule.required(),
     }),
   ],
 })

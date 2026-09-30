@@ -24,7 +24,12 @@ const client = createClient({
   useCdn: false,
 })
 
-async function errorsIn(document: { _type: string } & Record<string, unknown>) {
+type Level = "error" | "warning"
+
+async function markersIn(
+  document: { _type: string } & Record<string, unknown>,
+  level: Level,
+) {
   const markers = await validateDocumentWithWorkspace({
     document: {
       _id: "test",
@@ -43,7 +48,7 @@ async function errorsIn(document: { _type: string } & Record<string, unknown>) {
   })
 
   return markers
-    .filter((marker) => marker.level === "error")
+    .filter((marker) => marker.level === level)
     .map((marker) => ({
       path: marker.path
         .map((segment) =>
@@ -59,10 +64,15 @@ async function errorsIn(document: { _type: string } & Record<string, unknown>) {
 export function validateDocumentOf(
   type: string,
   fields: Record<string, unknown>,
+  level: Level = "error",
 ) {
-  return errorsIn({ _type: type, ...fields })
+  return markersIn({ _type: type, ...fields }, level)
 }
 
-export function validateValueOf(type: string, value: unknown) {
-  return errorsIn({ _type: "testHost", [type]: value })
+export function validateValueOf(
+  type: string,
+  value: unknown,
+  level: Level = "error",
+) {
+  return markersIn({ _type: "testHost", [type]: value }, level)
 }
