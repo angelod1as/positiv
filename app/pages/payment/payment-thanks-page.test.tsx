@@ -8,11 +8,11 @@ import type { PaymentThanksData } from "./payment-page.server"
 // The page reads one prop of the many a route component is handed, and a test
 // that built the rest would be describing React Router, not this page.
 const Page = PaymentThanksPage as unknown as (props: {
-  loaderData: PaymentThanksData
+  loaderData: PaymentThanksData & { betaNotice: boolean }
 }) => React.ReactNode
 
-const renderPage = (loaderData: PaymentThanksData) =>
-  renderWithRouter(<Page loaderData={loaderData} />)
+const renderPage = (loaderData: PaymentThanksData, betaNotice = false) =>
+  renderWithRouter(<Page loaderData={{ ...loaderData, betaNotice }} />)
 
 describe("PaymentThanksPage", () => {
   it("says so when the payment has already landed", () => {
@@ -65,6 +65,22 @@ describe("PaymentThanksPage", () => {
     ).not.toBeInTheDocument()
     expect(
       screen.queryByText(paymentsCopy.page.thanksPaidTitle),
+    ).not.toBeInTheDocument()
+  })
+  it("warns that online payments are new while they are on", () => {
+    renderPage({ state: "waiting", eventTitle: "Encontro de Maio" }, true)
+
+    expect(screen.getByRole("link", { name: "WhatsApp" })).toHaveAttribute(
+      "href",
+      expect.stringContaining("https://wa.me/5511945970336"),
+    )
+  })
+
+  it("shows no beta notice while online payments are off", () => {
+    renderPage({ state: "waiting", eventTitle: "Encontro de Maio" }, false)
+
+    expect(
+      screen.queryByRole("link", { name: "WhatsApp" }),
     ).not.toBeInTheDocument()
   })
 })

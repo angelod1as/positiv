@@ -232,4 +232,46 @@ describe("PaymentPage", () => {
       expect.objectContaining({ method: "post" }),
     )
   })
+
+  // Only these two states exist while online payments are on — with the switch
+  // off the loader answers closed — and both come before the participant pays.
+  it.each([
+    ["choosing an option", ready],
+    [
+      "asked for a CPF",
+      { state: "needs_cpf", paymentId: "payment-1", eventTitle: "Encontro de Maio" },
+    ],
+  ] as [string, PaymentPageData][])(
+    "warns that online payments are new while %s",
+    (_, data) => {
+      renderPage(data)
+
+      expect(screen.getByRole("link", { name: "WhatsApp" })).toHaveAttribute(
+        "href",
+        expect.stringContaining("https://wa.me/5511945970336"),
+      )
+    },
+  )
+
+  it.each([
+    [
+      "paid",
+      {
+        state: "paid",
+        eventTitle: "Encontro de Maio",
+        amount: 22199,
+        paidAt: "2026-08-20T12:00:00Z",
+      },
+    ],
+    ["closed", { state: "closed", eventTitle: "Encontro de Maio" }],
+  ] as [string, PaymentPageData][])(
+    "shows no beta notice once the link is %s",
+    (_, data) => {
+      renderPage(data)
+
+      expect(
+        screen.queryByRole("link", { name: "WhatsApp" }),
+      ).not.toBeInTheDocument()
+    },
+  )
 })

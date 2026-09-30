@@ -11,6 +11,7 @@ import { isValidCpf, normalizeCpf } from "~/lib/helpers/cpf"
 import type { PaymentOption } from "~/business/payment/pricing"
 import { Button } from "~/components/atoms/button/button"
 import { Copy } from "~/components/atoms/copy/copy"
+import { PaymentBetaNotice } from "~/components/molecules/payment-beta-notice/payment-beta-notice"
 import {
   Card,
   CardContent,
@@ -86,6 +87,11 @@ const PaymentPage = ({ loaderData }: Route.ComponentProps) => {
           <h1>{page.heading(data.eventTitle)}</h1>
         </CardTitle>
       </CardHeader>
+      {(data.state === "ready" || data.state === "needs_cpf") && (
+        <CardContent>
+          <PaymentBetaNotice eventTitle={data.eventTitle} />
+        </CardContent>
+      )}
       {renderState(data)}
     </Card>
   )

@@ -78,6 +78,12 @@ export const paymentsCopy = {
     thanksPaidBody: "Está tudo certo. Até lá!",
     backToDashboard: "Voltar para o painel",
   },
+  betaNotice: {
+    body: (whatsappLink: string) =>
+      `O sistema de pagamento é novo e ainda está em teste. Se acontecer qualquer problema, fale com a Positiv no [WhatsApp](<${whatsappLink}>)`,
+    whatsappMessage: (eventTitle: string) =>
+      `Oi! Tive um problema com o pagamento de ${eventTitle}.`,
+  },
   chargeDescription: (eventTitle: string) => `Positiv — ${eventTitle}`,
   manage: {
     title: "Pagamentos",
