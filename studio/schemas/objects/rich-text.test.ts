@@ -41,6 +41,10 @@ describe("richText", () => {
     ["a javascript: link", "javascript:alert(1)"],
     ["a path without the leading slash", "eventos"],
     ["a protocol-relative link", "//example.com"],
+    ["a protocol-relative link with a backslash", "/\\example.com"],
+    ["a protocol-relative link hidden by a tab", "/\t/example.com"],
+    ["a protocol-relative link hidden by a newline", "/\n/example.com"],
+    ["a path with a space", "/eventos futuros"],
   ])("rejects %s", async (_, href) => {
     expect(await validateValueOf("richText", linkTo(href))).toContainEqual(
       expect.objectContaining({ path: "richText.p1.markDefs.l1.href" }),

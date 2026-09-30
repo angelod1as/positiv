@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest"
-import type { HomepageContent } from "~/business/cms/homepage-content.schema"
+import type {
+  HomepageContent,
+  PortableText,
+} from "~/business/cms/homepage-content.schema"
 import { renderWithRouter, screen } from "~/test/test-utils"
 import { HomePageAbout } from "./about"
 
-const paragraph = (key: string, text: string) => ({
+const paragraph = (key: string, text: string): PortableText[number] => ({
   _type: "block",
   _key: key,
   style: "normal",

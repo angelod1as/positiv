@@ -304,6 +304,26 @@ explicit yes.
 - Full convention, including the Markdown traps and the `as const satisfies`
   rules: `app/copy/README.md`.
 
+## Sanity
+
+Public Site content lives in Sanity; the Platform's own labels stay in
+`app/copy/`.
+
+- **The Studio lives in `studio/`**, its own pnpm workspace package, deployed
+  to <https://positiv.sanity.studio> by CI. How to run it, the datasets and
+  migrations: `studio/README.md`.
+- **The app reads Sanity in `app/business/cms/`.** Every response is parsed by
+  the zod contract in `*.schema.ts`, which mirrors the Studio schema.
+- **`pnpm test:contract` reads the published `production` content** and checks
+  it against that contract. Run it after changing a query or tightening the
+  contract: content the new contract rejects takes the page down once the
+  cache is cold. It only reads — never write to `production`.
+- **Renaming or removing a field follows expand/contract** — see
+  [the ADR](docs/architecture/decisions/20260924-sanity-schema-changes-follow-expand-contract.md).
+  Adding a field is one pull request.
+- **Unit tests never call Sanity.** Pass a fake client to the loader, or build
+  content from `e2e/fixtures/homepage-content.json`.
+
 ## News Dialog Updates
 
 The news dialog is for users, not a changelog, and most PRs do not earn an item.

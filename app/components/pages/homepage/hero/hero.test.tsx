@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest"
+import type { HomepageContent } from "~/business/cms/homepage-content.schema"
 import { renderWithRouter, screen } from "~/test/test-utils"
 import { HomePageHero } from "./hero"
 
-const hero = {
+const hero: HomepageContent["hero"] = {
   title: "título do editor",
   subtitle: [
     {

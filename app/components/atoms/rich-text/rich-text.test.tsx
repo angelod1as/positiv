@@ -6,9 +6,13 @@ import { render, renderWithRouter, screen } from "~/test/test-utils"
 import { RichText } from "./rich-text"
 
 type Span = { text: string; marks?: string[] }
-type MarkDef = { _key: string; _type: string; href: string }
+type MarkDef = { _key: string; _type: "link"; href: string }
 
-const block = (key: string, spans: Span[], markDefs: MarkDef[] = []) => ({
+const block = (
+  key: string,
+  spans: Span[],
+  markDefs: MarkDef[] = [],
+): PortableText[number] => ({
   _type: "block",
   _key: key,
   style: "normal",

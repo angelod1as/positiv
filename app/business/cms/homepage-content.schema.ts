@@ -1,14 +1,57 @@
 import type { z } from "zod"
 import { zod } from "~/lib/helpers/zod"
 
-const portableTextSchema = zod
-  .array(
-    zod.looseObject({
-      _type: zod.string(),
-      _key: zod.string(),
-    }),
-  )
-  .min(1)
+const spanSchema = zod.object({
+  _type: zod.literal("span"),
+  _key: zod.string(),
+  text: zod.string(),
+  marks: zod.array(zod.string()).optional(),
+})
+
+const decorators = ["strong", "em"]
+
+const hrefSchema = zod.union([
+  zod.string().regex(/^\/(?![/\\])[^\s\p{Cc}]*$/u),
+  zod.url({ protocol: /^https$/ }),
+])
+
+const blockSchema = zod
+  .object({
+    _type: zod.literal("block"),
+    _key: zod.string(),
+    style: zod.literal("normal"),
+    listItem: zod.never().optional(),
+    markDefs: zod
+      .array(
+        zod.object({
+          _type: zod.literal("link"),
+          _key: zod.string(),
+          href: hrefSchema,
+        }),
+      )
+      .optional(),
+    children: zod.array(spanSchema),
+  })
+  .superRefine((block, context) => {
+    const allowed = [
+      ...decorators,
+      ...(block.markDefs ?? []).map((markDef) => markDef._key),
+    ]
+
+    block.children.forEach((span, spanIndex) => {
+      span.marks?.forEach((mark, markIndex) => {
+        if (!allowed.includes(mark)) {
+          context.addIssue({
+            code: "custom",
+            message: `Unknown mark "${mark}"`,
+            path: ["children", spanIndex, "marks", markIndex],
+          })
+        }
+      })
+    })
+  })
+
+export const portableTextSchema = zod.array(blockSchema).min(1)
 
 const sanityImageSchema = zod.object({
   alt: zod.string(),

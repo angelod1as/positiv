@@ -137,6 +137,24 @@ describe("getHomepageContent", () => {
     await expect(getHomepageContent(client)).rejects.toThrow(/hero\.subtitle/)
   })
 
+  it("rejects the whole content when a rich-text link has an unsafe address", async () => {
+    respondWith(
+      fixtureWith((content) => {
+        const [block] = content.hero.subtitle
+        Object.assign(block, {
+          markDefs: [
+            { _key: "l1", _type: "link", href: "javascript:alert(1)" },
+          ],
+        })
+        block.children[0].marks = ["l1"]
+      }),
+    )
+
+    await expect(getHomepageContent(client)).rejects.toThrow(
+      /hero\.subtitle\[0\]\.markDefs\[0\]\.href/,
+    )
+  })
+
   it.each([
     ["about.cards", (content: typeof fixture) => content.about.cards.pop()],
     [
