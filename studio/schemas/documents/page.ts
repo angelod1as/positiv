@@ -1,5 +1,10 @@
 import { DocumentIcon } from "@sanity/icons/Document"
-import { defineField, defineType, getPublishedId } from "sanity"
+import {
+  defineArrayMember,
+  defineField,
+  defineType,
+  getPublishedId,
+} from "sanity"
 
 import { reservedAddresses } from "../../reserved-addresses"
 
@@ -18,6 +23,18 @@ function addressProblem(address: string) {
 
   if (reservedAddresses.includes(segments[0])) {
     return `/${segments[0]} é usado pela plataforma; escolha outro começo para o endereço`
+  }
+
+  return undefined
+}
+
+function headerProblem(form: string | undefined, address: unknown) {
+  if (address === "/" && form !== "homepageHero") {
+    return "A página inicial abre com o Destaque da página inicial"
+  }
+
+  if (address !== "/" && form === "homepageHero") {
+    return "O Destaque da página inicial só pode ser usado na página inicial (/)"
   }
 
   return undefined
@@ -65,6 +82,27 @@ export const page = defineType({
 
           return pagesAtAddress > 0 ? "Outra página já usa este endereço" : true
         }),
+    }),
+    defineField({
+      name: "header",
+      title: "Topo da página",
+      description:
+        "O que abre a página: o Destaque da página inicial (só na /), um Destaque ou só um Título",
+      type: "array",
+      of: [
+        defineArrayMember({ type: "homepageHero" }),
+        defineArrayMember({ type: "pageHero" }),
+        defineArrayMember({ type: "pageTitle" }),
+      ],
+      validation: (rule) =>
+        rule
+          .required()
+          .length(1)
+          .custom<{ _type: string }[]>(
+            (header, context) =>
+              headerProblem(header?.[0]?._type, context.document?.address) ??
+              true,
+          ),
     }),
   ],
 })

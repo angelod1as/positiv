@@ -2,11 +2,36 @@ import { SanityClient } from "@sanity/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { pathsOf } from "../../test/errors"
+import { paragraphs } from "../../test/portable-text"
 import { validateDocumentOf } from "../../test/validate"
+
+const headers = {
+  homepageHero: {
+    _type: "homepageHero",
+    _key: "h",
+    title: "evento de gente pelada",
+    subtitle: paragraphs("para amantes de saliências não-mono"),
+  },
+  pageHero: {
+    _type: "pageHero",
+    _key: "h",
+    title: "Quem somos",
+    subtitle: paragraphs("Uma comunidade naturista queer."),
+  },
+  pageTitle: { _type: "pageTitle", _key: "h", title: "Sobre" },
+}
 
 const page = {
   title: "Sobre",
   address: "/sobre",
+  header: [headers.pageTitle],
+}
+
+const homepage = {
+  ...page,
+  title: "Início",
+  address: "/",
+  header: [headers.homepageHero],
 }
 
 type CountQuery = { fetch(query: string, params: object): Promise<number> }
@@ -36,7 +61,11 @@ describe("page", () => {
     expect(await validateDocumentOf("page", page)).toEqual([])
   })
 
-  it.each(["title", "address"])("requires the %s", async (field) => {
+  it("accepts a complete Homepage", async () => {
+    expect(await validateDocumentOf("page", homepage)).toEqual([])
+  })
+
+  it.each(["title", "address", "header"])("requires the %s", async (field) => {
     const errors = await validateDocumentOf("page", {
       ...page,
       [field]: undefined,
@@ -102,6 +131,59 @@ describe("page", () => {
         address: "/sobre",
         id: "page-sobre",
       })
+    })
+  })
+
+  describe("Page Header", () => {
+    it.each(["pageHero", "pageTitle"] as const)(
+      "accepts a %s on a page other than /",
+      async (form) => {
+        expect(
+          await validateDocumentOf("page", {
+            ...page,
+            header: [headers[form]],
+          }),
+        ).toEqual([])
+      },
+    )
+
+    it("takes exactly one header", async () => {
+      const errors = await validateDocumentOf("page", {
+        ...page,
+        header: [headers.pageTitle, { ...headers.pageHero, _key: "h2" }],
+      })
+
+      expect(pathsOf(errors)).toContain("header")
+    })
+
+    it("keeps the Homepage Hero off pages other than /", async () => {
+      const errors = await validateDocumentOf("page", {
+        ...page,
+        header: [headers.homepageHero],
+      })
+
+      expect(pathsOf(errors)).toContain("header")
+    })
+
+    it.each(["pageHero", "pageTitle"] as const)(
+      "opens / with the Homepage Hero, not a %s",
+      async (form) => {
+        const errors = await validateDocumentOf("page", {
+          ...homepage,
+          header: [headers[form]],
+        })
+
+        expect(pathsOf(errors)).toContain("header")
+      },
+    )
+
+    it("validates the header it holds", async () => {
+      const errors = await validateDocumentOf("page", {
+        ...page,
+        header: [{ ...headers.pageTitle, title: undefined }],
+      })
+
+      expect(pathsOf(errors)).toContain("header.h.title")
     })
   })
 })
