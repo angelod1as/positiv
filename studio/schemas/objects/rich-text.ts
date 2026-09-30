@@ -73,7 +73,7 @@ export const richText = defineType({
                     .required()
                     .uri({ scheme: ["https"], allowRelative: true })
                     .custom<string>((href) =>
-                      href?.startsWith("//")
+                      href?.startsWith("//") || href?.startsWith("/\\")
                         ? "Comece com / ou com https://"
                         : true,
                     ),
