@@ -265,7 +265,7 @@ const Options = ({
         </RadioGroup>
         <Copy>{page.dueAt(formatDateTime(data.dueAt).full ?? "")}</Copy>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="pt-6">
         <Button type="submit" disabled={submitting}>
           {page.pay}
         </Button>

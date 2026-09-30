@@ -70,13 +70,13 @@ describe("PaymentPage", () => {
     ).toHaveAccessibleDescription(/10% de desconto sobre R\$\s?250,00/)
 
     expect(
-      screen.getByRole("radio", { name: /^Cartão 6x de R\$\s?41,66 R\$\s?250,00$/ }),
+      screen.getByRole("radio", { name: /^Cartão de crédito — 6x de R\$\s?41,66 R\$\s?250,00$/ }),
     ).toHaveAccessibleDescription(
       /Sem juros\. A última parcela é de R\$\s?41,70\./,
     )
 
     expect(
-      screen.getByRole("radio", { name: /^Cartão à vista R\$\s?250,00$/ }),
+      screen.getByRole("radio", { name: /^Cartão de crédito — à vista R\$\s?250,00$/ }),
     ).toHaveAccessibleDescription("")
   })
 
@@ -99,7 +99,7 @@ describe("PaymentPage", () => {
       screen.getByRole("radio", { name: /^Pix R\$\s?225,00$/ }),
     ).toBeChecked()
     expect(
-      screen.getByRole("radio", { name: /Cartão 3x de/ }),
+      screen.getByRole("radio", { name: /Cartão de crédito — 3x de/ }),
     ).toBeInTheDocument()
     expect(screen.getAllByRole("radio")).toHaveLength(7)
   })
@@ -111,14 +111,14 @@ describe("PaymentPage", () => {
       invoiceUrl: "https://sandbox.asaas.com/i/pay_1",
     })
 
-    expect(screen.getByRole("radio", { name: /Cartão 3x de/ })).toBeChecked()
+    expect(screen.getByRole("radio", { name: /Cartão de crédito — 3x de/ })).toBeChecked()
     expect(screen.getByRole("radio", { name: /^Pix/ })).not.toBeChecked()
   })
 
   it("carries the chosen option to the server", async () => {
     renderPage(ready)
 
-    await userEvent.click(screen.getByRole("radio", { name: /Cartão 3x de/ }))
+    await userEvent.click(screen.getByRole("radio", { name: /Cartão de crédito — 3x de/ }))
 
     const form = screen
       .getByRole("button", { name: paymentsCopy.page.pay })

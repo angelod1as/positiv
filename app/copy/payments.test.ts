@@ -56,6 +56,21 @@ describe("paymentsCopy.options.label", () => {
   })
 })
 
+describe("paymentsCopy.options.title", () => {
+  it("names Pix plainly", () => {
+    expect(paymentsCopy.options.title(pix)).toBe("Pix")
+  })
+
+  it("names the card, then how it is paid", () => {
+    expect(paymentsCopy.options.title(cardOnce)).toBe(
+      "Cartão de crédito — à vista",
+    )
+    expect(paymentsCopy.options.title(cardSixTimes)).toBe(
+      "Cartão de crédito — 6x de R$ 41,66",
+    )
+  })
+})
+
 describe("paymentsCopy.options.breakdown", () => {
   it("names the Pix discount against the event price", () => {
     expect(paymentsCopy.options.breakdown(25000, pix)).toBe(

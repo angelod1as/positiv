@@ -20,8 +20,8 @@ export const paymentsCopy = {
     // sets the option apart on the line below, when anything does.
     title: (option: PaymentOption) => {
       if (option.method === "pix") return "Pix"
-      if (option.installmentCount === 1) return "Cartão à vista"
-      return `Cartão ${option.installmentCount}x de ${formatCurrency(option.perInstallment)}`
+      if (option.installmentCount === 1) return "Cartão de crédito — à vista"
+      return `Cartão de crédito — ${option.installmentCount}x de ${formatCurrency(option.perInstallment)}`
     },
     breakdown: (baseAmount: number, option: PaymentOption) => {
       if (option.method === "pix") {
