@@ -8,7 +8,9 @@ export const POSITIV_WHATSAPP = "5511945970336"
 export const EVENT_PAGE_REGEXP =
   /dashboard\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
 
-export const PHONE_REGEXP = /^(\d{2})?\d{2}\d{8,9}$/
+// Only the shape any phone has. Which shape is right depends on whether the
+// number is flagged international — see isValidPhone.
+export const PHONE_REGEXP = /^[1-9]\d{7,14}$/
 
 export const GENDERS = [
   "Homem cis",

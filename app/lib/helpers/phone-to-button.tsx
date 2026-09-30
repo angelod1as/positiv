@@ -3,11 +3,14 @@ import WhatsAppIcon from "~/assets/social/whatsapp.svg"
 import { Button } from "~/components/atoms/button/button"
 import { phoneToWhatsAppLink } from "./phone-to-whatsapp-link"
 
-type PhoneButtonProps = { phone: number | null }
+type PhoneButtonProps = { phone: number | null; isInternational?: boolean }
 
-export const PhoneButton: FC<PhoneButtonProps> = ({ phone }) => {
+export const PhoneButton: FC<PhoneButtonProps> = ({
+  phone,
+  isInternational,
+}) => {
   if (!phone) return null
-  const link = phoneToWhatsAppLink(phone)
+  const link = phoneToWhatsAppLink(phone, isInternational)
   if (!link) return null
   return (
     <Button

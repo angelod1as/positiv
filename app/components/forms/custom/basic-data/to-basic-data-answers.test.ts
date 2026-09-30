@@ -41,6 +41,22 @@ describe("toBasicDataAnswers", () => {
     expect(toBasicDataAnswers(profile).confirm_phone).toBe("11999999999")
   })
 
+  it("ticks the international box for a phone flagged international", () => {
+    expect(
+      toBasicDataAnswers({
+        ...profile,
+        phone: 351912345678,
+        phone_is_international: true,
+      }).phone_is_international,
+    ).toBe(true)
+  })
+
+  it("leaves the international box unticked for a Brazilian phone", () => {
+    expect(
+      toBasicDataAnswers({ ...profile, phone_is_international: false }),
+    ).not.toHaveProperty("phone_is_international")
+  })
+
   it("keeps a birthday to the day a date field can show", () => {
     expect(
       toBasicDataAnswers({ ...profile, date_of_birth: "1990-01-01T00:00:00Z" })

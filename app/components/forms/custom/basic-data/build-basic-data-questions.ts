@@ -9,6 +9,7 @@ import {
   basicDataValidation,
   genderPronounsOrientationCopy,
 } from "~/copy/account"
+import { isValidPhone } from "~/lib/helpers/phone"
 import { normalizeName } from "~/lib/helpers/strings"
 import {
   GENDERS,
@@ -78,11 +79,28 @@ export function buildBasicDataQuestions(): Question[] {
       schema: shape.how_came_to_us,
     },
     {
+      id: "phone_is_international",
+      prompt: labels.phone_is_international,
+      help: descriptions.phone_is_international,
+      input: { kind: "boolean" },
+      schema: shape.phone_is_international,
+    },
+    {
       id: "phone",
       prompt: labels.phone,
       help: descriptions.phone,
       input: { kind: "textnumber" },
       schema: shape.phone,
+      refine: (value, answers: Answers) => {
+        const international = answers.phone_is_international === true
+        if (isValidPhone(asText(value), international)) return null
+        return {
+          ok: false,
+          message: international
+            ? basicDataValidation.invalidInternationalPhone
+            : basicDataValidation.notAMobile,
+        }
+      },
     },
     {
       id: "confirm_phone",

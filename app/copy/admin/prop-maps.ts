@@ -10,6 +10,7 @@ export const adminPropMapsCopy = {
     where_lives: "Em que cidade você mora?",
     how_came_to_us: "Como chegou até nós?",
     phone: "WhatsApp",
+    phone_is_international: "Celular internacional?",
     confirm_phone: "Confirme seu whatsapp",
     rg: "RG",
     rg_issuer: "Emissor do RG",

@@ -31,6 +31,7 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
     is_veteran,
     orientation,
     phone,
+    phone_is_international,
     pronouns,
     rg,
     rg_issuer,
@@ -47,7 +48,10 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
         <h3>{adminParticipantsCopy.basicData.title}</h3>
         <div>
           <div className="flex gap-2 flex-wrap">
-            <PhoneButton phone={phone} />
+            <PhoneButton
+              phone={phone}
+              isInternational={phone_is_international}
+            />
             <AddToGoogleContactsButton
               profile={{
                 social_name,
@@ -57,6 +61,7 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
               }}
               email={email}
               phone={phone}
+              isInternational={phone_is_international}
             />
           </div>
           <p>{full_name}</p>

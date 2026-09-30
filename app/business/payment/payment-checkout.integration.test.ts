@@ -166,6 +166,38 @@ describe("pickOption", () => {
     expect(createAsaasCustomer).toHaveBeenCalledTimes(1)
   })
 
+  it("sends Asaas a Brazilian mobile", async () => {
+    await kysely
+      .updateTable("profiles")
+      .set({ phone: 11987654321, phone_is_international: false })
+      .where("id", "=", profileId)
+      .execute()
+    const payment = await openCharge()
+
+    await pickOption({ paymentId: payment.id, profileId, optionId: "pix" })
+
+    expect(createAsaasCustomer).toHaveBeenCalledWith(
+      expect.objectContaining({ mobilePhone: "11987654321" }),
+    )
+  })
+
+  // Asaas reads every number as Brazilian, and a +1 number such as 1 291
+  // 234-5678 has the shape of a mobile under DDD 12.
+  it("keeps a phone flagged international away from Asaas, even one shaped like a Brazilian mobile", async () => {
+    await kysely
+      .updateTable("profiles")
+      .set({ phone: 12912345678, phone_is_international: true })
+      .where("id", "=", profileId)
+      .execute()
+    const payment = await openCharge()
+
+    await pickOption({ paymentId: payment.id, profileId, optionId: "pix" })
+
+    expect(createAsaasCustomer).toHaveBeenCalledWith(
+      expect.objectContaining({ mobilePhone: undefined }),
+    )
+  })
+
   it("explains, rather than crashing, when the CPF's customer belongs to another profile", async () => {
     // A profile that took the customer under a CPF it no longer carries.
     await kysely

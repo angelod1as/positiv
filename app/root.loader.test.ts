@@ -169,6 +169,8 @@ describe("root loader", () => {
       basic_data_filled: true,
       race_color: ["Branca"],
       cpf: "111.444.777-35",
+      phone: 11999998888,
+      phone_is_international: false,
     }
 
     it("leaves a profile alone when race and CPF are both good", async () => {
@@ -188,6 +190,32 @@ describe("root loader", () => {
 
     it("still asks for an update when race or colour is missing", async () => {
       expect(await loadWithProfile({ ...complete, race_color: [] })).toBe(true)
+    })
+
+    it("asks for an update when there is no phone at all", async () => {
+      expect(await loadWithProfile({ ...complete, phone: null })).toBe(true)
+    })
+
+    it("asks for an update when the phone is not a Brazilian mobile", async () => {
+      expect(await loadWithProfile({ ...complete, phone: 1133334444 })).toBe(
+        true,
+      )
+      expect(await loadWithProfile({ ...complete, phone: 1199998888 })).toBe(
+        true,
+      )
+      expect(
+        await loadWithProfile({ ...complete, phone: 351912345678 }),
+      ).toBe(true)
+    })
+
+    it("leaves alone a foreign phone flagged international", async () => {
+      expect(
+        await loadWithProfile({
+          ...complete,
+          phone: 351912345678,
+          phone_is_international: true,
+        }),
+      ).toBe(false)
     })
 
     it("asks nothing of a visitor with no profile", async () => {

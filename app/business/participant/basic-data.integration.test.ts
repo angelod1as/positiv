@@ -122,6 +122,44 @@ describe("saveBasicData - Integration Tests", () => {
     expect(saved.basic_data_filled).toBe(true)
   })
 
+  it("writes a phone flagged international, and unflags it once it is Brazilian again", async () => {
+    const email = "test-save-basic-data-international@example.com"
+    const userId = await createTestAuthUser(email, "test1234", tracker)
+    const profile = await createTestProfile(tracker, kysely, {
+      email,
+      user_id: userId,
+    })
+    const flagOf = async () =>
+      (
+        await kysely
+          .selectFrom("profiles")
+          .select(["phone", "phone_is_international"])
+          .where("id", "=", profile.id)
+          .executeTakeFirstOrThrow()
+      )
+
+    await saveBasicData({
+      answers: {
+        ...answersFor(email),
+        phone: "351912345678",
+        confirm_phone: "351912345678",
+        phone_is_international: true,
+      },
+      context: contextFor(email, userId) as never,
+    })
+
+    const international = await flagOf()
+    expect(Number(international.phone)).toBe(351912345678)
+    expect(international.phone_is_international).toBe(true)
+
+    await saveBasicData({
+      answers: answersFor(email),
+      context: contextFor(email, userId) as never,
+    })
+
+    expect((await flagOf()).phone_is_international).toBe(false)
+  })
+
   it("refuses a CPF another profile already holds, on the CPF field", async () => {
     const email = "test-save-basic-data-cpf-taken@example.com"
     const userId = await createTestAuthUser(email, "test1234", tracker)
