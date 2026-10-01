@@ -11,18 +11,24 @@ pnpm workspace package, deployed to Sanity's hosting at
 
 ## Layout
 
-| Path                            | What it holds                                                                    |
-| ------------------------------- | -------------------------------------------------------------------------------- |
-| `schemas/objects/rich-text.ts`  | The one Portable Text definition: paragraphs, bold, italic, links                |
-| `schemas/objects/seo.ts`        | A Page's SEO: title, description, share image, noIndex                           |
-| `schemas/documents/`            | `page`, `homepage` (a singleton, until the Page at `/` replaces it) and `person` |
-| `schemas/page-header/`          | The three Page Header forms: Homepage Hero, Hero and Title                       |
-| `schemas/sections/`             | One object type per Section                                                      |
-| `reserved-addresses.ts`         | The first address segments the Platform uses, which no Page may take             |
-| `page-actions.ts`               | Keeps the Page at `/` from being deleted or unpublished                          |
-| `structure.ts`, `singletons.ts` | The desk: the two "Página inicial" entries, "Páginas" and "Pessoas"              |
-| `seed/`                         | The development seed — see below                                                 |
-| `migrations/`                   | Content migrations — see below                                                   |
+| Path                                | What it holds                                                                    |
+| ----------------------------------- | -------------------------------------------------------------------------------- |
+| `schemas/objects/rich-text.ts`      | Short Portable Text: paragraphs, bold, italic, links — subtitles, cards, bios    |
+| `schemas/objects/long-rich-text.ts` | Long Portable Text: adds h2, h3, blockquote and lists — the Rich Text Section    |
+| `schemas/objects/seo.ts`            | A Page's SEO: title, description, share image, noIndex                           |
+| `schemas/documents/`                | `page`, `homepage` (a singleton, until the Page at `/` replaces it) and `person` |
+| `schemas/page-header/`              | The three Page Header forms: Homepage Hero, Hero and Title                       |
+| `schemas/sections/`                 | One object type per Section                                                      |
+| `reserved-addresses.ts`             | The first address segments the Platform uses, which no Page may take             |
+| `page-actions.ts`                   | Keeps the Page at `/` from being deleted or unpublished                          |
+| `structure.ts`, `singletons.ts`     | The desk: the two "Página inicial" entries, "Páginas" and "Pessoas"              |
+| `seed/`                             | The development seed — see below                                                 |
+| `migrations/`                       | Content migrations — see below                                                   |
+
+A field's `validation` replaces the validation of the type it uses. A field
+of type `longRichText` that adds its own rule — `rule.required()`, say — must
+chain `.custom(contentProblem)` from `long-rich-text.ts`, or the long text's
+content rule stops running.
 
 ## Run it locally
 
