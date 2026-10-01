@@ -10,7 +10,7 @@ describe("paymentRefundMailTemplate", () => {
       refundAmount: 21900,
       amount: 22199,
       method: "pix",
-      kind: "asaas",
+      kind: "online",
     })
 
     expect(html).toContain("Ana")
@@ -27,7 +27,7 @@ describe("paymentRefundMailTemplate", () => {
       refundAmount: 23631,
       amount: 23631,
       method: "credit_card",
-      kind: "asaas",
+      kind: "online",
     })
     expect(card).toContain("10 dias úteis")
 
@@ -38,7 +38,7 @@ describe("paymentRefundMailTemplate", () => {
       refundAmount: 22199,
       amount: 22199,
       method: "pix",
-      kind: "asaas",
+      kind: "online",
     })
     expect(pix).not.toContain("10 dias úteis")
   })
@@ -52,7 +52,7 @@ describe("paymentRefundMailTemplate", () => {
       refundAmount: 22000,
       amount: 22000,
       method: "credit_card",
-      kind: "asaas",
+      kind: "online",
     })
 
     expect(html).not.toMatch(/taxa/i)
@@ -66,7 +66,7 @@ describe("paymentRefundMailTemplate", () => {
       refundAmount: 5000,
       amount: 22199,
       method: "pix",
-      kind: "asaas",
+      kind: "online",
     })
 
     expect(html).toContain("parcial")
@@ -82,7 +82,7 @@ describe("paymentRefundMailTemplate", () => {
       refundAmount: 22199,
       amount: 22199,
       method: "pix",
-      kind: "asaas",
+      kind: "online",
     })
 
     expect(html).not.toContain("parcial")
@@ -116,7 +116,7 @@ describe("paymentRefundMailTemplate", () => {
       refundAmount: 21900,
       amount: 22199,
       method: "pix",
-      kind: "asaas",
+      kind: "online",
     })
 
     // Both senders run after the money is already back: the webhook once Asaas
@@ -133,7 +133,7 @@ describe("paymentRefundMailTemplate", () => {
       refundAmount: 22000,
       amount: 22000,
       method: "pix",
-      kind: "asaas",
+      kind: "online",
     })
 
     // Clients render mail in an iframe sized to its content, so 100vh feeds
@@ -149,7 +149,7 @@ describe("paymentRefundMailTemplate", () => {
       refundAmount: 22000,
       amount: 22000,
       method: "pix",
-      kind: "asaas",
+      kind: "online",
     })
 
     expect(html).toContain("background-color: #ffffff")
@@ -165,7 +165,7 @@ describe("paymentRefundMailTemplate", () => {
       refundAmount: 100,
       amount: 100,
       method: "pix",
-      kind: "asaas",
+      kind: "online",
     })
 
     expect(html).not.toContain("onerror")

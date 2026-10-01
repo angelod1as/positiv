@@ -92,7 +92,7 @@ export async function sendPaymentLinkEmail({
   // arrives schemeless. And reading the card switch can fail with the database.
   let mail: { html: string; text: string }
   try {
-    // Once the participant has picked, the price is settled and the Asaas
+    // Once the participant has picked, the price is settled and the provider's
     // charge exists at that figure -- re-pricing the seven options here would
     // quote a number the checkout will not honour, because PR 10 sends a
     // returning payer back to the invoice it already created. So a resend at
@@ -142,11 +142,11 @@ export async function sendPaymentLinkEmail({
 }
 
 /**
- * The receipt a participant gets once Asaas says the money arrived. Reached
- * through the outbox — by the webhook once the guarded update has moved the
- * row, or by the sweep afterwards if that send never happened. A failure is
- * reported as `success: false` and nothing more: what to do about it belongs
- * to deliverPaymentEmail, which keeps the row owed until it goes out.
+ * The receipt a participant gets once the provider says the money arrived.
+ * Reached through the outbox — by the webhook once the guarded update has moved
+ * the row, or by the sweep afterwards if that send never happened. A failure is
+ * reported as `success: false` and nothing more: what to do about it belongs to
+ * deliverPaymentEmail, which keeps the row owed until it goes out.
  */
 export async function sendPaymentConfirmedEmail({
   paymentId,
@@ -213,11 +213,11 @@ export async function sendPaymentConfirmedEmail({
 }
 
 /**
- * The note a participant gets when money goes back, whether Asaas returned it
- * or an admin marked it returned by hand. Reached through the outbox once the
- * refund is a fact, and reported the same way as the receipt: a failure comes
- * back as `success: false` and leaves the row owed, rather than failing a
- * caller over money that has already moved.
+ * The note a participant gets when money goes back, whether the provider
+ * returned it or an admin marked it returned by hand. Reached through the
+ * outbox once the refund is a fact, and reported the same way as the receipt: a
+ * failure comes back as `success: false` and leaves the row owed, rather than
+ * failing a caller over money that has already moved.
  */
 export async function sendPaymentRefundEmail({
   paymentId,

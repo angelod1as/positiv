@@ -38,7 +38,7 @@ describe("registerAsaasWebhook", () => {
   it("creates the webhook when the account has none by that name", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ data: [{ id: "hook_other", name: "Outro", url: "https://x" }] }))
     fetchMock.mockResolvedValueOnce(
-      jsonResponse({ id: "hook_1", name: "Positiv", url: "https://www.positivparty.com/api/asaas/webhook" }),
+      jsonResponse({ id: "hook_1", name: "Positiv", url: "https://www.positivparty.com/api/payment/webhook" }),
     )
 
     const result = await registerAsaasWebhook("https://www.positivparty.com/")
@@ -48,7 +48,7 @@ describe("registerAsaasWebhook", () => {
     expect(fetchMock.mock.calls[1][1].method).toBe("POST")
     expect(bodyOf(1)).toEqual({
       name: "Positiv",
-      url: "https://www.positivparty.com/api/asaas/webhook",
+      url: "https://www.positivparty.com/api/payment/webhook",
       email: "contato@positivparty.com",
       enabled: true,
       interrupted: false,
@@ -64,7 +64,7 @@ describe("registerAsaasWebhook", () => {
       jsonResponse({ data: [{ id: "hook_1", name: "Positiv", url: "https://old.example.com" }] }),
     )
     fetchMock.mockResolvedValueOnce(
-      jsonResponse({ id: "hook_1", name: "Positiv", url: "https://www.positivparty.com/api/asaas/webhook" }),
+      jsonResponse({ id: "hook_1", name: "Positiv", url: "https://www.positivparty.com/api/payment/webhook" }),
     )
 
     const result = await registerAsaasWebhook("https://www.positivparty.com")
@@ -91,7 +91,7 @@ describe("registerAsaasWebhook", () => {
       }),
     )
     fetchMock.mockResolvedValueOnce(
-      jsonResponse({ id: "hook_positiv", name: "Positiv", url: "https://x/api/asaas/webhook" }),
+      jsonResponse({ id: "hook_positiv", name: "Positiv", url: "https://x/api/payment/webhook" }),
     )
 
     const result = await registerAsaasWebhook("https://www.positivparty.com")
@@ -105,7 +105,7 @@ describe("registerAsaasWebhook", () => {
   it("stops paging rather than looping when a page comes back empty", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ data: [], hasMore: true }))
     fetchMock.mockResolvedValueOnce(
-      jsonResponse({ id: "hook_new", name: "Positiv", url: "https://x/api/asaas/webhook" }),
+      jsonResponse({ id: "hook_new", name: "Positiv", url: "https://x/api/payment/webhook" }),
     )
 
     const result = await registerAsaasWebhook("https://www.positivparty.com")

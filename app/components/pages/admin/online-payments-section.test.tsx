@@ -15,7 +15,8 @@ type Setting = typeof defaultOnlinePaymentsSetting
 
 const configured: Setting = {
   switchedOn: true,
-  asaasConfigured: true,
+  providerName: "Asaas",
+  providerConfigured: true,
   enabled: true,
   updatedAt: "2026-09-27T15:30:00.000Z",
   updatedByName: "Admin Souza",
@@ -121,7 +122,7 @@ describe("OnlinePaymentsSection", () => {
 
   // Stored as on, but Asaas lost its keys: the effective state is off.
   it("reads as off while switched on without Asaas", () => {
-    renderSection({ ...configured, asaasConfigured: false, enabled: false }, true)
+    renderSection({ ...configured, providerConfigured: false, enabled: false }, true)
 
     expect(onlineSwitch()).not.toBeChecked()
     expect(onlineSwitch()).toBeDisabled()

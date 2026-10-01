@@ -31,7 +31,7 @@ type ParticipantDetailProps = {
   cardPaymentsEnabled?: boolean
   paymentsEnabled?: boolean
   appOrigin?: string
-  asaasDashboardOrigin?: string
+  providerName?: string
 }
 
 export const ParticipantDetail = ({
@@ -42,7 +42,7 @@ export const ParticipantDetail = ({
   cardPaymentsEnabled = false,
   paymentsEnabled = false,
   appOrigin = "",
-  asaasDashboardOrigin = "",
+  providerName = "",
 }: ParticipantDetailProps) => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const name = profile.social_name || profile.full_name
@@ -142,7 +142,7 @@ export const ParticipantDetail = ({
           active={payments.active}
           paymentsEnabled={paymentsEnabled}
           appOrigin={appOrigin}
-          asaasDashboardOrigin={asaasDashboardOrigin}
+          providerName={providerName}
           spotType={currentEvent.data.spot_type}
           ticketPrice={currentEvent.data.event_ticket_price}
           eventTitle={currentEvent.data.event_title ?? ""}

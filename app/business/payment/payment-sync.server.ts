@@ -4,11 +4,8 @@ import { paymentsCopy } from "~/copy/payments"
 import { kyselyDb } from "~/kysely-db"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
-import {
-  getAsaasInstallmentRefunds,
-  getAsaasPaymentRefunds,
-} from "./asaas-client.server"
-import { asaasErrorMessage } from "./asaas-error-message"
+import type { ProviderRefund } from "./payment-provider"
+import { paymentProvider } from "./payment-provider.server"
 import { deliverPaymentEmail } from "./payment-email-outbox.server"
 import { applyRefundTally } from "./refund-apply.server"
 import { tallyRefunds } from "./refund-state"
@@ -16,47 +13,47 @@ import { tallyRefunds } from "./refund-state"
 export const syncPaymentSchema = zod.object({ paymentId: zod.string().uuid() })
 
 /**
- * Reads a payment's refunds straight from Asaas and writes them onto the row
- * the way the webhook would. The webhook only knows what
- * Asaas chose to send, and when: a refund still "em progresso" is never an
- * event, and a delivery lost while the endpoint was down leaves the row
- * behind. This is how the admin -- and the sync job -- catch up.
+ * Reads a payment's refunds straight from the provider and writes them onto
+ * the row the way the webhook would. The webhook only knows what the provider
+ * chose to send, and when: a refund still on its way may never be an event,
+ * and a delivery lost while the endpoint was down leaves the row behind. This
+ * is how the admin -- and the sync job -- catch up.
  *
- * Asaas is read before the transaction opens: an HTTP call has no business
- * holding a row lock for as long as the network takes.
+ * The provider is read before the transaction opens: an HTTP call has no
+ * business holding a row lock for as long as the network takes.
  */
-export const syncPaymentFromAsaas = applySchema(syncPaymentSchema)(
+export const syncPaymentFromProvider = applySchema(syncPaymentSchema)(
   async (values) => {
     const payment = await kyselyDb
       .selectFrom("payments")
-      .select(["kind", "asaas_payment_id", "asaas_installment_id"])
+      .select(["kind", "provider_charge_id", "provider_plan_id"])
       .where("id", "=", values.paymentId)
       .executeTakeFirst()
 
-    if (!payment || payment.kind !== "asaas" || !payment.asaas_payment_id) {
-      throw new Error(paymentsCopy.errors.notSyncable)
+    if (!payment || payment.kind !== "online" || !payment.provider_charge_id) {
+      throw new Error(paymentsCopy.errors.notSyncable(paymentProvider().name))
     }
 
-    // Recorded before Asaas is asked, so a payment Asaas cannot answer about
-    // does not stay first in the sync job's line.
+    // Recorded before the provider is asked, so a payment it cannot answer
+    // about does not stay first in the sync job's line.
     await kyselyDb
       .updateTable("payments")
       .set({ refunds_sync_attempted_at: new Date().toISOString() })
       .where("id", "=", values.paymentId)
       .execute()
 
-    const plan = payment.asaas_installment_id
-    let refunds: Awaited<ReturnType<typeof getAsaasPaymentRefunds>>
+    let refunds: ProviderRefund[]
     try {
-      refunds = plan
-        ? await getAsaasInstallmentRefunds(plan)
-        : await getAsaasPaymentRefunds(payment.asaas_payment_id)
+      refunds = await paymentProvider().fetchRefunds({
+        chargeId: payment.provider_charge_id,
+        planId: payment.provider_plan_id,
+      })
     } catch (error) {
-      logger.error("Could not read the payment from Asaas", {
+      logger.error("Could not read the payment from the payment provider", {
         paymentId: values.paymentId,
         error: error instanceof Error ? error.message : String(error),
       })
-      throw new Error(asaasErrorMessage(error, "sync"))
+      throw new Error(paymentProvider().errorMessage(error, "sync"))
     }
 
     const syncedAt = new Date().toISOString()
@@ -101,19 +98,20 @@ export const syncPaymentFromAsaas = applySchema(syncPaymentSchema)(
   },
 )
 
-// A batch small enough to stay well inside Asaas's rate limits every run.
+// A batch small enough to stay well inside the provider's rate limits every
+// run.
 const SYNC_BATCH = 20
 // A row read this recently is left for the next run.
 const SYNC_AGAIN_AFTER_MINUTES = 10
 
 /**
- * The payments Asaas may still have news about, read one by one: a refund
- * under way and not yet complete, or one Asaas lists as still on its way.
+ * The payments the provider may still have news about, read one by one: a
+ * refund under way and not yet complete, or one listed as still on its way.
  * Everything else is settled, and reading it again would only spend the rate
  * limit.
  *
- * Called by the sync-payment-refunds job. One payment Asaas cannot answer
- * about is logged and skipped, never the end of the run.
+ * Called by the sync-payment-refunds job. One payment the provider cannot
+ * answer about is logged and skipped, never the end of the run.
  */
 export async function syncOpenPayments(): Promise<{
   synced: number
@@ -127,8 +125,8 @@ export async function syncOpenPayments(): Promise<{
   const candidates = await kyselyDb
     .selectFrom("payments")
     .select("id")
-    .where("kind", "=", "asaas")
-    .where("asaas_payment_id", "is not", null)
+    .where("kind", "=", "online")
+    .where("provider_charge_id", "is not", null)
     .where("status", "in", ["paid", "partially_refunded"])
     .where((eb) =>
       eb.or([
@@ -155,7 +153,7 @@ export async function syncOpenPayments(): Promise<{
   let synced = 0
   let failed = 0
   for (const { id } of candidates) {
-    const result = await syncPaymentFromAsaas({ paymentId: id })
+    const result = await syncPaymentFromProvider({ paymentId: id })
     if (result.success) synced += 1
     else failed += 1
   }

@@ -33,7 +33,7 @@ describe("cleanupTestData", () => {
       .insertInto("payments")
       .values({
         event_participant_id: participant.id,
-        kind: "asaas",
+        kind: "online",
         status: "pending",
         base_amount: 22000,
         due_at: now,

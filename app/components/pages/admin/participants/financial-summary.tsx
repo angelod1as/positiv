@@ -31,7 +31,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
   }
 
   // What the participant paid and Positiv still holds: the refund comes out.
-  // Fees are Asaas's to report.
+  // Fees are the payment provider's to report.
   const totalPaid = paidEvents.reduce((sum, item) => sum + item.net, 0)
 
   const paidEventsCount = paidEvents.length

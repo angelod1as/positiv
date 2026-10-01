@@ -45,7 +45,7 @@ function emptyState(): State {
 let state = emptyState()
 let server: Server | null = null
 // Outside the state on purpose: a reset forgets the mock's charges, not the
-// rows earlier specs wrote, and asaas_payment_id is unique in the database.
+// rows earlier specs wrote, and provider_charge_id is unique in the database.
 let sequence = 0
 
 function nextId(prefix: string): string {

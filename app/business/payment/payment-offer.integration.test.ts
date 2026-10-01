@@ -30,9 +30,9 @@ const {
   paymentsEnabled: { value: true },
 }))
 
-vi.mock("./asaas-client.server", async (importOriginal) => {
+vi.mock("./provider/asaas/asaas-client.server", async (importOriginal) => {
   const original =
-    await importOriginal<typeof import("./asaas-client.server")>()
+    await importOriginal<typeof import("./provider/asaas/asaas-client.server")>()
   return { ...original, deleteAsaasPayment }
 })
 
@@ -155,7 +155,7 @@ describe("createPaymentOffer", () => {
 
     const [payment] = await paymentsFor(participantId)
     expect(payment).toMatchObject({
-      kind: "asaas",
+      kind: "online",
       status: "pending",
       base_amount: 22000,
       amount: null,
@@ -333,12 +333,12 @@ describe("createPaymentOffer", () => {
   it("deletes the Asaas charge of the one it replaced", async () => {
     await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "awaiting_payment",
       amount: 23000,
       method: "pix",
       paid_at: null,
-      asaas_payment_id: `pay_old_${Date.now()}`,
+      provider_charge_id: `pay_old_${Date.now()}`,
     })
 
     await createPaymentOffer({ eventParticipantId: participantId })
@@ -350,12 +350,12 @@ describe("createPaymentOffer", () => {
     deleteAsaasPayment.mockRejectedValue(new Error("asaas is down"))
     await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "awaiting_payment",
       amount: 23000,
       method: "pix",
       paid_at: null,
-      asaas_payment_id: `pay_old_${Date.now()}`,
+      provider_charge_id: `pay_old_${Date.now()}`,
     })
 
     const result = await createPaymentOffer({
@@ -578,7 +578,7 @@ describe("resendPaymentOffer", () => {
   const chargeWith = (status: string) =>
     createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status,
       base_amount: 22000,
       amount: status === "paid" ? 22000 : null,

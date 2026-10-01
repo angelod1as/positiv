@@ -5,7 +5,8 @@ export const defaultOnlinePaymentsSetting: Awaited<
   ReturnType<typeof getOnlinePaymentsSetting>
 > = {
   switchedOn: false,
-  asaasConfigured: false,
+  providerName: "Asaas",
+  providerConfigured: false,
   enabled: false,
   updatedAt: null,
   updatedByName: null,

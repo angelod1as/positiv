@@ -441,11 +441,10 @@ describe("ledger totals on the admin queries - Integration Tests", () => {
     })
     await createTestPayment(tracker, kysely, {
       event_participant_id: participant.id,
-      kind: "asaas",
+      kind: "online",
       method: "credit_card",
       base_amount: 20000,
       amount: 21000,
-      asaas_net: 20050,
     })
 
     const result = await getProfilesWithExtraDataById({ eventId: event.id })
@@ -539,7 +538,7 @@ describe("ledger totals on the admin queries - Integration Tests", () => {
     })
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participant.id,
-      kind: "asaas",
+      kind: "online",
       method: null,
       status: "awaiting_payment",
       base_amount: 20000,

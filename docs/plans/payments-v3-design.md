@@ -11,6 +11,13 @@ Replaces: `origin/payment` (PRs #571–#583, umbrella #563), Linear POS-463…47
 > Refunds of Asaas payments are done in the Asaas dashboard and only recorded
 > here. The fee, gross-up, anticipation and refund-request sections below
 > describe the design as it was, not the code.
+>
+> **Asaas moved behind a connector in POS-573 (2026-09-30).** The domain talks
+> to `PaymentProvider` (`app/business/payment/payment-provider.ts`), and Asaas
+> lives in `app/business/payment/provider/asaas/`. The schema no longer names
+> it: `asaas_*` columns are `provider_*`, `payment_kind` `'asaas'` is
+> `'online'`, `asaas_net` is gone, and the webhook is `POST
+> /api/payment/webhook`. Names below are the ones the design used.
 
 ## 1. Why from scratch
 

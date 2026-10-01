@@ -34,7 +34,7 @@ export function buildWebhookEvent(event: string, payment: WebhookCharge) {
 }
 
 export function postWebhook(body: ReturnType<typeof buildWebhookEvent>): Promise<Response> {
-  return fetch(`${getBaseUrl()}/api/asaas/webhook`, {
+  return fetch(`${getBaseUrl()}/api/payment/webhook`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -51,8 +51,8 @@ export async function resetAsaasMock(): Promise<void> {
   await fetch(`${getAsaasMockUrl()}/__mock/reset`, { method: 'POST' })
   const { error } = await createSupabaseAdminClient()
     .from('profiles')
-    .update({ asaas_customer_id: null })
-    .not('asaas_customer_id', 'is', null)
+    .update({ provider_customer_id: null })
+    .not('provider_customer_id', 'is', null)
   if (error) throw new Error(`Could not forget the mock's customers: ${error.message}`)
 }
 

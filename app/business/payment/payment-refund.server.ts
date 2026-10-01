@@ -25,7 +25,7 @@ export const markManualRefundedSchema = zod.object({
 })
 
 /**
- * Money given back outside Asaas. The UPDATE is guarded on the status it
+ * Money given back outside the provider. The UPDATE is guarded on the status it
  * expects, so a second click — or a second admin — writes nothing instead of
  * refunding twice.
  *
@@ -40,9 +40,9 @@ export const markManualRefunded = applySchema(markManualRefundedSchema)(
       .where("id", "=", values.paymentId)
       .executeTakeFirst()
 
-    // Only a payment taken by hand can be given back by hand. Marking an Asaas
-    // row refunded here would move nothing at Asaas, leaving the participant's
-    // money where it is and Positiv's ledger saying otherwise.
+    // Only a payment taken by hand can be given back by hand. Marking an online
+    // row refunded here would move nothing at the provider, leaving the
+    // participant's money where it is and Positiv's ledger saying otherwise.
     if (
       !payment ||
       payment.kind !== "manual" ||

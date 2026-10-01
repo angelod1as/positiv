@@ -198,7 +198,7 @@ describe("registerManualPayment", () => {
   it("refuses to record one while a charge is still open", async () => {
     await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "pending",
       amount: null,
       method: null,
@@ -381,7 +381,7 @@ describe("editManualPayment", () => {
   it("refuses to edit a payment that went through Asaas", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       amount: 21985,
       base_amount: 21985,
     })

@@ -70,10 +70,11 @@ export type ManagePaymentModalProps = {
   eventTitle: string
   cardPaymentsEnabled: boolean
   appOrigin: string
-  asaasDashboardOrigin: string
+  /** The payment provider's name, as admins know it. */
+  providerName: string
 }
 
-/** The methods a payment taken by hand can have; card only ever runs through Asaas. */
+/** The methods a payment taken by hand can have; card only ever runs online. */
 const EDITABLE_METHODS = ["pix", "cash", "transfer", "other"] as const
 
 type ManualEdit = {
@@ -194,12 +195,14 @@ const EditManualPaymentDialog: FC<EditManualPaymentDialogProps> = ({
 
 type RefundDialogProps = {
   payment: PaymentRow
+  providerName: string
   isSubmitting: boolean
   onConfirm: (paymentId: string, amount: string) => void
 }
 
 const RefundDialog: FC<RefundDialogProps> = ({
   payment,
+  providerName,
   isSubmitting,
   onConfirm,
 }) => {
@@ -219,7 +222,9 @@ const RefundDialog: FC<RefundDialogProps> = ({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{refund.confirm}</AlertDialogTitle>
-          <AlertDialogDescription>{refund.description}</AlertDialogDescription>
+          <AlertDialogDescription>
+            {refund.description(providerName)}
+          </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="flex flex-col gap-2">
           <Label htmlFor={amountId}>{refund.amount}</Label>
@@ -247,25 +252,16 @@ const RefundDialog: FC<RefundDialogProps> = ({
   )
 }
 
-/**
- * Where an Asaas refund is done now: the charge in the Asaas dashboard, by
- * hand. The site only records it, from the webhook or "Atualizar do Asaas".
- * No admin page is known for a card plan, so a plan links to its first
- * charge, and a charge with no number to the payments list.
- */
-const asaasChargeUrl = (origin: string, invoiceNumber: string | null) =>
-  invoiceNumber
-    ? `${origin}/payment/show/${invoiceNumber}`
-    : `${origin}/payment/list`
-
 type CancelDialogProps = {
   payment: PaymentRow
+  providerName: string
   isSubmitting: boolean
   onConfirm: (paymentId: string) => void
 }
 
 const CancelDialog: FC<CancelDialogProps> = ({
   payment,
+  providerName,
   isSubmitting,
   onConfirm,
 }) => (
@@ -278,7 +274,9 @@ const CancelDialog: FC<CancelDialogProps> = ({
     <AlertDialogContent>
       <AlertDialogHeader>
         <AlertDialogTitle>{cancel.confirm}</AlertDialogTitle>
-        <AlertDialogDescription>{cancel.description}</AlertDialogDescription>
+        <AlertDialogDescription>
+          {cancel.description(providerName)}
+        </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel>{cancel.keep}</AlertDialogCancel>
@@ -294,23 +292,30 @@ const CancelDialog: FC<CancelDialogProps> = ({
 )
 
 /**
- * Where a payment's refund stands, as Asaas last reported it -- under its status, so the admin does not have to open Asaas to know
- * whether the rest of a refund is still on its way.
+ * Where a payment's refund stands, as the provider last reported it -- under
+ * its status, so the admin does not have to open the provider's dashboard to
+ * know whether the rest of a refund is still on its way.
  */
-const PaymentProgress: FC<{ payment: PaymentRow }> = ({ payment }) => {
+const PaymentProgress: FC<{ payment: PaymentRow; providerName: string }> = ({
+  payment,
+  providerName,
+}) => {
   const lines = [
     (payment.refund_amount ?? 0) > 0 &&
       manage.refundLines.refunded(formatCurrency(payment.refund_amount ?? 0)),
     (payment.refund_pending_amount ?? 0) > 0 &&
       manage.refundLines.pending(
+        providerName,
         formatCurrency(payment.refund_pending_amount ?? 0),
       ),
     (payment.refund_cancelled_amount ?? 0) > 0 &&
       manage.refundLines.cancelled(
+        providerName,
         formatCurrency(payment.refund_cancelled_amount ?? 0),
       ),
     payment.refunds_synced_at &&
       manage.sync.syncedAt(
+        providerName,
         formatInTimeZone(
           payment.refunds_synced_at,
           "America/Sao_Paulo",
@@ -337,6 +342,7 @@ type ChargeSectionProps = {
   ticketPrice: number | null
   cardPaymentsEnabled: boolean
   appOrigin: string
+  providerName: string
   isSubmitting: boolean
   justCreated: boolean
   wasRefunded: boolean
@@ -347,7 +353,7 @@ type ChargeSectionProps = {
 /**
  * Opening a charge is its own act, behind its own button. Nothing in the
  * participant funnel triggers it: a status is a note an admin keeps, and an
- * absent-minded grid edit should not delete a live Asaas charge and email
+ * absent-minded grid edit should not delete a live online charge and email
  * somebody a second payment link.
  */
 const ChargeSection: FC<ChargeSectionProps> = ({
@@ -357,6 +363,7 @@ const ChargeSection: FC<ChargeSectionProps> = ({
   ticketPrice,
   cardPaymentsEnabled,
   appOrigin,
+  providerName,
   isSubmitting,
   justCreated,
   wasRefunded,
@@ -374,7 +381,7 @@ const ChargeSection: FC<ChargeSectionProps> = ({
   const [copied, setCopied] = useState(false)
 
   // Replacing a charge the participant has already acted on deletes it at
-  // Asaas mid-checkout, so that one asks first. A pending row is nobody's
+  // the provider mid-checkout, so that one asks first. A pending row is nobody's
   // work in progress.
   // Charging again someone whose money already went back is legitimate, but
   // rare enough to be a slip, so it asks too.
@@ -382,7 +389,7 @@ const ChargeSection: FC<ChargeSectionProps> = ({
     active?.status === "awaiting_payment"
       ? {
           title: charge.replaceConfirm,
-          description: charge.replaceDescription,
+          description: charge.replaceDescription(providerName),
           keep: charge.replaceKeep,
           submit: charge.replaceSubmit,
         }
@@ -536,7 +543,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
   eventTitle,
   cardPaymentsEnabled,
   appOrigin,
-  asaasDashboardOrigin,
+  providerName,
 }) => {
   const fetcher = useFetcher<{
     success?: boolean
@@ -671,10 +678,17 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                   <TableCell>
                     <div className="flex flex-col gap-1">
                       {paymentStatusPropMap(payment.status)}
-                      <PaymentProgress payment={payment} />
+                      <PaymentProgress
+                        payment={payment}
+                        providerName={providerName}
+                      />
                     </div>
                   </TableCell>
-                  <TableCell>{manage.kinds[payment.kind]}</TableCell>
+                  <TableCell>
+                    {payment.kind === "online"
+                      ? providerName
+                      : manage.kinds.manual}
+                  </TableCell>
                   <TableCell>
                     {payment.method
                       ? manage.methods[payment.method]
@@ -682,7 +696,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                   </TableCell>
                   {/* What the participant pays: the event price until they
                       pick an option, the option's price from then on. What
-                      Asaas kept is Asaas's to report. */}
+                      the provider kept is the provider's to report. */}
                   <TableCell className="whitespace-nowrap">
                     {formatCurrency(payment.amount ?? payment.base_amount)}
                   </TableCell>
@@ -710,6 +724,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                       (payment.amount ?? 0) > 0 && (
                       <RefundDialog
                         payment={payment}
+                        providerName={providerName}
                         isSubmitting={isSubmitting}
                         onConfirm={(paymentId, amount) =>
                           post({
@@ -720,30 +735,28 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                         }
                       />
                     )}
-                      {payment.kind === "asaas" &&
+                      {payment.kind === "online" &&
                         payment.status === "paid" &&
                         (payment.amount ?? 0) > 0 &&
                         (payment.refund_requested_at ? (
                           <p className="text-muted-foreground text-sm">
-                            {refund.asaas.inProgress}
+                            {refund.provider.inProgress(providerName)}
                           </p>
                         ) : (
                           <div className="flex flex-col gap-2">
-                            {/* Asaas denied the last attempt and the claim
+                            {/* The provider denied the last attempt and the claim
                                 came back. Without this the button reappears
                                 as if nothing had been tried. */}
                             {payment.refund_denied_at && (
                               <p className="text-destructive text-sm">
-                                {refund.asaas.denied(
+                                {refund.provider.denied(
+                                  providerName,
                                   payment.refund_denial_reason,
                                 )}
                               </p>
                             )}
                             <a
-                              href={asaasChargeUrl(
-                                asaasDashboardOrigin,
-                                payment.asaas_invoice_number,
-                              )}
+                              href={payment.provider_dashboard_url ?? undefined}
                               target="_blank"
                               rel="noopener noreferrer"
                               className={buttonVariants({
@@ -751,11 +764,11 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                                 size: "sm",
                               })}
                             >
-                              {refund.asaas.title}
+                              {refund.provider.title(providerName)}
                             </a>
                           </div>
                         ))}
-                      {payment.kind === "asaas" && payment.asaas_payment_id && (
+                      {payment.kind === "online" && payment.provider_charge_id && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -764,12 +777,13 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                             post({ intent: "payment-sync", paymentId: payment.id })
                           }
                         >
-                          {manage.sync.button}
+                          {manage.sync.button(providerName)}
                         </Button>
                       )}
                       {active?.id === payment.id && (
                         <CancelDialog
                           payment={payment}
+                          providerName={providerName}
                           isSubmitting={isSubmitting}
                           onConfirm={(paymentId) =>
                             post({ intent: "payment-cancel", paymentId })
@@ -823,6 +837,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
             ticketPrice={ticketPrice}
             cardPaymentsEnabled={cardPaymentsEnabled}
             appOrigin={appOrigin}
+            providerName={providerName}
             isSubmitting={isSubmitting}
             justCreated={
               fetcher.data?.success === true &&

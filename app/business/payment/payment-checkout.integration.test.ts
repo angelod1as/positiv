@@ -36,9 +36,9 @@ vi.mock("~/lib/helpers/is-prod.server", () => ({
   isCI: () => false,
 }))
 
-vi.mock("./asaas-client.server", async (importOriginal) => {
+vi.mock("./provider/asaas/asaas-client.server", async (importOriginal) => {
   const original =
-    await importOriginal<typeof import("./asaas-client.server")>()
+    await importOriginal<typeof import("./provider/asaas/asaas-client.server")>()
   return {
     ...original,
     createAsaasCustomer,
@@ -59,7 +59,7 @@ vi.mock("~/business/settings/app-settings.server", async (importOriginal) => ({
   isCardPaymentsEnabled: async () => cardEnabled.value,
 }))
 
-import { AsaasError } from "./asaas-client.server"
+import { AsaasError } from "./provider/asaas/asaas-client.server"
 import { pickOption } from "./payment-checkout.server"
 
 describe("pickOption", () => {
@@ -126,7 +126,7 @@ describe("pickOption", () => {
   const openCharge = (forParticipant = participantId) =>
     createTestPayment(tracker, kysely, {
       event_participant_id: forParticipant,
-      kind: "asaas",
+      kind: "online",
       status: "pending",
       amount: null,
       method: null,
@@ -149,10 +149,10 @@ describe("pickOption", () => {
     expect(createAsaasCustomer).toHaveBeenCalledTimes(1)
     const profile = await kysely
       .selectFrom("profiles")
-      .select("asaas_customer_id")
+      .select("provider_customer_id")
       .where("id", "=", profileId)
       .executeTakeFirstOrThrow()
-    expect(profile.asaas_customer_id).toBe("cus_new")
+    expect(profile.provider_customer_id).toBe("cus_new")
 
     // A second event, same person: the customer is already on the profile.
     await kysely
@@ -202,7 +202,7 @@ describe("pickOption", () => {
     // A profile that took the customer under a CPF it no longer carries.
     await kysely
       .updateTable("profiles")
-      .set({ asaas_customer_id: "cus_existing" })
+      .set({ provider_customer_id: "cus_existing" })
       .where("id", "=", otherProfileId)
       .execute()
     findAsaasCustomerByCpf.mockResolvedValueOnce("cus_existing")
@@ -238,7 +238,7 @@ describe("pickOption", () => {
     })
 
     expect(result.success === false && result.errors[0]?.message).toBe(
-      paymentsCopy.asaasErrors.checkoutCpf,
+      paymentsCopy.providerErrors.checkoutCpf,
     )
   })
 
@@ -253,7 +253,7 @@ describe("pickOption", () => {
     })
 
     expect(result.success === false && result.errors[0]?.message).toBe(
-      paymentsCopy.asaasErrors.unavailable,
+      paymentsCopy.providerErrors.unavailable,
     )
   })
 
@@ -266,10 +266,10 @@ describe("pickOption", () => {
     expect(createAsaasCustomer).not.toHaveBeenCalled()
     const profile = await kysely
       .selectFrom("profiles")
-      .select("asaas_customer_id")
+      .select("provider_customer_id")
       .where("id", "=", profileId)
       .executeTakeFirstOrThrow()
-    expect(profile.asaas_customer_id).toBe("cus_existing")
+    expect(profile.provider_customer_id).toBe("cus_existing")
   })
 
   it("charges the event price on the card and records what came back", async () => {
@@ -296,10 +296,10 @@ describe("pickOption", () => {
       status: "awaiting_payment",
       method: "credit_card",
       installment_count: 3,
-      asaas_customer_id: "cus_new",
-      asaas_payment_id: "pay_1",
-      asaas_invoice_url: "https://sandbox.asaas.com/i/pay_1",
-      asaas_invoice_number: "00005101",
+      provider_customer_id: "cus_new",
+      provider_charge_id: "pay_1",
+      provider_checkout_url: "https://sandbox.asaas.com/i/pay_1",
+      provider_dashboard_ref: "00005101",
     })
     expect(after.amount).toBe(22000)
     expect(result.success && result.data.invoiceUrl).toBe(
@@ -375,7 +375,7 @@ describe("pickOption", () => {
 
     expect(deleteAsaasPayment).toHaveBeenCalledWith("pay_1")
     const after = await rowOf(payment.id)
-    expect(after.asaas_payment_id).toBe("pay_2")
+    expect(after.provider_charge_id).toBe("pay_2")
   })
 
   it("deletes the charge it just created when the row is no longer open", async () => {
@@ -406,7 +406,7 @@ describe("pickOption", () => {
     expect(deleteAsaasPayment).toHaveBeenCalledWith("pay_1")
     const after = await rowOf(payment.id)
     expect(after.status).toBe("cancelled")
-    expect(after.asaas_payment_id).toBeNull()
+    expect(after.provider_charge_id).toBeNull()
   })
 
   // Asaas refuses a callback whose domain does not match the commercial data on
@@ -457,8 +457,8 @@ describe("pickOption", () => {
 
     const after = await rowOf(payment.id)
     expect(after.status).toBe("pending")
-    expect(after.asaas_payment_id).toBeNull()
-    expect(after.asaas_invoice_url).toBeNull()
+    expect(after.provider_charge_id).toBeNull()
+    expect(after.provider_checkout_url).toBeNull()
   })
 
   // Two picks racing: both read the row before either writes, so both reach
@@ -494,7 +494,7 @@ describe("pickOption", () => {
     ])
 
     const after = await rowOf(payment.id)
-    const survivor = after.asaas_payment_id
+    const survivor = after.provider_charge_id
 
     expect(created).toBe(2)
     expect(survivor).not.toBeNull()
@@ -510,8 +510,8 @@ describe("pickOption", () => {
     expect(second.success).toBe(true)
     const urls = [first, second].map((r) => r.success && r.data.invoiceUrl)
     expect(urls).toEqual([
-      after.asaas_invoice_url,
-      after.asaas_invoice_url,
+      after.provider_checkout_url,
+      after.provider_checkout_url,
     ])
   })
 
@@ -568,7 +568,7 @@ describe("pickOption", () => {
 
     const profile = await kysely
       .selectFrom("profiles")
-      .select("asaas_customer_id")
+      .select("provider_customer_id")
       .where("id", "=", profileId)
       .executeTakeFirstOrThrow()
 
@@ -577,10 +577,10 @@ describe("pickOption", () => {
     expect(made).toBe(2)
     const rows = await kysely
       .selectFrom("payments")
-      .select("asaas_customer_id")
+      .select("provider_customer_id")
       .where("id", "=", payment.id)
       .execute()
-    expect(rows[0]?.asaas_customer_id).toBe(profile.asaas_customer_id)
+    expect(rows[0]?.provider_customer_id).toBe(profile.provider_customer_id)
   })
 
   it("refuses an unknown option", async () => {
@@ -612,7 +612,7 @@ describe("pickOption", () => {
   it("refuses a charge that is not open", async () => {
     const cancelled = await createTestPayment(tracker, kysely, {
       event_participant_id: otherParticipantId,
-      kind: "asaas",
+      kind: "online",
       status: "cancelled",
       amount: null,
       method: null,

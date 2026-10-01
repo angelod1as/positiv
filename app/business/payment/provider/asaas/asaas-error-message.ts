@@ -1,15 +1,14 @@
 import { paymentsCopy } from "~/copy/payments"
+import type { ProviderErrorContext } from "../../payment-provider"
 import { AsaasError } from "./asaas-client.server"
 
-const { asaasErrors } = paymentsCopy
-
-export type AsaasErrorContext = "checkout" | "sync"
+const { providerErrors } = paymentsCopy
 
 // Refusals Asaas words the same way every time, matched on its code and a
 // phrase of its description: the code alone is too broad -- invalid_action
 // covers a dozen different refusals.
 const KNOWN_REFUSALS: {
-  context: AsaasErrorContext
+  context: ProviderErrorContext
   code: string
   phrase: RegExp
   message: string
@@ -18,7 +17,7 @@ const KNOWN_REFUSALS: {
     context: "checkout",
     code: "invalid_cpfCnpj",
     phrase: /./,
-    message: asaasErrors.checkoutCpf,
+    message: providerErrors.checkoutCpf,
   },
 ]
 
@@ -32,11 +31,11 @@ const KNOWN_REFUSALS: {
  */
 export function asaasErrorMessage(
   error: unknown,
-  context: AsaasErrorContext,
+  context: ProviderErrorContext,
 ): string {
   if (error instanceof AsaasError) {
     if (error.status >= 500 || error.status === 401 || error.status === 403) {
-      return asaasErrors.unavailable
+      return providerErrors.unavailable
     }
 
     for (const refusal of KNOWN_REFUSALS) {
@@ -48,9 +47,9 @@ export function asaasErrorMessage(
     }
 
     const [first] = error.errors
-    if (!first) return asaasErrors.unavailable
-    if (context === "sync") return asaasErrors.syncRefused(first.description)
-    return asaasErrors.checkoutRefused(first.description)
+    if (!first) return providerErrors.unavailable
+    if (context === "sync") return providerErrors.syncRefused("Asaas", first.description)
+    return providerErrors.checkoutRefused(first.description)
   }
 
   // fetch rejects with a TypeError when the connection fails, and the timeout
@@ -59,7 +58,7 @@ export function asaasErrorMessage(
     error instanceof TypeError ||
     (error instanceof DOMException && error.name === "AbortError")
   ) {
-    return asaasErrors.unavailable
+    return providerErrors.unavailable
   }
 
   return error instanceof Error ? error.message : String(error)

@@ -31,8 +31,8 @@ const payment = (overrides: Partial<PaymentRow>): PaymentRow =>
     created_at: "2026-08-20T12:00:00Z",
     refund_amount: null,
     refunded_at: null,
-    asaas_net: null,
     note: null,
+    provider_dashboard_url: null,
     ...overrides,
   }) as PaymentRow
 
@@ -56,27 +56,27 @@ const baseProps = {
   eventTitle: "Festa de Setembro",
   cardPaymentsEnabled: true,
   appOrigin: "https://www.positivparty.com",
-  asaasDashboardOrigin: "https://sandbox.asaas.com",
+  providerName: "Asaas",
 }
 
 const paidAsaasCharge = (overrides: Partial<PaymentRow> = {}): PaymentRow =>
   payment({
     id: "asaas-1",
-    kind: "asaas",
+    kind: "online",
     status: "paid",
     method: "pix",
     base_amount: 20000,
     amount: 22199,
-    asaas_net: 21900,
-    asaas_payment_id: "pay_1",
-    asaas_invoice_number: "00005101",
+    provider_charge_id: "pay_1",
+    provider_dashboard_ref: "00005101",
+    provider_dashboard_url: "https://sandbox.asaas.com/payment/show/00005101",
     refund_requested_at: null,
     ...overrides,
   })
 
 const openCharge = payment({
   id: "open-1",
-  kind: "asaas",
+  kind: "online",
   status: "pending",
   method: null,
   amount: null,
@@ -260,7 +260,7 @@ describe("ManagePaymentModal", () => {
     fetcherState = "submitting"
     const open = payment({
       status: "pending",
-      kind: "asaas",
+      kind: "online",
       amount: null,
       method: null,
       paid_at: null,
@@ -338,7 +338,7 @@ describe("ManagePaymentModal", () => {
   it("does not read an open charge as a payment of zero", () => {
     const open = payment({
       status: "pending",
-      kind: "asaas",
+      kind: "online",
       amount: null,
       base_amount: 22000,
       method: null,
@@ -436,7 +436,7 @@ describe("ManagePaymentModal", () => {
     expect(formData.get("paymentId")).toBe("p1")
   })
 
-  it("sends an Asaas refund to the charge in the Asaas dashboard", () => {
+  it("sends a refund to the charge in the provider's dashboard, named after it", () => {
     render(
       <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
     )
@@ -448,32 +448,6 @@ describe("ManagePaymentModal", () => {
     )
     expect(link).toHaveAttribute("target", "_blank")
     expect(submit).not.toHaveBeenCalled()
-  })
-
-  it("falls back to the Asaas payments list for a charge with no number", () => {
-    render(
-      <ManagePaymentModal
-        {...baseProps}
-        payments={[paidAsaasCharge({ asaas_invoice_number: null })]}
-      />,
-    )
-
-    expect(
-      screen.getByRole("link", { name: /Reembolsar no Asaas/ }),
-    ).toHaveAttribute("href", "https://sandbox.asaas.com/payment/list")
-  })
-
-  it("offers the Asaas refund before Asaas reports the net", () => {
-    render(
-      <ManagePaymentModal
-        {...baseProps}
-        payments={[paidAsaasCharge({ asaas_net: null })]}
-      />,
-    )
-
-    expect(
-      screen.getByRole("link", { name: /Reembolsar no Asaas/ }),
-    ).toBeInTheDocument()
   })
 
   it("says a refund is under way instead of offering another", () => {
@@ -591,7 +565,7 @@ describe("ManagePaymentModal", () => {
   it("offers to cancel only an open charge", async () => {
     const open = payment({
       status: "pending",
-      kind: "asaas",
+      kind: "online",
       amount: null,
       method: null,
       paid_at: null,
@@ -619,7 +593,7 @@ describe("ManagePaymentModal", () => {
         {...baseProps}
         active={payment({
           status: "pending",
-          kind: "asaas",
+          kind: "online",
           amount: null,
           method: null,
           paid_at: null,
@@ -655,6 +629,17 @@ describe("ManagePaymentModal - the Cobrança section", () => {
     expect(lastSubmission().get("intent")).toBe("payment-offer")
     expect(lastSubmission().get("eventParticipantId")).toBe("ep-1")
     expect(lastSubmission().get("baseAmount")).toBe("220,00")
+  })
+
+  // Since POS-577 the price is flat and Positiv absorbs every fee. A hint
+  // promising fees on top would have the admin undercharge to compensate.
+  it("says the amount is what the participant pays, fees absorbed by Positiv", () => {
+    render(<ManagePaymentModal {...baseProps} />)
+
+    expect(
+      screen.getByText(/as taxas ficam por conta da Positiv/i),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/entram por cima/i)).not.toBeInTheDocument()
   })
 
   it("sends the amount the admin typed instead", async () => {
@@ -992,7 +977,7 @@ describe("ManagePaymentModal - the Cobrança section", () => {
 describe("ManagePaymentModal - the table's dates and amounts", () => {
   const sentOn = payment({
     id: "sent-1",
-    kind: "asaas",
+    kind: "online",
     status: "pending",
     method: null,
     amount: null,
@@ -1039,7 +1024,6 @@ describe("ManagePaymentModal - the table's dates and amounts", () => {
       status: "awaiting_payment",
       method: "pix",
       amount: 19800,
-      asaas_net: null,
     })
 
     render(<ManagePaymentModal {...baseProps} payments={[picked]} />)
@@ -1053,13 +1037,12 @@ describe("ManagePaymentModal - the table's dates and amounts", () => {
   it("shows what the participant paid, not what Asaas kept", () => {
     const paidByCard = payment({
       id: "paid-card",
-      kind: "asaas",
+      kind: "online",
       status: "paid",
       method: "credit_card",
       installment_count: 3,
       base_amount: 22000,
       amount: 22000,
-      asaas_net: 21000,
     })
 
     render(<ManagePaymentModal {...baseProps} payments={[paidByCard]} />)

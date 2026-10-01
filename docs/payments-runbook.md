@@ -33,7 +33,9 @@ payments are on is the admin switch (section 8).
 pnpm asaas:register-webhook https://www.positivparty.com
 ```
 
-Run it once per environment. Running it again updates the webhook named
+It registers `<origin>/api/payment/webhook`. Run it once per environment, and
+again after the URL changes — POS-573 moved it from `/api/asaas/webhook`.
+Running it again updates the webhook named
 `Positiv` instead of adding a second one, which would deliver every event twice.
 The script sends `sendType: SEQUENTIALLY`, `apiVersion: 3`, the token, and the
 event list in `scripts/asaas/register-webhook.ts`.
@@ -44,7 +46,7 @@ Asaas delivers events one at a time. A delivery that fails holds every later
 one behind it, and after 15 consecutive failures Asaas interrupts the queue and
 emails the address registered on the webhook (at failures 5, 10 and 15).
 
-1. Find out why deliveries fail: the app logs, `/api/asaas/webhook` answering
+1. Find out why deliveries fail: the app logs, `/api/payment/webhook` answering
    401 (token mismatch), 503 (`ASAAS_WEBHOOK_TOKEN` unset) or 5xx.
 2. Fix that first. Resuming a queue that still fails only burns another 15
    attempts.
@@ -68,11 +70,12 @@ affected payments have to be reconciled by hand against the Asaas dashboard.
 
 ## 4. Reading the webhook inbox
 
-Every delivery lands in `payment_webhook_events`, keyed by the Asaas event id,
-before it is applied.
+Every delivery lands in `payment_webhook_events`, keyed by the Asaas event id
+(`provider_event_id`), before it is applied. `payload` is what Asaas sent;
+`event` is what the connector translated it into, and what the site acts on.
 
 ```sql
-SELECT event_type, asaas_payment_id, received_at, processed_at, error
+SELECT event_type, provider_charge_id, received_at, processed_at, error
   FROM payment_webhook_events
  WHERE processed_at IS NULL OR error IS NOT NULL
  ORDER BY received_at DESC
@@ -117,7 +120,8 @@ SELECT kind, attempts, next_attempt_at, last_error
 The participant picked an option and says they paid, but the row never turned
 `paid`.
 
-1. Look for the charge's events in the inbox (section 4), by `asaas_payment_id`.
+1. Look for the charge's events in the inbox (section 4), by
+   `provider_charge_id` (the Asaas `pay_…` id).
 2. Look at the charge in the Asaas dashboard.
 3. If Asaas shows the money received and no event arrived, the webhook queue is
    the problem (section 3). Once it is resumed, the pending events arrive.
@@ -138,7 +142,7 @@ does not ask Asaas for them; it records them when Asaas reports them.
 
 - "Reembolsar no Asaas" in the payment modal opens the charge in the dashboard,
   at `/payment/show/{invoiceNumber}` (sandbox or production, following
-  `ASAAS_API_URL`). A card plan opens its first charge; a charge with no stored
+  `ASAAS_API_URL`; the number is `payments.provider_dashboard_ref`). A card plan opens its first charge; a charge with no stored
   number opens the payments list.
 - PIX can be refunded up to 90 days after payment, if the money is available in
   the Asaas account. A card up to 365 days; the money shows on the

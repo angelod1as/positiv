@@ -569,33 +569,39 @@ export type Database = {
       }
       payment_webhook_events: {
         Row: {
-          asaas_event_id: string
-          asaas_payment_id: string | null
           error: string | null
+          event: Json | null
           event_type: string
           id: string
           payload: Json
           processed_at: string | null
+          provider_charge_id: string | null
+          provider_event_id: string
+          provider_plan_id: string | null
           received_at: string
         }
         Insert: {
-          asaas_event_id: string
-          asaas_payment_id?: string | null
           error?: string | null
+          event?: Json | null
           event_type: string
           id?: string
           payload: Json
           processed_at?: string | null
+          provider_charge_id?: string | null
+          provider_event_id: string
+          provider_plan_id?: string | null
           received_at?: string
         }
         Update: {
-          asaas_event_id?: string
-          asaas_payment_id?: string | null
           error?: string | null
+          event?: Json | null
           event_type?: string
           id?: string
           payload?: Json
           processed_at?: string | null
+          provider_charge_id?: string | null
+          provider_event_id?: string
+          provider_plan_id?: string | null
           received_at?: string
         }
         Relationships: []
@@ -603,12 +609,6 @@ export type Database = {
       payments: {
         Row: {
           amount: number | null
-          asaas_customer_id: string | null
-          asaas_installment_id: string | null
-          asaas_invoice_number: string | null
-          asaas_invoice_url: string | null
-          asaas_net: number | null
-          asaas_payment_id: string | null
           base_amount: number
           created_at: string
           created_by: string | null
@@ -620,6 +620,11 @@ export type Database = {
           method: Database["public"]["Enums"]["payment_method"] | null
           note: string | null
           paid_at: string | null
+          provider_charge_id: string | null
+          provider_checkout_url: string | null
+          provider_customer_id: string | null
+          provider_dashboard_ref: string | null
+          provider_plan_id: string | null
           refund_amount: number | null
           refund_cancelled_amount: number | null
           refund_denial_reason: string | null
@@ -635,12 +640,6 @@ export type Database = {
         }
         Insert: {
           amount?: number | null
-          asaas_customer_id?: string | null
-          asaas_installment_id?: string | null
-          asaas_invoice_number?: string | null
-          asaas_invoice_url?: string | null
-          asaas_net?: number | null
-          asaas_payment_id?: string | null
           base_amount: number
           created_at?: string
           created_by?: string | null
@@ -652,6 +651,11 @@ export type Database = {
           method?: Database["public"]["Enums"]["payment_method"] | null
           note?: string | null
           paid_at?: string | null
+          provider_charge_id?: string | null
+          provider_checkout_url?: string | null
+          provider_customer_id?: string | null
+          provider_dashboard_ref?: string | null
+          provider_plan_id?: string | null
           refund_amount?: number | null
           refund_cancelled_amount?: number | null
           refund_denial_reason?: string | null
@@ -667,12 +671,6 @@ export type Database = {
         }
         Update: {
           amount?: number | null
-          asaas_customer_id?: string | null
-          asaas_installment_id?: string | null
-          asaas_invoice_number?: string | null
-          asaas_invoice_url?: string | null
-          asaas_net?: number | null
-          asaas_payment_id?: string | null
           base_amount?: number
           created_at?: string
           created_by?: string | null
@@ -684,6 +682,11 @@ export type Database = {
           method?: Database["public"]["Enums"]["payment_method"] | null
           note?: string | null
           paid_at?: string | null
+          provider_charge_id?: string | null
+          provider_checkout_url?: string | null
+          provider_customer_id?: string | null
+          provider_dashboard_ref?: string | null
+          provider_plan_id?: string | null
           refund_amount?: number | null
           refund_cancelled_amount?: number | null
           refund_denial_reason?: string | null
@@ -724,7 +727,6 @@ export type Database = {
       profiles: {
         Row: {
           approved_to_attend: Database["public"]["Enums"]["approved_to_attend_enum"]
-          asaas_customer_id: string | null
           basic_data_filled: boolean
           became_veteran_date: string | null
           cpf: string | null
@@ -743,6 +745,7 @@ export type Database = {
           phone: number | null
           phone_is_international: boolean
           pronouns: string[] | null
+          provider_customer_id: string | null
           race_color: string[] | null
           rg: string | null
           rg_issuer: string | null
@@ -752,7 +755,6 @@ export type Database = {
         }
         Insert: {
           approved_to_attend?: Database["public"]["Enums"]["approved_to_attend_enum"]
-          asaas_customer_id?: string | null
           basic_data_filled?: boolean
           became_veteran_date?: string | null
           cpf?: string | null
@@ -771,6 +773,7 @@ export type Database = {
           phone?: number | null
           phone_is_international?: boolean
           pronouns?: string[] | null
+          provider_customer_id?: string | null
           race_color?: string[] | null
           rg?: string | null
           rg_issuer?: string | null
@@ -780,7 +783,6 @@ export type Database = {
         }
         Update: {
           approved_to_attend?: Database["public"]["Enums"]["approved_to_attend_enum"]
-          asaas_customer_id?: string | null
           basic_data_filled?: boolean
           became_veteran_date?: string | null
           cpf?: string | null
@@ -799,6 +801,7 @@ export type Database = {
           phone?: number | null
           phone_is_international?: boolean
           pronouns?: string[] | null
+          provider_customer_id?: string | null
           race_color?: string[] | null
           rg?: string | null
           rg_issuer?: string | null
@@ -916,7 +919,7 @@ export type Database = {
       feedback_participation_enum: "never" | "once" | "more_than_once"
       feedback_status_enum: "new" | "in_progress" | "resolved"
       payment_email_kind: "link" | "confirmation" | "refund"
-      payment_kind: "asaas" | "manual"
+      payment_kind: "online" | "manual"
       payment_method: "pix" | "credit_card" | "cash" | "transfer" | "other"
       payment_status:
         | "pending"
@@ -1091,7 +1094,7 @@ export const Constants = {
       feedback_participation_enum: ["never", "once", "more_than_once"],
       feedback_status_enum: ["new", "in_progress", "resolved"],
       payment_email_kind: ["link", "confirmation", "refund"],
-      payment_kind: ["asaas", "manual"],
+      payment_kind: ["online", "manual"],
       payment_method: ["pix", "credit_card", "cash", "transfer", "other"],
       payment_status: [
         "pending",

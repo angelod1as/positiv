@@ -167,6 +167,36 @@ export default defineConfig([
     },
   },
 
+  // 4c. Payment provider guard: the domain talks to PaymentProvider, never to a
+  //     connector. Only the place that picks the connector, the connector
+  //     itself and the tests that stub its HTTP edge may reach inside.
+  {
+    files: ["app/**/*.{ts,tsx}"],
+    ignores: [
+      "app/business/payment/payment-provider.server.ts",
+      "app/business/payment/provider/**",
+      "**/*.test.{ts,tsx}",
+    ],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "**/payment/provider/**",
+                "./provider/**",
+                "**/provider/asaas/**",
+              ],
+              message:
+                "Go through paymentProvider() from ~/business/payment/payment-provider.server instead.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   // 5. React Refresh Configuration: For Vite development
   {
     files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"], // Apply to all applicable files for refresh

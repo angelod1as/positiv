@@ -16,7 +16,8 @@ describe("SettingsPage loader", () => {
     const onlinePayments = {
       ...defaultOnlinePaymentsSetting,
       switchedOn: true,
-      asaasConfigured: true,
+      providerName: "Asaas",
+      providerConfigured: true,
       enabled: true,
     }
     vi.mocked(getOnlinePaymentsSetting).mockResolvedValue(onlinePayments)

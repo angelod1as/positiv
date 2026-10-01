@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   cleanupAfterTest,
   setupIntegrationTest,
@@ -9,6 +9,14 @@ import {
   createTestPayment,
   createTestProfile,
 } from "~/test/db-test-utils"
+
+vi.mock("./payment-provider.server", () => ({
+  paymentProvider: () => ({
+    chargeDashboardUrl: (ref: string | null) =>
+      `https://dashboard.test/${ref ?? "list"}`,
+  }),
+}))
+
 import {
   getPaymentsForEvent,
   getPaymentsForParticipant,
@@ -63,7 +71,7 @@ describe("getPaymentsForParticipant", () => {
     })
     const active = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "pending",
       amount: null,
       method: null,
@@ -76,6 +84,29 @@ describe("getPaymentsForParticipant", () => {
     expect(result.payments[0].id).toBe(active.id)
     expect(result.active?.id).toBe(active.id)
     expect(result.totals.paid_gross).toBe(11000)
+  })
+
+  it("links an online payment to the charge in the provider's dashboard, and a manual one nowhere", async () => {
+    const manual = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      created_at: new Date(Date.now() - 60_000).toISOString(),
+    })
+    const online = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "online",
+      status: "awaiting_payment",
+      method: "pix",
+      paid_at: null,
+      provider_charge_id: `pay_dash_${Date.now()}`,
+      provider_dashboard_ref: "000123",
+    })
+
+    const { payments } = await getPaymentsForParticipant(participantId)
+
+    expect(payments.find((p) => p.id === online.id)?.provider_dashboard_url).toBe(
+      "https://dashboard.test/000123",
+    )
+    expect(payments.find((p) => p.id === manual.id)?.provider_dashboard_url).toBeNull()
   })
 })
 
@@ -133,6 +164,25 @@ describe("getPaymentsForEvent", () => {
     expect(byParticipant[paidParticipantId]).toHaveLength(1)
     expect(byParticipant[paidParticipantId][0].id).toBe(payment.id)
     expect(byParticipant[emptyParticipantId]).toBeUndefined()
+  })
+
+  it("links an online payment to the charge in the provider's dashboard", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: paidParticipantId,
+      kind: "online",
+      status: "awaiting_payment",
+      method: "pix",
+      paid_at: null,
+      provider_charge_id: `pay_dash_${Date.now()}`,
+      provider_dashboard_ref: null,
+    })
+
+    const byParticipant = await getPaymentsForEvent(eventId)
+
+    expect(
+      byParticipant[paidParticipantId].find((p) => p.id === payment.id)
+        ?.provider_dashboard_url,
+    ).toBe("https://dashboard.test/list")
   })
 
   it("leaves another event's payments out", async () => {

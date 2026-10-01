@@ -1,5 +1,6 @@
 import { redirectWithError } from "remix-toast"
 import { ACTIVE_PAYMENT_STATUSES } from "~/business/payment/payment-totals.server"
+import { paymentProvider } from "~/business/payment/payment-provider.server"
 import { isValidCpf } from "~/lib/helpers/cpf"
 import {
   buildPaymentOptions,
@@ -11,7 +12,12 @@ import { zod } from "~/lib/helpers/zod"
 import paths from "~/lib/paths"
 
 export type PaymentPageData =
-  | { state: "needs_cpf"; paymentId: string; eventTitle: string }
+  | {
+      state: "needs_cpf"
+      paymentId: string
+      eventTitle: string
+      providerName: string
+    }
   | {
       state: "ready"
       paymentId: string
@@ -57,7 +63,7 @@ async function findOwnPayment(paymentId: string, profileId: string) {
       "p.installment_count",
       "p.due_at",
       "p.paid_at",
-      "p.asaas_invoice_url",
+      "p.provider_checkout_url",
       "e.title as event_title",
       "e.emoji as event_emoji",
       "pr.id as profile_id",
@@ -113,7 +119,12 @@ export async function loadPaymentPage({
   }
 
   if (!isValidCpf(payment.cpf)) {
-    return { state: "needs_cpf", paymentId: payment.id, eventTitle }
+    return {
+      state: "needs_cpf",
+      paymentId: payment.id,
+      eventTitle,
+      providerName: paymentProvider().name,
+    }
   }
 
   const options = buildPaymentOptions(payment.base_amount, {
@@ -129,7 +140,7 @@ export async function loadPaymentPage({
     baseAmount: payment.base_amount,
     options,
     chosen: findChosen(options, payment.method, payment.installment_count),
-    invoiceUrl: payment.asaas_invoice_url,
+    invoiceUrl: payment.provider_checkout_url,
   }
 }
 
@@ -161,9 +172,10 @@ export type PaymentThanksData =
   | { state: "waiting"; eventTitle: string }
 
 /**
- * Where Asaas sends the participant after they paid. Only whether the money
- * landed: nothing is priced, so nothing here talks to Asaas, and switching
- * online payments off does not turn a charge already paid into a closed one.
+ * Where the provider sends the participant after they paid. Only whether the
+ * money landed: nothing is priced, so nothing here talks to the provider, and
+ * switching online payments off does not turn a charge already paid into a
+ * closed one.
  */
 export async function loadPaymentThanks({
   paymentId,

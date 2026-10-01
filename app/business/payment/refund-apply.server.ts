@@ -7,7 +7,7 @@ export type RefundablePayment = {
   id: string
   amount: number | null
   status: string
-  asaas_installment_id: string | null
+  provider_plan_id: string | null
   refund_amount: number | null
   refunded_at: string | null
   refund_requested_at: string | null
@@ -15,11 +15,11 @@ export type RefundablePayment = {
 }
 
 /**
- * Writes what Asaas's refunds add up to onto the payment -- from a webhook or
- * from reading Asaas directly, the same way either time. Guarded on the two
- * statuses a refund can move, so a row that is not ours to change is left
- * alone. The refund notice, when one is owed, is queued in the same
- * transaction as the write that owes it.
+ * Writes what the provider's refunds add up to onto the payment -- from a
+ * webhook or from reading the provider directly, the same way either time.
+ * Guarded on the two statuses a refund can move, so a row that is not ours to
+ * change is left alone. The refund notice, when one is owed, is queued in the
+ * same transaction as the write that owes it.
  */
 export async function applyRefundTally(
   db: Kysely<Database>,
@@ -34,7 +34,7 @@ export async function applyRefundTally(
     previousRefunded,
     requested: payment.refund_requested_amount,
     claimed: payment.refund_requested_at !== null,
-    isPlan: payment.asaas_installment_id !== null,
+    isPlan: payment.provider_plan_id !== null,
     tally,
   })
 

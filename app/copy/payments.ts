@@ -66,8 +66,8 @@ export const paymentsCopy = {
     closedBody:
       "A cobrança foi cancelada ou expirou. Fale com a organização para receber um novo link.",
     cpfTitle: "Precisamos do seu CPF",
-    cpfBody:
-      "O pagamento é processado pelo Asaas, que exige o CPF de quem paga.",
+    cpfBody: (provider: string) =>
+      `O pagamento é processado pelo ${provider}, que exige o CPF de quem paga.`,
     cpfLabel: "CPF",
     cpfSubmit: "Salvar e continuar",
     cpfSaved: "CPF salvo.",
@@ -105,17 +105,21 @@ export const paymentsCopy = {
       date: "Data pagto",
       actions: "Ações",
     },
-    kinds: { asaas: "Asaas", manual: "Manual" },
-    // The lines under a payment's status: where its refund stands, as Asaas
-    // last reported it.
+    // An online payment is labelled with the provider's name.
+    kinds: { manual: "Manual" },
+    // The lines under a payment's status: where its refund stands, as the
+    // provider last reported it.
     refundLines: {
       refunded: (amount: string) => `Devolvido ${amount}`,
-      pending: (amount: string) => `Em andamento no Asaas: ${amount}`,
-      cancelled: (amount: string) => `Cancelado pelo Asaas: ${amount}`,
+      pending: (provider: string, amount: string) =>
+        `Em andamento no ${provider}: ${amount}`,
+      cancelled: (provider: string, amount: string) =>
+        `Cancelado pelo ${provider}: ${amount}`,
     },
     sync: {
-      button: "Atualizar do Asaas",
-      syncedAt: (date: string) => `Atualizado do Asaas em ${date}`,
+      button: (provider: string) => `Atualizar do ${provider}`,
+      syncedAt: (provider: string, date: string) =>
+        `Atualizado do ${provider} em ${date}`,
     },
     methods: {
       pix: "Pix",
@@ -131,7 +135,7 @@ export const paymentsCopy = {
     title: "Cobrança",
     amount: "Valor a cobrar",
     amountHint:
-      "O valor que a Positiv recebe. As taxas do Asaas entram por cima, na conta de quem paga.",
+      "O valor do evento: é o que a pessoa paga, sem nada a mais. As taxas ficam por conta da Positiv.",
     send: "Enviar cobrança",
     resendAmount: "Reenviar com outro valor",
     resendEmail: "Reenviar email",
@@ -147,8 +151,8 @@ export const paymentsCopy = {
       "O email não saiu. A cobrança segue em aberto — copie a mensagem e mande por outro caminho.",
     resendSucceeded: "Email reenviado.",
     replaceConfirm: "Substituir a cobrança em aberto?",
-    replaceDescription:
-      "Esta pessoa já escolheu como pagar. A cobrança atual será cancelada no Asaas e ela receberá um novo link.",
+    replaceDescription: (provider: string) =>
+      `Esta pessoa já escolheu como pagar. A cobrança atual será cancelada no ${provider} e ela receberá um novo link.`,
     replaceKeep: "Manter cobrança",
     replaceSubmit: "Substituir cobrança",
     afterRefundConfirm: "Tem certeza que deseja gerar outra cobrança?",
@@ -177,42 +181,43 @@ export const paymentsCopy = {
   },
   refund: {
     title: "Marcar como reembolsado",
-    description:
-      "Registra que o dinheiro voltou para a pessoa. Não movimenta nada no Asaas.",
+    description: (provider: string) =>
+      `Registra que o dinheiro voltou para a pessoa. Não movimenta nada no ${provider}.`,
     amount: "Valor devolvido",
     amountHint: "Deixe em branco para devolver o valor inteiro.",
     submit: "Marcar reembolso",
     confirm: "Confirmar reembolso?",
     success: "Reembolso registrado.",
-    asaas: {
-      title: "Reembolsar no Asaas",
-      inProgress: "Reembolso solicitado — aguardando o Asaas confirmar.",
-      denied: (reason: string | null) =>
+    provider: {
+      title: (provider: string) => `Reembolsar no ${provider}`,
+      inProgress: (provider: string) =>
+        `Reembolso solicitado — aguardando o ${provider} confirmar.`,
+      denied: (provider: string, reason: string | null) =>
         reason
-          ? `O Asaas negou o último pedido de reembolso. Motivo: ${reason.replace(/\.$/, "")}. Você pode pedir de novo.`
-          : "O Asaas negou o último pedido de reembolso. Você pode pedir de novo.",
+          ? `O ${provider} negou o último pedido de reembolso. Motivo: ${reason.replace(/\.$/, "")}. Você pode pedir de novo.`
+          : `O ${provider} negou o último pedido de reembolso. Você pode pedir de novo.`,
     },
   },
   cancel: {
     title: "Cancelar cobrança",
     confirm: "Cancelar a cobrança em aberto?",
-    description:
-      "A cobrança deixa de valer e a pessoa pode receber uma nova. Nada é movimentado no Asaas.",
+    description: (provider: string) =>
+      `A cobrança deixa de valer e a pessoa pode receber uma nova. Nada é movimentado no ${provider}.`,
     keep: "Manter cobrança",
     submit: "Confirmar cancelamento",
     success: "Cobrança cancelada.",
   },
-  // What an Asaas refusal becomes before a person reads it. The technical
-  // detail -- status, path, code -- stays in the log.
-  asaasErrors: {
+  // What a payment provider's refusal becomes before a person reads it. The
+  // technical detail -- status, path, code -- stays in the log.
+  providerErrors: {
     checkoutCpf:
       "O sistema de pagamentos não aceitou o CPF da sua conta. Confira o CPF em Dados básicos ou fale com a organização.",
     checkoutRefused: (description: string) =>
       `O sistema de pagamentos recusou a cobrança: ${description}`,
     unavailable:
       "O sistema de pagamentos não respondeu. Tente de novo em alguns minutos.",
-    syncRefused: (description: string) =>
-      `O Asaas não deixou atualizar este pagamento: ${description}`,
+    syncRefused: (provider: string, description: string) =>
+      `O ${provider} não deixou atualizar este pagamento: ${description}`,
   },
   errors: {
     participantNotFound: "Participante não encontrade.",
@@ -234,7 +239,8 @@ export const paymentsCopy = {
     notRefundable: "Só é possível reembolsar um pagamento já confirmado.",
     notEditable: "Só é possível editar um pagamento manual confirmado.",
     notCancellable: "Só é possível cancelar uma cobrança em aberto.",
-    notSyncable: "Só um pagamento feito pelo Asaas pode ser atualizado do Asaas.",
+    notSyncable: (provider: string) =>
+      `Só um pagamento feito pelo ${provider} pode ser atualizado do ${provider}.`,
     invalidCpf: "Esse CPF não confere. Confira os números.",
     cpfTaken:
       "Esse CPF já está cadastrado em outra conta. Se ele é seu, fale com a organização.",
@@ -242,8 +248,8 @@ export const paymentsCopy = {
       "Não conseguimos gerar a cobrança: o CPF desta conta já está ligado a outra pessoa no sistema de pagamentos. Fale com a organização.",
     chargeClosed: "Esta cobrança não está mais aberta.",
     unknownOption: "Escolha uma das formas de pagamento oferecidas.",
-    noInvoiceUrl:
-      "O Asaas não devolveu a página de pagamento. Tente de novo.",
+    noInvoiceUrl: (provider: string) =>
+      `O ${provider} não devolveu a página de pagamento. Tente de novo.`,
     generic: "Não foi possível concluir a operação.",
   },
 } as const

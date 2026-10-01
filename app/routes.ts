@@ -25,7 +25,7 @@ export default [
   ),
   route("/api/retry-payment-emails", "routes/api.retry-payment-emails.ts"),
   route("/api/sync-payment-refunds", "routes/api.sync-payment-refunds.ts"),
-  route("/api/asaas/webhook", "routes/api.asaas-webhook.ts"),
+  route("/api/payment/webhook", "routes/api.payment-webhook.ts"),
   route("/api/events/:id/rules-quiz", "pages/api/events/verify-rules-quiz.ts"),
   route(
     "/api/events/:id/application",

@@ -51,15 +51,16 @@ export const adminSettingsCopy = {
 export const onlinePaymentsSettingCopy = {
   title: "Pagamentos",
   online: "Pagamentos online",
-  onlineHelp: "Cobranças pelo Asaas, pagas pelo link do email.",
+  onlineHelp: (provider: string) =>
+    `Cobranças pelo ${provider}, pagas pelo link do email.`,
   card: "Cartão de crédito",
   cardHelp: "1x a 6x. Com cartão, o Pix tem 10% de desconto.",
-  notConfigured:
-    "O Asaas não está configurado neste ambiente. Os pagamentos online ficam desligados até as chaves serem cadastradas.",
+  notConfigured: (provider: string) =>
+    `O ${provider} não está configurado neste ambiente. Os pagamentos online ficam desligados até as chaves serem cadastradas.`,
   lastChange: (when: string, name: string) => `Alterado por ${name} em ${when}`,
   confirmOffTitle: "Desligar pagamentos online?",
-  confirmOffDescription:
-    "Nenhuma cobrança nova pode ser aberta, e os links de pagamento passam a pedir que a pessoa fale com a organização. Isso não cancela pagamentos em andamento ou já feitos: cobranças abertas no Asaas continuam pagáveis.",
+  confirmOffDescription: (provider: string) =>
+    `Nenhuma cobrança nova pode ser aberta, e os links de pagamento passam a pedir que a pessoa fale com a organização. Isso não cancela pagamentos em andamento ou já feitos: cobranças abertas no ${provider} continuam pagáveis.`,
   confirmOff: "Desligar",
 } as const
 

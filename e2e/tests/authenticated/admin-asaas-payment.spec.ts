@@ -118,10 +118,10 @@ test.describe('POS-577: flat prices, and refunds done in the Asaas dashboard', (
     const [awaiting] = await getParticipantPayments(participant.profileId, event.id)
     expect(awaiting.status).toBe('awaiting_payment')
     expect(awaiting.amount).toBe(22000)
-    expect(awaiting.asaas_invoice_number).toMatch(/^\d+$/)
+    expect(awaiting.provider_dashboard_ref).toMatch(/^\d+$/)
 
-    const chargeId = awaiting.asaas_payment_id
-    const installmentId = awaiting.asaas_installment_id
+    const chargeId = awaiting.provider_charge_id
+    const installmentId = awaiting.provider_plan_id
     if (!chargeId || !installmentId) throw new Error('The card plan was not recorded on the row')
 
     // The participant pays on Asaas, which confirms each charge of the plan.
@@ -157,7 +157,7 @@ test.describe('POS-577: flat prices, and refunds done in the Asaas dashboard', (
     // for nothing.
     await expect(modal.getByRole('link', { name: 'Reembolsar no Asaas' })).toHaveAttribute(
       'href',
-      `https://www.asaas.com/payment/show/${awaiting.asaas_invoice_number}`,
+      `https://www.asaas.com/payment/show/${awaiting.provider_dashboard_ref}`,
     )
     expect((await getAsaasMockCalls()).filter((call) => call.path.endsWith('/refund'))).toEqual([])
 

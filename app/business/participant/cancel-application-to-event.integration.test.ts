@@ -15,10 +15,10 @@ const { deleteAsaasPayment, logger } = vi.hoisted(() => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
-vi.mock("~/business/payment/asaas-client.server", async (importOriginal) => {
+vi.mock("~/business/payment/provider/asaas/asaas-client.server", async (importOriginal) => {
   const original =
     await importOriginal<
-      typeof import("~/business/payment/asaas-client.server")
+      typeof import("~/business/payment/provider/asaas/asaas-client.server")
     >()
   return { ...original, deleteAsaasPayment }
 })
@@ -80,7 +80,7 @@ describe("cancelApplicationToEvent", () => {
   it("cancels the open charge when the participant withdraws", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "pending",
       amount: null,
       method: null,
@@ -97,12 +97,12 @@ describe("cancelApplicationToEvent", () => {
     const asaasPaymentId = `pay_withdraw_${Date.now()}`
     await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "awaiting_payment",
       amount: 22199,
       method: "pix",
       paid_at: null,
-      asaas_payment_id: asaasPaymentId,
+      provider_charge_id: asaasPaymentId,
     })
 
     await cancelApplicationToEvent({ eventId, profileId })
@@ -126,12 +126,12 @@ describe("cancelApplicationToEvent", () => {
     deleteAsaasPayment.mockRejectedValue(new Error("asaas is down"))
     await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "awaiting_payment",
       amount: 22199,
       method: "pix",
       paid_at: null,
-      asaas_payment_id: `pay_withdraw_fail_${Date.now()}`,
+      provider_charge_id: `pay_withdraw_fail_${Date.now()}`,
     })
 
     const result = await cancelApplicationToEvent({ eventId, profileId })

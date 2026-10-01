@@ -2,8 +2,22 @@ import type { Selectable } from "kysely"
 import { kyselyDb } from "~/kysely-db"
 import type { ParticipantPaymentTotals } from "~types/database/entities.types"
 import type { Database } from "~types/database/kysely.types"
+import { paymentProvider } from "./payment-provider.server"
 
-export type PaymentRow = Selectable<Database["payments"]>
+export type PaymentRow = Selectable<Database["payments"]> & {
+  /** The charge in the provider's dashboard; null for a manual payment. */
+  provider_dashboard_url: string | null
+}
+
+const withDashboardUrl = (
+  payment: Selectable<Database["payments"]>,
+): PaymentRow => ({
+  ...payment,
+  provider_dashboard_url:
+    payment.kind === "online"
+      ? paymentProvider().chargeDashboardUrl(payment.provider_dashboard_ref)
+      : null,
+})
 
 export type ParticipantPayments = {
   payments: PaymentRow[]
@@ -19,7 +33,7 @@ const isActive = (payment: PaymentRow): boolean =>
 export async function getPaymentsForParticipant(
   eventParticipantId: string,
 ): Promise<ParticipantPayments> {
-  const [payments, totals] = await Promise.all([
+  const [rows, totals] = await Promise.all([
     kyselyDb
       .selectFrom("payments")
       .selectAll()
@@ -32,6 +46,8 @@ export async function getPaymentsForParticipant(
       .where("event_participant_id", "=", eventParticipantId)
       .executeTakeFirst(),
   ])
+
+  const payments = rows.map(withDashboardUrl)
 
   return {
     payments,
@@ -68,7 +84,7 @@ export async function getPaymentsForEvent(
 
   return payments.reduce<Record<string, PaymentRow[]>>((grouped, payment) => {
     const forParticipant = grouped[payment.event_participant_id] ?? []
-    forParticipant.push(payment)
+    forParticipant.push(withDashboardUrl(payment))
     grouped[payment.event_participant_id] = forParticipant
     return grouped
   }, {})

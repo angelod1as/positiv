@@ -27,6 +27,15 @@ vi.mock("./payment-emails.server", async (importOriginal) => {
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
 
 import { applyWebhookEvent, recordWebhookEvent } from "./payment-webhook.server"
+import {
+  translateAsaasEvent,
+  webhookEventSchema,
+} from "./provider/asaas/asaas-webhook.server"
+
+// The scenarios below are what Asaas actually sends, so each one goes through
+// the connector's translation the way a real delivery does.
+const asaas = (raw: unknown) =>
+  translateAsaasEvent(webhookEventSchema.parse(raw))
 
 describe("applyWebhookEvent", () => {
   const { tracker, kysely } = setupIntegrationTest()
@@ -63,28 +72,28 @@ describe("applyWebhookEvent", () => {
     await cleanupAfterTest(tracker, kysely)
     await kysely
       .deleteFrom("payment_webhook_events")
-      .where("asaas_event_id", "like", "evt_test_%")
+      .where("provider_event_id", "like", "evt_test_%")
       .execute()
   })
 
   async function awaitingCharge(overrides: Record<string, unknown> = {}) {
     return createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "awaiting_payment",
       method: "pix",
       base_amount: 22000,
       amount: 22199,
       paid_at: null,
-      asaas_payment_id: `pay_${counter}`,
+      provider_charge_id: `pay_${counter}`,
       ...overrides,
     })
   }
 
   async function deliver(event: Record<string, unknown>) {
     const full = { id: `evt_test_${Math.random()}`, ...event }
-    const recorded = await recordWebhookEvent(full as never)
-    return applyWebhookEvent(recorded.id, full as never)
+    const recorded = await recordWebhookEvent(asaas(full), full)
+    return applyWebhookEvent(recorded.id, asaas(full))
   }
 
   async function statusOf(id: string) {
@@ -95,7 +104,7 @@ describe("applyWebhookEvent", () => {
       .executeTakeFirstOrThrow()
   }
 
-  it("marks a charge paid on PAYMENT_RECEIVED and records the net", async () => {
+  it("marks a charge paid on PAYMENT_RECEIVED", async () => {
     const payment = await awaitingCharge()
 
     await deliver({
@@ -111,7 +120,6 @@ describe("applyWebhookEvent", () => {
     const after = await statusOf(payment.id)
     expect(after.status).toBe("paid")
     expect(after.amount).toBe(22199)
-    expect(after.asaas_net).toBe(22000)
     expect(after.paid_at).not.toBeNull()
     expect(sendPaymentConfirmedEmail).toHaveBeenCalledTimes(1)
     const queued = await kysely
@@ -150,9 +158,9 @@ describe("applyWebhookEvent", () => {
       payment: { id: `pay_${counter}`, value: 221.99, netValue: 220.0 },
     }
 
-    const first = await recordWebhookEvent(event as never)
-    await applyWebhookEvent(first.id, event as never)
-    const second = await recordWebhookEvent(event as never)
+    const first = await recordWebhookEvent(asaas(event), event)
+    await applyWebhookEvent(first.id, asaas(event))
+    const second = await recordWebhookEvent(asaas(event), event)
     expect(second.isNew).toBe(false)
 
     expect(sendPaymentConfirmedEmail).toHaveBeenCalledTimes(1)
@@ -189,10 +197,10 @@ describe("applyWebhookEvent", () => {
   it("never flips a paid charge back to expired", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "pix",
       amount: 22199,
-      asaas_payment_id: `pay_${counter}`,
+      provider_charge_id: `pay_${counter}`,
     })
 
     await deliver({
@@ -217,10 +225,10 @@ describe("applyWebhookEvent", () => {
   it("records a full refund", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "pix",
       amount: 22199,
-      asaas_payment_id: `pay_${counter}`,
+      provider_charge_id: `pay_${counter}`,
     })
 
     await deliver({
@@ -244,13 +252,12 @@ describe("applyWebhookEvent", () => {
   it("adds up a card plan refunded one charge at a time, and tells the participant once", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "credit_card",
       installment_count: 3,
       amount: 23631,
-      asaas_net: 21900,
-      asaas_payment_id: `pay_a_${counter}`,
-      asaas_installment_id: `inst_${counter}`,
+      provider_charge_id: `pay_a_${counter}`,
+      provider_plan_id: `inst_${counter}`,
       refund_requested_at: new Date().toISOString(),
       refund_requested_amount: 21900,
     })
@@ -290,13 +297,12 @@ describe("applyWebhookEvent", () => {
   it("counts a plan charge's refund once, however many events describe it", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "credit_card",
       installment_count: 3,
       amount: 23631,
-      asaas_net: 21900,
-      asaas_payment_id: `pay_a_${counter}`,
-      asaas_installment_id: `inst_${counter}`,
+      provider_charge_id: `pay_a_${counter}`,
+      provider_plan_id: `inst_${counter}`,
       refund_requested_at: new Date().toISOString(),
       refund_requested_amount: 21900,
     })
@@ -320,13 +326,12 @@ describe("applyWebhookEvent", () => {
   it("closes a plan refunded in full from the Asaas dashboard, and tells the participant once", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "credit_card",
       installment_count: 3,
       amount: 23631,
-      asaas_net: 21900,
-      asaas_payment_id: `pay_a_${counter}`,
-      asaas_installment_id: `inst_${counter}`,
+      provider_charge_id: `pay_a_${counter}`,
+      provider_plan_id: `inst_${counter}`,
     })
 
     for (const charge of ["pay_a", "pay_b", "pay_c"]) {
@@ -350,13 +355,12 @@ describe("applyWebhookEvent", () => {
   it("records a plan partially refunded from the Asaas dashboard without telling the participant", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "credit_card",
       installment_count: 3,
       amount: 23631,
-      asaas_net: 21900,
-      asaas_payment_id: `pay_a_${counter}`,
-      asaas_installment_id: `inst_${counter}`,
+      provider_charge_id: `pay_a_${counter}`,
+      provider_plan_id: `inst_${counter}`,
     })
 
     await deliver({
@@ -381,13 +385,12 @@ describe("applyWebhookEvent", () => {
   it("tells the participant once even when a plan's last charges are applied at the same time", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "credit_card",
       installment_count: 3,
       amount: 23631,
-      asaas_net: 21900,
-      asaas_payment_id: `pay_a_${counter}`,
-      asaas_installment_id: `inst_${counter}`,
+      provider_charge_id: `pay_a_${counter}`,
+      provider_plan_id: `inst_${counter}`,
       refund_requested_at: new Date().toISOString(),
       refund_requested_amount: 21900,
     })
@@ -409,11 +412,11 @@ describe("applyWebhookEvent", () => {
     // whole plan in the inbox and would reach the target on its own.
     const b = refundEvent("pay_b")
     const c = refundEvent("pay_c")
-    const recordedB = await recordWebhookEvent(b as never)
-    const recordedC = await recordWebhookEvent(c as never)
+    const recordedB = await recordWebhookEvent(asaas(b), b)
+    const recordedC = await recordWebhookEvent(asaas(c), c)
     await Promise.all([
-      applyWebhookEvent(recordedB.id, b as never),
-      applyWebhookEvent(recordedC.id, c as never),
+      applyWebhookEvent(recordedB.id, asaas(b)),
+      applyWebhookEvent(recordedC.id, asaas(c)),
     ])
 
     expect((await statusOf(payment.id)).refund_amount).toBe(21900)
@@ -423,10 +426,10 @@ describe("applyWebhookEvent", () => {
   it("records a partial refund from the refunds list", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "pix",
       amount: 22199,
-      asaas_payment_id: `pay_${counter}`,
+      provider_charge_id: `pay_${counter}`,
     })
 
     await deliver({
@@ -448,10 +451,10 @@ describe("applyWebhookEvent", () => {
   it("records what is given back and what is still on its way", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "pix",
       amount: 22199,
-      asaas_payment_id: `pay_${counter}`,
+      provider_charge_id: `pay_${counter}`,
     })
 
     await deliver({
@@ -474,11 +477,10 @@ describe("applyWebhookEvent", () => {
   it("gives the claim back when Asaas cancels what was left of a request", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "pix",
       amount: 22199,
-      asaas_net: 22000,
-      asaas_payment_id: `pay_${counter}`,
+      provider_charge_id: `pay_${counter}`,
       refund_requested_at: new Date().toISOString(),
       refund_requested_amount: 22000,
     })
@@ -504,13 +506,12 @@ describe("applyWebhookEvent", () => {
   it("counts a refund still in progress on a plan as on its way, not as given back", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "credit_card",
       installment_count: 2,
       amount: 23430,
-      asaas_net: 22566,
-      asaas_payment_id: `pay_a_${counter}`,
-      asaas_installment_id: `inst_${counter}`,
+      provider_charge_id: `pay_a_${counter}`,
+      provider_plan_id: `inst_${counter}`,
       refund_requested_at: new Date().toISOString(),
       refund_requested_amount: 22566,
     })
@@ -544,10 +545,10 @@ describe("applyWebhookEvent", () => {
   it("marks a refund in progress without leaving paid", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "pix",
       amount: 22199,
-      asaas_payment_id: `pay_${counter}`,
+      provider_charge_id: `pay_${counter}`,
     })
 
     await deliver({
@@ -563,11 +564,10 @@ describe("applyWebhookEvent", () => {
   it("gives a denied refund its claim back, and still shouts about it", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "pix",
       amount: 22199,
-      asaas_net: 22000,
-      asaas_payment_id: `pay_${counter}`,
+      provider_charge_id: `pay_${counter}`,
       refund_requested_at: new Date().toISOString(),
       refund_requested_amount: 22000,
     })
@@ -592,11 +592,10 @@ describe("applyWebhookEvent", () => {
   it("records a denied refund even when Asaas gives no reason", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "pix",
       amount: 22199,
-      asaas_net: 22000,
-      asaas_payment_id: `pay_${counter}`,
+      provider_charge_id: `pay_${counter}`,
       refund_requested_at: new Date().toISOString(),
       refund_requested_amount: 22000,
     })
@@ -617,13 +616,12 @@ describe("applyWebhookEvent", () => {
     const requestedAt = new Date().toISOString()
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "credit_card",
       installment_count: 3,
       amount: 23430,
-      asaas_net: 22000,
-      asaas_payment_id: `pay_${counter}`,
-      asaas_installment_id: `ins_${counter}`,
+      provider_charge_id: `pay_${counter}`,
+      provider_plan_id: `ins_${counter}`,
       refund_requested_at: requestedAt,
       refund_requested_amount: 22000,
     })
@@ -642,14 +640,13 @@ describe("applyWebhookEvent", () => {
   it("leaves a refund that already went through alone when a denial arrives late", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "pix",
       status: "refunded",
       amount: 22199,
-      asaas_net: 22000,
       refund_amount: 22199,
       refunded_at: new Date().toISOString(),
-      asaas_payment_id: `pay_${counter}`,
+      provider_charge_id: `pay_${counter}`,
     })
 
     await deliver({
@@ -675,7 +672,7 @@ describe("applyWebhookEvent", () => {
     const payment = await awaitingCharge({
       method: "credit_card",
       installment_count: 3,
-      asaas_installment_id: `inst_${counter}`,
+      provider_plan_id: `inst_${counter}`,
     })
 
     await deliver({
@@ -691,90 +688,23 @@ describe("applyWebhookEvent", () => {
     expect((await statusOf(payment.id)).status).toBe("paid")
   })
 
-  it("accumulates the net of every installment of a card plan", async () => {
-    const payment = await awaitingCharge({
-      method: "credit_card",
-      installment_count: 3,
-      amount: 23454,
-      asaas_installment_id: `inst_${counter}`,
-    })
-
-    await deliver({
-      event: "PAYMENT_CONFIRMED",
-      payment: {
-        id: `pay_inst1_${counter}`,
-        installment: `inst_${counter}`,
-        value: 78.18,
-        netValue: 75.3,
-      },
-    })
-
-    expect((await statusOf(payment.id)).asaas_net).toBe(7530)
-
-    await deliver({
-      event: "PAYMENT_CONFIRMED",
-      payment: {
-        id: `pay_inst2_${counter}`,
-        installment: `inst_${counter}`,
-        value: 78.18,
-        netValue: 75.3,
-      },
-    })
-
-    const after = await statusOf(payment.id)
-    expect(after.status).toBe("paid")
-    expect(after.asaas_net).toBe(15060)
-  })
-
-  it("counts one installment once, however many events describe it", async () => {
-    const payment = await awaitingCharge({
-      method: "credit_card",
-      installment_count: 3,
-      amount: 23454,
-      asaas_installment_id: `inst_${counter}`,
-    })
-
-    await deliver({
-      event: "PAYMENT_CONFIRMED",
-      payment: {
-        id: `pay_inst1_${counter}`,
-        installment: `inst_${counter}`,
-        value: 78.18,
-        netValue: 75.3,
-      },
-    })
-    await deliver({
-      event: "PAYMENT_RECEIVED",
-      payment: {
-        id: `pay_inst1_${counter}`,
-        installment: `inst_${counter}`,
-        value: 78.18,
-        netValue: 75.3,
-      },
-    })
-
-    expect((await statusOf(payment.id)).asaas_net).toBe(7530)
-  })
-
-  it("stops summing a plan once the row has left paid", async () => {
+  it("leaves a settled plan alone when a later installment arrives", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "refunded",
       method: "credit_card",
       installment_count: 3,
       amount: 23454,
       // The whole plan had settled: three installments, not the one the late
       // event on its own would add up to.
-      asaas_net: 22590,
       refund_amount: 23454,
       refunded_at: new Date().toISOString(),
-      asaas_installment_id: `inst_${counter}`,
+      provider_plan_id: `inst_${counter}`,
     })
 
     // Asaas keeps billing the plan, so a later installment still arrives after
-    // the money went back. The row is settled: its audit trail says refunded,
-    // and a field that keeps moving afterwards contradicts it.
+    // the money went back. The row is settled: its audit trail says refunded.
     const result = await deliver({
       event: "PAYMENT_CONFIRMED",
       payment: {
@@ -788,11 +718,10 @@ describe("applyWebhookEvent", () => {
     expect(result.applied).toBe(false)
     const after = await statusOf(payment.id)
     expect(after.status).toBe("refunded")
-    expect(after.asaas_net).toBe(22590)
   })
 
   it("falls back to externalReference", async () => {
-    const payment = await awaitingCharge({ asaas_payment_id: null })
+    const payment = await awaitingCharge({ provider_charge_id: null })
 
     await deliver({
       event: "PAYMENT_RECEIVED",
@@ -832,7 +761,7 @@ describe("applyWebhookEvent", () => {
       payment: { id: `pay_${counter}`, value: 221.99, netValue: 220.0 },
     }
 
-    const first = await recordWebhookEvent(event as never)
+    const first = await recordWebhookEvent(asaas(event), event)
     // What the catch in applyWebhookEvent leaves behind when a transition
     // throws: the error recorded, the row still waiting to be processed.
     await kysely
@@ -841,14 +770,54 @@ describe("applyWebhookEvent", () => {
       .where("id", "=", first.id)
       .execute()
 
-    const second = await recordWebhookEvent(event as never)
+    const second = await recordWebhookEvent(asaas(event), event)
     expect(second.isNew).toBe(false)
     expect(second.alreadyProcessed).toBe(false)
 
-    await applyWebhookEvent(second.id, event as never)
+    await applyWebhookEvent(second.id, asaas(event))
 
     expect((await statusOf(payment.id)).status).toBe("paid")
     expect(sendPaymentConfirmedEmail).toHaveBeenCalledTimes(1)
+  })
+
+  it("keeps the translated event beside the raw payload in the inbox", async () => {
+    const raw = {
+      id: "evt_test_translated",
+      event: "PAYMENT_PARTIALLY_REFUNDED",
+      payment: {
+        id: `pay_${counter}`,
+        installment: `inst_${counter}`,
+        value: 78.18,
+        refunds: [{ value: 10, status: "DONE" }],
+      },
+    }
+
+    const recorded = await recordWebhookEvent(asaas(raw), raw)
+
+    const row = await kysely
+      .selectFrom("payment_webhook_events")
+      .select([
+        "provider_event_id",
+        "event_type",
+        "provider_charge_id",
+        "provider_plan_id",
+        "payload",
+        "event",
+      ])
+      .where("id", "=", recorded.id)
+      .executeTakeFirstOrThrow()
+
+    expect(row).toMatchObject({
+      provider_event_id: "evt_test_translated",
+      event_type: "PAYMENT_PARTIALLY_REFUNDED",
+      provider_charge_id: `pay_${counter}`,
+      provider_plan_id: `inst_${counter}`,
+      payload: raw,
+      event: {
+        type: "partially_refunded",
+        refunds: [{ amount: 1000, state: "done" }],
+      },
+    })
   })
 
   it("closes an event that was processed, so a redelivery is a no-op", async () => {
@@ -859,10 +828,10 @@ describe("applyWebhookEvent", () => {
       payment: { id: `pay_${counter}`, value: 221.99, netValue: 220.0 },
     }
 
-    const first = await recordWebhookEvent(event as never)
-    await applyWebhookEvent(first.id, event as never)
+    const first = await recordWebhookEvent(asaas(event), event)
+    await applyWebhookEvent(first.id, asaas(event))
 
-    const second = await recordWebhookEvent(event as never)
+    const second = await recordWebhookEvent(asaas(event), event)
     expect(second.alreadyProcessed).toBe(true)
   })
 
@@ -874,10 +843,10 @@ describe("applyWebhookEvent", () => {
       // More cents than an integer column holds: the update itself fails.
       payment: { id: `pay_${counter}`, value: 99_999_999_999 },
     }
-    const recorded = await recordWebhookEvent(event as never)
+    const recorded = await recordWebhookEvent(asaas(event), event)
 
     await expect(
-      applyWebhookEvent(recorded.id, event as never),
+      applyWebhookEvent(recorded.id, asaas(event)),
     ).rejects.toThrow()
 
     const row = await kysely
@@ -898,13 +867,13 @@ describe("applyWebhookEvent", () => {
       event: "PAYMENT_RECEIVED",
       payment: { id: `pay_${counter}`, value: 221.99, netValue: 220.0 },
     }
-    await recordWebhookEvent(event as never)
+    await recordWebhookEvent(asaas(event), event)
 
     // The transition and the inbox row move together or not at all. A row
     // marked paid whose delivery was never closed would be redelivered into
     // `already_paid`, and the participant would never hear about it.
     await expect(
-      applyWebhookEvent("not-a-uuid", event as never),
+      applyWebhookEvent("not-a-uuid", asaas(event)),
     ).rejects.toThrow()
 
     expect((await statusOf(payment.id)).status).toBe("awaiting_payment")
@@ -920,11 +889,11 @@ describe("applyWebhookEvent", () => {
       event: "PAYMENT_RECEIVED",
       payment: { id: `pay_${counter}`, value: 221.99, netValue: 220.0 },
     }
-    const recorded = await recordWebhookEvent(event as never)
+    const recorded = await recordWebhookEvent(asaas(event), event)
 
     // The money moved. Asking Asaas to retry would not re-send the email —
     // the guarded update no longer matches — and would stall its queue.
-    const result = await applyWebhookEvent(recorded.id, event as never)
+    const result = await applyWebhookEvent(recorded.id, asaas(event))
 
     expect(result.applied).toBe(true)
     expect((await statusOf(payment.id)).status).toBe("paid")
@@ -940,10 +909,10 @@ describe("applyWebhookEvent", () => {
   it("records no refund when every entry in the list was cancelled", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "pix",
       amount: 22199,
-      asaas_payment_id: `pay_${counter}`,
+      provider_charge_id: `pay_${counter}`,
     })
 
     await deliver({
@@ -1008,10 +977,10 @@ describe("applyWebhookEvent", () => {
   it("does not call a partial refund full when Asaas itemises nothing", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "pix",
       amount: 22199,
-      asaas_payment_id: `pay_${counter}`,
+      provider_charge_id: `pay_${counter}`,
     })
 
     const result = await deliver({
@@ -1043,10 +1012,10 @@ describe("applyWebhookEvent", () => {
   it("does not resize a charge that is already paid", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "pix",
       amount: 22199,
-      asaas_payment_id: `pay_${counter}`,
+      provider_charge_id: `pay_${counter}`,
     })
 
     const result = await deliver({
@@ -1073,10 +1042,10 @@ describe("applyWebhookEvent", () => {
   it("does not restore a charge that was paid", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "pix",
       amount: 22199,
-      asaas_payment_id: `pay_${counter}`,
+      provider_charge_id: `pay_${counter}`,
     })
 
     const result = await deliver({
@@ -1104,10 +1073,10 @@ describe("applyWebhookEvent", () => {
   it("marks a refund in progress only the first time", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "pix",
       amount: 22199,
-      asaas_payment_id: `pay_${counter}`,
+      provider_charge_id: `pay_${counter}`,
     })
 
     const first = await deliver({
@@ -1140,10 +1109,10 @@ describe("applyWebhookEvent", () => {
   it("shouts about a chargeback without changing the status", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       method: "credit_card",
       amount: 22199,
-      asaas_payment_id: `pay_${counter}`,
+      provider_charge_id: `pay_${counter}`,
     })
 
     await deliver({
@@ -1162,8 +1131,8 @@ describe("applyWebhookEvent", () => {
       event: "PAYMENT_RECEIVED",
       payment: { id: `pay_${counter}`, value: 221.99, netValue: 220 },
     }
-    const recorded = await recordWebhookEvent(event as never)
-    await applyWebhookEvent(recorded.id, event as never)
+    const recorded = await recordWebhookEvent(asaas(event), event)
+    await applyWebhookEvent(recorded.id, asaas(event))
 
     const row = await kysely
       .selectFrom("payment_webhook_events")

@@ -67,7 +67,8 @@ describe("online payments setting", () => {
     expect(await isOnlinePaymentsEnabled()).toBe(false)
     expect(await getOnlinePaymentsSetting()).toMatchObject({
       switchedOn: false,
-      asaasConfigured: true,
+      providerName: "Asaas",
+      providerConfigured: true,
       enabled: false,
     })
   })
@@ -114,7 +115,7 @@ describe("online payments setting", () => {
     expect(await isOnlinePaymentsEnabled()).toBe(false)
     expect(await getOnlinePaymentsSetting()).toMatchObject({
       switchedOn: true,
-      asaasConfigured: false,
+      providerConfigured: false,
       enabled: false,
     })
   })

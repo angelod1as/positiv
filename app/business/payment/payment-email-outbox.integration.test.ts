@@ -76,7 +76,7 @@ describe("payment email outbox", () => {
   async function openPayment() {
     return createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "awaiting_payment",
       amount: null,
       method: null,

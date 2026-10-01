@@ -93,7 +93,7 @@ describe("sendPaymentLinkEmail", () => {
   const openCharge = () =>
     createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "pending",
       base_amount: 22000,
       amount: null,
@@ -148,7 +148,7 @@ describe("sendPaymentLinkEmail", () => {
   it("restates what was chosen instead of re-offering the menu", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "awaiting_payment",
       base_amount: 22000,
       amount: 19800,
@@ -169,7 +169,7 @@ describe("sendPaymentLinkEmail", () => {
     cardEnabled.value = false
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "awaiting_payment",
       base_amount: 22000,
       amount: 22000,
@@ -199,7 +199,7 @@ describe("sendPaymentLinkEmail", () => {
     })
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participant.id,
-      kind: "asaas",
+      kind: "online",
       status: "pending",
       base_amount: 22000,
       amount: null,
@@ -289,17 +289,16 @@ describe("sendPaymentRefundEmail", () => {
   })
 
   // `payments_full_is_full` only lets a row be `refunded` when the whole
-  // amount came back, so a refund of asaas_net is a partial one in the ledger
+  // amount came back, so a refund of less than that is a partial one in the ledger
   // too -- which is exactly what it is.
   const refundedCharge = (overrides: Record<string, unknown> = {}) =>
     createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
-      kind: "asaas",
+      kind: "online",
       status: "refunded",
       method: "pix",
       base_amount: 20000,
       amount: 21900,
-      asaas_net: 21900,
       refund_amount: 21900,
       refunded_at: new Date().toISOString(),
       ...overrides,
@@ -368,7 +367,7 @@ describe("sendPaymentRefundEmail", () => {
     ).id
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: mailless,
-      kind: "asaas",
+      kind: "online",
       status: "refunded",
       method: "pix",
       amount: 22199,
