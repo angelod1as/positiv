@@ -1,9 +1,15 @@
-import type { DocumentActionComponent, DocumentActionProps } from "sanity"
+import {
+  type DocumentActionComponent,
+  type DocumentActionProps,
+  getPublishedId,
+} from "sanity"
+
+import { HOMEPAGE_PAGE_ID } from "./schemas/documents/page"
 
 const removesThePage = ["delete", "unpublish"]
 
-function isHomepage({ draft, published }: DocumentActionProps) {
-  return draft?.address === "/" || published?.address === "/"
+function isHomepage({ id }: DocumentActionProps) {
+  return getPublishedId(id) === HOMEPAGE_PAGE_ID
 }
 
 function unlessHomepage(action: DocumentActionComponent) {

@@ -28,7 +28,7 @@ function atAddress(address: string) {
 
 function shown(
   actions: DocumentActionComponent[],
-  versions: Pick<DocumentActionProps, "draft" | "published">,
+  versions: Pick<DocumentActionProps, "id" | "draft" | "published">,
 ) {
   return actions
     .filter((candidate) => candidate({ ...versions } as DocumentActionProps))
@@ -39,23 +39,25 @@ describe("pageActions", () => {
   it("keeps the Page at / from being deleted or unpublished", () => {
     const actions = pageActions(allActions, { schemaType: "page" })
 
-    expect(shown(actions, { draft: null, published: atAddress("/") })).toEqual([
-      "publish",
-      "discardChanges",
-      "restore",
-      "duplicate",
-    ])
+    expect(
+      shown(actions, {
+        id: "page-home",
+        draft: null,
+        published: atAddress("/"),
+      }),
+    ).toEqual(["publish", "discardChanges", "restore", "duplicate"])
   })
 
   it("protects it while its draft is still unpublished", () => {
     const actions = pageActions(allActions, { schemaType: "page" })
 
-    expect(shown(actions, { draft: atAddress("/"), published: null })).toEqual([
-      "publish",
-      "discardChanges",
-      "restore",
-      "duplicate",
-    ])
+    expect(
+      shown(actions, {
+        id: "page-home",
+        draft: atAddress("/"),
+        published: null,
+      }),
+    ).toEqual(["publish", "discardChanges", "restore", "duplicate"])
   })
 
   it("protects it while a draft moves it away from /", () => {
@@ -63,8 +65,21 @@ describe("pageActions", () => {
 
     expect(
       shown(actions, {
+        id: "page-home",
         draft: atAddress("/inicio"),
         published: atAddress("/"),
+      }),
+    ).toEqual(["publish", "discardChanges", "restore", "duplicate"])
+  })
+
+  it("protects it while its unpublished draft sits elsewhere", () => {
+    const actions = pageActions(allActions, { schemaType: "page" })
+
+    expect(
+      shown(actions, {
+        id: "page-home",
+        draft: atAddress("/inicio"),
+        published: null,
       }),
     ).toEqual(["publish", "discardChanges", "restore", "duplicate"])
   })
@@ -73,7 +88,11 @@ describe("pageActions", () => {
     const actions = pageActions(allActions, { schemaType: "page" })
 
     expect(
-      shown(actions, { draft: null, published: atAddress("/sobre") }),
+      shown(actions, {
+        id: "page-sobre",
+        draft: null,
+        published: atAddress("/sobre"),
+      }),
     ).toEqual(names(allActions))
   })
 
