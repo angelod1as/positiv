@@ -240,6 +240,7 @@ describe("page", () => {
         "founders",
         "feedback",
         "richTextSection",
+        "imageSection",
       ])
     })
 

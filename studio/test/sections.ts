@@ -81,4 +81,14 @@ export const sections = {
       },
     ],
   },
+  imageSection: {
+    _type: "imageSection",
+    _key: "image",
+    image: {
+      _type: "image",
+      asset: { _type: "reference", _ref: "image-abc-400x400-png" },
+      alt: "Pessoas num piquenique",
+    },
+    caption: "O primeiro evento da Positiv",
+  },
 }
