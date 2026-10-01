@@ -7,10 +7,36 @@ import {
   type PortableTextBlock,
 } from "sanity"
 
-const decorators = [
+export const decorators = [
   { title: "Negrito", value: "strong" },
   { title: "Itálico", value: "em" },
 ]
+
+export const link = defineField({
+  name: "link",
+  title: "Link",
+  type: "object",
+  fields: [
+    defineField({
+      name: "href",
+      title: "Endereço",
+      description:
+        "Uma página do site, começando com / (por exemplo /eventos), ou um endereço começando com https://",
+      type: "url",
+      validation: (rule) =>
+        rule
+          .required()
+          .uri({ scheme: ["https"], allowRelative: true })
+          .custom<string>((href) =>
+            href?.startsWith("//") ||
+            href?.startsWith("/\\") ||
+            /[\s\p{Cc}]/u.test(href ?? "")
+              ? "Comece com / ou com https://"
+              : true,
+          ),
+    }),
+  ],
+})
 
 const decoratorValues = decorators.map((decorator) => decorator.value)
 
@@ -56,33 +82,7 @@ export const richText = defineType({
       lists: [],
       marks: {
         decorators,
-        annotations: [
-          defineField({
-            name: "link",
-            title: "Link",
-            type: "object",
-            fields: [
-              defineField({
-                name: "href",
-                title: "Endereço",
-                description:
-                  "Uma página do site, começando com / (por exemplo /eventos), ou um endereço começando com https://",
-                type: "url",
-                validation: (rule) =>
-                  rule
-                    .required()
-                    .uri({ scheme: ["https"], allowRelative: true })
-                    .custom<string>((href) =>
-                      href?.startsWith("//") ||
-                      href?.startsWith("/\\") ||
-                      /[\s\p{Cc}]/u.test(href ?? "")
-                        ? "Comece com / ou com https://"
-                        : true,
-                    ),
-              }),
-            ],
-          }),
-        ],
+        annotations: [link],
       },
     }),
   ],
