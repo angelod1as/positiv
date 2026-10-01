@@ -3,6 +3,7 @@ import type { SchemaTypeDefinition } from "sanity"
 import { homepage } from "./documents/homepage"
 import { page } from "./documents/page"
 import { person } from "./documents/person"
+import { longRichText } from "./objects/long-rich-text"
 import { richText } from "./objects/rich-text"
 import { seo } from "./objects/seo"
 import { homepageHero } from "./page-header/homepage-hero"
@@ -18,6 +19,7 @@ import { testimonials } from "./sections/testimonials"
 
 export const schemaTypes: SchemaTypeDefinition[] = [
   richText,
+  longRichText,
   seo,
   person,
   hero,
