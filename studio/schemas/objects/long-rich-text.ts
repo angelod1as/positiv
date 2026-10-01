@@ -41,22 +41,23 @@ function isAllowed(block: PortableTextBlock) {
   )
 }
 
+export function contentProblem(blocks: PortableTextBlock[] | undefined) {
+  const block = blocks?.find((candidate) => !isAllowed(candidate))
+
+  return block
+    ? {
+        message:
+          "Só são permitidos parágrafos, títulos, subtítulos, citações e listas, com negrito, itálico e links",
+        path: [{ _key: block._key }],
+      }
+    : true
+}
+
 export const longRichText = defineType({
   name: "longRichText",
   title: "Texto longo",
   type: "array",
-  validation: (rule) =>
-    rule.custom<PortableTextBlock[]>((blocks) => {
-      const block = blocks?.find((candidate) => !isAllowed(candidate))
-
-      return block
-        ? {
-            message:
-              "Só são permitidos parágrafos, títulos, subtítulos, citações e listas, com negrito, itálico e links",
-            path: [{ _key: block._key }],
-          }
-        : true
-    }),
+  validation: (rule) => rule.custom(contentProblem),
   of: [
     defineArrayMember({
       type: "block",

@@ -15,6 +15,7 @@ import { feedback } from "./sections/feedback"
 import { founders } from "./sections/founders"
 import { hero } from "./sections/hero"
 import { nextEvents } from "./sections/next-events"
+import { richTextSection } from "./sections/rich-text-section"
 import { testimonials } from "./sections/testimonials"
 
 export const schemaTypes: SchemaTypeDefinition[] = [
@@ -29,6 +30,7 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   ctaBanner,
   founders,
   feedback,
+  richTextSection,
   homepage,
   homepageHero,
   pageHero,

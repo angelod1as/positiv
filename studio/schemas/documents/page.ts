@@ -133,6 +133,7 @@ export const page = defineType({
         defineArrayMember({ type: "ctaBanner" }),
         defineArrayMember({ type: "founders" }),
         defineArrayMember({ type: "feedback" }),
+        defineArrayMember({ type: "richTextSection" }),
       ],
       validation: (rule) =>
         rule

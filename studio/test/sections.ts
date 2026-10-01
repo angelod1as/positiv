@@ -54,4 +54,31 @@ export const sections = {
     body: paragraphs("Estamos sempre buscando melhorias."),
     ctaLabel: "Deixar feedback",
   },
+  richTextSection: {
+    _type: "richTextSection",
+    _key: "rich-text",
+    title: "Código de conduta",
+    body: [
+      {
+        _type: "block",
+        _key: "h",
+        style: "h2",
+        markDefs: [],
+        children: [
+          { _type: "span", _key: "hs", text: "Consentimento", marks: [] },
+        ],
+      },
+      {
+        _type: "block",
+        _key: "li",
+        style: "normal",
+        listItem: "bullet",
+        level: 1,
+        markDefs: [],
+        children: [
+          { _type: "span", _key: "lis", text: "Pergunte antes.", marks: [] },
+        ],
+      },
+    ],
+  },
 }
