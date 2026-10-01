@@ -11,13 +11,18 @@ pnpm workspace package, deployed to Sanity's hosting at
 
 ## Layout
 
-| Path                            | What it holds                                                          |
-| ------------------------------- | ---------------------------------------------------------------------- |
-| `schemas/objects/rich-text.ts`  | The one Portable Text definition: paragraphs, bold, italic, links      |
-| `schemas/documents/`            | `homepage` (a singleton) and `person`                                  |
-| `schemas/sections/`             | One object type per Section of the homepage                            |
-| `structure.ts`, `singletons.ts` | The desk: "Página inicial" opens the singleton, "Pessoas" lists people |
-| `migrations/`                   | Content migrations — see below                                         |
+| Path                            | What it holds                                                                    |
+| ------------------------------- | -------------------------------------------------------------------------------- |
+| `schemas/objects/rich-text.ts`  | The one Portable Text definition: paragraphs, bold, italic, links                |
+| `schemas/objects/seo.ts`        | A Page's SEO: title, description, share image, noIndex                           |
+| `schemas/documents/`            | `page`, `homepage` (a singleton, until the Page at `/` replaces it) and `person` |
+| `schemas/page-header/`          | The three Page Header forms: Homepage Hero, Hero and Title                       |
+| `schemas/sections/`             | One object type per Section                                                      |
+| `reserved-addresses.ts`         | The first address segments the Platform uses, which no Page may take             |
+| `page-actions.ts`               | Keeps the Page at `/` from being deleted or unpublished                          |
+| `structure.ts`, `singletons.ts` | The desk: the two "Página inicial" entries, "Páginas" and "Pessoas"              |
+| `seed/`                         | The development seed — see below                                                 |
+| `migrations/`                   | Content migrations — see below                                                   |
 
 ## Run it locally
 
@@ -54,6 +59,41 @@ its own.
 Sanity is the source of truth for the Public Site's content: Editors change it
 in the Studio, and the repository keeps no copy of it — see
 [No repository fallback for Public Site content](../docs/architecture/decisions/20260924-no-repository-fallback-for-public-site-content.md).
+
+### Pages and their addresses
+
+A Page's address is stored with its leading slash: `/` is the Homepage,
+`/sobre` and `/sobre/equipe` are others. Its first segment may not be one of
+`reserved-addresses.ts`, so a Page never shadows a Platform route. When a new
+top-level route lands in `app/routes.ts`, add its segment there;
+`app/reserved-addresses.test.ts` fails until you do.
+
+The Homepage Hero and the Hero have the same fields today, on purpose: they
+are different Page Header forms that render differently, and only the
+Homepage Hero is allowed at `/`. Keep them as two types.
+
+The Page at `/` always has the id `page-home`; the address rule ties the two
+together. The Studio hides its delete and unpublish actions, but only the
+Studio: the API and the CLI can still remove it.
+
+### Seed development
+
+Development content comes from `seed/seed.ts`, never from edits by hand or
+by an agent:
+
+```bash
+pnpm --filter studio seed
+```
+
+It writes the Page at `/` with every Section type, `/sobre` with a Title,
+`/sobre/equipe` with a Hero, and two fictional People. It is idempotent —
+fixed ids and `createOrReplace` — so run it as often as you like; it
+overwrites those documents and nothing else. It refuses any dataset other
+than `development`, whatever `SANITY_STUDIO_DATASET` says.
+
+A ticket that adds a Section type or a field extends the seed in the same pull
+request; `seed/seed.test.ts` validates every seeded document against the
+schema.
 
 ### Refresh development from production
 

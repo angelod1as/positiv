@@ -3,6 +3,7 @@ import { defineConfig } from "sanity"
 import { structureTool } from "sanity/structure"
 
 import { dataset } from "./environment"
+import { pageActions } from "./page-actions"
 import { schemaTypes } from "./schemas/schema-types"
 import { homepageActions, withoutSingletons } from "./singletons"
 import { structure } from "./structure"
@@ -21,7 +22,8 @@ export default defineConfig({
   },
 
   document: {
-    actions: homepageActions,
+    actions: (actions, context) =>
+      pageActions(homepageActions(actions, context), context),
     newDocumentOptions: withoutSingletons,
   },
 })
