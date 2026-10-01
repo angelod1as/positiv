@@ -26,9 +26,10 @@ pnpm workspace package, deployed to Sanity's hosting at
 | `migrations/`                       | Content migrations — see below                                                   |
 
 A field's `validation` replaces the validation of the type it uses. A field
-of type `longRichText` that adds its own rule — `rule.required()`, say — must
-chain `.custom(contentProblem)` from `long-rich-text.ts`, or the long text's
-content rule stops running.
+of type `richText` or `longRichText` that adds its own rule —
+`rule.required()`, say — must chain `.custom(richTextProblem)` from
+`rich-text.ts` or `.custom(contentProblem)` from `long-rich-text.ts`, or the
+text's content rule stops running.
 
 ## Run it locally
 

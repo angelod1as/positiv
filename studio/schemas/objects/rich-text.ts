@@ -59,22 +59,22 @@ function isAllowed(block: PortableTextBlock) {
   )
 }
 
+export function richTextProblem(blocks: PortableTextBlock[] | undefined) {
+  const block = blocks?.find((candidate) => !isAllowed(candidate))
+
+  return block
+    ? {
+        message: "Só são permitidos parágrafos com negrito, itálico e links",
+        path: [{ _key: block._key }],
+      }
+    : true
+}
+
 export const richText = defineType({
   name: "richText",
   title: "Texto formatado",
   type: "array",
-  validation: (rule) =>
-    rule.custom<PortableTextBlock[]>((blocks) => {
-      const block = blocks?.find((candidate) => !isAllowed(candidate))
-
-      return block
-        ? {
-            message:
-              "Só são permitidos parágrafos com negrito, itálico e links",
-            path: [{ _key: block._key }],
-          }
-        : true
-    }),
+  validation: (rule) => rule.custom(richTextProblem),
   of: [
     defineArrayMember({
       type: "block",

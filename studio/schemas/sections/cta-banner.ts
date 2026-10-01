@@ -1,6 +1,8 @@
 import { RocketIcon } from "@sanity/icons/Rocket"
 import { defineField, defineType } from "sanity"
 
+import { richTextProblem } from "../objects/rich-text"
+
 export const ctaBanner = defineType({
   name: "ctaBanner",
   title: "Chamada para os eventos",
@@ -18,7 +20,7 @@ export const ctaBanner = defineType({
       name: "body",
       title: "Texto",
       type: "richText",
-      validation: (rule) => rule.required(),
+      validation: (rule) => rule.required().custom(richTextProblem),
     }),
   ],
 })

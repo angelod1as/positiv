@@ -1,6 +1,8 @@
 import { UserIcon } from "@sanity/icons/User"
 import { defineField, defineType } from "sanity"
 
+import { richTextProblem } from "../objects/rich-text"
+
 export const person = defineType({
   name: "person",
   title: "Pessoa",
@@ -50,7 +52,7 @@ export const person = defineType({
       name: "bio",
       title: "Bio",
       type: "richText",
-      validation: (rule) => rule.required(),
+      validation: (rule) => rule.required().custom(richTextProblem),
     }),
   ],
   preview: {
