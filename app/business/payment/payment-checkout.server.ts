@@ -195,7 +195,7 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
   // link nobody has. Deleted here rather than left for the next pick to tidy.
   if (!charge.checkoutUrl) {
     await deleteOrphanCharge(payment.id, charge.chargeId)
-    throw new Error(paymentsCopy.errors.noInvoiceUrl)
+    throw new Error(paymentsCopy.errors.noInvoiceUrl(paymentProvider().name))
   }
 
   const updated = await kyselyDb

@@ -5,7 +5,7 @@ import { paymentProvider } from "~/business/payment/payment-provider.server"
  * The secrets say whether the payment provider can be reached at all. The
  * admin switch says whether it should be. Online payments need both.
  */
-export const isAsaasConfigured = () => paymentProvider().isConfigured()
+export const isProviderConfigured = () => paymentProvider().isConfigured()
 
 export const getOnlinePaymentsSetting = async () => {
   const row = await kyselyDb
@@ -22,19 +22,20 @@ export const getOnlinePaymentsSetting = async () => {
   // The row hangs off profiles, so a TRUNCATE ... CASCADE there empties the
   // table. Every page reads this; a missing row is the default, off.
   const switchedOn = row?.online_payments_enabled ?? false
-  const asaasConfigured = isAsaasConfigured()
+  const providerConfigured = isProviderConfigured()
 
   return {
     switchedOn,
-    asaasConfigured,
-    enabled: asaasConfigured && switchedOn,
+    providerName: paymentProvider().name,
+    providerConfigured,
+    enabled: providerConfigured && switchedOn,
     updatedAt: row ? new Date(row.updated_at).toISOString() : null,
     updatedByName: row?.social_name || row?.full_name || null,
   }
 }
 
 export const isOnlinePaymentsEnabled = async () => {
-  if (!isAsaasConfigured()) return false
+  if (!isProviderConfigured()) return false
 
   const row = await kyselyDb
     .selectFrom("app_settings")

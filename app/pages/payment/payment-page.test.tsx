@@ -167,10 +167,14 @@ describe("PaymentPage", () => {
       state: "needs_cpf",
       paymentId: "payment-1",
       eventTitle: "Encontro de Maio",
+      providerName: "Asaas",
     })
 
     expect(
       screen.getByLabelText(paymentsCopy.page.cpfLabel),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/O pagamento é processado pelo Asaas/),
     ).toBeInTheDocument()
     expect(screen.queryByRole("radio")).not.toBeInTheDocument()
   })
@@ -180,6 +184,7 @@ describe("PaymentPage", () => {
       state: "needs_cpf",
       paymentId: "payment-1",
       eventTitle: "Encontro de Maio",
+      providerName: "Asaas",
     })
 
     await userEvent.type(
@@ -205,6 +210,7 @@ describe("PaymentPage", () => {
       state: "needs_cpf",
       paymentId: "payment-1",
       eventTitle: "Encontro de Maio",
+      providerName: "Asaas",
     })
 
     expect(screen.getByText("Sua sessão expirou.")).toBeInTheDocument()
@@ -217,6 +223,7 @@ describe("PaymentPage", () => {
       state: "needs_cpf",
       paymentId: "payment-1",
       eventTitle: "Encontro de Maio",
+      providerName: "Asaas",
     })
 
     await userEvent.type(

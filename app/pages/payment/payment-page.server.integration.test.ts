@@ -143,7 +143,7 @@ describe("loadPaymentPage", () => {
       cardPaymentsEnabled: true,
     })
 
-    expect(result.state).toBe("needs_cpf")
+    expect(result).toMatchObject({ state: "needs_cpf", providerName: "Asaas" })
   })
 
   it("says it is already paid", async () => {

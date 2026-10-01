@@ -1,5 +1,6 @@
 import { redirectWithError } from "remix-toast"
 import { ACTIVE_PAYMENT_STATUSES } from "~/business/payment/payment-totals.server"
+import { paymentProvider } from "~/business/payment/payment-provider.server"
 import { isValidCpf } from "~/lib/helpers/cpf"
 import {
   buildPaymentOptions,
@@ -11,7 +12,12 @@ import { zod } from "~/lib/helpers/zod"
 import paths from "~/lib/paths"
 
 export type PaymentPageData =
-  | { state: "needs_cpf"; paymentId: string; eventTitle: string }
+  | {
+      state: "needs_cpf"
+      paymentId: string
+      eventTitle: string
+      providerName: string
+    }
   | {
       state: "ready"
       paymentId: string
@@ -113,7 +119,12 @@ export async function loadPaymentPage({
   }
 
   if (!isValidCpf(payment.cpf)) {
-    return { state: "needs_cpf", paymentId: payment.id, eventTitle }
+    return {
+      state: "needs_cpf",
+      paymentId: payment.id,
+      eventTitle,
+      providerName: paymentProvider().name,
+    }
   }
 
   const options = buildPaymentOptions(payment.base_amount, {

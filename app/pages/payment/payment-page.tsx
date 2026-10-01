@@ -104,7 +104,7 @@ function renderState(data: PaymentPageData) {
     case "closed":
       return <Closed />
     case "needs_cpf":
-      return <CpfGate />
+      return <CpfGate providerName={data.providerName} />
     case "ready":
       return <Options data={data} />
   }
@@ -148,7 +148,7 @@ const Closed = () => (
  * even offered until the profile carries one. Validated here as well as on the
  * server, so a typo is answered without a round trip.
  */
-const CpfGate = () => {
+const CpfGate = ({ providerName }: { providerName: string }) => {
   const fetcher = useFetcher()
   const [cpf, setCpf] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -176,7 +176,7 @@ const CpfGate = () => {
     <form onSubmit={handleSubmit}>
       <CardContent className="flex flex-col gap-4">
         <h2 className="font-bold">{page.cpfTitle}</h2>
-        <Copy>{page.cpfBody}</Copy>
+        <Copy>{page.cpfBody(providerName)}</Copy>
         <div className="flex flex-col gap-2">
           <Label htmlFor="cpf">{page.cpfLabel}</Label>
           <Input

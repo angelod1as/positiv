@@ -9,7 +9,8 @@ import { formatDateTime } from "~/lib/helpers/format-date-time"
 
 type OnlinePaymentsSetting = {
   switchedOn: boolean
-  asaasConfigured: boolean
+  providerName: string
+  providerConfigured: boolean
   enabled: boolean
   updatedAt: string | null
   updatedByName: string | null
@@ -47,17 +48,17 @@ export function OnlinePaymentsSection({
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <Label htmlFor="online-payments">{copy.online}</Label>
-          <p className="text-sm text-muted-foreground">{copy.onlineHelp}</p>
-          {!setting.asaasConfigured && (
+          <p className="text-sm text-muted-foreground">{copy.onlineHelp(setting.providerName)}</p>
+          {!setting.providerConfigured && (
             <p role="alert" className="text-sm text-muted-foreground">
-              {copy.notConfigured}
+              {copy.notConfigured(setting.providerName)}
             </p>
           )}
         </div>
         <Switch
           id="online-payments"
           checked={setting.enabled}
-          disabled={isSubmitting || (!setting.enabled && !setting.asaasConfigured)}
+          disabled={isSubmitting || (!setting.enabled && !setting.providerConfigured)}
           onCheckedChange={onOnlineChange}
         />
       </div>
@@ -85,7 +86,7 @@ export function OnlinePaymentsSection({
 
       <ConfirmDialog
         title={copy.confirmOffTitle}
-        description={copy.confirmOffDescription}
+        description={copy.confirmOffDescription(setting.providerName)}
         confirmLabel={copy.confirmOff}
         cancelLabel={sharedCopy.actions.cancel}
         open={confirmingOff}

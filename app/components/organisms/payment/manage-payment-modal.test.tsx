@@ -32,6 +32,7 @@ const payment = (overrides: Partial<PaymentRow>): PaymentRow =>
     refund_amount: null,
     refunded_at: null,
     note: null,
+    provider_dashboard_url: null,
     ...overrides,
   }) as PaymentRow
 
@@ -55,7 +56,7 @@ const baseProps = {
   eventTitle: "Festa de Setembro",
   cardPaymentsEnabled: true,
   appOrigin: "https://www.positivparty.com",
-  asaasDashboardOrigin: "https://sandbox.asaas.com",
+  providerName: "Asaas",
 }
 
 const paidAsaasCharge = (overrides: Partial<PaymentRow> = {}): PaymentRow =>
@@ -68,6 +69,7 @@ const paidAsaasCharge = (overrides: Partial<PaymentRow> = {}): PaymentRow =>
     amount: 22199,
     provider_charge_id: "pay_1",
     provider_dashboard_ref: "00005101",
+    provider_dashboard_url: "https://sandbox.asaas.com/payment/show/00005101",
     refund_requested_at: null,
     ...overrides,
   })
@@ -434,7 +436,7 @@ describe("ManagePaymentModal", () => {
     expect(formData.get("paymentId")).toBe("p1")
   })
 
-  it("sends an Asaas refund to the charge in the Asaas dashboard", () => {
+  it("sends a refund to the charge in the provider's dashboard, named after it", () => {
     render(
       <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
     )
@@ -446,19 +448,6 @@ describe("ManagePaymentModal", () => {
     )
     expect(link).toHaveAttribute("target", "_blank")
     expect(submit).not.toHaveBeenCalled()
-  })
-
-  it("falls back to the Asaas payments list for a charge with no number", () => {
-    render(
-      <ManagePaymentModal
-        {...baseProps}
-        payments={[paidAsaasCharge({ provider_dashboard_ref: null })]}
-      />,
-    )
-
-    expect(
-      screen.getByRole("link", { name: /Reembolsar no Asaas/ }),
-    ).toHaveAttribute("href", "https://sandbox.asaas.com/payment/list")
   })
 
   it("says a refund is under way instead of offering another", () => {

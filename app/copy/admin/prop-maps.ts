@@ -26,7 +26,7 @@ export const adminPropMapsCopy = {
     flag_notes: "Notas da flag",
     general_notes: "Observações gerais",
     race_color: "Raça ou cor",
-    provider_customer_id: "Id do cliente no Asaas",
+    provider_customer_id: "Id do cliente no provedor de pagamento",
   },
   eventFields: {
     created_at: "Criado em",

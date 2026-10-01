@@ -31,7 +31,7 @@ export const syncPaymentFromProvider = applySchema(syncPaymentSchema)(
       .executeTakeFirst()
 
     if (!payment || payment.kind !== "online" || !payment.provider_charge_id) {
-      throw new Error(paymentsCopy.errors.notSyncable)
+      throw new Error(paymentsCopy.errors.notSyncable(paymentProvider().name))
     }
 
     // Recorded before the provider is asked, so a payment it cannot answer

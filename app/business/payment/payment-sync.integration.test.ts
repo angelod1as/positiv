@@ -150,7 +150,7 @@ describe("syncPaymentFromProvider", () => {
     expect((await reload(payment.id)).refund_amount).toBe(22000)
   })
 
-  it("refuses a payment that did not go through Asaas", async () => {
+  it("refuses a payment that did not go through the provider", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
       kind: "manual",
@@ -161,7 +161,7 @@ describe("syncPaymentFromProvider", () => {
     const result = await syncPaymentFromProvider({ paymentId: payment.id })
 
     expect(result.success === false && result.errors[0]?.message).toBe(
-      paymentsCopy.errors.notSyncable,
+      paymentsCopy.errors.notSyncable("Asaas"),
     )
   })
 
