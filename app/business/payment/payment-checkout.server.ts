@@ -43,6 +43,7 @@ async function ensureAsaasCustomer(profile: {
   email: string | null
   cpf: string | null
   phone: number | null
+  phone_is_international: boolean
 }): Promise<string> {
   if (profile.asaas_customer_id) return profile.asaas_customer_id
 
@@ -53,7 +54,10 @@ async function ensureAsaasCustomer(profile: {
       name: profile.full_name || profile.social_name || profile.email || "",
       cpf,
       email: profile.email ?? "",
-      mobilePhone: profile.phone ? String(profile.phone) : undefined,
+      mobilePhone:
+        profile.phone && !profile.phone_is_international
+          ? String(profile.phone)
+          : undefined,
       externalReference: profile.id,
     }))
 
@@ -124,6 +128,7 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
       "pr.email",
       "pr.cpf",
       "pr.phone",
+      "pr.phone_is_international",
     ])
     .where("p.id", "=", values.paymentId)
     .executeTakeFirst()
@@ -170,6 +175,7 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
     email: payment.email,
     cpf: payment.cpf,
     phone: payment.phone,
+    phone_is_international: payment.phone_is_international,
   })
 
   // Asaas refuses a callback whose domain does not match the commercial data on

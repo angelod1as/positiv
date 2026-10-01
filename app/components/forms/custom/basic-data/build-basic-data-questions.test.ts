@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { validateQuestion } from "~/components/forms/runtime/validate-question"
+import { basicDataValidation } from "~/copy/account"
 import { buildBasicDataQuestions } from "./build-basic-data-questions"
 
 const find = (id: string) => {
@@ -16,6 +17,7 @@ describe("buildBasicDataQuestions", () => {
       "date_of_birth",
       "where_lives",
       "how_came_to_us",
+      "phone_is_international",
       "phone",
       "confirm_phone",
       "cpf",
@@ -66,6 +68,46 @@ describe("buildBasicDataQuestions", () => {
   it("refuses a phone that is not a phone", () => {
     expect(validateQuestion(find("phone"), "1").ok).toBe(false)
     expect(validateQuestion(find("phone"), "11999999999").ok).toBe(true)
+  })
+
+  it("offers a box for a phone from outside Brazil", () => {
+    expect(find("phone_is_international").input).toEqual({ kind: "boolean" })
+    expect(find("phone_is_international").prompt).toBe("Celular internacional")
+  })
+
+  it("refuses a landline or a mobile missing its ninth digit", () => {
+    expect(validateQuestion(find("phone"), "1133334444", {})).toEqual({
+      ok: false,
+      message: basicDataValidation.notAMobile,
+    })
+    expect(
+      validateQuestion(find("phone"), "1199998888", {
+        phone_is_international: false,
+      }).ok,
+    ).toBe(false)
+  })
+
+  it("takes a foreign number only once the box is ticked", () => {
+    expect(validateQuestion(find("phone"), "351912345678", {})).toEqual({
+      ok: false,
+      message: basicDataValidation.notAMobile,
+    })
+    expect(
+      validateQuestion(find("phone"), "351912345678", {
+        phone_is_international: true,
+      }).ok,
+    ).toBe(true)
+  })
+
+  it("sends a Brazilian number back to the Brazilian side of the box", () => {
+    expect(
+      validateQuestion(find("phone"), "5511999998888", {
+        phone_is_international: true,
+      }),
+    ).toEqual({
+      ok: false,
+      message: basicDataValidation.invalidInternationalPhone,
+    })
   })
 
   it("asks for the confirmation before comparing it to anything", () => {

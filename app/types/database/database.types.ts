@@ -741,6 +741,7 @@ export type Database = {
           is_veteran: boolean | null
           orientation: string[] | null
           phone: number | null
+          phone_is_international: boolean
           pronouns: string[] | null
           race_color: string[] | null
           rg: string | null
@@ -768,6 +769,7 @@ export type Database = {
           is_veteran?: boolean | null
           orientation?: string[] | null
           phone?: number | null
+          phone_is_international?: boolean
           pronouns?: string[] | null
           race_color?: string[] | null
           rg?: string | null
@@ -795,6 +797,7 @@ export type Database = {
           is_veteran?: boolean | null
           orientation?: string[] | null
           phone?: number | null
+          phone_is_international?: boolean
           pronouns?: string[] | null
           race_color?: string[] | null
           rg?: string | null
@@ -863,6 +866,7 @@ export type Database = {
           is_admin: boolean
           orientation: string[]
           phone: number
+          phone_is_international: boolean
           pronouns: string[]
           race_color: string[]
           rg: string

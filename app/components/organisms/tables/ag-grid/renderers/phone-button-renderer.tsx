@@ -9,7 +9,10 @@ export function PhoneButtonRenderer(params: ICellRendererParams) {
 
   if (!phone) return null
 
-  const link = phoneToWhatsAppLink(phone)
+  const link = phoneToWhatsAppLink(
+    phone,
+    params.data?.phone_is_international === true,
+  )
   if (!link) return null
 
   return (

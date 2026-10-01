@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import { basicDataValidation } from "~/copy/account"
 import { validationMessages } from "~/lib/helpers/validation-messages"
 import {
   applyToEventSchema,
@@ -422,6 +423,57 @@ describe("basicDataSchema", () => {
       const result = basicDataSchema.safeParse(data)
 
       expect(result.success).toBe(true)
+    })
+  })
+
+  describe("phone", () => {
+    const withPhone = (phone: number, phone_is_international?: boolean) => ({
+      ...validBasicData,
+      phone,
+      confirm_phone: phone,
+      phone_is_international,
+    })
+
+    const phoneIssue = (data: object) => {
+      const result = basicDataSchema.safeParse(data)
+      if (result.success) return null
+      return result.error.issues.find((issue) => issue.path[0] === "phone")
+        ?.message
+    }
+
+    it("reads a phone nobody flagged as Brazilian", () => {
+      const result = basicDataSchema.safeParse(withPhone(11999999999))
+
+      expect(result.success).toBe(true)
+      if (result.success) expect(result.data.phone_is_international).toBe(false)
+    })
+
+    it("refuses a landline or a mobile still missing its ninth digit", () => {
+      expect(phoneIssue(withPhone(1133334444))).toBe(
+        basicDataValidation.notAMobile,
+      )
+      expect(phoneIssue(withPhone(1199998888, false))).toBe(
+        basicDataValidation.notAMobile,
+      )
+    })
+
+    it("refuses a foreign number that was not flagged international", () => {
+      expect(phoneIssue(withPhone(351912345678))).toBe(
+        basicDataValidation.notAMobile,
+      )
+    })
+
+    it("accepts a foreign number flagged international", () => {
+      const result = basicDataSchema.safeParse(withPhone(351912345678, true))
+
+      expect(result.success).toBe(true)
+      if (result.success) expect(result.data.phone_is_international).toBe(true)
+    })
+
+    it("refuses a flagged number that is a Brazilian one with its country code", () => {
+      expect(phoneIssue(withPhone(5511999998888, true))).toBe(
+        basicDataValidation.invalidInternationalPhone,
+      )
     })
   })
 })

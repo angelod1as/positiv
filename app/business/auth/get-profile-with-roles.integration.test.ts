@@ -195,6 +195,20 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
     expect(data.roles).toBeNull()
   })
 
+  it("should say whether the phone is flagged international", async () => {
+    await kysely
+      .updateTable("profiles")
+      .set({ phone: 351912345678, phone_is_international: true })
+      .where("user_id", "=", testUserId)
+      .execute()
+
+    const result = await callAsOwner<{ phone_is_international: boolean }>(
+      testUserId,
+    )
+
+    expect(result.rows[0].phone_is_international).toBe(true)
+  })
+
   it("should return no rows when user_id does not exist", async () => {
     const nonExistentUserId = "99999999-9999-9999-9999-999999999999"
 

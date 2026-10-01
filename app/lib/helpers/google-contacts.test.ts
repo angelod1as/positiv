@@ -137,6 +137,11 @@ describe('Google Contacts Helper', () => {
       expect(result).toBe('https://contacts.google.com/u/0/new?hl=pt-BR&email=test@example.com&phone=11987654321')
     })
 
+    it('should mark an international phone with its plus sign, so it is not read as Brazilian', () => {
+      const result = generateGoogleContactsUrl('test@example.com', 12125551234, true)
+      expect(result).toBe('https://contacts.google.com/u/0/new?hl=pt-BR&email=test@example.com&phone=%2B12125551234')
+    })
+
     it('should generate URL with only email', () => {
       const email = 'test@example.com'
 

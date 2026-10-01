@@ -58,6 +58,10 @@ export const basicDataValidation = {
   phoneNotANumber: "Você tem certeza que digitou um número?",
   invalidPhone: "Número inválido",
   phoneMismatch: "Os números de telefone são diferentes",
+  notAMobile:
+    "Informe um celular com DDD e o 9 na frente, só números. Número de fora do Brasil? Marque celular internacional.",
+  invalidInternationalPhone:
+    "Informe o código do país e o número, só números (de 8 a 15 dígitos). Para um número brasileiro, desmarque celular internacional.",
   socialNameMustDiffer: "O nome social deve ser diferente do nome completo",
   invalidCpf: "Esse CPF não confere. Confira os números.",
   cpfTaken:
@@ -81,6 +85,7 @@ export const basicDataCopy = {
     date_of_birth: "Data de nascimento",
     where_lives: "Em que cidade você mora?",
     how_came_to_us: "Como chegou até nós?",
+    phone_is_international: "Celular internacional",
     phone: "WhatsApp",
     confirm_phone: "Confirme seu whatsapp",
     cpf: "CPF",
@@ -94,6 +99,8 @@ export const basicDataCopy = {
     where_lives: "Nossa dúvida: de onde nosso público vêm?",
     how_came_to_us:
       "Nos diga o nome de quem te indicou ou se você nos viu em alguma rede social",
+    phone_is_international:
+      "Marque se seu WhatsApp é de fora do Brasil. Aí informe o código do país e o número, só números. Ex: 351912345678",
     phone: "Só números, com DDD. Ex: 11955552222",
     confirm_phone: "Só números, com DDD. Ex: 11955552222",
     cpf: "Precisamos de um CPF válido para emitir suas cobranças. Só números.",
@@ -121,6 +128,6 @@ export const profileUpdateCopy = {
   title: "Atualize seu perfil",
   message: `Precisamos que você atualize seus dados básicos.
 
-Estamos pedindo informação de raça ou cor para acompanhar nossos dados demográficos, e um CPF válido para emitir suas cobranças.`,
+Estamos pedindo informação de raça ou cor para acompanhar nossos dados demográficos, um CPF válido para emitir suas cobranças e um celular válido para falarmos com você pelo WhatsApp.`,
   cta: "Atualizar meu perfil",
 } as const
