@@ -25,9 +25,9 @@ export const manualPaymentSchema = zod.object({
 })
 
 /**
- * Money that arrived outside Asaas: a transfer, cash at the door, a courtesy
- * settled by hand. `base_amount` equals `amount` because there is no fee and
- * nothing was negotiated separately — what arrived is what was agreed.
+ * Money that arrived outside the provider: a transfer, cash at the door, a
+ * courtesy settled by hand. `base_amount` equals `amount` because there is no
+ * fee and nothing was negotiated separately — what arrived is what was agreed.
  *
  * Zero is a real amount: it settles a staff or social spot that owed nothing.
  * The schema is what keeps an unparsed field from arriving here as one.
@@ -101,8 +101,8 @@ export const editManualPaymentSchema = manualPaymentSchema
 
 /**
  * Corrects a manual payment the admin recorded wrong. Only a paid one: a
- * refund's amount was measured against the amount it gave back, and an Asaas
- * row mirrors what Asaas holds.
+ * refund's amount was measured against the amount it gave back, and an online
+ * row mirrors what the provider holds.
  *
  * The UPDATE is guarded on the state it expects, so a refund landing first —
  * or a second click — writes nothing instead of rewriting a closed payment.

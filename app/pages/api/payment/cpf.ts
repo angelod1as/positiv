@@ -6,7 +6,7 @@ import { paymentsCopy } from "~/copy/payments"
 
 /**
  * A route of its own rather than the page's action: the page's action creates
- * the Asaas charge and answers with a redirect out of the app, which is not
+ * the charge and answers with a redirect out of the app, which is not
  * what saving a CPF should do.
  */
 export async function action({ request, params }: ActionFunctionArgs) {

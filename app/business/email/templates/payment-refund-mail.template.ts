@@ -19,7 +19,7 @@ const methodNames: Record<string, string> = paymentsCopy.manage.methods
 /**
  * Refund Email Template
  * Positiv Email Design System - Brand Purple Theme
- * Sent when money is given back, by Asaas or by hand
+ * Sent when money is given back, by the payment provider or by hand
  * SECURITY: All user-controlled fields are sanitized to prevent XSS attacks
  */
 export const paymentRefundMailTemplate = (
@@ -33,8 +33,8 @@ export const paymentRefundMailTemplate = (
     input.refundAmount < input.amount
       ? paymentRefundMailCopy.partial(formatCurrency(input.amount))
       : ""
-  // The window describes money Asaas returns. A manual payment may have been
-  // cash or a transfer, so it is not true of it.
+  // The window describes money the provider returns. A manual payment may have
+  // been cash or a transfer, so it is not true of it.
   const throughProvider = input.kind === "online"
   const window = !throughProvider
     ? ""

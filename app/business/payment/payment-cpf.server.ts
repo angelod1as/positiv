@@ -14,9 +14,10 @@ export const savePaymentCpfSchema = zod.object({
 })
 
 /**
- * The CPF gate on the payment page. Asaas will not take a customer without one,
- * so this is the only way past the gate — and it is saved to the profile rather
- * than to the charge, because the person is the same person at the next event.
+ * The CPF gate on the payment page. The provider will not take a customer
+ * without one, so this is the only way past the gate — and it is saved to the
+ * profile rather than to the charge, because the person is the same person at
+ * the next event.
  */
 export const savePaymentCpf = applySchema(savePaymentCpfSchema)(
   async (values) => {

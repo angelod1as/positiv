@@ -22,8 +22,8 @@ const OFFER_VALID_DAYS = 7
  * database going away mid-delivery, not a send that failed -- those
  * deliverPaymentEmail already handles -- and it must not reach the modal as a
  * failed offer: the admin would open the charge again, which cancels the good
- * one and bills Asaas for a second. The queued row keeps the email owed either
- * way, so the sweep sends it regardless of what this answers.
+ * one and bills the provider for a second. The queued row keeps the email owed
+ * either way, so the sweep sends it regardless of what this answers.
  */
 async function deliverQueuedLink(emailId: string): Promise<boolean> {
   try {
@@ -114,7 +114,7 @@ async function deleteReplacedCharges(
  * does. It is reached from "Enviar cobrança" and "Reenviar com outro valor" in
  * the payment modal — never from a status change, because a funnel step is a
  * note an admin keeps and an absent-minded grid edit should not delete a live
- * Asaas charge.
+ * online charge.
  *
  * The database work is one transaction — cancel what was open, insert what
  * replaces it, nudge the funnel — so two admins clicking at once cannot leave

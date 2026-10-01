@@ -73,7 +73,7 @@ export async function action({ params, request }: Route.ActionArgs) {
     )
   }
 
-  // Asaas hosts the checkout, so this leaves the app on purpose.
+  // The provider hosts the checkout, so this leaves the app on purpose.
   return redirect(result.data.invoiceUrl)
 }
 
@@ -144,9 +144,9 @@ const Closed = () => (
 )
 
 /**
- * No charge can be created without a CPF Asaas accepts, so the options are not
- * even offered until the profile carries one. Validated here as well as on the
- * server, so a typo is answered without a round trip.
+ * No charge can be created without a CPF the provider accepts, so the options
+ * are not even offered until the profile carries one. Validated here as well as
+ * on the server, so a typo is answered without a round trip.
  */
 const CpfGate = ({ providerName }: { providerName: string }) => {
   const fetcher = useFetcher()
@@ -205,7 +205,7 @@ const Options = ({
 }: {
   data: Extract<PaymentPageData, { state: "ready" }>
 }) => {
-  // A second submit opens a second Asaas charge, and only one of them can end
+  // A second submit opens a second charge, and only one of them can end
   // up on the row. The action refuses the loser and deletes it, but the click
   // is better not taken at all.
   const navigation = useNavigation()

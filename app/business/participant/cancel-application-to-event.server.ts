@@ -30,7 +30,7 @@ export const cancelApplicationToEvent = composable(
     // No live charge survives a withdrawal. A paid one is left alone: giving
     // the money back is a separate decision, taken by an admin.
     //
-    // Swallowed on purpose. The person asked to leave, and an Asaas outage or
+    // Swallowed on purpose. The person asked to leave, and a provider outage or
     // a charge that changed under us is not a reason to refuse them.
     for (const participant of withdrawn) {
       try {

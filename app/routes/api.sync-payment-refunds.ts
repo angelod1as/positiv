@@ -5,8 +5,8 @@ import { syncOpenPayments } from "~/business/payment/payment-sync.server"
 import { logger } from "~/lib/logger/logger.server"
 
 /**
- * Reads from Asaas the payments it may still have news about -- refunds on
- * their way -- so the admin sees them without waiting for, or losing, a
+ * Reads from the provider the payments it may still have news about -- refunds
+ * on their way -- so the admin sees them without waiting for, or losing, a
  * webhook.
  *
  * Called by the pg_cron job 'sync-payment-refunds'. Authentication is the same

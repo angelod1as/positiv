@@ -20,7 +20,7 @@ const methodNames: Record<string, string> = paymentsCopy.manage.methods
 /**
  * Payment Confirmation Email Template
  * Positiv Email Design System - Brand Purple Theme
- * Sent when Asaas confirms the money arrived
+ * Sent when the payment provider confirms the money arrived
  * SECURITY: All user-controlled fields are sanitized to prevent XSS attacks
  */
 export const paymentConfirmedMailTemplate = (

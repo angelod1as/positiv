@@ -15,11 +15,11 @@ export type RefundablePayment = {
 }
 
 /**
- * Writes what Asaas's refunds add up to onto the payment -- from a webhook or
- * from reading Asaas directly, the same way either time. Guarded on the two
- * statuses a refund can move, so a row that is not ours to change is left
- * alone. The refund notice, when one is owed, is queued in the same
- * transaction as the write that owes it.
+ * Writes what the provider's refunds add up to onto the payment -- from a
+ * webhook or from reading the provider directly, the same way either time.
+ * Guarded on the two statuses a refund can move, so a row that is not ours to
+ * change is left alone. The refund notice, when one is owed, is queued in the
+ * same transaction as the write that owes it.
  */
 export async function applyRefundTally(
   db: Kysely<Database>,

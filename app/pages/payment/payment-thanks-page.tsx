@@ -28,9 +28,9 @@ export function meta({}: Route.MetaArgs) {
 }
 
 /**
- * Where Asaas sends the participant once they are done on its side — which is
- * before the money is confirmed. The page reads the row and writes nothing:
- * only the webhook may mark a payment paid.
+ * Where the provider sends the participant once they are done on its side —
+ * which is before the money is confirmed. The page reads the row and writes
+ * nothing: only the webhook may mark a payment paid.
  */
 export async function loader({ params, request }: Route.LoaderArgs) {
   const { currentProfile } = await getUserContext(request, params)
@@ -48,7 +48,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 }
 
 /**
- * Three answers, not two. A charge cancelled or expired between the Asaas
+ * Three answers, not two. A charge cancelled or expired between the provider's
  * redirect and this page loading is closed, and telling that person a
  * confirmation email is on its way promises something nothing will send.
  */

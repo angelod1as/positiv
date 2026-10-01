@@ -172,9 +172,10 @@ export type PaymentThanksData =
   | { state: "waiting"; eventTitle: string }
 
 /**
- * Where Asaas sends the participant after they paid. Only whether the money
- * landed: nothing is priced, so nothing here talks to Asaas, and switching
- * online payments off does not turn a charge already paid into a closed one.
+ * Where the provider sends the participant after they paid. Only whether the
+ * money landed: nothing is priced, so nothing here talks to the provider, and
+ * switching online payments off does not turn a charge already paid into a
+ * closed one.
  */
 export async function loadPaymentThanks({
   paymentId,
