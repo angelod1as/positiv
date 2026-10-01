@@ -54,6 +54,27 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
     person("seed-person-bia", "Bia Exemplo", photoAssetId),
   ]
 
+  const founders = {
+    _type: "founders",
+    _key: "founders",
+    title: "Quem faz a Positiv?",
+    people: people.map(({ _id }) => ({
+      _type: "reference",
+      _key: _id,
+      _ref: _id,
+    })),
+    videoUrl: "https://www.youtube.com/watch?v=WIveBynr7Yc",
+    videoTitle: "Vídeo de apresentação",
+  }
+
+  const feedback = {
+    _type: "feedback",
+    _key: "feedback",
+    title: "Nos deixe um feedback",
+    body: paragraphs("Estamos sempre buscando melhorias."),
+    ctaLabel: "Deixar feedback",
+  }
+
   return [
     ...people,
     {
@@ -112,25 +133,8 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
           title: "Não perca nossos próximos eventos",
           body: paragraphs("Faça login para se inscrever."),
         },
-        {
-          _type: "founders",
-          _key: "founders",
-          title: "Quem faz a Positiv?",
-          people: people.map(({ _id }) => ({
-            _type: "reference",
-            _key: _id,
-            _ref: _id,
-          })),
-          videoUrl: "https://www.youtube.com/watch?v=WIveBynr7Yc",
-          videoTitle: "Vídeo de apresentação",
-        },
-        {
-          _type: "feedback",
-          _key: "feedback",
-          title: "Nos deixe um feedback",
-          body: paragraphs("Estamos sempre buscando melhorias."),
-          ctaLabel: "Deixar feedback",
-        },
+        founders,
+        feedback,
       ],
       seo: seo(
         "Eventos naturistas para pessoas queer: conteúdo de exemplo do ambiente de desenvolvimento.",
@@ -150,15 +154,7 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
             "Uma página com só um título, para o ambiente de desenvolvimento.",
         },
       ],
-      sections: [
-        {
-          _type: "feedback",
-          _key: "feedback",
-          title: "Nos deixe um feedback",
-          body: paragraphs("Estamos sempre buscando melhorias."),
-          ctaLabel: "Deixar feedback",
-        },
-      ],
+      sections: [feedback],
       seo: seo(
         "Quem somos e por que fazemos eventos: conteúdo de exemplo do ambiente de desenvolvimento.",
       ),
@@ -176,20 +172,7 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
           subtitle: paragraphs("Uma página aninhada com Destaque."),
         },
       ],
-      sections: [
-        {
-          _type: "founders",
-          _key: "founders",
-          title: "Quem faz a Positiv?",
-          people: people.map(({ _id }) => ({
-            _type: "reference",
-            _key: _id,
-            _ref: _id,
-          })),
-          videoUrl: "https://www.youtube.com/watch?v=WIveBynr7Yc",
-          videoTitle: "Vídeo de apresentação",
-        },
-      ],
+      sections: [founders],
       seo: seo(
         "As pessoas por trás dos eventos: conteúdo de exemplo do ambiente de desenvolvimento.",
       ),
