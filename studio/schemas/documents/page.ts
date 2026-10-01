@@ -82,14 +82,19 @@ export const page = defineType({
             return problem
           }
 
+          const id = getPublishedId(context.document?._id ?? "")
+
+          if ((id === HOMEPAGE_PAGE_ID) !== (address === "/")) {
+            return id === HOMEPAGE_PAGE_ID
+              ? "Esta é a página inicial: o endereço dela é sempre /"
+              : "Só a página inicial usa o endereço /. Abra “Página inicial (nova)” no menu."
+          }
+
           const pagesAtAddress = await context
             .getClient({ apiVersion: "2026-09-24" })
             .fetch<number>(
               `count(*[_type == "page" && address == $address && !sanity::versionOf($id)])`,
-              {
-                address,
-                id: getPublishedId(context.document?._id ?? ""),
-              },
+              { address, id },
             )
 
           return pagesAtAddress > 0 ? "Outra página já usa este endereço" : true

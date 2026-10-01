@@ -38,6 +38,7 @@ const page = {
 
 const homepage = {
   ...page,
+  _id: "drafts.page-home",
   title: "Início",
   address: "/",
   header: [headers.homepageHero],
@@ -53,7 +54,9 @@ function pagesAtAddress(count: number) {
 }
 
 async function addressErrors(address: unknown) {
-  return (await validateDocumentOf("page", { ...page, address })).filter(
+  const _id = address === "/" ? "page-home" : "page-sobre"
+
+  return (await validateDocumentOf("page", { ...page, _id, address })).filter(
     (error) => error.path === "address",
   )
 }
@@ -118,6 +121,25 @@ describe("page", () => {
         expect(await addressErrors(address)).not.toEqual([])
       },
     )
+
+    it("keeps the Homepage's fixed id at /, so it cannot be moved and then deleted", async () => {
+      const errors = await validateDocumentOf("page", {
+        ...page,
+        _id: "drafts.page-home",
+        address: "/inicio",
+      })
+
+      expect(pathsOf(errors)).toContain("address")
+    })
+
+    it("gives / only to the Homepage's fixed id", async () => {
+      const errors = await validateDocumentOf("page", {
+        ...homepage,
+        _id: "drafts.3f2a9c",
+      })
+
+      expect(pathsOf(errors)).toContain("address")
+    })
 
     it("allows a reserved word below the first segment", async () => {
       expect(await addressErrors("/sobre/admin")).toEqual([])
