@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs"
-import { join } from "node:path"
+import { fileURLToPath } from "node:url"
 
 import { getCliClient } from "sanity/cli"
 
@@ -7,7 +7,9 @@ import { seed } from "./seed"
 
 const client = getCliClient({ apiVersion: "2026-09-24" })
 
-const photo = join(process.cwd(), "..", "public", "positiv-logo-colors.png")
+const photo = fileURLToPath(
+  new URL("../../public/positiv-logo-colors.png", import.meta.url),
+)
 
 await seed(client.config().dataset, {
   uploadPhoto: async () =>

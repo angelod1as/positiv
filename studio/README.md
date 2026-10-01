@@ -68,6 +68,14 @@ A Page's address is stored with its leading slash: `/` is the Homepage,
 top-level route lands in `app/routes.ts`, add its segment there;
 `app/reserved-addresses.test.ts` fails until you do.
 
+The Homepage Hero and the Hero have the same fields today, on purpose: they
+are different Page Header forms that render differently, and only the
+Homepage Hero is allowed at `/`. Keep them as two types.
+
+The Page at `/` always has the id `page-home`; the address rule ties the two
+together. The Studio hides its delete and unpublish actions, but only the
+Studio: the API and the CLI can still remove it.
+
 ### Seed development
 
 Development content comes from `seed/seed.ts`, never from edits by hand or
