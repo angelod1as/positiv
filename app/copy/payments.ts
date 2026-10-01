@@ -134,8 +134,8 @@ export const paymentsCopy = {
   charge: {
     title: "Cobrança",
     amount: "Valor a cobrar",
-    amountHint: (provider: string) =>
-      `O valor que a Positiv recebe. As taxas do ${provider} entram por cima, na conta de quem paga.`,
+    amountHint:
+      "O valor do evento: é o que a pessoa paga, sem nada a mais. As taxas ficam por conta da Positiv.",
     send: "Enviar cobrança",
     resendAmount: "Reenviar com outro valor",
     resendEmail: "Reenviar email",

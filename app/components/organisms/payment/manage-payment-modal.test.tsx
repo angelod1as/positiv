@@ -631,6 +631,17 @@ describe("ManagePaymentModal - the Cobrança section", () => {
     expect(lastSubmission().get("baseAmount")).toBe("220,00")
   })
 
+  // Since POS-577 the price is flat and Positiv absorbs every fee. A hint
+  // promising fees on top would have the admin undercharge to compensate.
+  it("says the amount is what the participant pays, fees absorbed by Positiv", () => {
+    render(<ManagePaymentModal {...baseProps} />)
+
+    expect(
+      screen.getByText(/as taxas ficam por conta da Positiv/i),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/entram por cima/i)).not.toBeInTheDocument()
+  })
+
   it("sends the amount the admin typed instead", async () => {
     render(<ManagePaymentModal {...baseProps} />)
 

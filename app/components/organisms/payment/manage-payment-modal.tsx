@@ -491,9 +491,7 @@ const ChargeSection: FC<ChargeSectionProps> = ({
           value={amount}
           onChange={(event) => setAmount(event.target.value)}
         />
-        <p className="text-muted-foreground text-sm">
-          {charge.amountHint(providerName)}
-        </p>
+        <p className="text-muted-foreground text-sm">{charge.amountHint}</p>
       </div>
 
       <div className="flex flex-wrap gap-2">
