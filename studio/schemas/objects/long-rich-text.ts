@@ -1,12 +1,6 @@
-import {
-  defineArrayMember,
-  defineType,
-  isPortableTextSpan,
-  isPortableTextTextBlock,
-  type PortableTextBlock,
-} from "sanity"
+import { defineArrayMember, defineType, type PortableTextBlock } from "sanity"
 
-import { decorators, link } from "./rich-text"
+import { decorators, isAllowed, link } from "./rich-text"
 
 const styles = [
   { title: "Parágrafo", value: "normal" },
@@ -19,27 +13,6 @@ const lists = [
   { title: "Lista com marcadores", value: "bullet" },
   { title: "Lista numerada", value: "number" },
 ]
-
-const decoratorValues = decorators.map((decorator) => decorator.value)
-
-function isAllowed(block: PortableTextBlock) {
-  if (block._type !== "block" || !isPortableTextTextBlock(block)) {
-    return false
-  }
-
-  const annotationKeys = (block.markDefs ?? [])
-    .filter((markDef) => markDef._type === "link")
-    .map((markDef) => markDef._key)
-
-  return block.children.every(
-    (child) =>
-      isPortableTextSpan(child) &&
-      (child.marks ?? []).every(
-        (mark) =>
-          decoratorValues.includes(mark) || annotationKeys.includes(mark),
-      ),
-  )
-}
 
 export function contentProblem(blocks: PortableTextBlock[] | undefined) {
   const block = blocks?.find((candidate) => !isAllowed(candidate))

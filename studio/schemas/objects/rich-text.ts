@@ -40,7 +40,7 @@ export const link = defineField({
 
 const decoratorValues = decorators.map((decorator) => decorator.value)
 
-function isAllowed(block: PortableTextBlock) {
+export function isAllowed(block: PortableTextBlock) {
   if (block._type !== "block" || !isPortableTextTextBlock(block)) {
     return false
   }
