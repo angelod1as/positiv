@@ -1,4 +1,5 @@
 import { HOMEPAGE_PAGE_ID } from "../schemas/documents/page"
+import { SITE_SETTINGS_ID } from "../singletons"
 
 type Item = { _type: string; [field: string]: unknown }
 
@@ -53,6 +54,19 @@ function person(id: string, name: string, photoAssetId: string) {
       `${name} é uma pessoa fictícia do conteúdo de desenvolvimento.`,
     ),
   }
+}
+
+function linkToPage(key: string, label: string, pageId: string) {
+  return {
+    _type: "siteLink",
+    _key: key,
+    label,
+    page: { _type: "reference", _ref: pageId },
+  }
+}
+
+function linkToUrl(key: string, label: string, url: string) {
+  return { _type: "siteLink", _key: key, label, url }
 }
 
 function seo(description: string) {
@@ -242,6 +256,90 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
       sections: [founders],
       seo: seo(
         "As pessoas por trás dos eventos: conteúdo de exemplo do ambiente de desenvolvimento.",
+      ),
+    },
+    {
+      _id: SITE_SETTINGS_ID,
+      _type: "siteSettings",
+      navigation: [
+        linkToPage("sobre", "Sobre", "seed-page-sobre"),
+        linkToPage("equipe", "Equipe", "seed-page-sobre-equipe"),
+        linkToUrl("eventos", "Eventos", "/eventos"),
+        linkToUrl(
+          "instagram",
+          "Instagram",
+          "https://instagram.com/positivparty",
+        ),
+      ],
+      footer: {
+        columns: [
+          {
+            _type: "footerColumn",
+            _key: "positiv",
+            title: "A Positiv",
+            links: [
+              linkToPage("inicio", "Início", HOMEPAGE_PAGE_ID),
+              linkToPage("sobre", "Sobre", "seed-page-sobre"),
+              linkToPage("equipe", "Equipe", "seed-page-sobre-equipe"),
+            ],
+          },
+          {
+            _type: "footerColumn",
+            _key: "plataforma",
+            title: "Plataforma",
+            links: [linkToUrl("eventos", "Eventos", "/eventos")],
+          },
+        ],
+        social: [
+          {
+            _type: "socialLink",
+            _key: "instagram",
+            network: "instagram",
+            url: "https://instagram.com/positivparty",
+          },
+        ],
+        text: paragraphs("© 2025 Positiv. Todos os direitos reservados."),
+        development: {
+          developedBy: [
+            {
+              _type: "block",
+              _key: "developed-by",
+              style: "normal",
+              markDefs: [
+                {
+                  _type: "link",
+                  _key: "angelo",
+                  href: "https://www.angelodias.com.br",
+                },
+              ],
+              children: [
+                {
+                  _type: "span",
+                  _key: "developed-by-text",
+                  text: "Este website está em constante desenvolvimento por ",
+                  marks: [],
+                },
+                {
+                  _type: "span",
+                  _key: "developed-by-link",
+                  text: "Angelo Dias",
+                  marks: ["angelo"],
+                },
+                {
+                  _type: "span",
+                  _key: "developed-by-end",
+                  text: ".",
+                  marks: [],
+                },
+              ],
+            },
+          ],
+          repositoryUrl: "https://github.com/angelod1as/positiv",
+          bugReportUrl: "https://forms.gle/ys6W6W54YTcoBHrJA",
+        },
+      },
+      notice: paragraphs(
+        "Este é um aviso de exemplo do ambiente de desenvolvimento.",
       ),
     },
   ]
