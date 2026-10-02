@@ -8,7 +8,7 @@ const singletonTypes = ["homepage", "siteSettings"]
 
 const actionsSingletonsKeep = ["publish", "discardChanges", "restore"]
 
-export function homepageActions(
+export function singletonActions(
   actions: DocumentActionComponent[],
   { schemaType }: { schemaType: string },
 ) {
