@@ -12,9 +12,13 @@ const homepage: HomepageDocument = {
   ...sections,
 }
 
-function fakeStore(found: HomepageDocument | null = homepage) {
+function fakeStore(
+  found: HomepageDocument | null = homepage,
+  pageHasDraft = false,
+) {
   return {
     fetchHomepage: vi.fn(async () => found),
+    pageHasDraft: vi.fn(async () => pageHasDraft),
     createOrReplace: vi.fn(async () => undefined),
   }
 }
@@ -47,6 +51,7 @@ describe("run", () => {
     expect(result).toEqual({
       dryRun: true,
       page: homepageToPage(homepage),
+      pageHasDraft: false,
     })
     expect(store.createOrReplace).not.toHaveBeenCalled()
   })
@@ -61,9 +66,7 @@ describe("run", () => {
 
     expect(result.dryRun).toBe(false)
     expect(store.createOrReplace).toHaveBeenCalledTimes(1)
-    expect(store.createOrReplace).toHaveBeenCalledWith(
-      homepageToPage(homepage),
-    )
+    expect(store.createOrReplace).toHaveBeenCalledWith(homepageToPage(homepage))
   })
 
   it("refuses a dataset without a published homepage", async () => {
@@ -74,4 +77,15 @@ describe("run", () => {
     ).rejects.toThrow(/homepage/)
     expect(store.createOrReplace).not.toHaveBeenCalled()
   })
+
+  it.each([true, false])(
+    "reports whether the Page has a draft (%s), which would hide what it writes",
+    async (pageHasDraft) => {
+      const store = fakeStore(homepage, pageHasDraft)
+
+      const result = await run(["--dataset", "development"], () => store)
+
+      expect(result.pageHasDraft).toBe(pageHasDraft)
+    },
+  )
 })

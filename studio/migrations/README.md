@@ -49,7 +49,8 @@ pnpm --filter studio migrate:homepage-to-page --dataset production --no-dry-run
 ```
 
 Check the Page in the Studio afterwards. If `page-home` has an unpublished
-draft, the Studio shows the draft over the migrated Page: discard it.
+draft, the script warns: the Studio shows the draft over the migrated Page,
+so discard it.
 
 On `development` the migration replaces the `page-home` the seed wrote, which
 showcases every Section type. Run `pnpm --filter studio seed` to restore it.

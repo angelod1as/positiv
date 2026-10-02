@@ -4,6 +4,7 @@ import { HomepageDocument, homepageToPage, PageDocument } from "./transform"
 
 export type Store = {
   fetchHomepage(): Promise<HomepageDocument | null>
+  pageHasDraft(): Promise<boolean>
   createOrReplace(page: PageDocument): Promise<void>
 }
 
@@ -36,5 +37,5 @@ export async function run(args: string[], connect: (dataset: string) => Store) {
     await store.createOrReplace(page)
   }
 
-  return { dryRun, page }
+  return { dryRun, page, pageHasDraft: await store.pageHasDraft() }
 }
