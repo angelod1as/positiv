@@ -9,7 +9,13 @@ import { describe, expect, it } from "vitest"
 // screenshots. This is a regression guard for that: it is nine minutes of every
 // pull request.
 const workflow = readFileSync(
-  join(import.meta.dirname, "..", ".github", "workflows", "deploy-and-test.yml"),
+  join(
+    import.meta.dirname,
+    "..",
+    ".github",
+    "workflows",
+    "deploy-and-test.yml",
+  ),
   "utf8",
 )
 
@@ -71,5 +77,15 @@ describe("deploy-and-test workflow", () => {
 
   it("type-checks and lints the Studio, which sanity build does not", () => {
     expect(runCommand("Lint the Studio")).toBe("pnpm --filter studio lint")
+  })
+
+  it("checks env.d.ts without the icons varlock fetches, which come and go with the network", () => {
+    const step = workflow.match(
+      /- name: Check env\.d\.ts matches \.env\.schema\n +run: \|\n((?: {10}.+\n)+)/,
+    )?.[1]
+
+    expect(step).toContain("pnpm exec varlock codegen")
+    expect(step).toContain("pnpm exec tsx scripts/check-env-types.ts")
+    expect(step).not.toContain("git diff --exit-code env.d.ts")
   })
 })
