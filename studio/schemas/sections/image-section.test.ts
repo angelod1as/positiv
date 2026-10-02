@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import { pathsOf } from "../../test/errors"
 import { sections } from "../../test/sections"
 import { validateValueOf } from "../../test/validate"
+import { imageSection as imageSectionType } from "./image-section"
 
 const { imageSection } = sections
 
@@ -54,5 +55,11 @@ describe("imageSection", () => {
     })
 
     expect(pathsOf(errors)).toContain("imageSection.image.alt")
+  })
+
+  it("titles the preview Imagem when it has an empty caption", () => {
+    expect(
+      imageSectionType.preview?.prepare?.({ title: "", media: undefined }),
+    ).toEqual(expect.objectContaining({ title: "Imagem" }))
   })
 })

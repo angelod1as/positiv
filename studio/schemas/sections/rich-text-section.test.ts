@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import { pathsOf } from "../../test/errors"
 import { sections } from "../../test/sections"
 import { validateValueOf } from "../../test/validate"
+import { richTextSection as richTextSectionType } from "./rich-text-section"
 
 const { richTextSection } = sections
 
@@ -44,5 +45,11 @@ describe("richTextSection", () => {
     })
 
     expect(pathsOf(errors)).toContain("richTextSection.body.i1")
+  })
+
+  it("titles the preview Texto when it has an empty title", () => {
+    expect(richTextSectionType.preview?.prepare?.({ title: "" })).toEqual(
+      expect.objectContaining({ title: "Texto" }),
+    )
   })
 })

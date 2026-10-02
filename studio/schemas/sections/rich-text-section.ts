@@ -26,6 +26,6 @@ export const richTextSection = defineType({
   ],
   preview: {
     select: { title: "title" },
-    prepare: ({ title }) => ({ title: title ?? "Texto" }),
+    prepare: ({ title }) => ({ title: title || "Texto" }),
   },
 })

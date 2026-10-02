@@ -33,6 +33,6 @@ export const imageSection = defineType({
   ],
   preview: {
     select: { title: "caption", media: "image" },
-    prepare: ({ title, media }) => ({ title: title ?? "Imagem", media }),
+    prepare: ({ title, media }) => ({ title: title || "Imagem", media }),
   },
 })
