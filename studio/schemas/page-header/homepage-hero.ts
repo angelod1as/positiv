@@ -1,6 +1,8 @@
 import { HomeIcon } from "@sanity/icons/Home"
 import { defineField, defineType } from "sanity"
 
+import { richTextProblem } from "../objects/rich-text"
+
 export const homepageHero = defineType({
   name: "homepageHero",
   title: "Destaque da página inicial",
@@ -19,7 +21,7 @@ export const homepageHero = defineType({
       name: "subtitle",
       title: "Subtítulo",
       type: "richText",
-      validation: (rule) => rule.required(),
+      validation: (rule) => rule.required().custom(richTextProblem),
     }),
   ],
 })

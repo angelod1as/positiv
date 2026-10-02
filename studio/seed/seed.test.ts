@@ -83,6 +83,8 @@ describe("seedDocuments", () => {
       "ctaBanner",
       "founders",
       "feedback",
+      "richTextSection",
+      "imageSection",
     ])
   })
 

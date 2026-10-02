@@ -1,6 +1,8 @@
 import { HelpCircleIcon } from "@sanity/icons/HelpCircle"
 import { defineArrayMember, defineField, defineType } from "sanity"
 
+import { richTextProblem } from "../objects/rich-text"
+
 export const about = defineType({
   name: "about",
   title: "Como assim?",
@@ -35,7 +37,7 @@ export const about = defineType({
               name: "body",
               title: "Texto",
               type: "richText",
-              validation: (rule) => rule.required(),
+              validation: (rule) => rule.required().custom(richTextProblem),
             }),
           ],
         }),

@@ -239,6 +239,8 @@ describe("page", () => {
         "ctaBanner",
         "founders",
         "feedback",
+        "richTextSection",
+        "imageSection",
       ])
     })
 

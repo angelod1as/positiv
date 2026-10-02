@@ -26,6 +26,17 @@ function paragraphs(...texts: string[]) {
   }))
 }
 
+function block(key: string, text: string, fields: object = {}) {
+  return {
+    _type: "block",
+    _key: key,
+    style: "normal",
+    markDefs: [],
+    children: [{ _type: "span", _key: `${key}-span`, text, marks: [] }],
+    ...fields,
+  }
+}
+
 function person(id: string, name: string, photoAssetId: string) {
   return {
     _id: id,
@@ -135,6 +146,62 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
         },
         founders,
         feedback,
+        {
+          _type: "richTextSection",
+          _key: "rich-text",
+          title: "Código de conduta",
+          body: [
+            block("heading", "Consentimento", { style: "h2" }),
+            {
+              _type: "block",
+              _key: "paragraph",
+              style: "normal",
+              markDefs: [{ _type: "link", _key: "events", href: "/eventos" }],
+              children: [
+                {
+                  _type: "span",
+                  _key: "paragraph-span",
+                  text: "Texto de exemplo com ",
+                  marks: [],
+                },
+                {
+                  _type: "span",
+                  _key: "paragraph-bold",
+                  text: "negrito",
+                  marks: ["strong"],
+                },
+                {
+                  _type: "span",
+                  _key: "paragraph-link",
+                  text: " e um link para os eventos.",
+                  marks: ["events"],
+                },
+              ],
+            },
+            block("subheading", "Antes do evento", { style: "h3" }),
+            ...["Pergunte antes de tocar.", "Não é não."].map((text, index) =>
+              block(`bullet-${index}`, text, { listItem: "bullet", level: 1 }),
+            ),
+            ...["Chegue no horário.", "Respeite os espaços."].map(
+              (text, index) =>
+                block(`number-${index}`, text, {
+                  listItem: "number",
+                  level: 1,
+                }),
+            ),
+            block("quote", "Uma citação de exemplo.", { style: "blockquote" }),
+          ],
+        },
+        {
+          _type: "imageSection",
+          _key: "image",
+          image: {
+            _type: "image",
+            asset: { _type: "reference", _ref: photoAssetId },
+            alt: "Imagem de exemplo do ambiente de desenvolvimento",
+          },
+          caption: "Uma legenda de exemplo",
+        },
       ],
       seo: seo(
         "Eventos naturistas para pessoas queer: conteúdo de exemplo do ambiente de desenvolvimento.",

@@ -7,10 +7,36 @@ import {
   type PortableTextBlock,
 } from "sanity"
 
-const decorators = [
+export const decorators = [
   { title: "Negrito", value: "strong" },
   { title: "Itálico", value: "em" },
 ]
+
+export const link = defineField({
+  name: "link",
+  title: "Link",
+  type: "object",
+  fields: [
+    defineField({
+      name: "href",
+      title: "Endereço",
+      description:
+        "Uma página do site, começando com / (por exemplo /eventos), ou um endereço começando com https://",
+      type: "url",
+      validation: (rule) =>
+        rule
+          .required()
+          .uri({ scheme: ["https"], allowRelative: true })
+          .custom<string>((href) =>
+            href?.startsWith("//") ||
+            href?.startsWith("/\\") ||
+            /[\s\p{Cc}]/u.test(href ?? "")
+              ? "Comece com / ou com https://"
+              : true,
+          ),
+    }),
+  ],
+})
 
 const decoratorValues = decorators.map((decorator) => decorator.value)
 
@@ -33,22 +59,23 @@ function isAllowed(block: PortableTextBlock) {
   )
 }
 
+export function blockProblem(message: string) {
+  return (blocks: PortableTextBlock[] | undefined) => {
+    const block = blocks?.find((candidate) => !isAllowed(candidate))
+
+    return block ? { message, path: [{ _key: block._key }] } : true
+  }
+}
+
+export const richTextProblem = blockProblem(
+  "Só são permitidos parágrafos com negrito, itálico e links",
+)
+
 export const richText = defineType({
   name: "richText",
   title: "Texto formatado",
   type: "array",
-  validation: (rule) =>
-    rule.custom<PortableTextBlock[]>((blocks) => {
-      const block = blocks?.find((candidate) => !isAllowed(candidate))
-
-      return block
-        ? {
-            message:
-              "Só são permitidos parágrafos com negrito, itálico e links",
-            path: [{ _key: block._key }],
-          }
-        : true
-    }),
+  validation: (rule) => rule.custom(richTextProblem),
   of: [
     defineArrayMember({
       type: "block",
@@ -56,33 +83,7 @@ export const richText = defineType({
       lists: [],
       marks: {
         decorators,
-        annotations: [
-          defineField({
-            name: "link",
-            title: "Link",
-            type: "object",
-            fields: [
-              defineField({
-                name: "href",
-                title: "Endereço",
-                description:
-                  "Uma página do site, começando com / (por exemplo /eventos), ou um endereço começando com https://",
-                type: "url",
-                validation: (rule) =>
-                  rule
-                    .required()
-                    .uri({ scheme: ["https"], allowRelative: true })
-                    .custom<string>((href) =>
-                      href?.startsWith("//") ||
-                      href?.startsWith("/\\") ||
-                      /[\s\p{Cc}]/u.test(href ?? "")
-                        ? "Comece com / ou com https://"
-                        : true,
-                    ),
-              }),
-            ],
-          }),
-        ],
+        annotations: [link],
       },
     }),
   ],

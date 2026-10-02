@@ -1,6 +1,8 @@
 import { EnvelopeIcon } from "@sanity/icons/Envelope"
 import { defineField, defineType } from "sanity"
 
+import { richTextProblem } from "../objects/rich-text"
+
 export const feedback = defineType({
   name: "feedback",
   title: "Feedback",
@@ -17,7 +19,7 @@ export const feedback = defineType({
       name: "body",
       title: "Texto",
       type: "richText",
-      validation: (rule) => rule.required(),
+      validation: (rule) => rule.required().custom(richTextProblem),
     }),
     defineField({
       name: "ctaLabel",

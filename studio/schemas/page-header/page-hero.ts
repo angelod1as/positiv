@@ -1,6 +1,8 @@
 import { StarIcon } from "@sanity/icons/Star"
 import { defineField, defineType } from "sanity"
 
+import { richTextProblem } from "../objects/rich-text"
+
 export const pageHero = defineType({
   name: "pageHero",
   title: "Destaque",
@@ -19,7 +21,7 @@ export const pageHero = defineType({
       name: "subtitle",
       title: "Subtítulo",
       type: "richText",
-      validation: (rule) => rule.required(),
+      validation: (rule) => rule.required().custom(richTextProblem),
     }),
   ],
 })
