@@ -29,7 +29,8 @@ A field's `validation` replaces the validation of the type it uses. A field
 of type `richText` or `longRichText` that adds its own rule —
 `rule.required()`, say — must chain `.custom(richTextProblem)` from
 `rich-text.ts` or `.custom(contentProblem)` from `long-rich-text.ts`, or the
-text's content rule stops running.
+text's content rule stops running. `schemas/objects/rich-text-fields.test.ts`
+walks every type in the schema and fails on such a field.
 
 ## Run it locally
 

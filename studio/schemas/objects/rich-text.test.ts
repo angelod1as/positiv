@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { validateDocumentOf, validateValueOf } from "../../test/validate"
+import { validateValueOf } from "../../test/validate"
 
 function paragraph(markDefs: object[], marks: string[] = [], style = "normal") {
   return {
@@ -94,38 +94,5 @@ describe("richText", () => {
         },
       ]),
     ).not.toEqual([])
-  })
-})
-
-describe("richText fields", () => {
-  const image = [
-    {
-      _type: "image",
-      _key: "i1",
-      asset: { _type: "reference", _ref: "image-abc-1x1-jpg" },
-    },
-  ]
-
-  it.each([
-    ["ctaBanner", { body: image }, "ctaBanner.body.i1"],
-    ["hero", { subtitle: image }, "hero.subtitle.i1"],
-    ["feedback", { body: image }, "feedback.body.i1"],
-    ["homepageHero", { subtitle: image }, "homepageHero.subtitle.i1"],
-    ["pageHero", { subtitle: image }, "pageHero.subtitle.i1"],
-    [
-      "about",
-      { cards: [{ _type: "aboutCard", _key: "a", body: image }] },
-      "about.cards.a.body.i1",
-    ],
-  ])("keep the richText rule in %s", async (type, fields, path) => {
-    expect(
-      await validateValueOf(type, { _type: type, ...fields }),
-    ).toContainEqual(expect.objectContaining({ path }))
-  })
-
-  it("keep the richText rule in a Person's bio", async () => {
-    expect(await validateDocumentOf("person", { bio: image })).toContainEqual(
-      expect.objectContaining({ path: "bio.i1" }),
-    )
   })
 })
