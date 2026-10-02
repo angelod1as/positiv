@@ -1,6 +1,6 @@
-import { defineArrayMember, defineType, type PortableTextBlock } from "sanity"
+import { defineArrayMember, defineType } from "sanity"
 
-import { decorators, isAllowed, link } from "./rich-text"
+import { blockProblem, decorators, link } from "./rich-text"
 
 const styles = [
   { title: "Parágrafo", value: "normal" },
@@ -14,17 +14,9 @@ const lists = [
   { title: "Lista numerada", value: "number" },
 ]
 
-export function contentProblem(blocks: PortableTextBlock[] | undefined) {
-  const block = blocks?.find((candidate) => !isAllowed(candidate))
-
-  return block
-    ? {
-        message:
-          "Só são permitidos parágrafos, títulos, subtítulos, citações e listas, com negrito, itálico e links",
-        path: [{ _key: block._key }],
-      }
-    : true
-}
+export const contentProblem = blockProblem(
+  "Só são permitidos parágrafos, títulos, subtítulos, citações e listas, com negrito, itálico e links",
+)
 
 export const longRichText = defineType({
   name: "longRichText",

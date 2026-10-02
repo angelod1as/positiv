@@ -40,7 +40,7 @@ export const link = defineField({
 
 const decoratorValues = decorators.map((decorator) => decorator.value)
 
-export function isAllowed(block: PortableTextBlock) {
+function isAllowed(block: PortableTextBlock) {
   if (block._type !== "block" || !isPortableTextTextBlock(block)) {
     return false
   }
@@ -59,16 +59,17 @@ export function isAllowed(block: PortableTextBlock) {
   )
 }
 
-export function richTextProblem(blocks: PortableTextBlock[] | undefined) {
-  const block = blocks?.find((candidate) => !isAllowed(candidate))
+export function blockProblem(message: string) {
+  return (blocks: PortableTextBlock[] | undefined) => {
+    const block = blocks?.find((candidate) => !isAllowed(candidate))
 
-  return block
-    ? {
-        message: "Só são permitidos parágrafos com negrito, itálico e links",
-        path: [{ _key: block._key }],
-      }
-    : true
+    return block ? { message, path: [{ _key: block._key }] } : true
+  }
 }
+
+export const richTextProblem = blockProblem(
+  "Só são permitidos parágrafos com negrito, itálico e links",
+)
 
 export const richText = defineType({
   name: "richText",
