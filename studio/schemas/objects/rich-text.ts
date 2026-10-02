@@ -5,12 +5,25 @@ import {
   isPortableTextSpan,
   isPortableTextTextBlock,
   type PortableTextBlock,
+  type UrlRule,
 } from "sanity"
 
 export const decorators = [
   { title: "Negrito", value: "strong" },
   { title: "Itálico", value: "em" },
 ]
+
+export function hrefRule(rule: UrlRule) {
+  return rule
+    .uri({ scheme: ["https"], allowRelative: true })
+    .custom<string>((href) =>
+      href?.startsWith("//") ||
+      href?.startsWith("/\\") ||
+      /[\s\p{Cc}]/u.test(href ?? "")
+        ? "Comece com / ou com https://"
+        : true,
+    )
+}
 
 export const link = defineField({
   name: "link",
@@ -23,17 +36,7 @@ export const link = defineField({
       description:
         "Uma página do site, começando com / (por exemplo /eventos), ou um endereço começando com https://",
       type: "url",
-      validation: (rule) =>
-        rule
-          .required()
-          .uri({ scheme: ["https"], allowRelative: true })
-          .custom<string>((href) =>
-            href?.startsWith("//") ||
-            href?.startsWith("/\\") ||
-            /[\s\p{Cc}]/u.test(href ?? "")
-              ? "Comece com / ou com https://"
-              : true,
-          ),
+      validation: (rule) => hrefRule(rule.required()),
     }),
   ],
 })
