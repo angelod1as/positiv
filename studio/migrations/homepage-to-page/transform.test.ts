@@ -81,9 +81,7 @@ describe("homepageToPage", () => {
   it("keeps today's sections in today's order, each with a new key", () => {
     const page = homepageToPage(homepage)
 
-    expect(page.sections.map((section) => section._type)).toEqual(
-      sectionNames,
-    )
+    expect(page.sections.map((section) => section._type)).toEqual(sectionNames)
     expect(new Set(page.sections.map((section) => section._key)).size).toBe(
       sectionNames.length,
     )
