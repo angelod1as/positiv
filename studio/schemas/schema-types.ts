@@ -3,6 +3,7 @@ import type { SchemaTypeDefinition } from "sanity"
 import { homepage } from "./documents/homepage"
 import { page } from "./documents/page"
 import { person } from "./documents/person"
+import { siteSettings } from "./documents/site-settings"
 import { longRichText } from "./objects/long-rich-text"
 import { richText } from "./objects/rich-text"
 import { seo } from "./objects/seo"
@@ -40,4 +41,5 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   pageHero,
   pageTitle,
   page,
+  siteSettings,
 ]
