@@ -6,6 +6,7 @@ import { person } from "./documents/person"
 import { longRichText } from "./objects/long-rich-text"
 import { richText } from "./objects/rich-text"
 import { seo } from "./objects/seo"
+import { siteLink } from "./objects/site-link"
 import { homepageHero } from "./page-header/homepage-hero"
 import { pageHero } from "./page-header/page-hero"
 import { pageTitle } from "./page-header/page-title"
@@ -23,6 +24,7 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   richText,
   longRichText,
   seo,
+  siteLink,
   person,
   hero,
   about,
