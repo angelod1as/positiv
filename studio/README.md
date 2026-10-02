@@ -16,12 +16,13 @@ pnpm workspace package, deployed to Sanity's hosting at
 | `schemas/objects/rich-text.ts`      | Short Portable Text: paragraphs, bold, italic, links — subtitles, cards, bios    |
 | `schemas/objects/long-rich-text.ts` | Long Portable Text: adds h2, h3, blockquote and lists — the Rich Text Section    |
 | `schemas/objects/seo.ts`            | A Page's SEO: title, description, share image, noIndex                           |
-| `schemas/documents/`                | `page`, `homepage` (a singleton, until the Page at `/` replaces it) and `person` |
+| `schemas/objects/site-link.ts`      | A label and exactly one target, a Page or a URL — the Navigation and footer      |
+| `schemas/documents/`                | `page`, `person`. Singletons: `homepage` (until `/` replaces it), `siteSettings` |
 | `schemas/page-header/`              | The three Page Header forms: Homepage Hero, Hero and Title                       |
 | `schemas/sections/`                 | One object type per Section                                                      |
 | `reserved-addresses.ts`             | The first address segments the Platform uses, which no Page may take             |
 | `page-actions.ts`                   | Keeps the Page at `/` from being deleted or unpublished                          |
-| `structure.ts`, `singletons.ts`     | The desk: the two "Página inicial" entries, "Páginas" and "Pessoas"              |
+| `structure.ts`, `singletons.ts`     | The desk: both "Página inicial", "Páginas", "Configurações do site", "Pessoas"   |
 | `seed/`                             | The development seed — see below                                                 |
 | `migrations/`                       | Content migrations — see below                                                   |
 
@@ -84,6 +85,19 @@ The Page at `/` always has the id `page-home`; the address rule ties the two
 together. The Studio hides its delete and unpublish actions, but only the
 Studio: the API and the CLI can still remove it.
 
+### Site Settings
+
+Site Settings hold the Navigation, the footer and the Notice, at the fixed id
+`siteSettings`. Like the old homepage, the Studio keeps only publish, discard
+changes and restore on it, so it cannot be deleted, duplicated or
+unpublished from the desk.
+
+Every link in the Navigation and the footer columns is a `siteLink`: a label
+plus either a Page or a URL, never both. The URL, the social links and the
+Desenvolvimento addresses use `hrefRule` from `rich-text.ts`, the same rule as
+the rich text link: https or a path starting with `/`. The news dialog is not
+here; it stays Platform code.
+
 ### Seed development
 
 Development content comes from `seed/seed.ts`, never from edits by hand or
@@ -94,7 +108,8 @@ pnpm --filter studio seed
 ```
 
 It writes the Page at `/` with every Section type, `/sobre` with a Title,
-`/sobre/equipe` with a Hero, and two fictional People. It is idempotent —
+`/sobre/equipe` with a Hero, two fictional People, and Site Settings with a
+Navigation, a full footer and a Notice. It is idempotent —
 fixed ids and `createOrReplace` — so run it as often as you like; it
 overwrites those documents and nothing else. It refuses any dataset other
 than `development`, whatever `SANITY_STUDIO_DATASET` says.

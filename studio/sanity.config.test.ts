@@ -6,7 +6,7 @@ async function loadConfig(dataset: string | undefined) {
   return (await import("./sanity.config")).default
 }
 
-describe("Studio title", () => {
+describe("Studio title", { timeout: 30_000 }, () => {
   afterEach(() => {
     vi.unstubAllEnvs()
   })

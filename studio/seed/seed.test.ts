@@ -2,6 +2,7 @@ import { SanityClient } from "@sanity/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { HOMEPAGE_PAGE_ID } from "../schemas/documents/page"
+import { SITE_SETTINGS_ID } from "../singletons"
 import { validateDocumentOf } from "../test/validate"
 import { seed, seedDocuments } from "./seed"
 
@@ -95,5 +96,64 @@ describe("seedDocuments", () => {
         ["/sobre", "pageTitle"],
       ]),
     )
+  })
+
+  describe("Site Settings", () => {
+    type Link = { page?: { _ref: string }; url?: string }
+
+    const siteSettings = documents.find(
+      (document) => document._id === SITE_SETTINGS_ID,
+    ) as
+      | {
+          _type: string
+          navigation?: Link[]
+          footer?: {
+            columns?: { links?: Link[] }[]
+            social?: { network?: string }[]
+            text?: unknown[]
+            development?: Record<string, unknown>
+          }
+          notice?: unknown[]
+        }
+      | undefined
+
+    it("seeds the singleton", () => {
+      expect(siteSettings?._type).toBe("siteSettings")
+    })
+
+    it("links the Navigation to seeded Pages and to one external URL", () => {
+      const pageIds = pages.map((page) => page._id)
+      const navigation = siteSettings?.navigation ?? []
+      const toPages = navigation.filter((link) => link.page)
+
+      expect(toPages.length).toBeGreaterThan(0)
+      expect(pageIds).toEqual(
+        expect.arrayContaining(toPages.map((link) => link.page?._ref)),
+      )
+      expect(
+        navigation.filter((link) => link.url?.startsWith("https://")),
+      ).toHaveLength(1)
+    })
+
+    it("seeds a full footer", () => {
+      const footer = siteSettings?.footer
+
+      expect(footer?.columns?.length).toBeGreaterThan(0)
+      expect(footer?.social?.map((social) => social.network)).toEqual([
+        "instagram",
+      ])
+      expect(footer?.text?.length).toBeGreaterThan(0)
+      expect(Object.keys(footer?.development ?? {})).toEqual(
+        expect.arrayContaining([
+          "developedBy",
+          "repositoryUrl",
+          "bugReportUrl",
+        ]),
+      )
+    })
+
+    it("seeds a Notice", () => {
+      expect(siteSettings?.notice?.length).toBeGreaterThan(0)
+    })
   })
 })

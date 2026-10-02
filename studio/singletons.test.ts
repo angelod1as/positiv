@@ -1,7 +1,7 @@
 import type { DocumentActionComponent, TemplateItem } from "sanity"
 import { describe, expect, it } from "vitest"
 
-import { homepageActions, withoutSingletons } from "./singletons"
+import { singletonActions, withoutSingletons } from "./singletons"
 
 function action(
   name: DocumentActionComponent["action"],
@@ -22,15 +22,21 @@ function names(actions: DocumentActionComponent[]) {
   return actions.map((candidate) => candidate.action)
 }
 
-describe("homepageActions", () => {
+describe("singletonActions", () => {
   it("keeps the homepage from being deleted, duplicated or unpublished", () => {
     expect(
-      names(homepageActions(allActions, { schemaType: "homepage" })),
+      names(singletonActions(allActions, { schemaType: "homepage" })),
+    ).toEqual(["publish", "discardChanges", "restore"])
+  })
+
+  it("keeps Site Settings from being deleted, duplicated or unpublished", () => {
+    expect(
+      names(singletonActions(allActions, { schemaType: "siteSettings" })),
     ).toEqual(["publish", "discardChanges", "restore"])
   })
 
   it("leaves every other document's actions alone", () => {
-    expect(homepageActions(allActions, { schemaType: "person" })).toEqual(
+    expect(singletonActions(allActions, { schemaType: "person" })).toEqual(
       allActions,
     )
   })
@@ -44,5 +50,14 @@ describe("withoutSingletons", () => {
     ]
 
     expect(withoutSingletons(templates)).toEqual([{ templateId: "person" }])
+  })
+
+  it("does not offer a second Site Settings when creating a document", () => {
+    const templates: TemplateItem[] = [
+      { templateId: "siteSettings" },
+      { templateId: "page" },
+    ]
+
+    expect(withoutSingletons(templates)).toEqual([{ templateId: "page" }])
   })
 })
