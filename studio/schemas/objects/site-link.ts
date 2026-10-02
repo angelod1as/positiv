@@ -37,7 +37,7 @@ export const siteLink = defineType({
     defineField({
       name: "page",
       title: "Página",
-      description: "Uma página do site. Deixe vazio se usar um endereço.",
+      description: "Uma página publicada do site. Deixe vazio se usar um endereço.",
       type: "reference",
       to: [{ type: "page" }],
     }),
