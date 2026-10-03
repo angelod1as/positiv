@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto"
+import { sql } from "kysely"
 import { kyselyDb } from "~/kysely-db"
 
 export const SIGNUP_ATTEMPT_LIMIT = 10
@@ -26,21 +27,27 @@ export const recordSignupAttempt = async (
     .where("created_at", "<", windowStart)
     .execute()
 
-  const { count } = await kyselyDb
-    .selectFrom("signup_attempts")
-    .select((eb) => eb.fn.countAll<number>().as("count"))
-    .where("ip_hash", "=", ipHash)
-    .where("created_at", ">=", windowStart)
-    .executeTakeFirstOrThrow()
+  // Attempts from one address queue behind each other, so a burst cannot all
+  // read a count under the limit before any of them is recorded.
+  return kyselyDb.transaction().execute(async (trx) => {
+    await sql`SELECT pg_advisory_xact_lock(hashtext(${ipHash}))`.execute(trx)
 
-  if (Number(count) >= SIGNUP_ATTEMPT_LIMIT) return false
+    const { count } = await trx
+      .selectFrom("signup_attempts")
+      .select((eb) => eb.fn.countAll<number>().as("count"))
+      .where("ip_hash", "=", ipHash)
+      .where("created_at", ">=", windowStart)
+      .executeTakeFirstOrThrow()
 
-  await kyselyDb
-    .insertInto("signup_attempts")
-    .values({ ip_hash: ipHash, created_at: now.toISOString() })
-    .execute()
+    if (Number(count) >= SIGNUP_ATTEMPT_LIMIT) return false
 
-  return true
+    await trx
+      .insertInto("signup_attempts")
+      .values({ ip_hash: ipHash, created_at: now.toISOString() })
+      .execute()
+
+    return true
+  })
 }
 
 export const isSignupDomainBlocked = async (

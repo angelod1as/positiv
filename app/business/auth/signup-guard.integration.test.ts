@@ -39,6 +39,18 @@ describe("Signup guard - Integration Tests", () => {
       await expect(recordSignupAttempt(ip)).resolves.toBe(false)
     })
 
+    it("lets exactly the limit through when attempts arrive at once", async () => {
+      const ip = testIp("burst")
+
+      const answers = await Promise.all(
+        Array.from({ length: SIGNUP_ATTEMPT_LIMIT + 5 }, () =>
+          recordSignupAttempt(ip),
+        ),
+      )
+
+      expect(answers.filter(Boolean)).toHaveLength(SIGNUP_ATTEMPT_LIMIT)
+    })
+
     it("counts each address on its own", async () => {
       const busy = testIp("busy")
       const other = testIp("other")
