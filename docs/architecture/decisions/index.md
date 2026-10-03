@@ -50,6 +50,7 @@ ADRs are immutable once accepted - only their status can change (deprecated or s
 | [2025-01-31](./20250131-use-nodemailer-with-aws-ses.md) | Use Nodemailer with AWS SES | Accepted |
 | [2025-02-01](./20250201-use-listmonk-for-newsletters.md) | Use Listmonk for Newsletters | Accepted |
 | [2025-02-03](./20250203-use-cloudflare-turnstile.md) | Use Cloudflare Turnstile for CAPTCHA | Accepted |
+| [2026-10-03](./20261003-client-ip-comes-from-traefik.md) | Client IP comes from Traefik | Accepted |
 
 ### Payments
 

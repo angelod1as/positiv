@@ -36,5 +36,9 @@ Avise-nos pelo [email](mailto:${email}) com as informações:
       "Não conseguimos resetar sua senha. Entre em contato com o administrador",
     signupBlocked:
       'Houve um erro no cadastro da sua conta. Se você já tem uma conta, tente acessar o "esqueci minha senha". Se não, entre em contato pelo WhatsApp (em nossa homepage) e indique qual email você utilizou.',
+    signupRateLimited:
+      "Muitas tentativas de cadastro a partir desta conexão. Tente de novo amanhã ou fale com a gente pelo WhatsApp (em nossa homepage).",
+    signupDomainBlocked:
+      "Não aceitamos cadastros com este provedor de e-mail. Use outro e-mail, como Gmail ou Outlook.",
   },
 } as const

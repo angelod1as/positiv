@@ -173,4 +173,23 @@ test.describe('Registration', () => {
       await forgetAddress(email)
     }
   })
+
+  test('turns away an e-mail from a blocked provider on the e-mail field', async ({
+    page,
+  }) => {
+    // aol.com is one of the domains the signup bot used and no real person
+    // here has; it is seeded into blocked_signup_domains.
+    const email = generateTestEmail().replace(/@.*$/, '@aol.com')
+
+    try {
+      const registerPage = new RegisterPage(page)
+      await registerPage.register(email, PASSWORD)
+
+      await expect(registerPage.blockedDomainError).toBeVisible()
+      await expect(page).toHaveURL('/registrar')
+      await expect(registerPage.emailInput).toHaveValue(email)
+    } finally {
+      await forgetAddress(email)
+    }
+  })
 })

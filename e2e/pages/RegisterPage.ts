@@ -25,6 +25,7 @@ export class RegisterPage extends BasePage {
   readonly over18Error: Locator
   readonly emailFormatError: Locator
   readonly claimedProfileError: Locator
+  readonly blockedDomainError: Locator
   readonly commitFailureError: Locator
   readonly anyAlreadyRegisteredWording: Locator
 
@@ -44,6 +45,7 @@ export class RegisterPage extends BasePage {
     this.over18Error = page.getByText('Você só pode se cadastrar se for maior de 18 anos')
     this.emailFormatError = page.getByRole('alert').filter({ hasText: /e-?mail/i })
     this.claimedProfileError = page.getByText(/Houve um erro no cadastro da sua conta/i)
+    this.blockedDomainError = page.getByText(/Não aceitamos cadastros com este provedor de e-mail/i)
     this.commitFailureError = page.getByText('Não foi possível salvar agora. Tente novamente.')
 
     // Nothing on this page may ever say that an address is taken. Kept as a
