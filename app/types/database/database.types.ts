@@ -41,6 +41,21 @@ export type Database = {
           },
         ]
       }
+      blocked_signup_domains: {
+        Row: {
+          created_at: string
+          domain: string
+        }
+        Insert: {
+          created_at?: string
+          domain: string
+        }
+        Update: {
+          created_at?: string
+          domain?: string
+        }
+        Relationships: []
+      }
       event_demographics_history: {
         Row: {
           age_average: number | null
@@ -808,6 +823,24 @@ export type Database = {
           social_name?: string | null
           user_id?: string | null
           where_lives?: string | null
+        }
+        Relationships: []
+      }
+      signup_attempts: {
+        Row: {
+          created_at: string
+          id: number
+          ip_hash: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          ip_hash: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          ip_hash?: string
         }
         Relationships: []
       }
