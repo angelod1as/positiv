@@ -1,4 +1,5 @@
 import { getContext } from "~/business/auth/auth.server"
+import { isReservedAddress } from "~/business/cms/page.schema"
 import { pagesSnapshotCache } from "~/business/cms/pages-snapshot-cache.server"
 import { findPage } from "~/business/cms/pages-snapshot.server"
 import { PageHeader } from "~/components/pages/page/header/page-header"
@@ -8,7 +9,6 @@ import { POSITIV_URL } from "~/lib/constants/constants"
 import { createMetaArray, createPageTitle } from "~/lib/helpers/meta"
 import { logger } from "~/lib/logger/logger.server"
 import { getNextEvents } from "~/pages/homepage/fetch/get-next-events"
-import { reservedAddresses } from "../../../studio/reserved-addresses"
 import type { Route } from "./+types/page"
 
 const SITE_URL = POSITIV_URL.replace(/\/$/, "")
@@ -40,7 +40,7 @@ async function loadSnapshot() {
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   const address = `/${params["*"] ?? ""}`
-  if (reservedAddresses.includes(address.split("/")[1])) {
+  if (isReservedAddress(address)) {
     throw notFound()
   }
 

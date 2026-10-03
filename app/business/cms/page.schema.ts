@@ -11,13 +11,16 @@ import {
   sectionsFields,
 } from "./homepage-content.schema"
 
+export function isReservedAddress(address: string) {
+  return reservedAddresses.includes(address.split("/")[1])
+}
+
 const addressSchema = zod
   .string()
   .refine(
     (address) =>
       address === "/" ||
-      (/^(\/[a-z0-9-]+)+$/.test(address) &&
-        !reservedAddresses.includes(address.split("/")[1])),
+      (/^(\/[a-z0-9-]+)+$/.test(address) && !isReservedAddress(address)),
     { message: "Not a Page address" },
   )
 

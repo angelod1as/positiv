@@ -7,7 +7,7 @@ import {
   sections,
   seo,
 } from "~/test/page-documents"
-import { pageDocumentSchema } from "./page.schema"
+import { isReservedAddress, pageDocumentSchema } from "./page.schema"
 
 const accepts = (value: unknown) =>
   expect(pageDocumentSchema.safeParse(value).success).toBe(true)
@@ -203,4 +203,20 @@ describe("pageDocumentSchema", () => {
       rejects(page({ seo: { ...seo, image: { ...image, alt: null } } }))
     })
   })
+})
+
+describe("isReservedAddress", () => {
+  it.each(["/admin", "/admin/eventos", "/assets/entry.client-abc.js", "/api"])(
+    "reserves %s for the Platform",
+    (address) => {
+      expect(isReservedAddress(address)).toBe(true)
+    },
+  )
+
+  it.each(["/", "/sobre", "/sobre/admin", "/administrar", "/assetsx"])(
+    "leaves %s to Pages",
+    (address) => {
+      expect(isReservedAddress(address)).toBe(false)
+    },
+  )
 })
