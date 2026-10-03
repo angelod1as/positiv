@@ -15,43 +15,62 @@ const hrefSchema = zod.union([
   zod.url({ protocol: /^https$/ }),
 ])
 
-const blockSchema = zod
-  .object({
-    _type: zod.literal("block"),
-    _key: zod.string(),
-    style: zod.literal("normal"),
-    listItem: zod.never().optional(),
-    markDefs: zod
-      .array(
-        zod.object({
-          _type: zod.literal("link"),
-          _key: zod.string(),
-          href: hrefSchema,
-        }),
-      )
-      .optional(),
-    children: zod.array(spanSchema),
-  })
-  .superRefine((block, context) => {
-    const allowed = [
-      ...decorators,
-      ...(block.markDefs ?? []).map((markDef) => markDef._key),
-    ]
+const blockSchema = <
+  Style extends z.ZodType<string>,
+  ListItem extends z.ZodType<string | undefined>,
+>(
+  style: Style,
+  listItem: ListItem,
+) =>
+  zod
+    .object({
+      _type: zod.literal("block"),
+      _key: zod.string(),
+      style,
+      listItem,
+      level: zod.number().int().optional(),
+      markDefs: zod
+        .array(
+          zod.object({
+            _type: zod.literal("link"),
+            _key: zod.string(),
+            href: hrefSchema,
+          }),
+        )
+        .optional(),
+      children: zod.array(spanSchema),
+    })
+    .superRefine((block, context) => {
+      const allowed = [
+        ...decorators,
+        ...(block.markDefs ?? []).map((markDef) => markDef._key),
+      ]
 
-    block.children.forEach((span, spanIndex) => {
-      span.marks?.forEach((mark, markIndex) => {
-        if (!allowed.includes(mark)) {
-          context.addIssue({
-            code: "custom",
-            message: `Unknown mark "${mark}"`,
-            path: ["children", spanIndex, "marks", markIndex],
-          })
-        }
+      block.children.forEach((span, spanIndex) => {
+        span.marks?.forEach((mark, markIndex) => {
+          if (!allowed.includes(mark)) {
+            context.addIssue({
+              code: "custom",
+              message: `Unknown mark "${mark}"`,
+              path: ["children", spanIndex, "marks", markIndex],
+            })
+          }
+        })
       })
     })
-  })
 
-export const portableTextSchema = zod.array(blockSchema).min(1)
+export const portableTextSchema = zod
+  .array(blockSchema(zod.literal("normal"), zod.never().optional()))
+  .min(1)
+
+export const longPortableTextSchema = zod
+  .array(
+    blockSchema(
+      zod.enum(["normal", "h2", "h3", "blockquote"]),
+      zod.enum(["bullet", "number"]).optional(),
+    ),
+  )
+  .min(1)
 
 const sanityImageSchema = zod.object({
   alt: zod.string(),
@@ -168,3 +187,4 @@ export type HomepageDocument = z.infer<typeof homepageDocumentSchema>
 export type HomepageContent = z.infer<typeof homepageContentSchema>
 export type HomepageImage = z.infer<typeof homepageImageSchema>
 export type PortableText = z.infer<typeof portableTextSchema>
+export type LongPortableText = z.infer<typeof longPortableTextSchema>
