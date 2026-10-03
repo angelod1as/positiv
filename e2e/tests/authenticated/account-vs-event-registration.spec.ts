@@ -16,15 +16,19 @@ test.describe('Account signup versus event registration', () => {
     await page.goto('/dashboard')
 
     // The Alert title/description render as plain divs (not headings), since
-    // shadcn's AlertTitle/AlertDescription don't use heading elements.
+    // shadcn's AlertTitle/AlertDescription don't use heading elements. While
+    // the dashboard streams, React can keep a hidden copy of this content, so
+    // match only the visible one.
     await expect(
-      page.getByText('Sua conta está pronta', { exact: true }),
+      page.getByText('Sua conta está pronta', { exact: true }).filter({ visible: true }),
     ).toBeVisible()
 
     await expect(
-      page.getByText(
-        'Mas ter conta não te coloca em nenhuma festa. Escolha um evento abaixo e envie sua candidatura.',
-      ),
+      page
+        .getByText(
+          'Mas ter conta não te coloca em nenhuma festa. Escolha um evento abaixo e envie sua candidatura.',
+        )
+        .filter({ visible: true }),
     ).toBeVisible()
 
     await expect(
@@ -32,7 +36,7 @@ test.describe('Account signup versus event registration', () => {
     ).toBeVisible()
 
     await expect(
-      page.getByText('Você não tem nenhuma candidatura no momento.'),
+      page.getByText('Você não tem nenhuma candidatura no momento.').filter({ visible: true }),
     ).toBeVisible()
   })
 
