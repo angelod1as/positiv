@@ -9,13 +9,7 @@ import { describe, expect, it } from "vitest"
 // screenshots. This is a regression guard for that: it is nine minutes of every
 // pull request.
 const workflow = readFileSync(
-  join(
-    import.meta.dirname,
-    "..",
-    ".github",
-    "workflows",
-    "deploy-and-test.yml",
-  ),
+  join(import.meta.dirname, "..", ".github", "workflows", "deploy-and-test.yml"),
   "utf8",
 )
 
