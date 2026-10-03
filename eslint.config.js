@@ -129,6 +129,7 @@ export default defineConfig([
       "app/components/pages/events/**/*.tsx",
       "app/pages/admin/**/*.tsx",
       "app/pages/public/**/*.tsx",
+      "app/pages/page/**/*.tsx",
       "app/pages/events/**/*.tsx",
       "app/pages/auth/**/*.tsx",
       "app/pages/account/**/*.tsx",
