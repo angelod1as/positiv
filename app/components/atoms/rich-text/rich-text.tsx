@@ -5,7 +5,10 @@ import {
 } from "@portabletext/react"
 import type { ReactNode } from "react"
 import { ContentLink } from "~/components/atoms/content-link/content-link"
-import type { PortableText } from "~/business/cms/homepage-content.schema"
+import type {
+  LongPortableText,
+  PortableText,
+} from "~/business/cms/homepage-content.schema"
 
 type LinkMark = { _type: "link"; href?: string }
 
@@ -30,6 +33,21 @@ const INLINE_COMPONENTS: PortableTextComponents = {
   marks: MARKS,
 }
 
+const LONG_COMPONENTS: PortableTextComponents = {
+  block: {
+    normal: ({ children }) => <p>{children}</p>,
+    h2: ({ children }) => <h2>{children}</h2>,
+    h3: ({ children }) => <h3>{children}</h3>,
+    blockquote: ({ children }) => <blockquote>{children}</blockquote>,
+  },
+  list: {
+    bullet: ({ children }) => <ul className="list-disc pl-6">{children}</ul>,
+    number: ({ children }) => <ol>{children}</ol>,
+  },
+  listItem: ({ children }) => <li>{children}</li>,
+  marks: MARKS,
+}
+
 type RichTextProps = {
   value: PortableText
   inline?: boolean
@@ -43,4 +61,12 @@ export const RichText = ({
     value={value}
     components={inline ? INLINE_COMPONENTS : BLOCK_COMPONENTS}
   />
+)
+
+type LongRichTextProps = {
+  value: LongPortableText
+}
+
+export const LongRichText = ({ value }: LongRichTextProps): ReactNode => (
+  <PortableTextRenderer value={value} components={LONG_COMPONENTS} />
 )

@@ -1,7 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 import { homepageQuery } from "../../app/business/cms/homepage-query"
+import { pagesQuery } from "../../app/business/cms/pages-query"
 import { createSanityClient, SANITY_API_VERSION } from "../../app/business/cms/sanity-client.server"
 import fixture from "../fixtures/homepage-content.json"
+import pagesFixture from "../fixtures/pages-snapshot.json"
 import {
   E2E_SANITY_DATASET,
   E2E_SANITY_PROJECT_ID,
@@ -35,6 +37,13 @@ describe("sanity mock server", () => {
     expect(response.status).toBe(200)
     expect(response.headers.get("content-type")).toMatch(/^application\/json/)
     expect(await response.json()).toEqual({ result: fixture, ms: 1, query: homepageQuery })
+  })
+
+  it("answers the pages query with the Page snapshot fixture", async () => {
+    const response = await fetch(`${queryUrl(pagesQuery)}&returnQuery=false`)
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ result: pagesFixture, ms: 1 })
   })
 
   it("leaves the query out of the envelope when asked to, as the client does", async () => {

@@ -13,6 +13,7 @@ async function developmentRoutes() {
 function topLevelSegments(routes: Route[]): string[] {
   return routes.flatMap((route) => {
     const segment = route.path?.replace(/^\//, "").split("/")[0]
+    if (segment === "*") return []
     return segment ? [segment] : topLevelSegments(route.children ?? [])
   })
 }

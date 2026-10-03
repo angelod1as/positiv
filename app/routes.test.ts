@@ -44,6 +44,24 @@ describe("route config", () => {
     }
   })
 
+  it.each(["production", "development"])(
+    "serves Pages through a splat route registered after every other route in %s",
+    async (nodeEnv) => {
+      vi.stubEnv("NODE_ENV", nodeEnv)
+      vi.resetModules()
+      const routes = (await import("./routes")).default as {
+        path?: string
+        file: string
+      }[]
+
+      expect(routes.at(-1)).toMatchObject({
+        path: "*",
+        file: "pages/page/page.tsx",
+      })
+      expect(routes.filter((route) => route.path === "*")).toHaveLength(1)
+    },
+  )
+
   it("keeps the real routes in both environments", async () => {
     expect(await routesFor("production")).toContain("homepage")
     expect(await routesFor("development")).toContain("homepage")
