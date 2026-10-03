@@ -1,5 +1,17 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { ENV } from "varlock/env"
+import { logger } from "~/lib/logger/logger.server"
 import { action } from "./feedback"
+
+vi.mock("varlock/env", () => ({ ENV: { APP_ENV: "development" } }))
+
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+}))
+
+const runningIn = (env: string) => {
+  ;(ENV as { APP_ENV: string }).APP_ENV = env
+}
 
 vi.mock("~/business/feedback/submit-feedback-form.server", () => ({
   submitFeedbackForm: vi.fn(),
@@ -56,6 +68,24 @@ describe("feedback commit route", () => {
     expect(mockSubmitFeedbackForm).toHaveBeenCalledWith({
       answers,
       ip: "10.0.0.8",
+    })
+  })
+
+  describe("without an address", () => {
+    afterEach(() => runningIn("development"))
+
+    it("logs it in production, where the proxy always sets one", async () => {
+      runningIn("production")
+
+      await run(answers)
+
+      expect(logger.error).toHaveBeenCalled()
+    })
+
+    it("stays quiet outside production, where no proxy runs", async () => {
+      await run(answers)
+
+      expect(logger.error).not.toHaveBeenCalled()
     })
   })
 
