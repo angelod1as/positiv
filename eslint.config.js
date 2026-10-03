@@ -125,6 +125,7 @@ export default defineConfig([
       "app/components/forms/**/*.tsx",
       "app/components/pages/admin/**/*.tsx",
       "app/components/pages/homepage/**/*.tsx",
+      "app/components/pages/page/**/*.tsx",
       "app/components/pages/events/**/*.tsx",
       "app/pages/admin/**/*.tsx",
       "app/pages/public/**/*.tsx",
