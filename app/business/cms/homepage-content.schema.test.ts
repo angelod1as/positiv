@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest"
-import { portableTextSchema } from "./homepage-content.schema"
+import {
+  longPortableTextSchema,
+  portableTextSchema,
+} from "./homepage-content.schema"
 
 type Span = { text: string; marks?: string[] }
 type MarkDef = { _key: string; _type: string; href?: string }
@@ -134,5 +137,76 @@ describe("portableTextSchema", () => {
     ])
 
     expect(result.success).toBe(false)
+  })
+})
+
+describe("longPortableTextSchema", () => {
+  it.each(["normal", "h2", "h3", "blockquote"])(
+    "accepts a %s block",
+    (style) => {
+      const value = [block([{ text: "Consentimento" }], { style })]
+
+      expect(longPortableTextSchema.parse(value)).toEqual(value)
+    },
+  )
+
+  it.each(["h1", "h4"])("rejects a %s block", (style) => {
+    const result = longPortableTextSchema.safeParse([
+      block([{ text: "Consentimento" }], { style }),
+    ])
+
+    expect(result.success).toBe(false)
+  })
+
+  it.each(["bullet", "number"])("accepts a %s list item", (listItem) => {
+    const value = [{ ...block([{ text: "Não é não." }]), listItem, level: 1 }]
+
+    expect(longPortableTextSchema.parse(value)).toEqual(value)
+  })
+
+  it("rejects a list other than bullet or number", () => {
+    const result = longPortableTextSchema.safeParse([
+      { ...block([{ text: "Item" }]), listItem: "check", level: 1 },
+    ])
+
+    expect(result.success).toBe(false)
+  })
+
+  it("keeps the bold, italic and link rule of short text", () => {
+    const value = [
+      block(
+        [
+          { text: "negrito", marks: ["strong"] },
+          { text: "os eventos", marks: ["em", "l1"] },
+        ],
+        { markDefs: [{ _key: "l1", _type: "link", href: "/eventos" }] },
+      ),
+    ]
+
+    expect(longPortableTextSchema.parse(value)).toEqual(value)
+    expect(
+      longPortableTextSchema.safeParse([
+        block([{ text: "sublinhado", marks: ["underline"] }]),
+      ]).success,
+    ).toBe(false)
+    expect(
+      longPortableTextSchema.safeParse([
+        block([{ text: "Veja", marks: ["l1"] }], {
+          markDefs: [{ _key: "l1", _type: "link", href: "//evil.example" }],
+        }),
+      ]).success,
+    ).toBe(false)
+  })
+
+  it("rejects a member that is not a text block", () => {
+    const result = longPortableTextSchema.safeParse([
+      { _type: "image", _key: "i1", asset: { _ref: "image-1" } },
+    ])
+
+    expect(result.success).toBe(false)
+  })
+
+  it("rejects empty text", () => {
+    expect(longPortableTextSchema.safeParse([]).success).toBe(false)
   })
 })

@@ -181,4 +181,7 @@ export default [
       ]),
     ]),
   ]),
+
+  // PAGES: every other address is a Page from the CMS. Keep this last.
+  route("*", "pages/page/page.tsx"),
 ] satisfies RouteConfig

@@ -1,0 +1,258 @@
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import * as authServer from "~/business/auth/auth.server"
+import type { Page } from "~/business/cms/page.schema"
+import { pagesSnapshotCache } from "~/business/cms/pages-snapshot-cache.server"
+import type { PagesSnapshot } from "~/business/cms/pages-snapshot.server"
+import { metaCopy } from "~/copy/meta"
+import { getNextEvents } from "~/pages/homepage/fetch/get-next-events"
+import { pagesSnapshotFixture } from "~/test/pages-snapshot-fixture"
+import type { Route } from "./+types/page"
+import { loader, meta } from "./page"
+
+vi.mock("~/business/auth/auth.server", () => ({
+  getContext: vi.fn(),
+}))
+
+vi.mock("~/business/cms/pages-snapshot-cache.server", () => ({
+  pagesSnapshotCache: { get: vi.fn() },
+}))
+
+vi.mock("~/pages/homepage/fetch/get-next-events", () => ({
+  getNextEvents: vi.fn(),
+}))
+
+let snapshot: PagesSnapshot
+
+function argsFor(address: string) {
+  return {
+    request: new Request(`http://localhost${address}`),
+    params: { "*": address.replace(/^\//, "") },
+    context: {},
+  } as unknown as Route.LoaderArgs
+}
+
+function signedInAs(userId: string | undefined) {
+  vi.mocked(authServer.getContext).mockResolvedValue({
+    currentUser: userId ? { id: userId } : null,
+    currentProfile: userId ? { id: `profile-${userId}` } : null,
+  } as unknown as Awaited<ReturnType<typeof authServer.getContext>>)
+}
+
+function withPages(...pages: Page[]) {
+  vi.mocked(pagesSnapshotCache.get).mockResolvedValue(
+    new Map(pages.map((page) => [page.address, page])),
+  )
+}
+
+function pageAt(address: string) {
+  const page = snapshot.get(address)
+  if (!page) throw new Error(`No Page at ${address}`)
+  return page
+}
+
+async function statusOf(promise: Promise<unknown>) {
+  const thrown = await promise.then(
+    () => undefined,
+    (error: unknown) => error,
+  )
+  expect(thrown).toBeInstanceOf(Response)
+  return (thrown as Response).status
+}
+
+describe("Page loader", () => {
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    snapshot = await pagesSnapshotFixture()
+    vi.mocked(pagesSnapshotCache.get).mockResolvedValue(snapshot)
+    vi.mocked(getNextEvents).mockResolvedValue({
+      success: true,
+      data: [],
+      errors: [],
+    })
+    signedInAs(undefined)
+  })
+
+  it("returns the Page at a nested address with the login state", async () => {
+    signedInAs("user-1")
+
+    const result = await loader(argsFor("/sobre/equipe"))
+
+    expect(result.page).toEqual(pageAt("/sobre/equipe"))
+    expect(result.isLoggedIn).toBe(true)
+  })
+
+  it("finds the Page when the address ends with a slash", async () => {
+    const result = await loader(argsFor("/sobre/"))
+
+    expect(result.page).toEqual(pageAt("/sobre"))
+  })
+
+  it("throws a 404 for an address no Page has", async () => {
+    expect(await statusOf(loader(argsFor("/nao-existe")))).toBe(404)
+  })
+
+  it("leaves / to the homepage route for now", async () => {
+    expect(await statusOf(loader(argsFor("/")))).toBe(404)
+  })
+
+  it.each(["/assets/entry.client-abc123.js", "/admin/nada", "/api/nada"])(
+    "throws a 404 for %s without loading the snapshot",
+    async (address) => {
+      expect(await statusOf(loader(argsFor(address)))).toBe(404)
+      expect(pagesSnapshotCache.get).not.toHaveBeenCalled()
+    },
+  )
+
+  it("throws a 503 when the snapshot cannot be loaded on a cold start", async () => {
+    vi.mocked(pagesSnapshotCache.get).mockRejectedValue(
+      new Error("Sanity is down"),
+    )
+
+    expect(await statusOf(loader(argsFor("/sobre")))).toBe(503)
+  })
+
+  it("streams as many events as the Page's Next Events asks for", async () => {
+    const home = pageAt("/")
+    withPages({
+      ...home,
+      address: "/agenda",
+      header: pageAt("/sobre").header,
+      sections: home.sections.map((section) =>
+        section._type === "nextEvents" ? { ...section, count: 5 } : section,
+      ),
+    })
+    signedInAs("user-1")
+
+    const result = await loader(argsFor("/agenda"))
+
+    expect(result.events).toBeInstanceOf(Promise)
+    await expect(result.events).resolves.toEqual([])
+    expect(getNextEvents).toHaveBeenCalledWith("profile-user-1", 5, true)
+  })
+
+  it("does not fetch events for a Page without Next Events", async () => {
+    const result = await loader(argsFor("/sobre"))
+
+    expect(result.events).toBeUndefined()
+    expect(getNextEvents).not.toHaveBeenCalled()
+  })
+
+  it("streams no events when they cannot be loaded", async () => {
+    withPages({ ...pageAt("/"), address: "/agenda" })
+    vi.mocked(getNextEvents).mockResolvedValue({
+      success: false,
+      data: null,
+      errors: ["boom"],
+    } as unknown as Awaited<ReturnType<typeof getNextEvents>>)
+
+    const result = await loader(argsFor("/agenda"))
+
+    await expect(result.events).resolves.toBeUndefined()
+  })
+})
+
+describe("Page meta", () => {
+  beforeEach(async () => {
+    snapshot = await pagesSnapshotFixture()
+  })
+
+  function metaFor(page: Page | undefined) {
+    return meta({
+      data: page && { page, events: undefined, isLoggedIn: false },
+    } as unknown as Route.MetaArgs)
+  }
+
+  function find(entries: ReturnType<typeof metaFor>, key: string) {
+    return entries.find(
+      (entry) =>
+        ("property" in entry && entry.property === key) ||
+        ("name" in entry && entry.name === key) ||
+        ("rel" in entry && entry.rel === key) ||
+        (key === "title" && "title" in entry),
+    )
+  }
+
+  it("titles the Page after its own title when SEO has none", () => {
+    const entries = metaFor(pageAt("/sobre"))
+
+    expect(find(entries, "title")).toEqual({ title: "Sobre | Positiv Party" })
+    expect(find(entries, "og:title")).toMatchObject({
+      content: "Sobre | Positiv Party",
+    })
+  })
+
+  it("prefers the SEO title", () => {
+    const page = pageAt("/sobre")
+    const entries = metaFor({
+      ...page,
+      seo: { ...page.seo, title: "Quem somos" },
+    })
+
+    expect(find(entries, "title")).toEqual({
+      title: "Quem somos | Positiv Party",
+    })
+  })
+
+  it("describes the Page with its SEO description", () => {
+    const page = pageAt("/sobre/equipe")
+    const entries = metaFor(page)
+
+    expect(find(entries, "description")).toMatchObject({
+      content: page.seo.description,
+    })
+    expect(find(entries, "og:description")).toMatchObject({
+      content: page.seo.description,
+    })
+  })
+
+  it("points the canonical URL and og:url at the Page's address", () => {
+    const entries = metaFor(pageAt("/sobre/equipe"))
+
+    expect(find(entries, "canonical")).toEqual({
+      tagName: "link",
+      rel: "canonical",
+      href: "https://www.positivparty.com/sobre/equipe",
+    })
+    expect(find(entries, "og:url")).toMatchObject({
+      content: "https://www.positivparty.com/sobre/equipe",
+    })
+  })
+
+  it("shares the default image when the Page has none", () => {
+    expect(find(metaFor(pageAt("/sobre")), "og:image")).toMatchObject({
+      content: "https://www.positivparty.com/social.jpg",
+    })
+  })
+
+  it("shares the Page's own SEO image", () => {
+    const page = pageAt("/sobre")
+    const image = {
+      url: "https://cdn.sanity.io/images/test/development/abc.jpg",
+      alt: "Um grupo de pessoas",
+      width: 1200,
+      height: 630,
+    }
+    const entries = metaFor({ ...page, seo: { ...page.seo, image } })
+
+    expect(find(entries, "og:image")).toMatchObject({ content: image.url })
+    expect(find(entries, "og:image:alt")).toMatchObject({ content: image.alt })
+  })
+
+  it("asks search engines not to index a Page marked noIndex", () => {
+    const page = pageAt("/sobre")
+
+    expect(find(metaFor(page), "robots")).toBeUndefined()
+    expect(
+      find(metaFor({ ...page, seo: { ...page.seo, noIndex: true } }), "robots"),
+    ).toEqual({ name: "robots", content: "noindex" })
+  })
+
+  it("falls back to the site's own title and description without a Page", () => {
+    const entries = metaFor(undefined)
+
+    expect(find(entries, "title")).toEqual({ title: metaCopy.root.title })
+    expect(find(entries, "description")).toMatchObject({
+      content: metaCopy.root.description,
+    })
+  })
+})

@@ -134,7 +134,7 @@ rm production.tar.gz
 Check the dataset name on the import line twice. Never import into
 `production`.
 
-### Update the e2e fixture
+### Update the e2e fixtures
 
 `e2e/fixtures/homepage-content.json` is what the app's `homepageQuery` returns
 from `development`. It feeds the e2e Sanity mock and the unit tests. When the
@@ -149,7 +149,17 @@ pnpm --filter studio exec sanity documents query \
   > e2e/fixtures/homepage-content.json
 ```
 
-Commit the fixture when it changes.
+`e2e/fixtures/pages-snapshot.json` is the same for the app's `pagesQuery` —
+every Page the seed writes. Run the seed first, then:
+
+```bash
+pnpm --filter studio exec sanity documents query \
+  "$(pnpm exec tsx -e 'import { pagesQuery } from "./app/business/cms/pages-query"; process.stdout.write(pagesQuery)')" \
+  --dataset development --anonymous --api-version 2026-09-24 \
+  > e2e/fixtures/pages-snapshot.json
+```
+
+Commit the fixtures when they change.
 
 ## Deploy
 
