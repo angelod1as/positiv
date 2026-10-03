@@ -27,9 +27,9 @@ it yet.
 Copies the `homepage` document into the Page at `/` (`page-home`): title
 "Início", a Homepage Hero built from `homepage.hero`, today's six sections
 in today's order and the site's root description as the SEO description.
-It `createOrReplace`s `page-home` and never writes `homepage`, so it is safe
-to re-run: each run overwrites the Page with the current homepage. It runs
-once per dataset: do not re-run it after POS-584 serves `/` from `page-home`,
+It `createOrReplace`s `page-home` and never writes `homepage`, so it is
+idempotent: re-running it before POS-584 overwrites the Page with the current
+homepage. It runs once per dataset: do not re-run it after POS-584 serves `/` from `page-home`,
 because Editors then work on the Page and a re-run erases their changes.
 
 It runs through `sanity exec` rather than `sanity migrations run`, so that
