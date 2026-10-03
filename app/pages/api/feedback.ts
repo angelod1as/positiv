@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from "react-router"
 import { submitFeedbackForm } from "~/business/feedback/submit-feedback-form.server"
+import { getClientIp } from "~/lib/helpers/get-client-ip.server"
 
 /**
  * A route of its own rather than the page's action: a POST to a page route is
@@ -16,7 +17,7 @@ export async function action({ request }: ActionFunctionArgs) {
     return Response.json({ ok: false, errors: [] }, { status: 400 })
   }
 
-  const ip = request.headers.get("cf-connecting-ip") || "unknown"
+  const ip = getClientIp(request) ?? "unknown"
 
   const result = await submitFeedbackForm({
     answers: answers as Record<string, unknown>,

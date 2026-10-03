@@ -41,12 +41,21 @@ describe("feedback commit route", () => {
     })
   })
 
-  it("passes on the address the edge saw", async () => {
-    await run(answers, { "cf-connecting-ip": "10.0.0.7" })
+  it("passes on the address the proxy saw", async () => {
+    await run(answers, { "x-real-ip": "10.0.0.7" })
 
     expect(mockSubmitFeedbackForm).toHaveBeenCalledWith({
       answers,
       ip: "10.0.0.7",
+    })
+  })
+
+  it("passes on the address the proxy appended, not the one the client claimed", async () => {
+    await run(answers, { "x-forwarded-for": "198.51.100.1, 10.0.0.8" })
+
+    expect(mockSubmitFeedbackForm).toHaveBeenCalledWith({
+      answers,
+      ip: "10.0.0.8",
     })
   })
 
