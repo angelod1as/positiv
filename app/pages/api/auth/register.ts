@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "react-router"
 import { getContext, registerUser } from "~/business/auth/auth.server"
 import { registerUserSchema } from "~/business/common"
+import { getClientIp } from "~/lib/helpers/get-client-ip.server"
 
 /**
  * A route of its own rather than the register page's own action: a POST to a
@@ -38,5 +39,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
     )
   }
 
-  return Response.json(await registerUser(parsed.data, context))
+  return Response.json(
+    await registerUser(parsed.data, context, getClientIp(request)),
+  )
 }

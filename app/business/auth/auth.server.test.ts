@@ -2,6 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { logger } from "~/lib/logger/logger.server"
 import type { DBClient } from "~/types/utils/utils.types"
 import { getContext, getUserContext, registerUser } from "./auth.server"
+import {
+  isSignupDomainBlocked,
+  recordSignupAttempt,
+} from "./signup-guard.server"
 
 vi.mock("varlock/env", () => ({
   ENV: { IS_PROD_IN_DEV: false },
@@ -22,6 +26,13 @@ vi.mock("~/kysely-db", () => ({
     selectFrom: vi.fn(),
   },
 }))
+
+vi.mock("./signup-guard.server", () => ({
+  recordSignupAttempt: vi.fn(),
+  isSignupDomainBlocked: vi.fn(),
+}))
+
+const CLIENT_IP = "203.0.113.7"
 
 vi.mock("~/lib/logger/logger.server", () => ({
   logger: {
@@ -455,6 +466,8 @@ describe("getContext", () => {
 describe("registerUser", () => {
   // Set up default Kysely mock to return no existing orphan profile
   beforeEach(async () => {
+    vi.mocked(recordSignupAttempt).mockResolvedValue(true)
+    vi.mocked(isSignupDomainBlocked).mockResolvedValue(false)
     const { kyselyDb: kysely } = await import("~/kysely-db")
     vi.mocked(kysely.selectFrom).mockReturnValue({
       select: vi.fn().mockReturnValue({
@@ -492,7 +505,7 @@ describe("registerUser", () => {
       currentProfile: null,
     }
 
-    await registerUser(values, context)
+    await registerUser(values, context, CLIENT_IP)
 
     expect(mockSignUp).toHaveBeenCalledWith({
       email: "test@example.com",
@@ -529,7 +542,7 @@ describe("registerUser", () => {
       currentProfile: null,
     }
 
-    await registerUser(values, context)
+    await registerUser(values, context, CLIENT_IP)
 
     const signUpCall = mockSignUp.mock.calls[0][0]
     expect(signUpCall).not.toHaveProperty("over18")
@@ -567,7 +580,7 @@ describe("registerUser", () => {
       currentProfile: null,
     }
 
-    const result = await registerUser(values, context)
+    const result = await registerUser(values, context, CLIENT_IP)
 
     expect(mockSignUp).toHaveBeenCalled()
     expect(mockResetPassword).toHaveBeenCalledWith("existing@example.com", {
@@ -610,7 +623,7 @@ describe("registerUser", () => {
       currentProfile: null,
     }
 
-    const result = await registerUser(values, context)
+    const result = await registerUser(values, context, CLIENT_IP)
 
     // No question is to blame, so the runtime says the save failed and keeps
     // everything the person typed.
@@ -644,7 +657,7 @@ describe("registerUser", () => {
       currentProfile: null,
     }
 
-    const result = await registerUser(values, context)
+    const result = await registerUser(values, context, CLIENT_IP)
 
     expect(result).toEqual({ ok: false, errors: [] })
   })
@@ -691,7 +704,7 @@ describe("registerUser", () => {
       currentProfile: null,
     }
 
-    const result = await registerUser(values, context)
+    const result = await registerUser(values, context, CLIENT_IP)
 
     expect(result.ok).toBe(false)
     expect(result).toEqual({
@@ -753,7 +766,7 @@ describe("registerUser", () => {
       currentProfile: null,
     }
 
-    await registerUser(values, context)
+    await registerUser(values, context, CLIENT_IP)
 
     expect(logger.warn).toHaveBeenCalledWith(
       "[ADMIN] Blocked claimed profile signup:",
@@ -805,7 +818,7 @@ describe("registerUser", () => {
       currentProfile: null,
     }
 
-    const result = await registerUser(values, context)
+    const result = await registerUser(values, context, CLIENT_IP)
 
     expect(kysely.selectFrom).toHaveBeenCalledWith("profiles")
     expect(mockWhereEmail).toHaveBeenCalledWith("email", "=", "orphan@example.com")
@@ -854,7 +867,7 @@ describe("registerUser", () => {
       currentProfile: null,
     }
 
-    const result = await registerUser(values, context)
+    const result = await registerUser(values, context, CLIENT_IP)
 
     expect(kysely.selectFrom).toHaveBeenCalledWith("profiles")
     expect(mockWhereEmail).toHaveBeenCalledWith("email", "=", "new@example.com")
@@ -915,5 +928,138 @@ describe("getUserContext", () => {
       "/entrar?redirect_to=%2Fdashboard%2F1%2Fregras%3Fq%3D2",
       expect.any(String),
     )
+  })
+})
+
+describe("registerUser signup guard", () => {
+  const values = {
+    email: "someone@example.com",
+    password: "password123",
+    confirmPassword: "password123",
+    over18: true,
+    captchaToken: "test-captcha-token",
+  }
+
+  const contextWith = (signUp: ReturnType<typeof vi.fn>) => ({
+    supabase: { auth: { signUp } } as unknown as DBClient,
+    host: "http://localhost:5173",
+    supabaseHeaders: new Headers(),
+    currentUser: null,
+    currentProfile: null,
+  })
+
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    vi.mocked(recordSignupAttempt).mockResolvedValue(true)
+    vi.mocked(isSignupDomainBlocked).mockResolvedValue(false)
+    const { kyselyDb: kysely } = await import("~/kysely-db")
+    vi.mocked(kysely.selectFrom).mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            executeTakeFirst: vi.fn().mockResolvedValue(undefined),
+          }),
+        }),
+      }),
+    } as never)
+  })
+
+  it("counts the attempt against the address it came from", async () => {
+    const signUp = vi.fn().mockResolvedValue({ error: null })
+
+    const result = await registerUser(values, contextWith(signUp), CLIENT_IP)
+
+    expect(recordSignupAttempt).toHaveBeenCalledWith(CLIENT_IP)
+    expect(result).toEqual({ ok: true })
+    expect(signUp).toHaveBeenCalled()
+  })
+
+  it("refuses an address over the limit without signing anyone up", async () => {
+    vi.mocked(recordSignupAttempt).mockResolvedValue(false)
+    const signUp = vi.fn().mockResolvedValue({ error: null })
+
+    const result = await registerUser(values, contextWith(signUp), CLIENT_IP)
+
+    expect(result).toEqual({
+      ok: false,
+      errors: [],
+      message: expect.stringContaining(
+        "Muitas tentativas",
+      ) as unknown as string,
+    })
+    expect(signUp).not.toHaveBeenCalled()
+  })
+
+  it("logs a refused address without the address or the e-mail", async () => {
+    vi.mocked(recordSignupAttempt).mockResolvedValue(false)
+
+    await registerUser(values, contextWith(vi.fn()), CLIENT_IP)
+
+    expect(logger.warn).toHaveBeenCalled()
+    const logged = JSON.stringify(vi.mocked(logger.warn).mock.calls)
+    expect(logged).not.toContain(CLIENT_IP)
+    expect(logged).not.toContain("someone")
+  })
+
+  it("refuses a blocked domain on the e-mail question without signing anyone up", async () => {
+    vi.mocked(isSignupDomainBlocked).mockResolvedValue(true)
+    const signUp = vi.fn().mockResolvedValue({ error: null })
+
+    const result = await registerUser(
+      { ...values, email: "someone@aol.com" },
+      contextWith(signUp),
+      CLIENT_IP,
+    )
+
+    expect(isSignupDomainBlocked).toHaveBeenCalledWith("someone@aol.com")
+    expect(result).toEqual({
+      ok: false,
+      errors: [
+        {
+          questionId: "email",
+          message: expect.stringContaining("outro e-mail") as unknown as string,
+        },
+      ],
+    })
+    expect(signUp).not.toHaveBeenCalled()
+  })
+
+  it("logs a blocked domain with the domain only", async () => {
+    vi.mocked(isSignupDomainBlocked).mockResolvedValue(true)
+
+    await registerUser(
+      { ...values, email: "someone@aol.com" },
+      contextWith(vi.fn()),
+      CLIENT_IP,
+    )
+
+    const logged = JSON.stringify(vi.mocked(logger.warn).mock.calls)
+    expect(logged).toContain("aol.com")
+    expect(logged).not.toContain("someone")
+    expect(logged).not.toContain(CLIENT_IP)
+  })
+
+  it("signs up without the limit when no address is known, and says so in the log", async () => {
+    const signUp = vi.fn().mockResolvedValue({ error: null })
+
+    const result = await registerUser(values, contextWith(signUp), null)
+
+    expect(recordSignupAttempt).not.toHaveBeenCalled()
+    expect(logger.error).toHaveBeenCalled()
+    expect(result).toEqual({ ok: true })
+  })
+
+  it("still refuses a blocked domain when no address is known", async () => {
+    vi.mocked(isSignupDomainBlocked).mockResolvedValue(true)
+    const signUp = vi.fn()
+
+    const result = await registerUser(
+      { ...values, email: "someone@aol.com" },
+      contextWith(signUp),
+      null,
+    )
+
+    expect(result.ok).toBe(false)
+    expect(signUp).not.toHaveBeenCalled()
   })
 })

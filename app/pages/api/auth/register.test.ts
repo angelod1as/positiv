@@ -19,15 +19,15 @@ const valid = {
   captchaToken: "token",
 }
 
-const post = (body: unknown) =>
+const post = (body: unknown, headers: Record<string, string> = {}) =>
   new Request("http://localhost/api/auth/register", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...headers },
     body: typeof body === "string" ? body : JSON.stringify(body),
   })
 
-const run = (body: unknown) =>
-  action({ request: post(body), params: {}, context: {} as never })
+const run = (body: unknown, headers?: Record<string, string>) =>
+  action({ request: post(body, headers), params: {}, context: {} as never })
 
 describe("register commit route", () => {
   beforeEach(() => {
@@ -40,7 +40,31 @@ describe("register commit route", () => {
     const response = await run(valid)
 
     await expect(response.json()).resolves.toEqual({ ok: true })
-    expect(mockRegisterUser).toHaveBeenCalledWith(valid, expect.anything())
+    expect(mockRegisterUser).toHaveBeenCalledWith(
+      valid,
+      expect.anything(),
+      null,
+    )
+  })
+
+  it("passes on the address the proxy saw", async () => {
+    await run(valid, { "x-real-ip": "203.0.113.7" })
+
+    expect(mockRegisterUser).toHaveBeenCalledWith(
+      valid,
+      expect.anything(),
+      "203.0.113.7",
+    )
+  })
+
+  it("passes on the address the proxy appended, not the one the client claimed", async () => {
+    await run(valid, { "x-forwarded-for": "198.51.100.1, 203.0.113.9" })
+
+    expect(mockRegisterUser).toHaveBeenCalledWith(
+      valid,
+      expect.anything(),
+      "203.0.113.9",
+    )
   })
 
   it("returns the zod issues keyed by question, without reaching registerUser", async () => {
