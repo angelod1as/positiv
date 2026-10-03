@@ -19,3 +19,40 @@ it yet.
   running it once does.
 - Keep the script after it runs. It is the record of how production's content
   got its shape.
+
+## Migrations
+
+### `homepage-to-page` (POS-582)
+
+Copies the `homepage` document into the Page at `/` (`page-home`): title
+"Início", a Homepage Hero built from `homepage.hero`, today's six sections
+in today's order and the site's root description as the SEO description.
+It `createOrReplace`s `page-home` and never writes `homepage`, so it is
+idempotent: re-running it before POS-584 overwrites the Page with the current
+homepage. It runs once per dataset: do not re-run it after POS-584 serves `/` from `page-home`,
+because Editors then work on the Page and a re-run erases their changes.
+
+It runs through `sanity exec` rather than `sanity migrations run`, so that
+`--dataset` is required instead of defaulting to `development`. It dry-runs
+— printing the Page it would write — until you add `--no-dry-run`.
+
+From the repository root, `development` first:
+
+```sh
+pnpm --filter studio migrate:homepage-to-page --dataset development
+pnpm --filter studio migrate:homepage-to-page --dataset development --no-dry-run
+```
+
+Then `production`:
+
+```sh
+pnpm --filter studio migrate:homepage-to-page --dataset production
+pnpm --filter studio migrate:homepage-to-page --dataset production --no-dry-run
+```
+
+Check the Page in the Studio afterwards. If `page-home` has an unpublished
+draft, the script warns: the Studio shows the draft over the migrated Page,
+so discard it.
+
+On `development` the migration replaces the `page-home` the seed wrote, which
+showcases every Section type. Run `pnpm --filter studio seed` to restore it.

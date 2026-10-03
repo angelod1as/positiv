@@ -55,10 +55,11 @@ jobs:
         run: pnpm install
       # `pnpm lint` regenerates env.d.ts before typechecking, so a stale commit
       # of it is invisible locally. Codegen reads only .env.schema, no values.
+      # The icons it fetches from the network are left out of the comparison.
       - name: Check env.d.ts matches .env.schema
         run: |
           pnpm exec varlock codegen
-          git diff --exit-code env.d.ts
+          pnpm exec tsx scripts/check-env-types.ts
       - name: Run unit tests
         run: pnpm test:coverage
       # test:coverage runs the app's Vitest only; the Studio has its own.
