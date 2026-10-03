@@ -72,7 +72,7 @@ export const longPortableTextSchema = zod
   )
   .min(1)
 
-const sanityImageSchema = zod.object({
+export const sanityImageSchema = zod.object({
   alt: zod.string(),
   asset: zod.object({
     _ref: zod.string(),
@@ -103,7 +103,7 @@ export const homepageImageSchema = zod.object({
   height: zod.number(),
 })
 
-const personFields = {
+export const personFields = {
   _id: zod.string(),
   name: zod.string(),
   pronouns: zod.string(),
@@ -111,7 +111,7 @@ const personFields = {
   bio: portableTextSchema,
 }
 
-const sectionsFields = {
+export const sectionsFields = {
   hero: zod.object({
     title: zod.string(),
     subtitle: portableTextSchema,
@@ -157,7 +157,7 @@ const sectionsFields = {
   }),
 }
 
-const foundersFields = {
+export const foundersFields = {
   title: zod.string(),
   videoUrl: zod.url(),
   videoTitle: zod.string(),
