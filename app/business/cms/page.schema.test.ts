@@ -9,6 +9,11 @@ import {
 } from "~/test/page-documents"
 import { isReservedAddress, pageDocumentSchema } from "./page.schema"
 
+const imageSectionSized = (dimensions: { width: number; height: number }) => ({
+  ...sections.imageSection,
+  image: { ...sections.imageSection.image, dimensions },
+})
+
 const accepts = (value: unknown) =>
   expect(pageDocumentSchema.safeParse(value).success).toBe(true)
 
@@ -153,6 +158,14 @@ describe("pageDocumentSchema", () => {
             },
           },
         ],
+      ],
+      [
+        "an Image Section whose image has no width",
+        [imageSectionSized({ width: 0, height: 600 })],
+      ],
+      [
+        "an Image Section whose image has no height",
+        [imageSectionSized({ width: 800, height: 0 })],
       ],
       [
         "an Image Section without an image",

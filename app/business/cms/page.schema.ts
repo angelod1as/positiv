@@ -62,8 +62,8 @@ const sharedSections = [
 ] as const
 
 const imageDimensionsSchema = zod.object({
-  width: zod.number(),
-  height: zod.number(),
+  width: zod.number().positive(),
+  height: zod.number().positive(),
 })
 
 const pageSectionDocumentSchema = zod.discriminatedUnion("_type", [
