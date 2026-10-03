@@ -88,4 +88,14 @@ describe("run", () => {
       expect(result.pageHasDraft).toBe(pageHasDraft)
     },
   )
+
+  it("looks for the draft before writing, so the warning comes first", async () => {
+    const store = fakeStore(homepage, true)
+
+    await run(["--dataset", "development", "--no-dry-run"], () => store)
+
+    expect(store.pageHasDraft.mock.invocationCallOrder[0]).toBeLessThan(
+      store.createOrReplace.mock.invocationCallOrder[0],
+    )
+  })
 })

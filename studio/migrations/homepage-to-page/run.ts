@@ -32,10 +32,11 @@ export async function run(args: string[], connect: (dataset: string) => Store) {
 
   const page = homepageToPage(homepage)
   const dryRun = !values["no-dry-run"]
+  const pageHasDraft = await store.pageHasDraft()
 
   if (!dryRun) {
     await store.createOrReplace(page)
   }
 
-  return { dryRun, page, pageHasDraft: await store.pageHasDraft() }
+  return { dryRun, page, pageHasDraft }
 }
