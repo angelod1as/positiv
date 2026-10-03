@@ -213,8 +213,11 @@ export const registerUser = async (
 
   // Supabase sees every signup coming from this server, so its own per-IP
   // limits cannot tell one visitor from another; the limit is ours to keep.
+  // Only production runs behind Traefik; anywhere else no header is normal.
   if (!ip) {
-    logger.error("Signup without a client IP; the attempt limit was skipped")
+    if (ENV.APP_ENV === "production") {
+      logger.error("Signup without a client IP; the attempt limit was skipped")
+    }
   } else if (!(await recordSignupAttempt(ip))) {
     trackServerEvent("signup_rate_limited", {}, "/auth/register")
     logger.warn("[ADMIN] Refused signup: too many attempts from one address")

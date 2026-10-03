@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { ENV } from "varlock/env"
 import { logger } from "~/lib/logger/logger.server"
 import type { DBClient } from "~/types/utils/utils.types"
 import { getContext, getUserContext, registerUser } from "./auth.server"
@@ -1039,14 +1040,43 @@ describe("registerUser signup guard", () => {
     expect(logged).not.toContain(CLIENT_IP)
   })
 
-  it("signs up without the limit when no address is known, and says so in the log", async () => {
+  const runningIn = (env: string | undefined) => {
+    ;(ENV as { APP_ENV?: string }).APP_ENV = env
+  }
+
+  afterEach(() => runningIn(undefined))
+
+  it("signs up without the limit when no address is known", async () => {
     const signUp = vi.fn().mockResolvedValue({ error: null })
 
     const result = await registerUser(values, contextWith(signUp), null)
 
     expect(recordSignupAttempt).not.toHaveBeenCalled()
-    expect(logger.error).toHaveBeenCalled()
     expect(result).toEqual({ ok: true })
+  })
+
+  it("logs a missing address in production, where the proxy always sets one", async () => {
+    runningIn("production")
+
+    await registerUser(
+      values,
+      contextWith(vi.fn().mockResolvedValue({ error: null })),
+      null,
+    )
+
+    expect(logger.error).toHaveBeenCalled()
+  })
+
+  it("stays quiet about a missing address outside production, where no proxy runs", async () => {
+    runningIn("development")
+
+    await registerUser(
+      values,
+      contextWith(vi.fn().mockResolvedValue({ error: null })),
+      null,
+    )
+
+    expect(logger.error).not.toHaveBeenCalled()
   })
 
   it("still refuses a blocked domain when no address is known", async () => {
