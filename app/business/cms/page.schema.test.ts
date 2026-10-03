@@ -63,6 +63,22 @@ describe("pageDocumentSchema", () => {
       )
     })
 
+    it("accepts a cropped Image Section", () => {
+      accepts(
+        page({
+          sections: [
+            {
+              ...sections.imageSection,
+              image: {
+                ...sections.imageSection.image,
+                crop: { top: 0.1, bottom: 0.1, left: 0.25, right: 0.25 },
+              },
+            },
+          ],
+        }),
+      )
+    })
+
     it("accepts an Image Section without a caption", () => {
       accepts(page({ sections: [{ ...sections.imageSection, caption: null }] }))
     })
@@ -111,6 +127,30 @@ describe("pageDocumentSchema", () => {
           {
             ...sections.imageSection,
             image: { ...sections.imageSection.image, alt: null },
+          },
+        ],
+      ],
+      [
+        "an Image Section whose crop leaves no width",
+        [
+          {
+            ...sections.imageSection,
+            image: {
+              ...sections.imageSection.image,
+              crop: { top: 0, bottom: 0, left: 0.5, right: 0.5 },
+            },
+          },
+        ],
+      ],
+      [
+        "an Image Section whose crop leaves no height",
+        [
+          {
+            ...sections.imageSection,
+            image: {
+              ...sections.imageSection.image,
+              crop: { top: 0.6, bottom: 0.4, left: 0, right: 0 },
+            },
           },
         ],
       ],

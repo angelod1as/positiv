@@ -72,7 +72,13 @@ const pageSectionDocumentSchema = zod.discriminatedUnion("_type", [
       .min(1),
   }),
   section("imageSection", {
-    image: sanityImageSchema.extend({ dimensions: imageDimensionsSchema }),
+    image: sanityImageSchema
+      .extend({ dimensions: imageDimensionsSchema })
+      .refine(
+        ({ crop }) =>
+          !crop || (crop.left + crop.right < 1 && crop.top + crop.bottom < 1),
+        { message: "The crop leaves nothing of the image" },
+      ),
     caption: zod.string().nullish(),
   }),
 ])
