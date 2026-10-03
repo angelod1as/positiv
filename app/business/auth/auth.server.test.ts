@@ -1025,6 +1025,20 @@ describe("registerUser signup guard", () => {
     expect(signUp).not.toHaveBeenCalled()
   })
 
+  it("does not count a blocked domain against the address", async () => {
+    vi.mocked(isSignupDomainBlocked).mockResolvedValue(true)
+
+    await registerUser(
+      { ...values, email: "someone@aol.com" },
+      contextWith(vi.fn()),
+      CLIENT_IP,
+    )
+
+    // Several people behind one carrier address mistyping into a blocked
+    // provider must not use up the turns of everyone else on it.
+    expect(recordSignupAttempt).not.toHaveBeenCalled()
+  })
+
   it("logs a blocked domain with the domain only", async () => {
     vi.mocked(isSignupDomainBlocked).mockResolvedValue(true)
 

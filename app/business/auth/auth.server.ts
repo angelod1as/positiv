@@ -211,6 +211,18 @@ export const registerUser = async (
 
   const { over18, confirmPassword, captchaToken, ...data } = values
 
+  if (await isSignupDomainBlocked(data.email)) {
+    const domain = data.email.trim().toLowerCase().split("@").at(-1)
+    trackServerEvent("signup_domain_blocked", { domain }, "/auth/register")
+    logger.warn("[ADMIN] Refused signup from a blocked domain:", { domain })
+    return {
+      ok: false,
+      errors: [
+        { questionId: "email", message: errorsCopy.auth.signupDomainBlocked },
+      ],
+    }
+  }
+
   // Supabase sees every signup coming from this server, so its own per-IP
   // limits cannot tell one visitor from another; the limit is ours to keep.
   // Only production runs behind Traefik; anywhere else no header is normal.
@@ -222,18 +234,6 @@ export const registerUser = async (
     trackServerEvent("signup_rate_limited", {}, "/auth/register")
     logger.warn("[ADMIN] Refused signup: too many attempts from one address")
     return { ok: false, errors: [], message: errorsCopy.auth.signupRateLimited }
-  }
-
-  if (await isSignupDomainBlocked(data.email)) {
-    const domain = data.email.trim().toLowerCase().split("@").at(-1)
-    trackServerEvent("signup_domain_blocked", { domain }, "/auth/register")
-    logger.warn("[ADMIN] Refused signup from a blocked domain:", { domain })
-    return {
-      ok: false,
-      errors: [
-        { questionId: "email", message: errorsCopy.auth.signupDomainBlocked },
-      ],
-    }
   }
 
   // Block signup only when a claimed profile (user_id IS NOT NULL) already exists for
