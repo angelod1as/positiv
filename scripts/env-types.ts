@@ -5,7 +5,7 @@
 // comparison.
 export function withoutIcons(source: string): string {
   return source
-    .replace(/^ *\* !\[icon\]\(data:[^)]*\) *\n/gm, "")
+    .replace(/^ *\* !\[icon\]\(data:.*\) *\n/gm, "")
     .replace(/\/\*\*\n *\* (.*?) *\n *\*\//g, "/** $1 */")
     .replace(/ +$/gm, "")
 }

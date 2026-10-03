@@ -38,6 +38,17 @@ describe("withoutIcons", () => {
     expect(withoutIcons(withIcons)).toBe(withoutIcons(withoutFetchedIcons))
   })
 
+  it("drops an icon whose SVG holds a parenthesis, which encodeURIComponent keeps", () => {
+    const withParenthesis = withIcons.replaceAll(
+      "%3C%2Fsvg%3E)",
+      "%3Cg%20transform%3D%22rotate(90)%22%2F%3E%3C%2Fsvg%3E)",
+    )
+
+    expect(withoutIcons(withParenthesis)).toBe(
+      withoutIcons(withoutFetchedIcons),
+    )
+  })
+
   it("still tells a changed type apart", () => {
     expect(withoutIcons(withIcons)).not.toBe(
       withoutIcons(
