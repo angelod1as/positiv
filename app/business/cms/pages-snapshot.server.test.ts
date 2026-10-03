@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import fixture from "../../../e2e/fixtures/pages-snapshot.json"
 import { headers, image, page, sections, seo } from "~/test/page-documents"
 import { pageSchema } from "./page.schema"
 import { pagesQuery } from "./pages-query"
@@ -215,6 +216,14 @@ describe("getPagesSnapshot", () => {
     await expect(getPagesSnapshot(client)).rejects.toThrow(
       /page-sobre-2 \(\/sobre\)/,
     )
+  })
+
+  it("accepts the Pages recorded from the development seed", async () => {
+    respondWith(fixture)
+
+    const snapshot = await getPagesSnapshot(client)
+
+    expect([...snapshot.keys()]).toEqual(["/", "/sobre", "/sobre/equipe"])
   })
 
   it("fails when Sanity does not answer with a list", async () => {

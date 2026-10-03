@@ -2,12 +2,13 @@
 // test so the suite never reads a real dataset. The app's client, given a custom
 // apiHost, sends every query — CDN or not — to
 // GET <apiHost>/v<apiVersion>/data/query/<dataset>?query=…, and this answers the
-// homepage query there with the recorded fixture.
+// homepage and pages queries there with the recorded fixtures.
 import { readFileSync } from "node:fs"
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 import type { AddressInfo } from "node:net"
 import { join } from "node:path"
 import { homepageQuery } from "../../app/business/cms/homepage-query"
+import { pagesQuery } from "../../app/business/cms/pages-query"
 import { SANITY_API_VERSION } from "../../app/business/cms/sanity-client.server"
 
 export const E2E_SANITY_PROJECT_ID = "e2emock"
@@ -15,11 +16,14 @@ export const E2E_SANITY_DATASET = "e2e"
 
 // Read rather than imported: Playwright loads this file as native ESM, where a
 // JSON import needs an import attribute the project's TypeScript target rejects.
-const homepageContent: unknown = JSON.parse(
-  readFileSync(join(process.cwd(), "e2e", "fixtures", "homepage-content.json"), "utf8"),
-)
+function readFixture(name: string): unknown {
+  return JSON.parse(readFileSync(join(process.cwd(), "e2e", "fixtures", name), "utf8"))
+}
 
-const RESULTS = new Map<string, unknown>([[homepageQuery, homepageContent]])
+const RESULTS = new Map<string, unknown>([
+  [homepageQuery, readFixture("homepage-content.json")],
+  [pagesQuery, readFixture("pages-snapshot.json")],
+])
 
 let server: Server | null = null
 
