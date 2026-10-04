@@ -2,6 +2,7 @@ import { getContext } from "~/business/auth/auth.server"
 import { isReservedAddress } from "~/business/cms/page.schema"
 import { pagesSnapshotCache } from "~/business/cms/pages-snapshot-cache.server"
 import { findPage } from "~/business/cms/pages-snapshot.server"
+import { FloatingWhatsAppButton } from "~/components/atoms/floating-whatsapp-button/floating-whatsapp-button"
 import { PageHeader } from "~/components/pages/page/header/page-header"
 import { PageSections } from "~/components/pages/page/sections/page-sections"
 import { metaCopy } from "~/copy/meta"
@@ -12,6 +13,7 @@ import { getNextEvents } from "~/pages/homepage/fetch/get-next-events"
 import type { Route } from "./+types/page"
 
 const SITE_URL = POSITIV_URL.replace(/\/$/, "")
+const HOMEPAGE_ADDRESS = "/"
 
 function notFound() {
   return new Response(null, { status: 404 })
@@ -49,8 +51,11 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     loadSnapshot(),
   ])
 
-  // The homepage route still serves /, from the homepage document.
-  const page = address === "/" ? undefined : findPage(snapshot, address)
+  const page = findPage(snapshot, address)
+  if (!page && address === HOMEPAGE_ADDRESS) {
+    logger.error("There is no Page at /, so the Homepage is down")
+    throw new Response(null, { status: 503 })
+  }
   if (!page) {
     throw notFound()
   }
@@ -77,7 +82,10 @@ export function meta({ data }: Route.MetaArgs) {
   }
 
   const { seo, address } = data.page
-  const title = createPageTitle(seo.title ?? data.page.title)
+  const title = createPageTitle(
+    seo.title ??
+      (address === HOMEPAGE_ADDRESS ? metaCopy.root.title : data.page.title),
+  )
   const url = `${SITE_URL}${address}`
 
   return [
@@ -103,13 +111,16 @@ export default function PageRoute({ loaderData }: Route.ComponentProps) {
   const { page, events, isLoggedIn } = loaderData
 
   return (
-    <div>
-      <PageHeader header={page.header} />
-      <PageSections
-        sections={page.sections}
-        events={events}
-        isLoggedIn={isLoggedIn}
-      />
-    </div>
+    <>
+      <div>
+        <PageHeader header={page.header} />
+        <PageSections
+          sections={page.sections}
+          events={events}
+          isLoggedIn={isLoggedIn}
+        />
+      </div>
+      {page.address === HOMEPAGE_ADDRESS && <FloatingWhatsAppButton />}
+    </>
   )
 }

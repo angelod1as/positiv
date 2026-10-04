@@ -62,6 +62,20 @@ describe("route config", () => {
     },
   )
 
+  it("serves / through the Page route", async () => {
+    vi.resetModules()
+    const routes = (await import("./routes")).default as {
+      index?: boolean
+      id?: string
+      file: string
+    }[]
+
+    expect(routes.find((route) => route.index)).toMatchObject({
+      id: "homepage",
+      file: "pages/page/page.tsx",
+    })
+  })
+
   it("keeps the real routes in both environments", async () => {
     expect(await routesFor("production")).toContain("homepage")
     expect(await routesFor("development")).toContain("homepage")
