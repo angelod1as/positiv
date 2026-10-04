@@ -66,10 +66,12 @@ describe("route config", () => {
     vi.resetModules()
     const routes = (await import("./routes")).default as {
       index?: boolean
+      id?: string
       file: string
     }[]
 
     expect(routes.find((route) => route.index)).toMatchObject({
+      id: "homepage",
       file: "pages/page/page.tsx",
     })
   })
