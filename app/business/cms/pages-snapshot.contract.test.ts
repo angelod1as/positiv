@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { pageSchema } from "./page.schema"
-import { getPagesSnapshot } from "./pages-snapshot.server"
+import { findPage, getPagesSnapshot } from "./pages-snapshot.server"
 import { createProductionReadClient } from "./production-read-client.server"
 
 describe("published Pages in the production dataset", () => {
@@ -10,6 +10,12 @@ describe("published Pages in the production dataset", () => {
     for (const page of snapshot.values()) {
       expect(pageSchema.parse(page)).toEqual(page)
     }
+  })
+
+  it("include the Homepage, at /, opening with the Homepage Hero", async () => {
+    const snapshot = await getPagesSnapshot(createProductionReadClient())
+
+    expect(findPage(snapshot, "/")?.header._type).toBe("homepageHero")
   })
 
   it("point every image at a file the CDN serves", async () => {
