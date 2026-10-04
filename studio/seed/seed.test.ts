@@ -142,14 +142,8 @@ describe("seedDocuments", () => {
       expect(footer?.social?.map((social) => social.network)).toEqual([
         "instagram",
       ])
-      expect(footer?.text?.length).toBeGreaterThan(0)
-      expect(Object.keys(footer?.development ?? {})).toEqual(
-        expect.arrayContaining([
-          "developedBy",
-          "repositoryUrl",
-          "bugReportUrl",
-        ]),
-      )
+      expect(footer?.text?.length).toBeGreaterThan(1)
+      expect(footer?.development).toBeUndefined()
     })
 
     it("seeds a Notice", () => {

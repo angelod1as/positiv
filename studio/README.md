@@ -149,14 +149,19 @@ pnpm --filter studio exec sanity documents query \
   > e2e/fixtures/homepage-content.json
 ```
 
-`e2e/fixtures/pages-snapshot.json` is the same for the app's `pagesQuery` —
-every Page the seed writes. Run the seed first, then:
+`e2e/fixtures/pages-snapshot.json` and `e2e/fixtures/site-settings.json` are
+the two halves of the app's `siteSnapshotQuery` — every Page the seed writes and
+its Site Settings. Run the seed first, then:
 
 ```bash
 pnpm --filter studio exec sanity documents query \
   "$(pnpm exec tsx -e 'import { pagesQuery } from "./app/business/cms/pages-query"; process.stdout.write(pagesQuery)')" \
   --dataset development --anonymous --api-version 2026-09-24 \
   > e2e/fixtures/pages-snapshot.json
+pnpm --filter studio exec sanity documents query \
+  "$(pnpm exec tsx -e 'import { siteSettingsQuery } from "./app/business/cms/site-snapshot-query"; process.stdout.write(siteSettingsQuery)')" \
+  --dataset development --anonymous --api-version 2026-09-24 \
+  > e2e/fixtures/site-settings.json
 ```
 
 Commit the fixtures when they change.

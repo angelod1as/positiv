@@ -1,11 +1,20 @@
-import { CalendarIcon, Table2Icon, UserIcon } from "lucide-react"
-import type { FC } from "react"
+import { CalendarIcon, MenuIcon, Table2Icon, UserIcon } from "lucide-react"
+import { type FC, useState } from "react"
 import { useLocation } from "react-router"
 import PositivLogo from "~/assets/brand/positiv-logo-colors.png"
 import { Button } from "~/components/atoms/button/button"
+import { ContentLink } from "~/components/atoms/content-link/content-link"
 import { Link } from "~/components/atoms/link/link"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "~/components/ui/sheet"
 import { headerCopy } from "~/copy/layout"
 import paths from "~/lib/paths"
+import type { SiteLink } from "~/business/cms/site-settings.schema"
 import type { ProfileWithRoles } from "~types/database/entities.types"
 import { NewsDialog } from "../news-dialog/news-dialog"
 import { WarningBanner } from "../warning-banner/warning-banner"
@@ -25,6 +34,7 @@ type HeaderProps = {
   userEmail?: string | null
   isProdInDev?: boolean
   isThereAnyNews: boolean
+  navigation?: SiteLink[]
 }
 
 export const Header: FC<HeaderProps> = ({
@@ -32,8 +42,10 @@ export const Header: FC<HeaderProps> = ({
   userEmail,
   isProdInDev,
   isThereAnyNews,
+  navigation = [],
 }) => {
   const { pathname } = useLocation()
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   const showButton = pathname !== "/entrar"
   const displayName = profile
@@ -62,6 +74,53 @@ export const Header: FC<HeaderProps> = ({
             </Link>
           </div>
           <div className="flex items-center space-x-2">
+            {navigation.length > 0 && (
+              <>
+                <nav
+                  aria-label={headerCopy.navigationLabel}
+                  className="hidden md:flex items-center gap-4 pr-2"
+                >
+                  {navigation.map((link) => (
+                    <ContentLink
+                      key={link._key}
+                      href={link.href}
+                      className="no-underline hover:underline"
+                    >
+                      {link.label}
+                    </ContentLink>
+                  ))}
+                </nav>
+                <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+                  <SheetTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="md:hidden"
+                      aria-label={headerCopy.openMenu}
+                    >
+                      <MenuIcon />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent aria-describedby={undefined}>
+                    <SheetHeader>
+                      <SheetTitle>{headerCopy.menuTitle}</SheetTitle>
+                    </SheetHeader>
+                    <ul className="flex flex-col gap-4 px-4">
+                      {navigation.map((link) => (
+                        <li key={link._key}>
+                          <ContentLink
+                            href={link.href}
+                            className="no-underline hover:underline"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            {link.label}
+                          </ContentLink>
+                        </li>
+                      ))}
+                    </ul>
+                  </SheetContent>
+                </Sheet>
+              </>
+            )}
             {showButton &&
               (showButtons ? (
                 <div className="flex items-center space-x-2">

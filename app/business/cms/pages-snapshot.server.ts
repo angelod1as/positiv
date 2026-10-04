@@ -2,8 +2,6 @@ import { createImageUrlBuilder } from "@sanity/image-url"
 import { zod } from "~/lib/helpers/zod"
 import type { HomepageImage } from "./homepage-content.schema"
 import { type Page, type PageDocument, pageDocumentSchema } from "./page.schema"
-import { pagesQuery } from "./pages-query"
-import { createSanityClient } from "./sanity-client.server"
 
 const PHOTO_SIZE = 320
 const IMAGE_MAX_WIDTH = 1600
@@ -11,10 +9,7 @@ const SHARING_IMAGE = { width: 1200, height: 630 }
 
 export type PagesSnapshot = ReadonlyMap<string, Page>
 
-type PagesClient = {
-  fetch(query: string): Promise<unknown>
-  config(): { projectId?: string; dataset?: string }
-}
+export type ClientConfig = { projectId?: string; dataset?: string }
 
 type ImageUrlBuilder = ReturnType<typeof createImageUrlBuilder>
 type SectionDocument = PageDocument["sections"][number]
@@ -23,13 +18,11 @@ type ImageDocument = Extract<
   { _type: "imageSection" }
 >["image"]
 
-export async function getPagesSnapshot(
-  client: PagesClient = createSanityClient(),
-): Promise<PagesSnapshot> {
-  const response = zod
-    .array(zod.unknown())
-    .parse(await client.fetch(pagesQuery))
-  const { projectId, dataset } = client.config()
+export function resolvePagesSnapshot(
+  documents: unknown,
+  { projectId, dataset }: ClientConfig,
+): PagesSnapshot {
+  const response = zod.array(zod.unknown()).parse(documents)
   const builder = createImageUrlBuilder({
     clientConfig: { projectId, dataset },
   })

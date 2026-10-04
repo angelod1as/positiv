@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import * as authServer from "~/business/auth/auth.server"
 import type { Page } from "~/business/cms/page.schema"
-import { pagesSnapshotCache } from "~/business/cms/pages-snapshot-cache.server"
 import type { PagesSnapshot } from "~/business/cms/pages-snapshot.server"
+import { siteSnapshotCache } from "~/business/cms/site-snapshot-cache.server"
 import { whatsAppButtonCopy } from "~/copy/layout"
 import { metaCopy } from "~/copy/meta"
 import { getNextEvents } from "~/pages/homepage/fetch/get-next-events"
@@ -15,8 +15,8 @@ vi.mock("~/business/auth/auth.server", () => ({
   getContext: vi.fn(),
 }))
 
-vi.mock("~/business/cms/pages-snapshot-cache.server", () => ({
-  pagesSnapshotCache: { get: vi.fn() },
+vi.mock("~/business/cms/site-snapshot-cache.server", () => ({
+  siteSnapshotCache: { get: vi.fn() },
 }))
 
 vi.mock("~/pages/homepage/fetch/get-next-events", () => ({
@@ -47,9 +47,10 @@ function signedInAs(userId: string | undefined) {
 }
 
 function withPages(...pages: Page[]) {
-  vi.mocked(pagesSnapshotCache.get).mockResolvedValue(
-    new Map(pages.map((page) => [page.address, page])),
-  )
+  vi.mocked(siteSnapshotCache.get).mockResolvedValue({
+    pages: new Map(pages.map((page) => [page.address, page])),
+    siteSettings: null,
+  })
 }
 
 function pageAt(address: string) {
@@ -71,7 +72,10 @@ describe("Page loader", () => {
   beforeEach(async () => {
     vi.clearAllMocks()
     snapshot = await pagesSnapshotFixture()
-    vi.mocked(pagesSnapshotCache.get).mockResolvedValue(snapshot)
+    vi.mocked(siteSnapshotCache.get).mockResolvedValue({
+      pages: snapshot,
+      siteSettings: null,
+    })
     vi.mocked(getNextEvents).mockResolvedValue({
       success: true,
       data: [],
@@ -126,7 +130,7 @@ describe("Page loader", () => {
 
     const result = loader(homepageArgs)
 
-    expect(pagesSnapshotCache.get).toHaveBeenCalled()
+    expect(siteSnapshotCache.get).toHaveBeenCalled()
     resolveContext({
       currentUser: null,
       currentProfile: null,
@@ -138,12 +142,12 @@ describe("Page loader", () => {
     "throws a 404 for %s without loading the snapshot",
     async (address) => {
       expect(await statusOf(loader(argsFor(address)))).toBe(404)
-      expect(pagesSnapshotCache.get).not.toHaveBeenCalled()
+      expect(siteSnapshotCache.get).not.toHaveBeenCalled()
     },
   )
 
   it("throws a 503 when the snapshot cannot be loaded on a cold start", async () => {
-    vi.mocked(pagesSnapshotCache.get).mockRejectedValue(
+    vi.mocked(siteSnapshotCache.get).mockRejectedValue(
       new Error("Sanity is down"),
     )
 

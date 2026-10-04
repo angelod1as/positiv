@@ -6,15 +6,15 @@ export const headerCopy = {
   adminTitle: "Área Admin",
   accountTitle: "Conta",
   login: "Entrar",
+  navigationLabel: "Navegação principal",
+  openMenu: "Abrir menu",
+  menuTitle: "Menu",
 } as const
 
 export const footerCopy = {
   copyright: `© 2025 Positiv. Todos os direitos reservados.`,
-  developedBy: `Este website está em constante desenvolvimento por [Angelo Dias](https://www.angelodias.com.br).`,
-  openSource: "Ele é Open Source e aceita colaborações.",
-  repository: "Visite nosso repositório.",
-  bugReport: (url: string) =>
-    `Encontrou um bug? [Clique aqui e nos avise](${url}).`,
+  openSource: (url: string) =>
+    `O site da Positiv é [Open Source](${url}) e aceita colaborações.`,
   instagramIconAlt: "Instagram icon",
   instagram: "Siga nosso instagram",
 } as const
