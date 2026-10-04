@@ -1,7 +1,7 @@
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
 import { MemoryRouter } from "react-router"
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { portableTextSchema } from "~/business/cms/homepage-content.schema"
 import { headerCopy, noticeCopy } from "~/copy/layout"
 import { paragraph } from "~/test/page-documents"
@@ -145,6 +145,37 @@ describe("Header", () => {
       expect(screen.getByRole("alert")).toHaveTextContent(
         noticeCopy.editorialSystemUnavailable,
       )
+    })
+  })
+
+  describe("the space it takes", () => {
+    afterEach(() => {
+      vi.unstubAllGlobals()
+      document.documentElement.style.removeProperty("--site-header-height")
+    })
+
+    it("tells the page how tall it is, so a Notice never covers the content", () => {
+      let report: ResizeObserverCallback = () => {}
+      vi.stubGlobal(
+        "ResizeObserver",
+        class {
+          constructor(callback: ResizeObserverCallback) {
+            report = callback
+          }
+          observe() {}
+          disconnect() {}
+        },
+      )
+      renderHeader()
+
+      report(
+        [{ borderBoxSize: [{ blockSize: 120 }] } as never],
+        {} as ResizeObserver,
+      )
+
+      expect(
+        document.documentElement.style.getPropertyValue("--site-header-height"),
+      ).toBe("120px")
     })
   })
 })

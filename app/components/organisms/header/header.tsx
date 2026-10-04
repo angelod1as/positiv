@@ -1,5 +1,5 @@
 import { CalendarIcon, MenuIcon, Table2Icon, UserIcon } from "lucide-react"
-import { type FC, useState } from "react"
+import { type FC, useEffect, useRef, useState } from "react"
 import { useLocation } from "react-router"
 import PositivLogo from "~/assets/brand/positiv-logo-colors.png"
 import { Button } from "~/components/atoms/button/button"
@@ -51,6 +51,22 @@ export const Header: FC<HeaderProps> = ({
 }) => {
   const { pathname } = useLocation()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const topRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const top = topRef.current
+    if (!top || typeof ResizeObserver === "undefined") return
+
+    const observer = new ResizeObserver(([entry]) => {
+      const height = entry.borderBoxSize[0].blockSize
+      document.documentElement.style.setProperty(
+        "--site-header-height",
+        `${height}px`,
+      )
+    })
+    observer.observe(top)
+    return () => observer.disconnect()
+  }, [])
 
   const showButton = pathname !== "/entrar"
   const displayName = profile
@@ -66,7 +82,7 @@ export const Header: FC<HeaderProps> = ({
           {headerCopy.prodInDevWarning}
         </div>
       )}
-      <div className="fixed top-0 left-0 z-30 w-full">
+      <div ref={topRef} className="fixed top-0 left-0 z-30 w-full">
         <Notice
           notice={notice}
           editorialSystemUnavailable={editorialSystemUnavailable}
