@@ -1,7 +1,11 @@
 import userEvent from "@testing-library/user-event"
+import type { ReactNode } from "react"
+import { MemoryRouter } from "react-router"
 import { describe, expect, it } from "vitest"
-import { headerCopy } from "~/copy/layout"
-import { renderWithRouter, screen, within } from "~/test/test-utils"
+import { portableTextSchema } from "~/business/cms/homepage-content.schema"
+import { headerCopy, noticeCopy } from "~/copy/layout"
+import { paragraph } from "~/test/page-documents"
+import { render, renderWithRouter, screen, within } from "~/test/test-utils"
 import { Header } from "./header"
 
 const navigation = [
@@ -106,5 +110,41 @@ describe("Header", () => {
     expect(
       screen.getByRole("link", { name: headerCopy.login }),
     ).toBeInTheDocument()
+  })
+
+  describe("the Notice", () => {
+    const onPlatformPage = ({ children }: { children: ReactNode }) => (
+      <MemoryRouter initialEntries={["/dashboard"]}>{children}</MemoryRouter>
+    )
+
+    it("shows the Notice on every page", async () => {
+      render(
+        <Header
+          profile={null}
+          isThereAnyNews={false}
+          notice={portableTextSchema.parse(paragraph("Inscrições abertas!"))}
+        />,
+        { wrapper: onPlatformPage },
+      )
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Inscrições abertas!",
+      )
+    })
+
+    it("says when the editorial system is unavailable", () => {
+      render(
+        <Header
+          profile={null}
+          isThereAnyNews={false}
+          editorialSystemUnavailable
+        />,
+        { wrapper: onPlatformPage },
+      )
+
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        noticeCopy.editorialSystemUnavailable,
+      )
+    })
   })
 })

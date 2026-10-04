@@ -14,10 +14,11 @@ import {
 } from "~/components/ui/sheet"
 import { headerCopy } from "~/copy/layout"
 import paths from "~/lib/paths"
+import type { PortableText } from "~/business/cms/homepage-content.schema"
 import type { SiteLink } from "~/business/cms/site-settings.schema"
 import type { ProfileWithRoles } from "~types/database/entities.types"
 import { NewsDialog } from "../news-dialog/news-dialog"
-import { WarningBanner } from "../warning-banner/warning-banner"
+import { Notice } from "../notice/notice"
 
 const {
   root: { HOME },
@@ -35,6 +36,8 @@ type HeaderProps = {
   isProdInDev?: boolean
   isThereAnyNews: boolean
   navigation?: SiteLink[]
+  notice?: PortableText | null
+  editorialSystemUnavailable?: boolean
 }
 
 export const Header: FC<HeaderProps> = ({
@@ -43,6 +46,8 @@ export const Header: FC<HeaderProps> = ({
   isProdInDev,
   isThereAnyNews,
   navigation = [],
+  notice = null,
+  editorialSystemUnavailable = false,
 }) => {
   const { pathname } = useLocation()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -62,7 +67,10 @@ export const Header: FC<HeaderProps> = ({
         </div>
       )}
       <div className="fixed top-0 left-0 z-30 w-full">
-        {(pathname === "/" || pathname === "/entrar") && <WarningBanner />}
+        <Notice
+          notice={notice}
+          editorialSystemUnavailable={editorialSystemUnavailable}
+        />
         <header className="flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 px-[1.75rem]">
           <div className="text-xl font-bold">
             <Link variant="unstyled" to={HOME}>
@@ -125,9 +133,15 @@ export const Header: FC<HeaderProps> = ({
               (showButtons ? (
                 <div className="flex items-center space-x-2">
                   {!!displayName && (
-                    <p className="hidden sm:block">{headerCopy.greeting(displayName)}</p>
+                    <p className="hidden sm:block">
+                      {headerCopy.greeting(displayName)}
+                    </p>
                   )}
-                  <NewsDialog isThereAnyNews={isThereAnyNews} isHeader={true} currentProfile={profile} />
+                  <NewsDialog
+                    isThereAnyNews={isThereAnyNews}
+                    isHeader={true}
+                    currentProfile={profile}
+                  />
                   <Button
                     asChild
                     variant="outline"
@@ -146,7 +160,12 @@ export const Header: FC<HeaderProps> = ({
                       <Table2Icon />
                     </Button>
                   )}
-                  <Button asChild variant="outline" title={headerCopy.accountTitle} to={ACCOUNT}>
+                  <Button
+                    asChild
+                    variant="outline"
+                    title={headerCopy.accountTitle}
+                    to={ACCOUNT}
+                  >
                     <UserIcon />
                   </Button>
                 </div>

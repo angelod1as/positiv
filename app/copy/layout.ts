@@ -38,8 +38,10 @@ Assim que a houver uma nova atualização, ele voltará a pular na sua frente �
   },
 } as const
 
-export const warningBannerCopy = {
+export const noticeCopy = {
   dismiss: "Dismiss warning",
+  editorialSystemUnavailable:
+    "Parte do sistema editorial está indisponível no momento, por isso alguns links podem não aparecer.",
 } as const
 
 export const whatsAppButtonCopy = {

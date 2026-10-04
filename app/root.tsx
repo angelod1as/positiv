@@ -293,6 +293,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
     needsProfileUpdate = false,
     shouldShowNewsletterModal = false,
     siteSettings,
+    editorialSystemUnavailable = false,
   } = loaderData
 
   const location = useLocation()
@@ -326,6 +327,8 @@ export default function App({ loaderData }: Route.ComponentProps) {
         userEmail={currentUser?.email}
         isThereAnyNews={isThereAnyNews ?? false}
         navigation={siteSettings?.navigation}
+        notice={siteSettings?.notice}
+        editorialSystemUnavailable={editorialSystemUnavailable}
       />
       <ProfileUpdateGuard
         currentProfile={currentProfile}
