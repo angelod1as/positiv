@@ -6,6 +6,9 @@ export const headerCopy = {
   adminTitle: "Área Admin",
   accountTitle: "Conta",
   login: "Entrar",
+  navigationLabel: "Navegação principal",
+  openMenu: "Abrir menu",
+  menuTitle: "Menu",
 } as const
 
 export const footerCopy = {
