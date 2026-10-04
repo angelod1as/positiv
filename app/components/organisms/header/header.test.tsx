@@ -82,6 +82,21 @@ describe("Header", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
   })
 
+  it("closes the menu once a link to another site in it is followed", async () => {
+    renderHeader()
+
+    await userEvent.click(
+      screen.getByRole("button", { name: headerCopy.openMenu }),
+    )
+    await userEvent.click(
+      within(screen.getByRole("dialog")).getByRole("link", {
+        name: "Instagram",
+      }),
+    )
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+  })
+
   it("renders no Navigation and no menu without links", () => {
     renderHeader([])
 

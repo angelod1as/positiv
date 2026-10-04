@@ -1,5 +1,5 @@
 import { CalendarIcon, MenuIcon, Table2Icon, UserIcon } from "lucide-react"
-import { type FC, useEffect, useState } from "react"
+import { type FC, useState } from "react"
 import { useLocation } from "react-router"
 import PositivLogo from "~/assets/brand/positiv-logo-colors.png"
 import { Button } from "~/components/atoms/button/button"
@@ -46,10 +46,6 @@ export const Header: FC<HeaderProps> = ({
 }) => {
   const { pathname } = useLocation()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-
-  useEffect(() => {
-    setIsMenuOpen(false)
-  }, [pathname])
 
   const showButton = pathname !== "/entrar"
   const displayName = profile
@@ -114,6 +110,7 @@ export const Header: FC<HeaderProps> = ({
                           <ContentLink
                             href={link.href}
                             className="no-underline hover:underline"
+                            onClick={() => setIsMenuOpen(false)}
                           >
                             {link.label}
                           </ContentLink>
