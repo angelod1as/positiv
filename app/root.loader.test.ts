@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
+import { siteSettingsSchema } from "./business/cms/site-settings.schema"
+import { siteSettingsDocument } from "./test/site-settings-documents"
 import { loader } from "./root"
+
+vi.mock("./business/cms/site-snapshot-cache.server", () => ({
+  siteSnapshotCache: { get: vi.fn() },
+}))
 
 vi.mock("./business/auth/auth.server", () => ({
   getContext: vi.fn(),
@@ -42,9 +48,17 @@ describe("root loader", () => {
     const { getToast } = await import("remix-toast")
     const { newsCookie } = await import("./business/session.server")
 
+    const { siteSnapshotCache } = await import(
+      "./business/cms/site-snapshot-cache.server"
+    )
+
     mockGetContext = vi.mocked(getContext)
     mockGetToast = vi.mocked(getToast)
     vi.mocked(newsCookie.parse).mockResolvedValue({})
+    vi.mocked(siteSnapshotCache.get).mockResolvedValue({
+      pages: new Map(),
+      siteSettings: null,
+    })
   })
 
   afterEach(() => {
@@ -220,6 +234,80 @@ describe("root loader", () => {
 
     it("asks nothing of a visitor with no profile", async () => {
       expect(await loadWithProfile(null)).toBe(false)
+    })
+  })
+
+  describe("Site Settings", () => {
+    const siteSettings = siteSettingsSchema.parse(siteSettingsDocument())
+    const profile = { id: "profile-1", race_color: ["Branca"] }
+
+    async function load() {
+      mockGetContext.mockResolvedValue({
+        currentProfile: profile,
+        currentUser: { id: "user-1", email: "test@test.com" },
+        isProdInDev: false,
+        supabaseHeaders: new Headers(),
+        supabase: {},
+        host: "localhost",
+      })
+      mockGetToast.mockResolvedValue({ toast: null, headers: new Headers() })
+      const { newsletterPreferenceCookie } = await import(
+        "./business/session.server"
+      )
+      vi.mocked(newsletterPreferenceCookie.parse).mockResolvedValue({
+        checked: true,
+        shouldShow: false,
+      })
+
+      const request = new Request("http://localhost:5173/dashboard")
+      const result = (await loader({ request, params: {} } as never)) as {
+        data: { siteSettings: unknown; currentProfile: unknown }
+      }
+      return result.data
+    }
+
+    it("hands every page the Site Settings", async () => {
+      const { siteSnapshotCache } = await import(
+        "./business/cms/site-snapshot-cache.server"
+      )
+      vi.mocked(siteSnapshotCache.get).mockResolvedValue({
+        pages: new Map(),
+        siteSettings,
+      })
+
+      expect((await load()).siteSettings).toEqual(siteSettings)
+    })
+
+    it("still loads a Platform page, with no Site Settings, when Sanity is unreachable", async () => {
+      const { siteSnapshotCache } = await import(
+        "./business/cms/site-snapshot-cache.server"
+      )
+      vi.mocked(siteSnapshotCache.get).mockRejectedValue(
+        new Error("connect ECONNREFUSED"),
+      )
+
+      const data = await load()
+
+      expect(data.siteSettings).toBeNull()
+      expect(data.currentProfile).toEqual(profile)
+    })
+
+    it("still hands out the Site Settings when the session cannot be read", async () => {
+      const { siteSnapshotCache } = await import(
+        "./business/cms/site-snapshot-cache.server"
+      )
+      vi.mocked(siteSnapshotCache.get).mockResolvedValue({
+        pages: new Map(),
+        siteSettings,
+      })
+      mockGetContext.mockRejectedValue(new Error("Supabase is down"))
+      const request = new Request("http://localhost:5173/")
+
+      const result = (await loader({ request, params: {} } as never)) as {
+        siteSettings: unknown
+      }
+
+      expect(result.siteSettings).toEqual(siteSettings)
     })
   })
 })

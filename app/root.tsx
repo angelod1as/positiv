@@ -26,6 +26,7 @@ import { POSITIV_EMAIL } from "~/lib/constants/constants"
 import type { Route } from "./+types/root"
 import "./app.css"
 import { getContext } from "./business/auth/auth.server"
+import { loadSiteSettings } from "./business/cms/site-settings.server"
 import { subscribeProfileToNewsletter } from "./business/newsletter/auto-subscribe.server"
 import { getSubscriptionStatus } from "./business/newsletter/subscription-helpers.server"
 import {
@@ -103,6 +104,8 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export async function loader({ params, request }: Route.LoaderArgs) {
+  const siteSettings = loadSiteSettings()
+
   try {
     const { currentProfile, currentUser, isProdInDev, supabaseHeaders } =
       await getContext(request, params)
@@ -165,6 +168,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         isThereAnyNews: shouldShowNews,
         needsProfileUpdate,
         shouldShowNewsletterModal,
+        siteSettings: await siteSettings,
       },
       { headers },
     )
@@ -178,6 +182,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       isThereAnyNews: null,
       needsProfileUpdate: false,
       shouldShowNewsletterModal: false,
+      siteSettings: await siteSettings,
     }
   }
 }
@@ -284,6 +289,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
     isThereAnyNews = false,
     needsProfileUpdate = false,
     shouldShowNewsletterModal = false,
+    siteSettings,
   } = loaderData
 
   const location = useLocation()
@@ -316,6 +322,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
         profile={currentProfile}
         userEmail={currentUser?.email}
         isThereAnyNews={isThereAnyNews ?? false}
+        navigation={siteSettings?.navigation}
       />
       <ProfileUpdateGuard
         currentProfile={currentProfile}
@@ -329,6 +336,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
       <Footer
         isThereAnyNews={isThereAnyNews ?? false}
         currentProfile={currentProfile}
+        siteSettings={siteSettings}
       />
     </>
   )

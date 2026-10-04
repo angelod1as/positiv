@@ -13,7 +13,6 @@ export const headerCopy = {
 
 export const footerCopy = {
   copyright: `© 2025 Positiv. Todos os direitos reservados.`,
-  developedBy: `Este website está em constante desenvolvimento por [Angelo Dias](https://www.angelodias.com.br).`,
   openSource: "Ele é Open Source e aceita colaborações.",
   repository: "Visite nosso repositório.",
   bugReport: (url: string) =>
