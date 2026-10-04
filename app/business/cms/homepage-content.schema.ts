@@ -10,7 +10,7 @@ const spanSchema = zod.object({
 
 const decorators = ["strong", "em"]
 
-const hrefSchema = zod.union([
+export const hrefSchema = zod.union([
   zod.string().regex(/^\/(?![/\\])[^\s\p{Cc}]*$/u),
   zod.url({ protocol: /^https$/ }),
 ])
