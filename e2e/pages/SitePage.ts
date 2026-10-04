@@ -33,6 +33,14 @@ export class SitePage extends BasePage {
     return this.page.locator(`meta[property="${property}"]`)
   }
 
+  navigation(name: string): Locator {
+    return this.page.getByRole('navigation', { name })
+  }
+
+  footerColumn(title: string): Locator {
+    return this.page.getByRole('contentinfo').getByRole('list', { name: title })
+  }
+
   canonical(): Locator {
     return this.page.locator('link[rel="canonical"]')
   }
