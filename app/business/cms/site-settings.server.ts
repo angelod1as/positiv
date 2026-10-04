@@ -7,9 +7,14 @@ export const SITE_SETTINGS_TIMEOUT_MS = 2_000
 
 type SnapshotCache = { get(): Promise<SiteSnapshot> }
 
+export type LoadedSiteSettings = {
+  siteSettings: SiteSettings | null
+  editorialSystemUnavailable: boolean
+}
+
 export async function loadSiteSettings(
   cache: SnapshotCache = siteSnapshotCache,
-): Promise<SiteSettings | null> {
+): Promise<LoadedSiteSettings> {
   let timer: ReturnType<typeof setTimeout> | undefined
   const timeout = new Promise<never>((_, reject) => {
     timer = setTimeout(
@@ -19,12 +24,13 @@ export async function loadSiteSettings(
   })
 
   try {
-    return (await Promise.race([cache.get(), timeout])).siteSettings
+    const { siteSettings } = await Promise.race([cache.get(), timeout])
+    return { siteSettings, editorialSystemUnavailable: false }
   } catch (error) {
     logger.error("Could not load the Site Settings, rendering the fallback", {
       error: error instanceof Error ? error.message : String(error),
     })
-    return null
+    return { siteSettings: null, editorialSystemUnavailable: true }
   } finally {
     clearTimeout(timer)
   }

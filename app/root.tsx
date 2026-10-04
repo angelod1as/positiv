@@ -168,7 +168,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         isThereAnyNews: shouldShowNews,
         needsProfileUpdate,
         shouldShowNewsletterModal,
-        siteSettings: await siteSettings,
+        ...(await siteSettings),
       },
       { headers },
     )
@@ -182,7 +182,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       isThereAnyNews: null,
       needsProfileUpdate: false,
       shouldShowNewsletterModal: false,
-      siteSettings: await siteSettings,
+      ...(await siteSettings),
     }
   }
 }
@@ -209,7 +209,10 @@ export async function action({ params, request }: Route.ActionArgs) {
     )
 
     if (!result.success) {
-      return redirectWithError(thisUrl as string, newsletterSubscribeCopy.failed)
+      return redirectWithError(
+        thisUrl as string,
+        newsletterSubscribeCopy.failed,
+      )
     }
 
     const headers = new Headers()
