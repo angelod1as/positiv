@@ -62,7 +62,7 @@ export default [
   route("/sitemap.xml", "routes/sitemap[.xml].ts"),
 
   // PUBLIC
-  index("pages/homepage/homepage.tsx"),
+  index("pages/page/page.tsx", { id: "homepage" }),
   route("/auth/confirm", "pages/auth/confirm.tsx"),
   route("/convite/:token", "pages/invite/invite-page.tsx"),
   route("/newsletter/unsubscribe", "pages/newsletter/unsubscribe.tsx"),

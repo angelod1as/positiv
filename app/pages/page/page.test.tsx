@@ -3,11 +3,13 @@ import * as authServer from "~/business/auth/auth.server"
 import type { Page } from "~/business/cms/page.schema"
 import { pagesSnapshotCache } from "~/business/cms/pages-snapshot-cache.server"
 import type { PagesSnapshot } from "~/business/cms/pages-snapshot.server"
+import { whatsAppButtonCopy } from "~/copy/layout"
 import { metaCopy } from "~/copy/meta"
 import { getNextEvents } from "~/pages/homepage/fetch/get-next-events"
 import { pagesSnapshotFixture } from "~/test/pages-snapshot-fixture"
+import { renderWithRouter, screen } from "~/test/test-utils"
 import type { Route } from "./+types/page"
-import { loader, meta } from "./page"
+import PageRoute, { loader, meta } from "./page"
 
 vi.mock("~/business/auth/auth.server", () => ({
   getContext: vi.fn(),
@@ -30,6 +32,12 @@ function argsFor(address: string) {
     context: {},
   } as unknown as Route.LoaderArgs
 }
+
+const homepageArgs = {
+  request: new Request("http://localhost/"),
+  params: {},
+  context: {},
+} as unknown as Route.LoaderArgs
 
 function signedInAs(userId: string | undefined) {
   vi.mocked(authServer.getContext).mockResolvedValue({
@@ -91,8 +99,39 @@ describe("Page loader", () => {
     expect(await statusOf(loader(argsFor("/nao-existe")))).toBe(404)
   })
 
-  it("leaves / to the homepage route for now", async () => {
-    expect(await statusOf(loader(argsFor("/")))).toBe(404)
+  it("serves the Homepage from the Page at /", async () => {
+    signedInAs("user-1")
+
+    const result = await loader(homepageArgs)
+
+    expect(result.page).toEqual(pageAt("/"))
+    expect(result.isLoggedIn).toBe(true)
+    await expect(result.events).resolves.toEqual([])
+  })
+
+  it("throws a 503 when there is no Page at /", async () => {
+    withPages(pageAt("/sobre"))
+
+    expect(await statusOf(loader(homepageArgs))).toBe(503)
+  })
+
+  it("starts loading the snapshot without waiting for the session", async () => {
+    type Context = Awaited<ReturnType<typeof authServer.getContext>>
+    let resolveContext: (context: Context) => void = () => {}
+    vi.mocked(authServer.getContext).mockReturnValue(
+      new Promise<Context>((resolve) => {
+        resolveContext = resolve
+      }),
+    )
+
+    const result = loader(homepageArgs)
+
+    expect(pagesSnapshotCache.get).toHaveBeenCalled()
+    resolveContext({
+      currentUser: null,
+      currentProfile: null,
+    } as unknown as Context)
+    await result
   })
 
   it.each(["/assets/entry.client-abc123.js", "/admin/nada", "/api/nada"])(
@@ -247,6 +286,18 @@ describe("Page meta", () => {
     ).toEqual({ name: "robots", content: "noindex" })
   })
 
+  it("titles the Homepage after the site when SEO has no title", () => {
+    const entries = metaFor(pageAt("/"))
+
+    expect(find(entries, "title")).toEqual({ title: metaCopy.root.title })
+    expect(find(entries, "og:title")).toMatchObject({
+      content: metaCopy.root.title,
+    })
+    expect(find(entries, "canonical")).toMatchObject({
+      href: "https://www.positivparty.com/",
+    })
+  })
+
   it("falls back to the site's own title and description without a Page", () => {
     const entries = metaFor(undefined)
 
@@ -254,5 +305,37 @@ describe("Page meta", () => {
     expect(find(entries, "description")).toMatchObject({
       content: metaCopy.root.description,
     })
+  })
+})
+
+describe("Page route", () => {
+  beforeEach(async () => {
+    snapshot = await pagesSnapshotFixture()
+  })
+
+  function renderPage(page: Page) {
+    const loaderData = {
+      page,
+      events: Promise.resolve([]),
+      isLoggedIn: false,
+    }
+    renderWithRouter(
+      <PageRoute {...({ loaderData } as unknown as Route.ComponentProps)} />,
+    )
+  }
+
+  const whatsAppLink = () =>
+    screen.queryByRole("link", { name: whatsAppButtonCopy.ariaLabel })
+
+  it("offers the WhatsApp button on the Homepage", () => {
+    renderPage(pageAt("/"))
+
+    expect(whatsAppLink()).toBeInTheDocument()
+  })
+
+  it("leaves the WhatsApp button off every other Page", () => {
+    renderPage(pageAt("/sobre"))
+
+    expect(whatsAppLink()).toBeNull()
   })
 })
