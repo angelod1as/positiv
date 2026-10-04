@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { siteSettingsDocument } from "~/test/site-settings-documents"
 import { createContentCache } from "./content-cache.server"
 import { siteSettingsSchema } from "./site-settings.schema"
-import { loadSiteSettings } from "./site-settings.server"
+import {
+  loadSiteSettings,
+  SITE_SETTINGS_TIMEOUT_MS,
+} from "./site-settings.server"
 import type { SiteSnapshot } from "./site-snapshot.server"
 
 vi.mock("~/lib/logger/logger.server", () => ({
@@ -40,6 +43,33 @@ describe("loadSiteSettings", () => {
     load.mockRejectedValue(new Error("connect ECONNREFUSED"))
 
     expect(await loadSiteSettings({ get: load })).toBeNull()
+  })
+
+  it("returns null rather than waiting when Sanity is slow on a cold start", async () => {
+    vi.useFakeTimers()
+    load.mockReturnValue(new Promise(() => {}))
+
+    const settings = loadSiteSettings({ get: load })
+    await vi.advanceTimersByTimeAsync(SITE_SETTINGS_TIMEOUT_MS)
+
+    expect(await settings).toBeNull()
+  })
+
+  it("returns the Site Settings when Sanity answers within the time limit", async () => {
+    vi.useFakeTimers()
+    load.mockReturnValue(
+      new Promise((resolve) =>
+        setTimeout(
+          () => resolve(snapshot(siteSettings)),
+          SITE_SETTINGS_TIMEOUT_MS - 1,
+        ),
+      ),
+    )
+
+    const settings = loadSiteSettings({ get: load })
+    await vi.advanceTimersByTimeAsync(SITE_SETTINGS_TIMEOUT_MS - 1)
+
+    expect(await settings).toEqual(siteSettings)
   })
 
   it("keeps serving stale Site Settings when a refresh fails", async () => {
