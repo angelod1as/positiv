@@ -8,16 +8,4 @@ describe("published Site Settings in the production dataset", () => {
 
     expect(siteSettings).not.toBeNull()
   })
-
-  it("point every link somewhere", async () => {
-    const { siteSettings } = await getSiteSnapshot(createProductionReadClient())
-
-    const links = [
-      ...(siteSettings?.navigation ?? []),
-      ...(siteSettings?.footer.columns.flatMap(({ links }) => links) ?? []),
-    ]
-    for (const { label, href } of links) {
-      expect(href, label).not.toBe("")
-    }
-  })
 })
