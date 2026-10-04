@@ -51,7 +51,10 @@ describe("siteSettingsSchema", () => {
       ["neither a Page nor an address", { page: null, url: null }],
       ["both a Page and an address", { page: { address: "/a" }, url: "/b" }],
       ["a Page reference that did not resolve", { page: null, url: undefined }],
-      ["an address that is neither relative nor https", { url: "http://x.com" }],
+      [
+        "an address that is neither relative nor https",
+        { url: "http://x.com" },
+      ],
       ["a protocol-relative address", { url: "//evil.com" }],
     ])("rejects a link with %s", (_, target) => {
       rejects(
@@ -119,12 +122,33 @@ describe("siteSettingsSchema", () => {
     })
 
     it.each([
-      ["a column without a title", { columns: [{ _key: "c", title: null, links: [linkToUrl("A", "/a")] }] }],
-      ["a column without links", { columns: [{ _key: "c", title: "C", links: [] }] }],
-      ["an unknown social network", { social: [{ _key: "x", network: "x", url: "https://x.com" }] }],
-      ["a social link that is not https", { social: [{ _key: "i", network: "instagram", url: "http://instagram.com" }] }],
+      [
+        "a column without a title",
+        {
+          columns: [{ _key: "c", title: null, links: [linkToUrl("A", "/a")] }],
+        },
+      ],
+      [
+        "a column without links",
+        { columns: [{ _key: "c", title: "C", links: [] }] },
+      ],
+      [
+        "an unknown social network",
+        { social: [{ _key: "x", network: "x", url: "https://x.com" }] },
+      ],
+      [
+        "a social link that is not https",
+        {
+          social: [
+            { _key: "i", network: "instagram", url: "http://instagram.com" },
+          ],
+        },
+      ],
       ["no text", { text: null }],
-      ["text with a heading", { text: [{ ...paragraph("Oi")[0], style: "h2" }] }],
+      [
+        "text with a heading",
+        { text: [{ ...paragraph("Oi")[0], style: "h2" }] },
+      ],
     ])("rejects %s", (_, footer) => {
       rejects(siteSettingsDocument({}, footer))
     })

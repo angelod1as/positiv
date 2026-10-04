@@ -19,10 +19,9 @@ describe("Footer", () => {
       renderFooter(siteSettings)
 
       const column = screen.getByRole("list", { name: "A Positiv" })
-      expect(within(column).getByRole("link", { name: "Início" })).toHaveAttribute(
-        "href",
-        "/",
-      )
+      expect(
+        within(column).getByRole("link", { name: "Início" }),
+      ).toHaveAttribute("href", "/")
     })
 
     it("renders the social links", () => {

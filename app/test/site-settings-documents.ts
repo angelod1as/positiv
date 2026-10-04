@@ -18,10 +18,7 @@ export const siteSettingsDocument = (
   overrides: Record<string, unknown> = {},
   footerOverrides: Record<string, unknown> = {},
 ) => ({
-  navigation: [
-    linkToPage("Sobre", "/sobre"),
-    linkToUrl("Eventos", "/eventos"),
-  ],
+  navigation: [linkToPage("Sobre", "/sobre"), linkToUrl("Eventos", "/eventos")],
   footer: {
     columns: [
       {

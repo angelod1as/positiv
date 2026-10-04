@@ -36,10 +36,9 @@ describe("Header", () => {
     const nav = screen.getByRole("navigation", {
       name: headerCopy.navigationLabel,
     })
-    expect(within(nav).getByRole("link", { name: "Instagram" })).toHaveAttribute(
-      "target",
-      "_blank",
-    )
+    expect(
+      within(nav).getByRole("link", { name: "Instagram" }),
+    ).toHaveAttribute("target", "_blank")
   })
 
   it("keeps the Platform's login button after the Navigation", () => {

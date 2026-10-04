@@ -82,7 +82,9 @@ describe("getSiteSnapshot", () => {
 
     const { siteSettings } = await getSiteSnapshot(client)
 
-    expect(siteSettings?.navigation.map(({ label, href }) => [label, href])).toEqual([
+    expect(
+      siteSettings?.navigation.map(({ label, href }) => [label, href]),
+    ).toEqual([
       ["Sobre", "/sobre"],
       ["Equipe", "/sobre/equipe"],
       ["Eventos", "/eventos"],
