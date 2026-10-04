@@ -13,10 +13,8 @@ export const headerCopy = {
 
 export const footerCopy = {
   copyright: `© 2025 Positiv. Todos os direitos reservados.`,
-  openSource: "Ele é Open Source e aceita colaborações.",
-  repository: "Visite nosso repositório.",
-  bugReport: (url: string) =>
-    `Encontrou um bug? [Clique aqui e nos avise](${url}).`,
+  openSource: (url: string) =>
+    `O site da Positiv é [Open Source](${url}) e aceita colaborações.`,
   instagramIconAlt: "Instagram icon",
   instagram: "Siga nosso instagram",
 } as const

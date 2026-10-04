@@ -93,17 +93,29 @@ describe("siteSettingsSchema", () => {
       expect(footer.social).toEqual([])
     })
 
-    it("keeps the text and the Desenvolvimento fields", () => {
+    it("keeps the text", () => {
       const { footer } = siteSettingsSchema.parse(siteSettingsDocument())
 
       expect(footer.text).toEqual(
         paragraph("© 2025 Positiv. Todos os direitos reservados."),
       )
-      expect(footer.development).toEqual({
-        developedBy: paragraph("Feito com carinho."),
-        repositoryUrl: "https://github.com/angelod1as/positiv",
-        bugReportUrl: "https://forms.gle/ys6W6W54YTcoBHrJA",
-      })
+    })
+
+    it("ignores the deprecated Desenvolvimento group", () => {
+      const { footer } = siteSettingsSchema.parse(
+        siteSettingsDocument(
+          {},
+          {
+            development: {
+              developedBy: paragraph("x"),
+              repositoryUrl: null,
+              bugReportUrl: "not a url",
+            },
+          },
+        ),
+      )
+
+      expect(footer).not.toHaveProperty("development")
     })
 
     it.each([
@@ -113,8 +125,6 @@ describe("siteSettingsSchema", () => {
       ["a social link that is not https", { social: [{ _key: "i", network: "instagram", url: "http://instagram.com" }] }],
       ["no text", { text: null }],
       ["text with a heading", { text: [{ ...paragraph("Oi")[0], style: "h2" }] }],
-      ["no Desenvolvimento group", { development: null }],
-      ["no repository address", { development: { developedBy: paragraph("x"), repositoryUrl: null, bugReportUrl: "https://forms.gle/x" } }],
     ])("rejects %s", (_, footer) => {
       rejects(siteSettingsDocument({}, footer))
     })

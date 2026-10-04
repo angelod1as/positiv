@@ -1,4 +1,3 @@
-import { GithubIcon } from "lucide-react"
 import type { FC } from "react"
 import Instagram from "~/assets/social/instagram.svg"
 import type { SiteSettings } from "~/business/cms/site-settings.schema"
@@ -11,6 +10,7 @@ import type { ProfileWithRoles } from "~types/database/entities.types"
 import { NewsDialog } from "../news-dialog/news-dialog"
 
 const FALLBACK_INSTAGRAM_URL = "https://instagram.com/positivparty"
+const REPOSITORY_URL = "https://github.com/angelod1as/positiv"
 
 type FooterProps = {
   isThereAnyNews: boolean
@@ -62,24 +62,7 @@ export const Footer: FC<FooterProps> = ({
         <div className="grid grid-cols-1 text-muted-foreground lg:grid-cols-2  gap-4  justify-end items-start text-center">
           <div className="text-muted-foreground">
             {footer ? (
-              <>
-                <RichText value={footer.text} />
-                <RichText value={footer.development.developedBy} />
-                <p className="flex gap-2 justify-center">
-                  {footerCopy.openSource}{" "}
-                  <Link
-                    target="_blank"
-                    to={footer.development.repositoryUrl}
-                    className="flex items-center"
-                  >
-                    <GithubIcon />
-                    {footerCopy.repository}
-                  </Link>
-                </p>
-                <Copy>
-                  {footerCopy.bugReport(footer.development.bugReportUrl)}
-                </Copy>
-              </>
+              <RichText value={footer.text} />
             ) : (
               <Copy>{footerCopy.copyright}</Copy>
             )}
@@ -89,6 +72,7 @@ export const Footer: FC<FooterProps> = ({
               isThereAnyNews={isThereAnyNews}
               currentProfile={currentProfile}
             />
+            <Copy>{footerCopy.openSource(REPOSITORY_URL)}</Copy>
             <div className="flex justify-center items-center space-x-4">
               {socialLinks.map((social) => (
                 <InstagramLink key={social._key} url={social.url} />

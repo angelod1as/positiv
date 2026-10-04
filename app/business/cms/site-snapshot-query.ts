@@ -7,8 +7,7 @@ export const siteSettingsQuery = `*[_id == "siteSettings"][0]{
   footer{
     columns[]{ _key, title, links[]${siteLinkProjection} },
     social[]{ _key, network, url },
-    text,
-    development{ developedBy, repositoryUrl, bugReportUrl }
+    text
   }
 }`
 

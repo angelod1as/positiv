@@ -33,19 +33,21 @@ describe("Footer", () => {
       ).toHaveAttribute("href", "https://instagram.com/positivparty")
     })
 
-    it("renders the text and the Desenvolvimento fields", () => {
+    it("renders the text", () => {
       renderFooter(siteSettings)
 
       expect(
         screen.getByText("© 2025 Positiv. Todos os direitos reservados."),
       ).toBeInTheDocument()
-      expect(screen.getByText("Feito com carinho.")).toBeInTheDocument()
-      expect(
-        screen.getByRole("link", { name: new RegExp(footerCopy.repository) }),
-      ).toHaveAttribute("href", "https://github.com/angelod1as/positiv")
-      expect(
-        screen.getByRole("link", { name: "Clique aqui e nos avise" }),
-      ).toHaveAttribute("href", "https://forms.gle/ys6W6W54YTcoBHrJA")
+    })
+
+    it("says the site is Open Source, linking to the repository", () => {
+      renderFooter(siteSettings)
+
+      expect(screen.getByRole("link", { name: "Open Source" })).toHaveAttribute(
+        "href",
+        "https://github.com/angelod1as/positiv",
+      )
     })
 
     it("keeps the news dialog", () => {
@@ -65,13 +67,19 @@ describe("Footer", () => {
       ).toHaveAttribute("href", "https://instagram.com/positivparty")
     })
 
-    it("renders nothing an Editor wrote", () => {
+    it("renders no link columns", () => {
       renderFooter(null)
 
       expect(screen.queryByRole("list")).not.toBeInTheDocument()
-      expect(
-        screen.queryByRole("link", { name: new RegExp(footerCopy.repository) }),
-      ).not.toBeInTheDocument()
+    })
+
+    it("still says the site is Open Source", () => {
+      renderFooter(null)
+
+      expect(screen.getByRole("link", { name: "Open Source" })).toHaveAttribute(
+        "href",
+        "https://github.com/angelod1as/positiv",
+      )
     })
 
     it("keeps the news dialog", () => {

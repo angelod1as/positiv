@@ -42,11 +42,6 @@ export const siteSettingsSchema = zod.object({
       }),
     ),
     text: portableTextSchema,
-    development: zod.object({
-      developedBy: portableTextSchema,
-      repositoryUrl: hrefSchema,
-      bugReportUrl: hrefSchema,
-    }),
   }),
 })
 
