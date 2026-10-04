@@ -85,7 +85,8 @@ export const siteSettings = defineType({
         defineField({
           name: "text",
           title: "Texto",
-          description: "Um texto curto, como a linha de direitos autorais",
+          description:
+            "A coluna da esquerda do rodapé: direitos autorais, quem desenvolve o site, como avisar de um bug",
           type: "richText",
           validation: (rule) => rule.required().custom(richTextProblem),
         }),
@@ -93,25 +94,28 @@ export const siteSettings = defineType({
           name: "development",
           title: "Desenvolvimento",
           type: "object",
-          validation: (rule) => rule.required(),
+          deprecated: {
+            reason:
+              "O site não usa mais estes campos. Escreva o que for preciso no Texto do rodapé.",
+          },
           fields: [
             defineField({
               name: "developedBy",
               title: "Desenvolvido por",
               type: "richText",
-              validation: (rule) => rule.required().custom(richTextProblem),
+              validation: (rule) => rule.custom(richTextProblem),
             }),
             defineField({
               name: "repositoryUrl",
               title: "Repositório no GitHub",
               type: "url",
-              validation: (rule) => hrefRule(rule.required()),
+              validation: hrefRule,
             }),
             defineField({
               name: "bugReportUrl",
               title: "Formulário para avisar de bugs",
               type: "url",
-              validation: (rule) => hrefRule(rule.required()),
+              validation: hrefRule,
             }),
           ],
         }),

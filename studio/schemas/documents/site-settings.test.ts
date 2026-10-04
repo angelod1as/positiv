@@ -177,29 +177,27 @@ describe("siteSettings", () => {
     expect(pathsOf(errors)).toContain("footer.social.instagram.url")
   })
 
-  it("requires the Desenvolvimento group", async () => {
+  it("no longer requires the deprecated Desenvolvimento group", async () => {
     const errors = await validate({
       ...siteSettings,
       footer: { ...footer, development: undefined },
     })
 
-    expect(pathsOf(errors)).toContain("footer.development")
+    expect(
+      pathsOf(errors).filter((path) => path.startsWith("footer.development")),
+    ).toEqual([])
   })
 
-  it.each(["developedBy", "repositoryUrl", "bugReportUrl"])(
-    "requires the Desenvolvimento %s",
-    async (field) => {
-      const errors = await validate({
-        ...siteSettings,
-        footer: {
-          ...footer,
-          development: { ...development, [field]: undefined },
-        },
-      })
+  it("marks the Desenvolvimento group deprecated", () => {
+    const footerField = siteSettingsType.fields.find(
+      (field) => field.name === "footer",
+    ) as { fields?: { name: string; deprecated?: { reason: string } }[] }
 
-      expect(pathsOf(errors)).toContain(`footer.development.${field}`)
-    },
-  )
+    expect(
+      footerField.fields?.find((field) => field.name === "development")
+        ?.deprecated?.reason,
+    ).toBeTruthy()
+  })
 
   it("keeps the developed by text short", async () => {
     const errors = await validate({

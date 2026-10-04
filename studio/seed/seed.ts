@@ -27,6 +27,31 @@ function paragraphs(...texts: string[]) {
   }))
 }
 
+function linkedParagraph(
+  key: string,
+  before: string,
+  linkText: string,
+  href: string,
+  after: string,
+) {
+  return {
+    _type: "block",
+    _key: key,
+    style: "normal",
+    markDefs: [{ _type: "link", _key: `${key}-link`, href }],
+    children: [
+      { _type: "span", _key: `${key}-before`, text: before, marks: [] },
+      {
+        _type: "span",
+        _key: `${key}-text`,
+        text: linkText,
+        marks: [`${key}-link`],
+      },
+      { _type: "span", _key: `${key}-after`, text: after, marks: [] },
+    ],
+  }
+}
+
 function block(key: string, text: string, fields: object = {}) {
   return {
     _type: "block",
@@ -298,45 +323,23 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
             url: "https://instagram.com/positivparty",
           },
         ],
-        text: paragraphs("© 2025 Positiv. Todos os direitos reservados."),
-        development: {
-          developedBy: [
-            {
-              _type: "block",
-              _key: "developed-by",
-              style: "normal",
-              markDefs: [
-                {
-                  _type: "link",
-                  _key: "angelo",
-                  href: "https://www.angelodias.com.br",
-                },
-              ],
-              children: [
-                {
-                  _type: "span",
-                  _key: "developed-by-text",
-                  text: "Este website está em constante desenvolvimento por ",
-                  marks: [],
-                },
-                {
-                  _type: "span",
-                  _key: "developed-by-link",
-                  text: "Angelo Dias",
-                  marks: ["angelo"],
-                },
-                {
-                  _type: "span",
-                  _key: "developed-by-end",
-                  text: ".",
-                  marks: [],
-                },
-              ],
-            },
-          ],
-          repositoryUrl: "https://github.com/angelod1as/positiv",
-          bugReportUrl: "https://forms.gle/ys6W6W54YTcoBHrJA",
-        },
+        text: [
+          ...paragraphs("© 2025 Positiv. Todos os direitos reservados."),
+          linkedParagraph(
+            "developed-by",
+            "Este website está em constante desenvolvimento por ",
+            "Angelo Dias",
+            "https://www.angelodias.com.br",
+            ".",
+          ),
+          linkedParagraph(
+            "bug-report",
+            "Encontrou um bug? ",
+            "Clique aqui e nos avise",
+            "https://forms.gle/ys6W6W54YTcoBHrJA",
+            ".",
+          ),
+        ],
       },
       notice: paragraphs(
         "Este é um aviso de exemplo do ambiente de desenvolvimento.",
