@@ -1,16 +1,12 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { describe, expect, it } from "vitest"
 import fixture from "../../../e2e/fixtures/pages-snapshot.json"
 import { headers, image, page, sections, seo } from "~/test/page-documents"
 import { pageSchema } from "./page.schema"
-import { pagesQuery } from "./pages-query"
-import { findPage, getPagesSnapshot } from "./pages-snapshot.server"
+import { findPage, resolvePagesSnapshot } from "./pages-snapshot.server"
 
-const fetchMock = vi.fn<(query: string) => Promise<unknown>>()
+let documents: unknown
 
-const client = {
-  fetch: fetchMock,
-  config: () => ({ projectId: "8ojkallk", dataset: "development" }),
-}
+const config = { projectId: "8ojkallk", dataset: "development" }
 
 const CDN = "https://cdn.sanity.io/images/8ojkallk/development"
 
@@ -30,7 +26,11 @@ const team = page({
 })
 
 function respondWith(body: unknown) {
-  fetchMock.mockResolvedValueOnce(body)
+  documents = body
+}
+
+async function resolveSnapshot() {
+  return resolvePagesSnapshot(documents, config)
 }
 
 function imageSectionWith(
@@ -57,29 +57,17 @@ function imageSectionWith(
 
 async function imageOf(document: ReturnType<typeof page>) {
   respondWith([document])
-  const snapshot = await getPagesSnapshot(client)
+  const snapshot = await resolveSnapshot()
   const section = snapshot.get(document.address as string)?.sections[0]
   if (section?._type !== "imageSection") throw new Error("Not an image")
   return section.image
 }
 
-beforeEach(() => {
-  fetchMock.mockReset()
-})
-
-describe("getPagesSnapshot", () => {
-  it("fetches every Page with the pages query", async () => {
-    respondWith([])
-
-    await getPagesSnapshot(client)
-
-    expect(fetchMock).toHaveBeenCalledWith(pagesQuery)
-  })
-
+describe("resolvePagesSnapshot", () => {
   it("keys every published Page by its address", async () => {
     respondWith([home, about, team])
 
-    const snapshot = await getPagesSnapshot(client)
+    const snapshot = await resolveSnapshot()
 
     expect([...snapshot.keys()]).toEqual(["/", "/sobre", "/sobre/equipe"])
     expect(snapshot.get("/sobre")?.title).toBe("Sobre")
@@ -88,13 +76,13 @@ describe("getPagesSnapshot", () => {
   it("accepts a dataset with no Pages", async () => {
     respondWith([])
 
-    expect((await getPagesSnapshot(client)).size).toBe(0)
+    expect((await resolveSnapshot()).size).toBe(0)
   })
 
   it("opens each Page with the one item of its Page Header", async () => {
     respondWith([about, team])
 
-    const snapshot = await getPagesSnapshot(client)
+    const snapshot = await resolveSnapshot()
 
     expect(snapshot.get("/sobre")?.header).toEqual({
       _type: "pageTitle",
@@ -107,7 +95,7 @@ describe("getPagesSnapshot", () => {
   it("keeps the Sections in the order the Editor placed them", async () => {
     respondWith([team])
 
-    const snapshot = await getPagesSnapshot(client)
+    const snapshot = await resolveSnapshot()
 
     expect(
       snapshot.get("/sobre/equipe")?.sections.map(({ _type }) => _type),
@@ -117,7 +105,7 @@ describe("getPagesSnapshot", () => {
   it("replaces every founder photo with a square CDN URL", async () => {
     respondWith([team])
 
-    const snapshot = await getPagesSnapshot(client)
+    const snapshot = await resolveSnapshot()
     const founders = snapshot.get("/sobre/equipe")?.sections[0]
 
     expect(founders?._type === "founders" && founders.people[0].photo).toEqual({
@@ -160,7 +148,7 @@ describe("getPagesSnapshot", () => {
   it("builds a 1200 by 630 sharing image from the SEO image", async () => {
     respondWith([page({ seo: { ...seo, image } })])
 
-    const snapshot = await getPagesSnapshot(client)
+    const snapshot = await resolveSnapshot()
 
     expect(snapshot.get("/sobre")?.seo.image).toEqual({
       url: `${CDN}/abc-800x600.jpg?rect=0,90,800,420&w=1200&h=630&fit=crop&auto=format`,
@@ -173,7 +161,7 @@ describe("getPagesSnapshot", () => {
   it("leaves the sharing image empty when the Editor set none", async () => {
     respondWith([about])
 
-    const snapshot = await getPagesSnapshot(client)
+    const snapshot = await resolveSnapshot()
 
     expect(snapshot.get("/sobre")?.seo.image).toBeNull()
   })
@@ -181,7 +169,7 @@ describe("getPagesSnapshot", () => {
   it("returns Pages that satisfy the shared Page contract", async () => {
     respondWith([home, about, team])
 
-    const snapshot = await getPagesSnapshot(client)
+    const snapshot = await resolveSnapshot()
 
     for (const resolved of snapshot.values()) {
       expect(pageSchema.parse(resolved)).toEqual(resolved)
@@ -194,7 +182,7 @@ describe("getPagesSnapshot", () => {
       page({ _id: "page-quebrada", address: "/quebrada", sections: [] }),
     ])
 
-    await expect(getPagesSnapshot(client)).rejects.toThrow(
+    await expect(resolveSnapshot()).rejects.toThrow(
       /page-quebrada \(\/quebrada\)/,
     )
   })
@@ -205,7 +193,7 @@ describe("getPagesSnapshot", () => {
       page({ _id: "page-b", address: "/b", header: [] }),
     ])
 
-    await expect(getPagesSnapshot(client)).rejects.toThrow(
+    await expect(resolveSnapshot()).rejects.toThrow(
       /page-a \(\/a\)[\s\S]*page-b \(\/b\)/,
     )
   })
@@ -213,7 +201,7 @@ describe("getPagesSnapshot", () => {
   it("fails when two Pages share an address", async () => {
     respondWith([about, page({ _id: "page-sobre-2" })])
 
-    await expect(getPagesSnapshot(client)).rejects.toThrow(
+    await expect(resolveSnapshot()).rejects.toThrow(
       /page-sobre-2 \(\/sobre\)/,
     )
   })
@@ -221,7 +209,7 @@ describe("getPagesSnapshot", () => {
   it("accepts the Pages recorded from the development seed", async () => {
     respondWith(fixture)
 
-    const snapshot = await getPagesSnapshot(client)
+    const snapshot = await resolveSnapshot()
 
     expect([...snapshot.keys()]).toEqual(["/", "/sobre", "/sobre/equipe"])
   })
@@ -229,14 +217,14 @@ describe("getPagesSnapshot", () => {
   it("fails when Sanity does not answer with a list", async () => {
     respondWith(null)
 
-    await expect(getPagesSnapshot(client)).rejects.toThrow()
+    await expect(resolveSnapshot()).rejects.toThrow()
   })
 })
 
 describe("findPage", () => {
   async function snapshot() {
     respondWith([home, about, team])
-    return getPagesSnapshot(client)
+    return resolveSnapshot()
   }
 
   it("finds a Page by its address", async () => {

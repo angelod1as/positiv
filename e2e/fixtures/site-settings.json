@@ -1,0 +1,141 @@
+{
+  "footer": {
+    "columns": [
+      {
+        "_key": "positiv",
+        "links": [
+          {
+            "_key": "inicio",
+            "label": "Início",
+            "page": {
+              "address": "/"
+            },
+            "url": null
+          },
+          {
+            "_key": "sobre",
+            "label": "Sobre",
+            "page": {
+              "address": "/sobre"
+            },
+            "url": null
+          },
+          {
+            "_key": "equipe",
+            "label": "Equipe",
+            "page": {
+              "address": "/sobre/equipe"
+            },
+            "url": null
+          }
+        ],
+        "title": "A Positiv"
+      },
+      {
+        "_key": "plataforma",
+        "links": [
+          {
+            "_key": "eventos",
+            "label": "Eventos",
+            "page": null,
+            "url": "/eventos"
+          }
+        ],
+        "title": "Plataforma"
+      }
+    ],
+    "development": {
+      "bugReportUrl": "https://forms.gle/ys6W6W54YTcoBHrJA",
+      "developedBy": [
+        {
+          "_key": "developed-by",
+          "_type": "block",
+          "children": [
+            {
+              "_key": "developed-by-text",
+              "_type": "span",
+              "marks": [],
+              "text": "Este website está em constante desenvolvimento por "
+            },
+            {
+              "_key": "developed-by-link",
+              "_type": "span",
+              "marks": [
+                "angelo"
+              ],
+              "text": "Angelo Dias"
+            },
+            {
+              "_key": "developed-by-end",
+              "_type": "span",
+              "marks": [],
+              "text": "."
+            }
+          ],
+          "markDefs": [
+            {
+              "_key": "angelo",
+              "_type": "link",
+              "href": "https://www.angelodias.com.br"
+            }
+          ],
+          "style": "normal"
+        }
+      ],
+      "repositoryUrl": "https://github.com/angelod1as/positiv"
+    },
+    "social": [
+      {
+        "_key": "instagram",
+        "network": "instagram",
+        "url": "https://instagram.com/positivparty"
+      }
+    ],
+    "text": [
+      {
+        "_key": "p0",
+        "_type": "block",
+        "children": [
+          {
+            "_key": "s0",
+            "_type": "span",
+            "marks": [],
+            "text": "© 2025 Positiv. Todos os direitos reservados."
+          }
+        ],
+        "markDefs": [],
+        "style": "normal"
+      }
+    ]
+  },
+  "navigation": [
+    {
+      "_key": "sobre",
+      "label": "Sobre",
+      "page": {
+        "address": "/sobre"
+      },
+      "url": null
+    },
+    {
+      "_key": "equipe",
+      "label": "Equipe",
+      "page": {
+        "address": "/sobre/equipe"
+      },
+      "url": null
+    },
+    {
+      "_key": "eventos",
+      "label": "Eventos",
+      "page": null,
+      "url": "/eventos"
+    },
+    {
+      "_key": "instagram",
+      "label": "Instagram",
+      "page": null,
+      "url": "https://instagram.com/positivparty"
+    }
+  ]
+}

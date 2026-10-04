@@ -1,7 +1,7 @@
 import { getContext } from "~/business/auth/auth.server"
 import { isReservedAddress } from "~/business/cms/page.schema"
-import { pagesSnapshotCache } from "~/business/cms/pages-snapshot-cache.server"
 import { findPage } from "~/business/cms/pages-snapshot.server"
+import { siteSnapshotCache } from "~/business/cms/site-snapshot-cache.server"
 import { FloatingWhatsAppButton } from "~/components/atoms/floating-whatsapp-button/floating-whatsapp-button"
 import { PageHeader } from "~/components/pages/page/header/page-header"
 import { PageSections } from "~/components/pages/page/sections/page-sections"
@@ -31,7 +31,7 @@ async function loadEvents(profileId: string | undefined, count: number) {
 
 async function loadSnapshot() {
   try {
-    return await pagesSnapshotCache.get()
+    return (await siteSnapshotCache.get()).pages
   } catch (error) {
     logger.error("Could not load the Pages", {
       error: error instanceof Error ? error.message : String(error),
