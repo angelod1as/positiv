@@ -1,7 +1,7 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { headerCopy } from '../../../app/copy/layout'
+import { headerCopy, noticeCopy } from '../../../app/copy/layout'
 import { SitePage } from '../../pages/SitePage'
 
 type FixtureLink = { label: string; page: { address: string } | null; url: string | null }
@@ -66,5 +66,38 @@ test.describe('Site Settings from Sanity', () => {
     await expect(
       page.getByRole('contentinfo').getByText('Este website está em constante desenvolvimento por'),
     ).toBeVisible()
+  })
+})
+
+test.describe('the Notice from Sanity', () => {
+  const notice = (page: Page) =>
+    page.getByRole('alert').filter({ hasText: 'Aviso de teste' })
+
+  test('shows on every page without covering it, and stays closed once dismissed', async ({ page }) => {
+    const sitePage = new SitePage(page)
+
+    await sitePage.goto('/sobre')
+
+    await expect(notice(page)).toBeVisible()
+    await expect(notice(page).getByRole('link', { name: 'Saiba mais no aviso' })).toHaveAttribute(
+      'href',
+      '/eventos',
+    )
+    await expect
+      .poll(async () => {
+        const noticeBox = await notice(page).boundingBox()
+        const titleBox = await sitePage.title.boundingBox()
+        return noticeBox && titleBox && titleBox.y - (noticeBox.y + noticeBox.height)
+      })
+      .toBeGreaterThanOrEqual(0)
+
+    await sitePage.goto('/entrar')
+    await expect(notice(page)).toBeVisible()
+    await notice(page).getByRole('button', { name: noticeCopy.dismiss }).click()
+    await expect(notice(page)).toBeHidden()
+
+    await page.reload()
+    await sitePage.waitForPageLoad()
+    await expect(notice(page)).toBeHidden()
   })
 })
