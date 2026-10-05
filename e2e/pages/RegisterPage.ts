@@ -37,7 +37,7 @@ export class RegisterPage extends BasePage {
     this.passwordInput = page.getByLabel('Senha', { exact: true })
     this.confirmPasswordInput = page.getByLabel('Confirme a senha')
     this.over18Checkbox = page.getByRole('checkbox', { name: 'Sou maior de 18 anos' })
-    this.over18Label = page.getByText('Sou maior de 18 anos', { exact: true })
+    this.over18Label = page.locator('label', { hasText: 'Sou maior de 18 anos' })
     this.submitButton = page.getByRole('button', { name: 'Continuar' })
     this.captchaTokenInput = page.locator('input[name="captchaToken"]')
     this.turnstileIframe = page.locator('iframe[src*="challenges.cloudflare.com"]')
@@ -61,9 +61,6 @@ export class RegisterPage extends BasePage {
     await this.page.goto(this.url)
     await this.page.waitForLoadState('domcontentloaded')
     await this.emailInput.waitFor({ state: 'visible', timeout: 30000 })
-    // The form is server-rendered, so the field is visible before React is
-    // listening to it. Filled any earlier, the over-18 box gets ticked, never
-    // reaches state, and the next re-render unticks it.
     await this.waitForHydration()
   }
 

@@ -86,6 +86,9 @@ export abstract class BasePage {
    * being visible does not mean React is listening to it: a value typed or a
    * box ticked before hydration never reaches state, and the next re-render
    * quietly undoes it. Set by `useMarkHydrated` in the root.
+   *
+   * The mark is set once per document and never cleared, so it means something
+   * only after a full page load (`page.goto`), not after client-side navigation.
    */
   async waitForHydration(timeout = 30000): Promise<void> {
     await expect(this.page.locator('html')).toHaveAttribute('data-hydrated', 'true', { timeout })
