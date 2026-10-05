@@ -82,6 +82,16 @@ export abstract class BasePage {
   }
 
   /**
+   * Wait for React to hydrate the page. The server renders every field, so one
+   * being visible does not mean React is listening to it: a value typed or a
+   * box ticked before hydration never reaches state, and the next re-render
+   * quietly undoes it. Set by `useMarkHydrated` in the root.
+   */
+  async waitForHydration(timeout = 30000): Promise<void> {
+    await expect(this.page.locator('html')).toHaveAttribute('data-hydrated', 'true', { timeout })
+  }
+
+  /**
    * Click an element and wait for the page to stabilize
    */
   async clickAndWait(locator: Locator, options?: { 

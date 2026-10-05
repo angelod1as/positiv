@@ -58,9 +58,11 @@ export class RegisterPage extends BasePage {
   async goto(): Promise<void> {
     await this.page.goto(this.url)
     await this.page.waitForLoadState('domcontentloaded')
-    // The form is client-rendered, so the field arriving is what says the page
-    // is ready — more reliable than networkidle in CI.
     await this.emailInput.waitFor({ state: 'visible', timeout: 30000 })
+    // The form is server-rendered, so the field is visible before React is
+    // listening to it. Filled any earlier, the over-18 box gets ticked, never
+    // reaches state, and the next re-render unticks it.
+    await this.waitForHydration()
   }
 
   /**
