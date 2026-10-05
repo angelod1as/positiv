@@ -57,15 +57,18 @@ export const Header: FC<HeaderProps> = ({
     const top = topRef.current
     if (!top || typeof ResizeObserver === "undefined") return
 
+    const root = document.documentElement
     const observer = new ResizeObserver(([entry]) => {
-      const height = entry.borderBoxSize[0].blockSize
-      document.documentElement.style.setProperty(
-        "--site-header-height",
-        `${height}px`,
-      )
+      const height =
+        entry.borderBoxSize?.[0]?.blockSize ??
+        entry.target.getBoundingClientRect().height
+      root.style.setProperty("--site-header-height", `${height}px`)
     })
     observer.observe(top)
-    return () => observer.disconnect()
+    return () => {
+      observer.disconnect()
+      root.style.removeProperty("--site-header-height")
+    }
   }, [])
 
   const showButton = pathname !== "/entrar"

@@ -1,7 +1,7 @@
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
 import { MemoryRouter } from "react-router"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { portableTextSchema } from "~/business/cms/homepage-content.schema"
 import { headerCopy, noticeCopy } from "~/copy/layout"
 import { paragraph } from "~/test/page-documents"
@@ -149,13 +149,11 @@ describe("Header", () => {
   })
 
   describe("the space it takes", () => {
-    afterEach(() => {
-      vi.unstubAllGlobals()
-      document.documentElement.style.removeProperty("--site-header-height")
-    })
+    let report: ResizeObserverCallback = () => {}
+    const headerHeight = () =>
+      document.documentElement.style.getPropertyValue("--site-header-height")
 
-    it("tells the page how tall it is, so a Notice never covers the content", () => {
-      let report: ResizeObserverCallback = () => {}
+    beforeEach(() => {
       vi.stubGlobal(
         "ResizeObserver",
         class {
@@ -166,6 +164,14 @@ describe("Header", () => {
           disconnect() {}
         },
       )
+    })
+
+    afterEach(() => {
+      vi.unstubAllGlobals()
+      document.documentElement.style.removeProperty("--site-header-height")
+    })
+
+    it("tells the page how tall it is, so a Notice never covers the content", () => {
       renderHeader()
 
       report(
@@ -173,9 +179,34 @@ describe("Header", () => {
         {} as ResizeObserver,
       )
 
-      expect(
-        document.documentElement.style.getPropertyValue("--site-header-height"),
-      ).toBe("120px")
+      expect(headerHeight()).toBe("120px")
+    })
+
+    it("measures itself in a browser that reports no border box", () => {
+      renderHeader()
+
+      report(
+        [
+          {
+            target: { getBoundingClientRect: () => ({ height: 96 }) },
+          } as never,
+        ],
+        {} as ResizeObserver,
+      )
+
+      expect(headerHeight()).toBe("96px")
+    })
+
+    it("stops claiming space once it is gone", () => {
+      const { unmount } = renderHeader()
+      report(
+        [{ borderBoxSize: [{ blockSize: 120 }] } as never],
+        {} as ResizeObserver,
+      )
+
+      unmount()
+
+      expect(headerHeight()).toBe("")
     })
   })
 })
