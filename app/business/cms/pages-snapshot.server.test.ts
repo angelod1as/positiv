@@ -73,6 +73,20 @@ describe("resolvePagesSnapshot", () => {
     expect(snapshot.get("/sobre")?.title).toBe("Sobre")
   })
 
+  it("keeps when each Page was last updated", async () => {
+    respondWith([page({ _updatedAt: "2026-09-30T13:10:12Z" })])
+
+    const snapshot = await resolveSnapshot()
+
+    expect(snapshot.get("/sobre")?._updatedAt).toBe("2026-09-30T13:10:12Z")
+  })
+
+  it("fails a Page that does not say when it was last updated", async () => {
+    respondWith([page({ _updatedAt: undefined })])
+
+    await expect(resolveSnapshot()).rejects.toThrow(/page-sobre \(\/sobre\)/)
+  })
+
   it("accepts a dataset with no Pages", async () => {
     respondWith([])
 

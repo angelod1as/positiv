@@ -125,6 +125,7 @@ export const seo = {
 
 export const page = (overrides: Record<string, unknown> = {}) => ({
   _id: "page-sobre",
+  _updatedAt: "2026-09-30T12:00:00Z",
   title: "Sobre",
   address: "/sobre",
   header: [headers.pageTitle],

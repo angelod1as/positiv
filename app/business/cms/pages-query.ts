@@ -1,5 +1,6 @@
 export const pagesQuery = `*[_type == "page"]{
   _id,
+  _updatedAt,
   title,
   address,
   header[]{
