@@ -122,7 +122,7 @@ const seoFields = {
 
 export const pageDocumentSchema = zod.object({
   _id: zod.string(),
-  _updatedAt: zod.string(),
+  _updatedAt: zod.iso.datetime(),
   title: zod.string(),
   address: addressSchema,
   header: zod.tuple([pageHeaderSchema]),
@@ -132,7 +132,7 @@ export const pageDocumentSchema = zod.object({
 
 export const pageSchema = zod.object({
   _id: zod.string(),
-  _updatedAt: zod.string(),
+  _updatedAt: zod.iso.datetime(),
   title: zod.string(),
   address: addressSchema,
   header: pageHeaderSchema,

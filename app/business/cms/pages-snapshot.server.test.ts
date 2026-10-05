@@ -87,6 +87,12 @@ describe("resolvePagesSnapshot", () => {
     await expect(resolveSnapshot()).rejects.toThrow(/page-sobre \(\/sobre\)/)
   })
 
+  it("fails a Page whose last update is not a datetime", async () => {
+    respondWith([page({ _updatedAt: "ontem" })])
+
+    await expect(resolveSnapshot()).rejects.toThrow(/page-sobre \(\/sobre\)/)
+  })
+
   it("accepts a dataset with no Pages", async () => {
     respondWith([])
 
