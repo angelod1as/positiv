@@ -165,5 +165,35 @@
       "page": null,
       "url": "https://instagram.com/positivparty"
     }
+  ],
+  "notice": [
+    {
+      "_key": "aviso",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "aviso-texto",
+          "_type": "span",
+          "marks": [],
+          "text": "Aviso de teste: as inscrições da próxima festa abrem em breve. "
+        },
+        {
+          "_key": "aviso-link",
+          "_type": "span",
+          "marks": [
+            "aviso-eventos"
+          ],
+          "text": "Saiba mais no aviso"
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "aviso-eventos",
+          "_type": "link",
+          "href": "/eventos"
+        }
+      ],
+      "style": "normal"
+    }
   ]
 }

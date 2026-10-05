@@ -153,4 +153,42 @@ describe("siteSettingsSchema", () => {
       rejects(siteSettingsDocument({}, footer))
     })
   })
+
+  describe("notice", () => {
+    it("keeps a Notice with text", () => {
+      const notice = paragraph("Inscrições abertas!")
+
+      expect(
+        siteSettingsSchema.parse(siteSettingsDocument({ notice })).notice,
+      ).toEqual(notice)
+    })
+
+    it.each([
+      ["absent", {}],
+      ["null", { notice: null }],
+      ["an empty list", { notice: [] }],
+      ["a blank paragraph", { notice: paragraph("") }],
+      [
+        "only whitespace across paragraphs",
+        {
+          notice: [
+            ...paragraph("  "),
+            { ...paragraph("\n")[0], _key: "b2", children: [] },
+          ],
+        },
+      ],
+    ])("reads %s as no Notice", (_, overrides) => {
+      expect(
+        siteSettingsSchema.parse(siteSettingsDocument(overrides)).notice,
+      ).toBeNull()
+    })
+
+    it("rejects a Notice with a heading", () => {
+      rejects(
+        siteSettingsDocument({
+          notice: [{ ...paragraph("Oi")[0], style: "h2" }],
+        }),
+      )
+    })
+  })
 })

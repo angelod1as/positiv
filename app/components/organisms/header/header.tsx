@@ -1,5 +1,5 @@
 import { CalendarIcon, MenuIcon, Table2Icon, UserIcon } from "lucide-react"
-import { type FC, useState } from "react"
+import { type FC, useEffect, useRef, useState } from "react"
 import { useLocation } from "react-router"
 import PositivLogo from "~/assets/brand/positiv-logo-colors.png"
 import { Button } from "~/components/atoms/button/button"
@@ -14,10 +14,11 @@ import {
 } from "~/components/ui/sheet"
 import { headerCopy } from "~/copy/layout"
 import paths from "~/lib/paths"
+import type { PortableText } from "~/business/cms/homepage-content.schema"
 import type { SiteLink } from "~/business/cms/site-settings.schema"
 import type { ProfileWithRoles } from "~types/database/entities.types"
 import { NewsDialog } from "../news-dialog/news-dialog"
-import { WarningBanner } from "../warning-banner/warning-banner"
+import { Notice } from "../notice/notice"
 
 const {
   root: { HOME },
@@ -35,6 +36,8 @@ type HeaderProps = {
   isProdInDev?: boolean
   isThereAnyNews: boolean
   navigation?: SiteLink[]
+  notice?: PortableText | null
+  editorialSystemUnavailable?: boolean
 }
 
 export const Header: FC<HeaderProps> = ({
@@ -43,9 +46,30 @@ export const Header: FC<HeaderProps> = ({
   isProdInDev,
   isThereAnyNews,
   navigation = [],
+  notice = null,
+  editorialSystemUnavailable = false,
 }) => {
   const { pathname } = useLocation()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const topRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const top = topRef.current
+    if (!top || typeof ResizeObserver === "undefined") return
+
+    const root = document.documentElement
+    const observer = new ResizeObserver(([entry]) => {
+      const height =
+        entry.borderBoxSize?.[0]?.blockSize ??
+        entry.target.getBoundingClientRect().height
+      root.style.setProperty("--site-header-height", `${height}px`)
+    })
+    observer.observe(top)
+    return () => {
+      observer.disconnect()
+      root.style.removeProperty("--site-header-height")
+    }
+  }, [])
 
   const showButton = pathname !== "/entrar"
   const displayName = profile
@@ -61,8 +85,11 @@ export const Header: FC<HeaderProps> = ({
           {headerCopy.prodInDevWarning}
         </div>
       )}
-      <div className="fixed top-0 left-0 z-30 w-full">
-        {(pathname === "/" || pathname === "/entrar") && <WarningBanner />}
+      <div ref={topRef} className="fixed top-0 left-0 z-30 w-full">
+        <Notice
+          notice={notice}
+          editorialSystemUnavailable={editorialSystemUnavailable}
+        />
         <header className="flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 px-[1.75rem]">
           <div className="text-xl font-bold">
             <Link variant="unstyled" to={HOME}>

@@ -8,7 +8,8 @@ export const siteSettingsQuery = `*[_id == "siteSettings"][0]{
     columns[]{ _key, title, links[]${siteLinkProjection} },
     social[]{ _key, network, url },
     text
-  }
+  },
+  notice
 }`
 
 export const siteSnapshotQuery = `{

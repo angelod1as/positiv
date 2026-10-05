@@ -1,6 +1,10 @@
 import type { z } from "zod"
 import { zod } from "~/lib/helpers/zod"
-import { hrefSchema, portableTextSchema } from "./homepage-content.schema"
+import {
+  hrefSchema,
+  type PortableText,
+  portableTextSchema,
+} from "./homepage-content.schema"
 
 const siteLinkSchema = zod
   .object({
@@ -24,6 +28,16 @@ const listSchema = <Item extends z.ZodType>(item: Item) =>
     .nullish()
     .transform((items) => items ?? [])
 
+const isBlank = (text: PortableText) =>
+  text.every((block) => block.children.every((span) => span.text.trim() === ""))
+
+const noticeSchema = zod
+  .preprocess(
+    (value) => (Array.isArray(value) && value.length === 0 ? null : value),
+    portableTextSchema.nullish(),
+  )
+  .transform((notice) => (notice && !isBlank(notice) ? notice : null))
+
 export const siteSettingsSchema = zod.object({
   navigation: listSchema(siteLinkSchema),
   footer: zod.object({
@@ -43,6 +57,7 @@ export const siteSettingsSchema = zod.object({
     ),
     text: portableTextSchema,
   }),
+  notice: noticeSchema,
 })
 
 export type SiteSettings = z.output<typeof siteSettingsSchema>

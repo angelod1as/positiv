@@ -30,29 +30,41 @@ describe("loadSiteSettings", () => {
   it("returns the Site Settings from the snapshot", async () => {
     load.mockResolvedValue(snapshot(siteSettings))
 
-    expect(await loadSiteSettings({ get: load })).toEqual(siteSettings)
+    expect(await loadSiteSettings({ get: load })).toEqual({
+      siteSettings,
+      editorialSystemUnavailable: false,
+    })
   })
 
-  it("returns null when the Site Settings document is missing", async () => {
+  it("returns no Site Settings, with the editorial system available, when the document is missing", async () => {
     load.mockResolvedValue(snapshot(null))
 
-    expect(await loadSiteSettings({ get: load })).toBeNull()
+    expect(await loadSiteSettings({ get: load })).toEqual({
+      siteSettings: null,
+      editorialSystemUnavailable: false,
+    })
   })
 
-  it("returns null rather than throwing when Sanity is unreachable on a cold start", async () => {
+  it("reports the editorial system unavailable, rather than throwing, when Sanity is unreachable on a cold start", async () => {
     load.mockRejectedValue(new Error("connect ECONNREFUSED"))
 
-    expect(await loadSiteSettings({ get: load })).toBeNull()
+    expect(await loadSiteSettings({ get: load })).toEqual({
+      siteSettings: null,
+      editorialSystemUnavailable: true,
+    })
   })
 
-  it("returns null rather than waiting when Sanity is slow on a cold start", async () => {
+  it("reports the editorial system unavailable, rather than waiting, when Sanity is slow on a cold start", async () => {
     vi.useFakeTimers()
     load.mockReturnValue(new Promise(() => {}))
 
     const settings = loadSiteSettings({ get: load })
     await vi.advanceTimersByTimeAsync(SITE_SETTINGS_TIMEOUT_MS)
 
-    expect(await settings).toBeNull()
+    expect(await settings).toEqual({
+      siteSettings: null,
+      editorialSystemUnavailable: true,
+    })
   })
 
   it("returns the Site Settings when Sanity answers within the time limit", async () => {
@@ -69,7 +81,10 @@ describe("loadSiteSettings", () => {
     const settings = loadSiteSettings({ get: load })
     await vi.advanceTimersByTimeAsync(SITE_SETTINGS_TIMEOUT_MS - 1)
 
-    expect(await settings).toEqual(siteSettings)
+    expect(await settings).toEqual({
+      siteSettings,
+      editorialSystemUnavailable: false,
+    })
   })
 
   it("keeps serving stale Site Settings when a refresh fails", async () => {
@@ -81,7 +96,10 @@ describe("loadSiteSettings", () => {
     vi.advanceTimersByTime(1_001)
     load.mockRejectedValueOnce(new Error("Sanity is down"))
 
-    expect(await loadSiteSettings(cache)).toEqual(siteSettings)
+    expect(await loadSiteSettings(cache)).toEqual({
+      siteSettings,
+      editorialSystemUnavailable: false,
+    })
     expect(load).toHaveBeenCalledTimes(2)
   })
 })

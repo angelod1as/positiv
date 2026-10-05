@@ -261,7 +261,11 @@ describe("root loader", () => {
 
       const request = new Request("http://localhost:5173/dashboard")
       const result = (await loader({ request, params: {} } as never)) as {
-        data: { siteSettings: unknown; currentProfile: unknown }
+        data: {
+          siteSettings: unknown
+          editorialSystemUnavailable: unknown
+          currentProfile: unknown
+        }
       }
       return result.data
     }
@@ -275,7 +279,10 @@ describe("root loader", () => {
         siteSettings,
       })
 
-      expect((await load()).siteSettings).toEqual(siteSettings)
+      const data = await load()
+
+      expect(data.siteSettings).toEqual(siteSettings)
+      expect(data.editorialSystemUnavailable).toBe(false)
     })
 
     it("still loads a Platform page, with no Site Settings, when Sanity is unreachable", async () => {
@@ -289,6 +296,7 @@ describe("root loader", () => {
       const data = await load()
 
       expect(data.siteSettings).toBeNull()
+      expect(data.editorialSystemUnavailable).toBe(true)
       expect(data.currentProfile).toEqual(profile)
     })
 
@@ -305,9 +313,11 @@ describe("root loader", () => {
 
       const result = (await loader({ request, params: {} } as never)) as {
         siteSettings: unknown
+        editorialSystemUnavailable: unknown
       }
 
       expect(result.siteSettings).toEqual(siteSettings)
+      expect(result.editorialSystemUnavailable).toBe(false)
     })
   })
 })

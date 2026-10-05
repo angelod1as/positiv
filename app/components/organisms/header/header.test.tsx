@@ -1,7 +1,11 @@
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it } from "vitest"
-import { headerCopy } from "~/copy/layout"
-import { renderWithRouter, screen, within } from "~/test/test-utils"
+import type { ReactNode } from "react"
+import { MemoryRouter } from "react-router"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { portableTextSchema } from "~/business/cms/homepage-content.schema"
+import { headerCopy, noticeCopy } from "~/copy/layout"
+import { paragraph } from "~/test/page-documents"
+import { render, renderWithRouter, screen, within } from "~/test/test-utils"
 import { Header } from "./header"
 
 const navigation = [
@@ -106,5 +110,103 @@ describe("Header", () => {
     expect(
       screen.getByRole("link", { name: headerCopy.login }),
     ).toBeInTheDocument()
+  })
+
+  describe("the Notice", () => {
+    const onPlatformPage = ({ children }: { children: ReactNode }) => (
+      <MemoryRouter initialEntries={["/dashboard"]}>{children}</MemoryRouter>
+    )
+
+    it("shows the Notice on every page", async () => {
+      render(
+        <Header
+          profile={null}
+          isThereAnyNews={false}
+          notice={portableTextSchema.parse(paragraph("Inscrições abertas!"))}
+        />,
+        { wrapper: onPlatformPage },
+      )
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Inscrições abertas!",
+      )
+    })
+
+    it("says when the editorial system is unavailable", () => {
+      render(
+        <Header
+          profile={null}
+          isThereAnyNews={false}
+          editorialSystemUnavailable
+        />,
+        { wrapper: onPlatformPage },
+      )
+
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        noticeCopy.editorialSystemUnavailable,
+      )
+    })
+  })
+
+  describe("the space it takes", () => {
+    let report: ResizeObserverCallback = () => {}
+    const headerHeight = () =>
+      document.documentElement.style.getPropertyValue("--site-header-height")
+
+    beforeEach(() => {
+      vi.stubGlobal(
+        "ResizeObserver",
+        class {
+          constructor(callback: ResizeObserverCallback) {
+            report = callback
+          }
+          observe() {}
+          disconnect() {}
+        },
+      )
+    })
+
+    afterEach(() => {
+      vi.unstubAllGlobals()
+      document.documentElement.style.removeProperty("--site-header-height")
+    })
+
+    it("tells the page how tall it is, so a Notice never covers the content", () => {
+      renderHeader()
+
+      report(
+        [{ borderBoxSize: [{ blockSize: 120 }] } as never],
+        {} as ResizeObserver,
+      )
+
+      expect(headerHeight()).toBe("120px")
+    })
+
+    it("measures itself in a browser that reports no border box", () => {
+      renderHeader()
+
+      report(
+        [
+          {
+            target: { getBoundingClientRect: () => ({ height: 96 }) },
+          } as never,
+        ],
+        {} as ResizeObserver,
+      )
+
+      expect(headerHeight()).toBe("96px")
+    })
+
+    it("stops claiming space once it is gone", () => {
+      const { unmount } = renderHeader()
+      report(
+        [{ borderBoxSize: [{ blockSize: 120 }] } as never],
+        {} as ResizeObserver,
+      )
+
+      unmount()
+
+      expect(headerHeight()).toBe("")
+    })
   })
 })

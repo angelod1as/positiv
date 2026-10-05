@@ -168,7 +168,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         isThereAnyNews: shouldShowNews,
         needsProfileUpdate,
         shouldShowNewsletterModal,
-        siteSettings: await siteSettings,
+        ...(await siteSettings),
       },
       { headers },
     )
@@ -182,7 +182,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       isThereAnyNews: null,
       needsProfileUpdate: false,
       shouldShowNewsletterModal: false,
-      siteSettings: await siteSettings,
+      ...(await siteSettings),
     }
   }
 }
@@ -290,6 +290,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
     needsProfileUpdate = false,
     shouldShowNewsletterModal = false,
     siteSettings,
+    editorialSystemUnavailable = false,
   } = loaderData
 
   const location = useLocation()
@@ -323,6 +324,8 @@ export default function App({ loaderData }: Route.ComponentProps) {
         userEmail={currentUser?.email}
         isThereAnyNews={isThereAnyNews ?? false}
         navigation={siteSettings?.navigation}
+        notice={siteSettings?.notice}
+        editorialSystemUnavailable={editorialSystemUnavailable}
       />
       <ProfileUpdateGuard
         currentProfile={currentProfile}
@@ -330,7 +333,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
         needsProfileUpdate={needsProfileUpdate}
       />
       <NewsletterSubscriptionModal open={showNewsletterModal} />
-      <div className="flex flex-col grow mt-16">
+      <div className="flex flex-col grow mt-[var(--site-header-height,4rem)]">
         <Outlet />
       </div>
       <Footer
@@ -367,7 +370,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <div className="flex flex-col grow mt-16">
+    <div className="flex flex-col grow mt-[var(--site-header-height,4rem)]">
       <Header profile={null} isThereAnyNews={false} />
       <main className="grow flex flex-col justify-center items-center">
         <div className="max-w-2xl">
