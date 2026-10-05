@@ -149,15 +149,9 @@ export const Header: FC<HeaderProps> = ({
               (showButtons ? (
                 <div className="flex items-center space-x-2">
                   {!!displayName && (
-                    <p className="hidden sm:block">
-                      {headerCopy.greeting(displayName)}
-                    </p>
+                    <p className="hidden sm:block">{headerCopy.greeting(displayName)}</p>
                   )}
-                  <NewsDialog
-                    isThereAnyNews={isThereAnyNews}
-                    isHeader={true}
-                    currentProfile={profile}
-                  />
+                  <NewsDialog isThereAnyNews={isThereAnyNews} isHeader={true} currentProfile={profile} />
                   <Button
                     asChild
                     variant="outline"
@@ -176,12 +170,7 @@ export const Header: FC<HeaderProps> = ({
                       <Table2Icon />
                     </Button>
                   )}
-                  <Button
-                    asChild
-                    variant="outline"
-                    title={headerCopy.accountTitle}
-                    to={ACCOUNT}
-                  >
+                  <Button asChild variant="outline" title={headerCopy.accountTitle} to={ACCOUNT}>
                     <UserIcon />
                   </Button>
                 </div>

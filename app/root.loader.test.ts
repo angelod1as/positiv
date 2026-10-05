@@ -67,8 +67,14 @@ describe("root loader", () => {
 
   it("should propagate supabaseHeaders Set-Cookie in response when auth recovery occurs", async () => {
     const supabaseHeaders = new Headers()
-    supabaseHeaders.append("Set-Cookie", "sb-access-token=; Max-Age=0; Path=/")
-    supabaseHeaders.append("Set-Cookie", "sb-refresh-token=; Max-Age=0; Path=/")
+    supabaseHeaders.append(
+      "Set-Cookie",
+      "sb-access-token=; Max-Age=0; Path=/",
+    )
+    supabaseHeaders.append(
+      "Set-Cookie",
+      "sb-refresh-token=; Max-Age=0; Path=/",
+    )
 
     mockGetContext.mockResolvedValue({
       currentProfile: null,
@@ -101,11 +107,7 @@ describe("root loader", () => {
     )
 
     mockGetContext.mockResolvedValue({
-      currentProfile: {
-        id: "profile-1",
-        basic_data_filled: true,
-        race_color: ["white"],
-      },
+      currentProfile: { id: "profile-1", basic_data_filled: true, race_color: ["white"] },
       currentUser: { id: "user-1", email: "test@test.com" },
       isProdInDev: false,
       supabaseHeaders,
@@ -137,11 +139,15 @@ describe("root loader", () => {
     await loader({ request, params: {} } as never)
 
     const setCookies = toastHeaders.getSetCookie()
-    expect(setCookies).toContain("sb-access-token=new-token; Path=/; HttpOnly")
+    expect(setCookies).toContain(
+      "sb-access-token=new-token; Path=/; HttpOnly",
+    )
   })
 
   describe("needsProfileUpdate", () => {
-    const loadWithProfile = async (profile: Record<string, unknown> | null) => {
+    const loadWithProfile = async (
+      profile: Record<string, unknown> | null,
+    ) => {
       mockGetContext.mockResolvedValue({
         currentProfile: profile,
         currentUser: profile ? { id: "user-1", email: "test@test.com" } : null,
@@ -211,9 +217,9 @@ describe("root loader", () => {
       expect(await loadWithProfile({ ...complete, phone: 1199998888 })).toBe(
         true,
       )
-      expect(await loadWithProfile({ ...complete, phone: 351912345678 })).toBe(
-        true,
-      )
+      expect(
+        await loadWithProfile({ ...complete, phone: 351912345678 }),
+      ).toBe(true)
     })
 
     it("leaves alone a foreign phone flagged international", async () => {
