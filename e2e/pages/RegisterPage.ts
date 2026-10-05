@@ -14,6 +14,7 @@ export class RegisterPage extends BasePage {
   readonly passwordInput: Locator
   readonly confirmPasswordInput: Locator
   readonly over18Checkbox: Locator
+  readonly over18Label: Locator
   readonly submitButton: Locator
   readonly captchaTokenInput: Locator
   readonly turnstileIframe: Locator
@@ -36,6 +37,7 @@ export class RegisterPage extends BasePage {
     this.passwordInput = page.getByLabel('Senha', { exact: true })
     this.confirmPasswordInput = page.getByLabel('Confirme a senha')
     this.over18Checkbox = page.getByRole('checkbox', { name: 'Sou maior de 18 anos' })
+    this.over18Label = page.getByText('Sou maior de 18 anos', { exact: true })
     this.submitButton = page.getByRole('button', { name: 'Continuar' })
     this.captchaTokenInput = page.locator('input[name="captchaToken"]')
     this.turnstileIframe = page.locator('iframe[src*="challenges.cloudflare.com"]')
@@ -124,8 +126,12 @@ export class RegisterPage extends BasePage {
     await this.emailInput.fill(email)
     await this.passwordInput.fill(password)
     await this.confirmPasswordInput.fill(confirmPassword ?? password)
-    // The visible box is a styled span over a screen-reader-only input.
-    await this.over18Checkbox.check({ force: true })
+    // The input is screen-reader-only, so the label is what takes the click —
+    // as it does for a person. Not a forced click on the input: that skips the
+    // checks for a moving target, and the form moves down when the Notice
+    // appears after hydration, leaving the click where the box used to be.
+    await this.over18Label.click()
+    await expect(this.over18Checkbox).toBeChecked()
 
     if (captcha === 'direct') {
       await this.setCaptchaToken()
