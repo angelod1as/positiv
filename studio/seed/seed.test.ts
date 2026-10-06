@@ -1,6 +1,7 @@
 import { SanityClient } from "@sanity/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
+import { CODE_OF_CONDUCT_PAGE_ID } from "../migrations/code-of-conduct-to-page/transform"
 import { HOMEPAGE_PAGE_ID } from "../schemas/documents/page"
 import { SITE_SETTINGS_ID } from "../singletons"
 import { validateDocumentOf } from "../test/validate"
@@ -96,6 +97,18 @@ describe("seedDocuments", () => {
         ["/sobre", "pageTitle"],
       ]),
     )
+  })
+
+  it("seeds the code of conduct as a Page with a Title and a Rich Text Section", () => {
+    const codeOfConduct = pages.find(
+      (page) => page.address === "/codigo-de-conduta",
+    )
+
+    expect(codeOfConduct?._id).toBe(CODE_OF_CONDUCT_PAGE_ID)
+    expect(codeOfConduct?.header?.[0]._type).toBe("pageTitle")
+    expect(codeOfConduct?.sections?.map((section) => section._type)).toEqual([
+      "richTextSection",
+    ])
   })
 
   describe("Site Settings", () => {

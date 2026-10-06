@@ -12,7 +12,8 @@
     "lint": "tsc --noEmit && eslint .",
     "test": "vitest --run",
     "seed": "sanity exec seed/cli.ts --with-user-token",
-    "migrate:homepage-to-page": "sanity exec migrations/homepage-to-page/cli.ts --with-user-token --"
+    "migrate:homepage-to-page": "sanity exec migrations/homepage-to-page/cli.ts --with-user-token --",
+    "migrate:code-of-conduct-to-page": "sanity exec migrations/code-of-conduct-to-page/cli.ts --with-user-token --"
   },
   "dependencies": {
     "@sanity/icons": "^5.2.2",

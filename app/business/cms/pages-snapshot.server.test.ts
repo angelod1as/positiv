@@ -231,7 +231,12 @@ describe("resolvePagesSnapshot", () => {
 
     const snapshot = await resolveSnapshot()
 
-    expect([...snapshot.keys()]).toEqual(["/", "/sobre", "/sobre/equipe"])
+    expect([...snapshot.keys()]).toEqual([
+      "/",
+      "/sobre",
+      "/sobre/equipe",
+      "/codigo-de-conduta",
+    ])
   })
 
   it("fails when Sanity does not answer with a list", async () => {

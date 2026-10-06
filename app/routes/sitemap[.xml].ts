@@ -3,7 +3,7 @@ import { siteSnapshotCache } from "~/business/cms/site-snapshot-cache.server"
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { logger } from "~/lib/logger/logger.server"
 
-const PLATFORM_ADDRESSES = ["/codigo-de-conduta", "/feedback"]
+const PLATFORM_ADDRESSES = ["/feedback"]
 
 export async function loader() {
   const baseUrl = POSITIV_URL.replace(/\/$/, "")
