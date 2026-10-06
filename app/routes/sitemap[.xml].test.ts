@@ -40,6 +40,12 @@ const hidden = page({
   address: "/rascunho",
   seo: { ...seo, noIndex: true },
 })
+const codeOfConduct = page({
+  _id: "page-codigo-de-conduta",
+  _updatedAt: "2026-09-05T14:00:00Z",
+  title: "Código de Conduta",
+  address: "/codigo-de-conduta",
+})
 
 async function sitemap() {
   const response = await loader()
@@ -54,7 +60,7 @@ function entry(loc: string, lastmod?: string) {
 
 describe("sitemap.xml loader", () => {
   beforeEach(() => {
-    snapshotOf([home, about, team, hidden])
+    snapshotOf([home, about, team, hidden, codeOfConduct])
   })
 
   it("returns a Response with application/xml content type", async () => {
@@ -83,6 +89,12 @@ describe("sitemap.xml loader", () => {
     expect(body).toContain(entry("/sobre/equipe", "2026-09-03T12:00:00Z"))
   })
 
+  it("lists the code of conduct, now a Page, with its lastmod", async () => {
+    const { body } = await sitemap()
+
+    expect(body).toContain(entry("/codigo-de-conduta", "2026-09-05T14:00:00Z"))
+  })
+
   it("leaves out the Pages the Editor kept from search engines", async () => {
     const { body } = await sitemap()
 
@@ -92,21 +104,20 @@ describe("sitemap.xml loader", () => {
   it("keeps the public Platform URLs, which have no lastmod", async () => {
     const { body } = await sitemap()
 
-    expect(body).toContain(entry("/codigo-de-conduta"))
     expect(body).toContain(entry("/feedback"))
   })
 
   it("lists the Pages by address, then the Platform URLs", async () => {
-    snapshotOf([team, about, home])
+    snapshotOf([team, about, home, codeOfConduct])
 
     const { body } = await sitemap()
     const locs = [...body.matchAll(/<loc>(.*)<\/loc>/g)].map(([, loc]) => loc)
 
     expect(locs).toEqual([
       `${SITE}/`,
+      `${SITE}/codigo-de-conduta`,
       `${SITE}/sobre`,
       `${SITE}/sobre/equipe`,
-      `${SITE}/codigo-de-conduta`,
       `${SITE}/feedback`,
     ])
   })
