@@ -4,10 +4,6 @@ export const metaCopy = {
     description:
       "Eventos para amantes de saliências não-mono, curioses com o mundo da suruba, e quem quer explorar a própria sexualidade",
   },
-  codeOfConduct: {
-    title: "Código de Conduta",
-    description: "Código de conduta da Positiv",
-  },
   feedback: {
     title: "Feedback",
   },

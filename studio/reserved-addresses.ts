@@ -4,7 +4,6 @@ export const reservedAddresses: readonly string[] = [
   // Not a route: the production build serves its bundles under /assets.
   "assets",
   "auth",
-  "codigo-de-conduta",
   "conta",
   "convite",
   "dashboard",

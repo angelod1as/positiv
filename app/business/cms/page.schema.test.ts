@@ -177,7 +177,13 @@ describe("pageDocumentSchema", () => {
   })
 
   describe("address", () => {
-    it.each(["/", "/sobre", "/sobre/equipe", "/codigo-de-conduta-2"])(
+    it.each([
+      "/",
+      "/sobre",
+      "/sobre/equipe",
+      "/codigo-de-conduta",
+      "/codigo-de-conduta-2",
+    ])(
       "accepts %s",
       (address) => {
         accepts(page({ address }))
@@ -194,7 +200,6 @@ describe("pageDocumentSchema", () => {
       "/a&b",
       "/admin",
       "/assets/app.js",
-      "/codigo-de-conduta",
       "/feedback",
     ])("rejects %j", (address) => {
       rejects(page({ address }))
