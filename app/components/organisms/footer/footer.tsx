@@ -31,6 +31,8 @@ export const Footer: FC<FooterProps> = ({
   siteSettings,
 }) => {
   const footer = siteSettings?.footer
+  const columns = footer?.columns ?? []
+  const hasColumns = columns.length > 0
   const socialLinks = footer
     ? footer.social
     : [{ _key: "instagram", url: FALLBACK_INSTAGRAM_URL }]
@@ -38,36 +40,39 @@ export const Footer: FC<FooterProps> = ({
   return (
     <footer className="text-xs w-full p-3 bg-gray-100 border">
       <div className="px-4 md:px-6">
-        {footer && footer.columns.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-8 pb-4 text-center">
-            {footer.columns.map((column) => (
-              <div key={column._key}>
-                <p id={`footer-column-${column._key}`} className="font-bold">
-                  {column.title}
-                </p>
-                <ul
-                  aria-labelledby={`footer-column-${column._key}`}
-                  className="flex flex-col gap-1 pt-1"
-                >
-                  {column.links.map((link) => (
-                    <li key={link._key}>
-                      <ContentLink href={link.href}>{link.label}</ContentLink>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        )}
-        <div className="grid grid-cols-1 text-muted-foreground lg:grid-cols-2  gap-4  justify-end items-start text-center">
-          <div className="text-muted-foreground">
-            {footer ? (
-              <RichText value={footer.text} />
-            ) : (
-              <Copy>{footerCopy.copyright}</Copy>
-            )}
-          </div>
-          <div>
+        <div
+          data-testid="footer-grid"
+          className="grid grid-cols-1 text-muted-foreground lg:grid-cols-2  gap-4  justify-end items-start text-center"
+        >
+          {hasColumns && (
+            <div className="flex flex-wrap justify-center gap-8 text-center">
+              {columns.map((column) => (
+                <div key={column._key}>
+                  <p id={`footer-column-${column._key}`} className="font-bold">
+                    {column.title}
+                  </p>
+                  <ul
+                    aria-labelledby={`footer-column-${column._key}`}
+                    className="flex flex-col gap-1 pt-1"
+                  >
+                    {column.links.map((link) => (
+                      <li key={link._key}>
+                        <ContentLink href={link.href}>{link.label}</ContentLink>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className={hasColumns ? undefined : "lg:col-span-2"}>
+            <div className="text-muted-foreground">
+              {footer ? (
+                <RichText value={footer.text} />
+              ) : (
+                <Copy>{footerCopy.copyright}</Copy>
+              )}
+            </div>
             <NewsDialog
               isThereAnyNews={isThereAnyNews}
               currentProfile={currentProfile}
