@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { reservedAddresses } from "../studio/reserved-addresses"
+import { reservedAddresses } from "./reserved-addresses"
 
 type Route = { path?: string; children?: Route[] }
 

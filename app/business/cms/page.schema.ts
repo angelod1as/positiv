@@ -1,6 +1,6 @@
 import type { z } from "zod"
 import { zod } from "~/lib/helpers/zod"
-import { reservedAddresses } from "../../../studio/reserved-addresses"
+import { reservedAddresses } from "../../reserved-addresses"
 import {
   foundersFields,
   homepageImageSchema,
