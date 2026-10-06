@@ -20,7 +20,6 @@ pnpm workspace package, deployed to Sanity's hosting at
 | `schemas/documents/`                | `page`, `person`. Singletons: `homepage` (until `/` replaces it), `siteSettings` |
 | `schemas/page-header/`              | The three Page Header forms: Homepage Hero, Hero and Title                       |
 | `schemas/sections/`                 | One object type per Section                                                      |
-| `reserved-addresses.ts`             | The first address segments the Platform uses, which no Page may take             |
 | `page-actions.ts`                   | Keeps the Page at `/` from being deleted or unpublished                          |
 | `structure.ts`, `singletons.ts`     | The desk: both "Página inicial", "Páginas", "Configurações do site", "Pessoas"   |
 | `seed/`                             | The development seed — see below                                                 |
@@ -73,9 +72,11 @@ in the Studio, and the repository keeps no copy of it — see
 
 A Page's address is stored with its leading slash: `/` is the Homepage,
 `/sobre` and `/sobre/equipe` are others. Its first segment may not be one of
-`reserved-addresses.ts`, so a Page never shadows a Platform route. When a new
+`app/reserved-addresses.ts`, so a Page never shadows a Platform route. When a new
 top-level route lands in `app/routes.ts`, add its segment there;
-`app/reserved-addresses.test.ts` fails until you do.
+`app/reserved-addresses.test.ts` fails until you do. The list lives in the app
+because it mirrors the app's routes; the Studio imports it across the workspace,
+so keep that file free of imports or the Studio build starts pulling in app code.
 
 The Homepage Hero and the Hero have the same fields today, on purpose: they
 are different Page Header forms that render differently, and only the

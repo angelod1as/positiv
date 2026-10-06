@@ -6,7 +6,7 @@ import {
   getPublishedId,
 } from "sanity"
 
-import { reservedAddresses } from "../../reserved-addresses"
+import { reservedAddresses } from "../../../app/reserved-addresses"
 
 export const HOMEPAGE_PAGE_ID = "page-home"
 

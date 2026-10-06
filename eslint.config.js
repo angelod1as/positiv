@@ -91,6 +91,24 @@ export default defineConfig([
           ignoreRestSiblings: true,
         },
       ],
+
+      // The app is built into the production image without studio/, which
+      // .dockerignore excludes, so importing from it breaks the image build.
+      // Shared code belongs in app/ (see app/reserved-addresses.ts). studio/ is
+      // globally ignored above, so this covers app/, e2e/ and scripts/ and
+      // never lints studio itself.
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["**/studio", "**/studio/**"],
+              message:
+                "Don't import from studio/ in the app — it is excluded from the production image. Put shared code in app/.",
+            },
+          ],
+        },
+      ],
     },
   },
 

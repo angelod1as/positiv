@@ -1,6 +1,7 @@
+import { readFileSync } from "node:fs"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { reservedAddresses } from "../studio/reserved-addresses"
+import { reservedAddresses } from "./reserved-addresses"
 
 type Route = { path?: string; children?: Route[] }
 
@@ -44,5 +45,15 @@ describe("reserved addresses", () => {
     expect(missingFrom(withoutAdmin, await developmentRoutes())).toEqual([
       "admin",
     ])
+  })
+
+  it("stays import-free, so the Studio can bundle it across the workspace", () => {
+    const source = readFileSync("app/reserved-addresses.ts", "utf8")
+
+    expect(source).toContain("reservedAddresses")
+    expect(source).not.toMatch(/^\s*import\b/m)
+    expect(source).not.toMatch(/\bfrom\s+["']/)
+    expect(source).not.toMatch(/\bimport\s*\(/)
+    expect(source).not.toMatch(/\brequire\s*\(/)
   })
 })
