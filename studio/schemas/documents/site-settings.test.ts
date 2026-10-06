@@ -5,12 +5,6 @@ import { paragraphs } from "../../test/portable-text"
 import { validateDocumentOf } from "../../test/validate"
 import { siteSettings as siteSettingsType } from "./site-settings"
 
-const development = {
-  developedBy: paragraphs("Desenvolvido por Angelo Dias."),
-  repositoryUrl: "https://github.com/angelod1as/positiv",
-  bugReportUrl: "https://forms.gle/ys6W6W54YTcoBHrJA",
-}
-
 const footer = {
   columns: [
     {
@@ -36,7 +30,6 @@ const footer = {
     },
   ],
   text: paragraphs("© 2025 Positiv. Todos os direitos reservados."),
-  development,
 }
 
 const siteSettings = {
@@ -176,55 +169,6 @@ describe("siteSettings", () => {
 
     expect(pathsOf(errors)).toContain("footer.social.instagram.url")
   })
-
-  it("no longer requires the deprecated Desenvolvimento group", async () => {
-    const errors = await validate({
-      ...siteSettings,
-      footer: { ...footer, development: undefined },
-    })
-
-    expect(
-      pathsOf(errors).filter((path) => path.startsWith("footer.development")),
-    ).toEqual([])
-  })
-
-  it("marks the Desenvolvimento group deprecated", () => {
-    const footerField = siteSettingsType.fields.find(
-      (field) => field.name === "footer",
-    ) as { fields?: { name: string; deprecated?: { reason: string } }[] }
-
-    expect(
-      footerField.fields?.find((field) => field.name === "development")
-        ?.deprecated?.reason,
-    ).toBeTruthy()
-  })
-
-  it("keeps the developed by text short", async () => {
-    const errors = await validate({
-      ...siteSettings,
-      footer: {
-        ...footer,
-        development: { ...development, developedBy: image },
-      },
-    })
-
-    expect(pathsOf(errors)).toContain("footer.development.developedBy.i1")
-  })
-
-  it.each(["repositoryUrl", "bugReportUrl"])(
-    "rejects a Desenvolvimento %s that is not https or relative",
-    async (field) => {
-      const errors = await validate({
-        ...siteSettings,
-        footer: {
-          ...footer,
-          development: { ...development, [field]: "http://example.com" },
-        },
-      })
-
-      expect(pathsOf(errors)).toContain(`footer.development.${field}`)
-    },
-  )
 
   it("titles the preview Configurações do site", () => {
     expect(siteSettingsType.preview?.prepare?.()).toEqual({

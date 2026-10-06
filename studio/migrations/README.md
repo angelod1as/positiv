@@ -98,3 +98,32 @@ reading it, so do not re-run `--no-dry-run` on `production` once an Editor has
 changed the Page — a re-run, including a retry after a half-failed deploy,
 silently discards their edits. On `development` the seed already writes this
 Page, so a re-run only overwrites it with the same content.
+
+### `remove-footer-development` (POS-599)
+
+Contract step of POS-586: the app no longer reads `footer.development`
+(`developedBy`, `repositoryUrl`, `bugReportUrl`) and the group has left the
+Studio schema. This migration unsets `footer.development` on the `siteSettings`
+singleton, both the published document and its draft.
+
+It is idempotent: it patches only the documents that exist, and unsetting a
+field that is already gone is a no-op. On `production` the field is already
+absent, so the migration writes nothing there — it ships for `development` and
+as a safety net.
+
+Like the others, it runs through `sanity exec`, so `--dataset` is required and
+it dry-runs until you add `--no-dry-run`.
+
+From the repository root, `development` first:
+
+```sh
+pnpm --filter studio migrate:remove-footer-development --dataset development
+pnpm --filter studio migrate:remove-footer-development --dataset development --no-dry-run
+```
+
+Then `production`:
+
+```sh
+pnpm --filter studio migrate:remove-footer-development --dataset production
+pnpm --filter studio migrate:remove-footer-development --dataset production --no-dry-run
+```

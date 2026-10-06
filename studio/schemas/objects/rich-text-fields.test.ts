@@ -85,7 +85,6 @@ describe("every rich text field", () => {
         "page: header.pageHero.subtitle.i1",
         "page: sections.richTextSection.body.i1",
         "siteSettings: footer.text.i1",
-        "siteSettings: footer.development.developedBy.i1",
         "siteSettings: notice.i1",
       ]),
     )

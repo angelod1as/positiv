@@ -90,35 +90,6 @@ export const siteSettings = defineType({
           type: "richText",
           validation: (rule) => rule.required().custom(richTextProblem),
         }),
-        defineField({
-          name: "development",
-          title: "Desenvolvimento",
-          type: "object",
-          deprecated: {
-            reason:
-              "O site não usa mais estes campos. Escreva o que for preciso no Texto do rodapé.",
-          },
-          fields: [
-            defineField({
-              name: "developedBy",
-              title: "Desenvolvido por",
-              type: "richText",
-              validation: (rule) => rule.custom(richTextProblem),
-            }),
-            defineField({
-              name: "repositoryUrl",
-              title: "Repositório no GitHub",
-              type: "url",
-              validation: hrefRule,
-            }),
-            defineField({
-              name: "bugReportUrl",
-              title: "Formulário para avisar de bugs",
-              type: "url",
-              validation: hrefRule,
-            }),
-          ],
-        }),
       ],
     }),
     defineField({
