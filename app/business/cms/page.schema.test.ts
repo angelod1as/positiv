@@ -191,9 +191,11 @@ describe("pageDocumentSchema", () => {
       "/sobre/",
       "//sobre",
       "/sobre equipe",
+      "/a&b",
       "/admin",
       "/assets/app.js",
       "/codigo-de-conduta",
+      "/feedback",
     ])("rejects %j", (address) => {
       rejects(page({ address }))
     })

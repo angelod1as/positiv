@@ -1,6 +1,7 @@
 [
   {
     "_id": "page-home",
+    "_updatedAt": "2026-09-30T12:00:00Z",
     "address": "/",
     "header": [
       {
@@ -404,6 +405,7 @@
   },
   {
     "_id": "seed-page-sobre",
+    "_updatedAt": "2026-09-30T12:05:00Z",
     "address": "/sobre",
     "header": [
       {
@@ -446,6 +448,7 @@
   },
   {
     "_id": "seed-page-sobre-equipe",
+    "_updatedAt": "2026-09-30T12:10:00Z",
     "address": "/sobre/equipe",
     "header": [
       {
