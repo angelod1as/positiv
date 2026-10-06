@@ -37,7 +37,7 @@ export class RegisterPage extends BasePage {
     this.passwordInput = page.getByLabel('Senha', { exact: true })
     this.confirmPasswordInput = page.getByLabel('Confirme a senha')
     this.over18Checkbox = page.getByRole('checkbox', { name: 'Sou maior de 18 anos' })
-    this.over18Label = page.locator('label', { hasText: 'Sou maior de 18 anos' })
+    this.over18Label = page.locator('label').filter({ has: this.over18Checkbox })
     this.submitButton = page.getByRole('button', { name: 'Continuar' })
     this.captchaTokenInput = page.locator('input[name="captchaToken"]')
     this.turnstileIframe = page.locator('iframe[src*="challenges.cloudflare.com"]')
