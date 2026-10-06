@@ -552,5 +552,491 @@
       "title": null
     },
     "title": "Equipe"
+  },
+  {
+    "_id": "page-codigo-de-conduta",
+    "_updatedAt": "2026-09-30T12:15:00Z",
+    "address": "/codigo-de-conduta",
+    "header": [
+      {
+        "_type": "pageTitle",
+        "intro": "Na Positiv, acreditamos que a celebração só existe plenamente quando todas as pessoas se sentem seguras, respeitadas e livres para viver a experiência que pretendemos propiciar. Por isso, assumimos o compromisso de construir e promover um ambiente inclusivo, acolhedor e livre de qualquer forma de violência.",
+        "title": "Código de Conduta"
+      }
+    ],
+    "sections": [
+      {
+        "_key": "code-of-conduct",
+        "_type": "richTextSection",
+        "body": [
+          {
+            "_key": "b0",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b0s0",
+                "_type": "span",
+                "marks": [],
+                "text": "1. Tolerância zero a assédio e abuso (incluindo preconceitos diversos)"
+              }
+            ],
+            "markDefs": [],
+            "style": "h2"
+          },
+          {
+            "_key": "b1",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b1s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Durante o evento e no grupo que antecede a ele, não serão toleradas atitudes de assédio, abuso, invasão de espaço pessoal, discriminação — racismo, machismo, LGBTfobia, gordofobia e qualquer ação ou comentário que fira a existência de um indivíduo ou grupo — ou comportamentos que coloquem outra pessoa em situação de insegurança ou vulnerabilidade."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b2",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b2s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Assédio inclui — mas não se limita a:"
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b3",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b3s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Comentários indesejados de cunho sexual ou ofensivo"
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b4",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b4s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Interações (virtuais ou não) sem consentimento"
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b5",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b5s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Insistência de interações (sejam virtuais ou não)"
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b6",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b6s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Tentativas de intimidar, coagir ou manipular."
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b7",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b7s0",
+                "_type": "span",
+                "marks": [],
+                "text": "2. Compromisso com um espaço seguro"
+              }
+            ],
+            "markDefs": [],
+            "style": "h2"
+          },
+          {
+            "_key": "b8",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b8s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Levamos a sério a criação de um espaço seguro para todes."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b9",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b9s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Por esse motivo, "
+              },
+              {
+                "_key": "b9s1",
+                "_type": "span",
+                "marks": [
+                  "strong"
+                ],
+                "text": "a presença de pessoas que gerem incômodo, desrespeito ou que não representem segurança para o coletivo será inviabilizada."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b10",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b10s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Isso significa que:"
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b11",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b11s0",
+                "_type": "span",
+                "marks": [],
+                "text": "A equipe pode advertir, intervir ou retirar do evento ou do grupo qualquer pessoa cujo comportamento viole este código."
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b12",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b12s0",
+                "_type": "span",
+                "marks": [],
+                "text": "A decisão dos administradores da Positiv é soberana e tem como objetivo proteger o bem-estar coletivo."
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b13",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b13s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Histórias de assédio que ocorrem "
+              },
+              {
+                "_key": "b13s1",
+                "_type": "span",
+                "marks": [
+                  "strong"
+                ],
+                "text": "fora"
+              },
+              {
+                "_key": "b13s2",
+                "_type": "span",
+                "marks": [],
+                "text": " do nosso ecossistema (evento ou grupo gerenciado pela Positiv) e que geram desconfortos, inseguranças e/ou incômodos aos participantes da festa, poderão incorrer na não aceitação da pessoa em nossos eventos, porque ferem, justamente, a segurança coletiva."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b14",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b14s0",
+                "_type": "span",
+                "marks": [],
+                "text": "3. Canal oficial para denúncias"
+              }
+            ],
+            "markDefs": [],
+            "style": "h2"
+          },
+          {
+            "_key": "b15",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b15s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Temos um canal ativo e permanente para qualquer denúncia, relato ou pedido de apoio: "
+              },
+              {
+                "_key": "b15s1",
+                "_type": "span",
+                "marks": [
+                  "strong"
+                ],
+                "text": "nosso WhatsApp oficial:"
+              },
+              {
+                "_key": "b15s2",
+                "_type": "span",
+                "marks": [],
+                "text": " "
+              },
+              {
+                "_key": "b15s3",
+                "_type": "span",
+                "marks": [
+                  "b15l0"
+                ],
+                "text": "(11) 94597-0336"
+              }
+            ],
+            "markDefs": [
+              {
+                "_key": "b15l0",
+                "_type": "link",
+                "href": "https://wa.me/5511945970336"
+              }
+            ],
+            "style": "normal"
+          },
+          {
+            "_key": "b16",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b16s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Se você passar por alguma situação de incômodo, testemunhar algo suspeito ou simplesmente sentir que algo não está certo, "
+              },
+              {
+                "_key": "b16s1",
+                "_type": "span",
+                "marks": [
+                  "strong"
+                ],
+                "text": "fale com a nossa equipe imediatamente"
+              },
+              {
+                "_key": "b16s2",
+                "_type": "span",
+                "marks": [],
+                "text": ". Sua segurança é prioridade."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b17",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b17s0",
+                "_type": "span",
+                "marks": [],
+                "text": "4. Consentimento é regra"
+              }
+            ],
+            "markDefs": [],
+            "style": "h2"
+          },
+          {
+            "_key": "b18",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b18s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Na Positiv:"
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b19",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b19s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Uma pessoa só tem interesse se ela disser claramente que tem."
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b20",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b20s0",
+                "_type": "span",
+                "marks": [],
+                "text": "“Talvez” é “não”."
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b21",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b21s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Pessoas alcoolizadas ou com consciência alterada "
+              },
+              {
+                "_key": "b21s1",
+                "_type": "span",
+                "marks": [
+                  "strong"
+                ],
+                "text": "não podem"
+              },
+              {
+                "_key": "b21s2",
+                "_type": "span",
+                "marks": [],
+                "text": " consentir."
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b22",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b22s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Perguntar é sexy. Respeitar limites é obrigatório."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b23",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b23s0",
+                "_type": "span",
+                "marks": [],
+                "text": "5. Cuidamos uns dos outros"
+              }
+            ],
+            "markDefs": [],
+            "style": "h2"
+          },
+          {
+            "_key": "b24",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b24s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Se algo parecer errado, ajude. Se não se sentir confortável para intervir, chame alguém da nossa equipe."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b25",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b25s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Segurança é responsabilidade coletiva — mas a responsabilidade de agir é nossa também."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          }
+        ]
+      }
+    ],
+    "seo": {
+      "_type": "seo",
+      "description": "Código de conduta da Positiv",
+      "noIndex": false
+    },
+    "title": "Código de Conduta"
   }
 ]

@@ -1,3 +1,4 @@
+import { codeOfConductToPage } from "../migrations/code-of-conduct-to-page/transform"
 import { HOMEPAGE_PAGE_ID } from "../schemas/documents/page"
 import { SITE_SETTINGS_ID } from "../singletons"
 
@@ -283,6 +284,7 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
         "As pessoas por trás dos eventos: conteúdo de exemplo do ambiente de desenvolvimento.",
       ),
     },
+    codeOfConductToPage(),
     {
       _id: SITE_SETTINGS_ID,
       _type: "siteSettings",
