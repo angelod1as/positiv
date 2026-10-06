@@ -34,6 +34,19 @@ test.describe('POS-192: User Settings and Profile Management', () => {
     await expect(page.getByLabel('Nome social ou apelido')).toHaveValue(newName)
   })
 
+  test('Can reach the code of conduct Page from the account page', async ({
+    page,
+  }) => {
+    await page.goto('/conta')
+
+    await page.getByRole('link', { name: 'Código de Conduta' }).click()
+
+    await expect(page).toHaveURL('/codigo-de-conduta')
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Código de Conduta' }),
+    ).toBeVisible()
+  })
+
   test('Can navigate to change password page', async ({ page }) => {
     // Go to account page
     await page.goto('/conta')

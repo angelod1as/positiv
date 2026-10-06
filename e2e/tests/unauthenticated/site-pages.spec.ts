@@ -4,11 +4,18 @@ import { join } from 'node:path'
 import { errorsCopy } from '../../../app/copy/errors'
 import { SitePage } from '../../pages/SitePage'
 
+type RichTextBlock = { style?: string; children: { text: string }[] }
+
 type FixturePage = {
   title: string
   address: string
   header: { title: string; intro?: string }[]
-  sections: { _type: string; title?: string; people?: { name: string }[] }[]
+  sections: {
+    _type: string
+    title?: string
+    people?: { name: string }[]
+    body?: RichTextBlock[]
+  }[]
   seo: { description: string }
 }
 
@@ -47,6 +54,29 @@ test.describe('Pages from Sanity', () => {
 
     await expect(sitePage.title).toHaveText(about.header[0].title)
     await expect(page.getByText(about.header[0].intro ?? '')).toBeVisible()
+  })
+
+  test('the code of conduct renders its Title and a heading from its Rich Text', async ({
+    page,
+  }) => {
+    const conduct = fixturePage('/codigo-de-conduta')
+    const richText = conduct.sections.find(
+      (section) => section._type === 'richTextSection',
+    )
+    const firstHeading = (richText?.body ?? []).find(
+      (block) => block.style === 'h2',
+    )
+    const headingText = (firstHeading?.children ?? [])
+      .map((child) => child.text)
+      .join('')
+    const sitePage = new SitePage(page)
+
+    const response = await sitePage.goto(conduct.address)
+
+    expect(response?.status()).toBe(200)
+    await expect(sitePage.title).toHaveText(conduct.header[0].title)
+    expect(headingText).not.toBe('')
+    await expect(sitePage.sectionTitle(headingText)).toBeVisible()
   })
 
   test('a Page carries its SEO meta', async ({ page }) => {
