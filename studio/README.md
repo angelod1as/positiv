@@ -20,7 +20,6 @@ pnpm workspace package, deployed to Sanity's hosting at
 | `schemas/documents/`                | `page`, `person`. Singletons: `homepage` (until `/` replaces it), `siteSettings` |
 | `schemas/page-header/`              | The three Page Header forms: Homepage Hero, Hero and Title                       |
 | `schemas/sections/`                 | One object type per Section                                                      |
-| `app/reserved-addresses.ts`         | The first address segments the Platform uses — owned by the app, imported here   |
 | `page-actions.ts`                   | Keeps the Page at `/` from being deleted or unpublished                          |
 | `structure.ts`, `singletons.ts`     | The desk: both "Página inicial", "Páginas", "Configurações do site", "Pessoas"   |
 | `seed/`                             | The development seed — see below                                                 |
