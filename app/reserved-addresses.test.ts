@@ -52,6 +52,7 @@ describe("reserved addresses", () => {
 
     expect(source).toContain("reservedAddresses")
     expect(source).not.toMatch(/^\s*import\b/m)
+    expect(source).not.toMatch(/\bfrom\s+["']/)
     expect(source).not.toMatch(/\brequire\s*\(/)
   })
 })

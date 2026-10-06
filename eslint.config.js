@@ -102,14 +102,7 @@ export default defineConfig([
         {
           patterns: [
             {
-              group: [
-                "**/studio",
-                "**/studio/**",
-                "../studio/**",
-                "../../studio/**",
-                "../../../studio/**",
-                "../../../../studio/**",
-              ],
+              group: ["**/studio", "**/studio/**"],
               message:
                 "Don't import from studio/ in the app — it is excluded from the production image. Put shared code in app/.",
             },
