@@ -16,6 +16,7 @@ import { toast as notify, Toaster } from "sonner"
 import { ENV } from "varlock/env"
 import { isValidCpf } from "~/lib/helpers/cpf"
 import { isValidPhone } from "~/lib/helpers/phone"
+import { useMarkHydrated } from "~/lib/hooks/use-mark-hydrated"
 import { Copy } from "~/components/atoms/copy/copy"
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import { TooltipProvider } from "~/components/ui/tooltip"
@@ -294,6 +295,8 @@ export default function App({ loaderData }: Route.ComponentProps) {
   } = loaderData
 
   const location = useLocation()
+
+  useMarkHydrated()
 
   useEffect(() => {
     if (toast?.type) {
