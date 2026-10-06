@@ -67,6 +67,11 @@ preserved — and the code of conduct's SEO description. The content is inlined 
 `transform.ts`, so the migration no longer depends on the Platform copy it
 replaces, and `createOrReplace` on a fixed id makes it idempotent.
 
+The Markdown it converts is only the subset the code of conduct uses:
+paragraphs, `##` and `###` headings, blockquotes, bullet and numbered lists,
+bold, italic and `[text](href)` links. It is not a general Markdown parser, so
+do not point it at arbitrary content.
+
 Like `homepage-to-page`, it runs through `sanity exec`, so `--dataset` is
 required and it dry-runs until you add `--no-dry-run`.
 
@@ -88,5 +93,8 @@ Check the Page in the Studio afterwards. If `page-codigo-de-conduta` has an
 unpublished draft, the script warns: the Studio shows the draft over the
 migrated Page, so discard it.
 
-On `development` the seed already writes this Page, so a re-run only overwrites
-it with the same content.
+Run it once per dataset. `createOrReplace` overwrites the published Page without
+reading it, so do not re-run `--no-dry-run` on `production` once an Editor has
+changed the Page — a re-run, including a retry after a half-failed deploy,
+silently discards their edits. On `development` the seed already writes this
+Page, so a re-run only overwrites it with the same content.
