@@ -54,6 +54,12 @@ describe("Footer", () => {
 
       expect(screen.getByText(newsDialogCopy.trigger)).toBeInTheDocument()
     })
+
+    it("lays out the link columns and the rest as two grid children", () => {
+      renderFooter(siteSettings)
+
+      expect(screen.getByTestId("footer-grid").children).toHaveLength(2)
+    })
   })
 
   describe("without Site Settings", () => {
@@ -85,6 +91,12 @@ describe("Footer", () => {
       renderFooter(null)
 
       expect(screen.getByText(newsDialogCopy.trigger)).toBeInTheDocument()
+    })
+
+    it("lays out the rest as a single grid child", () => {
+      renderFooter(null)
+
+      expect(screen.getByTestId("footer-grid").children).toHaveLength(1)
     })
   })
 })
