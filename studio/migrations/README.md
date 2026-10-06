@@ -56,3 +56,37 @@ so discard it.
 
 On `development` the migration replaces the `page-home` the seed wrote, which
 showcases every Section type. Run `pnpm --filter studio seed` to restore it.
+
+### `code-of-conduct-to-page` (POS-588)
+
+Writes the code of conduct into the Page at `/codigo-de-conduta`
+(`page-codigo-de-conduta`): a Title header with the introduction, one Rich Text
+Section whose long rich text is the five numbered sections converted from
+Markdown — headings to `h2`, the lists, the bold text and the WhatsApp link
+preserved — and the code of conduct's SEO description. The content is inlined in
+`transform.ts`, so the migration no longer depends on the Platform copy it
+replaces, and `createOrReplace` on a fixed id makes it idempotent.
+
+Like `homepage-to-page`, it runs through `sanity exec`, so `--dataset` is
+required and it dry-runs until you add `--no-dry-run`.
+
+From the repository root, `development` first:
+
+```sh
+pnpm --filter studio migrate:code-of-conduct-to-page --dataset development
+pnpm --filter studio migrate:code-of-conduct-to-page --dataset development --no-dry-run
+```
+
+Then `production`:
+
+```sh
+pnpm --filter studio migrate:code-of-conduct-to-page --dataset production
+pnpm --filter studio migrate:code-of-conduct-to-page --dataset production --no-dry-run
+```
+
+Check the Page in the Studio afterwards. If `page-codigo-de-conduta` has an
+unpublished draft, the script warns: the Studio shows the draft over the
+migrated Page, so discard it.
+
+On `development` the seed already writes this Page, so a re-run only overwrites
+it with the same content.
