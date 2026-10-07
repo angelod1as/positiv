@@ -172,23 +172,23 @@
       "_type": "block",
       "children": [
         {
-          "_key": "aviso-texto",
+          "_key": "aviso-before",
           "_type": "span",
           "marks": [],
-          "text": "Aviso de teste: as inscrições da próxima festa abrem em breve. "
+          "text": "Aviso de exemplo do ambiente de desenvolvimento. "
         },
         {
-          "_key": "aviso-link",
+          "_key": "aviso-text",
           "_type": "span",
           "marks": [
-            "aviso-eventos"
+            "aviso-link"
           ],
-          "text": "Saiba mais no aviso"
+          "text": "Saiba mais nos eventos"
         }
       ],
       "markDefs": [
         {
-          "_key": "aviso-eventos",
+          "_key": "aviso-link",
           "_type": "link",
           "href": "/eventos"
         }
