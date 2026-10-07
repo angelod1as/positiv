@@ -1,8 +1,12 @@
 import { getCliClient } from "sanity/cli"
 
 import { HOMEPAGE_PAGE_ID } from "../../schemas/documents/page"
-import { HOMEPAGE_ID } from "../../singletons"
 import { run } from "./run"
+
+// The id of the old homepage singleton this migration reads from. The document
+// type is gone (POS-589), but the migration still runs against datasets that
+// hold the document.
+const HOMEPAGE_ID = "homepage"
 
 const separator = process.argv.indexOf("--")
 

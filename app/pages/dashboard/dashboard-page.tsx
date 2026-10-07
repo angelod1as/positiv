@@ -16,7 +16,7 @@ import { metaCopy } from "~/copy/meta"
 import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
 import type { Event } from "~types/database/entities.types"
-import { getNextEvents } from "../homepage/fetch/get-next-events"
+import { getNextEvents } from "../page/fetch/get-next-events"
 import type { Route } from "./+types/dashboard-page"
 import { splitEvents } from "./utils/split-events"
 

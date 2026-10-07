@@ -21,7 +21,7 @@ vi.mock("~/lib/analytics/umami.server", () => ({
   trackServerEvent: vi.fn(),
 }))
 
-vi.mock("../homepage/fetch/get-next-events", () => ({
+vi.mock("../page/fetch/get-next-events", () => ({
   getNextEvents: vi.fn(),
 }))
 
@@ -29,7 +29,7 @@ import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { getContext, getUserContext } from "~/business/auth/auth.server"
 import { applyToEvent } from "~/business/participant/apply-to-event.server"
 import { hasEverApplied } from "~/business/participant/has-ever-applied.server"
-import { getNextEvents } from "../homepage/fetch/get-next-events"
+import { getNextEvents } from "../page/fetch/get-next-events"
 import { action, loader } from "./dashboard-page"
 
 const mockGetContext = vi.mocked(getContext)
