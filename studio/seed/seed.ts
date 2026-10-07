@@ -2,6 +2,11 @@ import { codeOfConductToPage } from "../migrations/code-of-conduct-to-page/trans
 import { HOMEPAGE_PAGE_ID } from "../schemas/documents/page"
 import { SITE_SETTINGS_ID } from "../singletons"
 
+export const E2E_TEST_PAGE_ID = "page-e2e-test"
+export const E2E_TEST_PAGE_ADDRESS = "/pagina-de-teste"
+export const E2E_TEST_SENTINEL =
+  "Se você chegou aqui, parabéns, encontrou nossa página de teste."
+
 type Item = { _type: string; [field: string]: unknown }
 
 type SeedDocument = {
@@ -41,14 +46,18 @@ function linkedParagraph(
     style: "normal",
     markDefs: [{ _type: "link", _key: `${key}-link`, href }],
     children: [
-      { _type: "span", _key: `${key}-before`, text: before, marks: [] },
+      ...(before
+        ? [{ _type: "span", _key: `${key}-before`, text: before, marks: [] }]
+        : []),
       {
         _type: "span",
         _key: `${key}-text`,
         text: linkText,
         marks: [`${key}-link`],
       },
-      { _type: "span", _key: `${key}-after`, text: after, marks: [] },
+      ...(after
+        ? [{ _type: "span", _key: `${key}-after`, text: after, marks: [] }]
+        : []),
     ],
   }
 }
@@ -286,6 +295,89 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
     },
     codeOfConductToPage(),
     {
+      _id: E2E_TEST_PAGE_ID,
+      _type: "page",
+      title: "Página de teste",
+      address: E2E_TEST_PAGE_ADDRESS,
+      header: [
+        {
+          _type: "pageTitle",
+          _key: "header",
+          title: "Página de teste",
+          intro:
+            "Página exclusiva dos testes end-to-end: exercita todos os componentes.",
+        },
+      ],
+      sections: [
+        {
+          _type: "nextEvents",
+          _key: "next-events",
+          title: "Próximos eventos",
+          subtitle: "Confira nossos próximos encontros.",
+          count: 3,
+        },
+        {
+          _type: "about",
+          _key: "about",
+          title: "Como assim?",
+          cards: ["para quem?", "como funciona?", "e depois?"].map(
+            (title, index) => ({
+              _type: "aboutCard",
+              _key: `card-${index}`,
+              title,
+              body: paragraphs("Texto de exemplo para os testes end-to-end."),
+            }),
+          ),
+        },
+        {
+          _type: "testimonials",
+          _key: "testimonials",
+          title: "Quem vai, nunca esquece",
+          subtitle: "Experiências reais.",
+          quotes: [
+            {
+              _type: "testimonial",
+              _key: "quote",
+              author: "A., 32",
+              quote: "Libertador.",
+            },
+          ],
+        },
+        {
+          _type: "ctaBanner",
+          _key: "cta-banner",
+          title: "Não perca nossos próximos eventos",
+          body: paragraphs("Faça login para se inscrever."),
+        },
+        founders,
+        feedback,
+        {
+          _type: "richTextSection",
+          _key: "rich-text",
+          title: "Aviso",
+          body: [
+            block("heading", "Seção de teste", { style: "h2" }),
+            block("sentinel", E2E_TEST_SENTINEL),
+          ],
+        },
+        {
+          _type: "imageSection",
+          _key: "image",
+          image: {
+            _type: "image",
+            asset: { _type: "reference", _ref: photoAssetId },
+            alt: "Imagem de exemplo dos testes end-to-end",
+          },
+          caption: "Uma legenda de exemplo",
+        },
+      ],
+      seo: {
+        _type: "seo",
+        description: "Página exclusiva dos testes end-to-end.",
+        noIndex: true,
+      },
+    },
+    {
       _id: SITE_SETTINGS_ID,
       _type: "siteSettings",
       navigation: [
@@ -343,9 +435,15 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
           ),
         ],
       },
-      notice: paragraphs(
-        "Este é um aviso de exemplo do ambiente de desenvolvimento.",
-      ),
+      notice: [
+        linkedParagraph(
+          "aviso",
+          "Aviso de exemplo do ambiente de desenvolvimento. ",
+          "Saiba mais nos eventos",
+          "/eventos",
+          "",
+        ),
+      ],
     },
   ]
 }

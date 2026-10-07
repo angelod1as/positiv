@@ -5,7 +5,13 @@ import { CODE_OF_CONDUCT_PAGE_ID } from "../migrations/code-of-conduct-to-page/t
 import { HOMEPAGE_PAGE_ID } from "../schemas/documents/page"
 import { SITE_SETTINGS_ID } from "../singletons"
 import { validateDocumentOf } from "../test/validate"
-import { seed, seedDocuments } from "./seed"
+import {
+  E2E_TEST_PAGE_ADDRESS,
+  E2E_TEST_PAGE_ID,
+  E2E_TEST_SENTINEL,
+  seed,
+  seedDocuments,
+} from "./seed"
 
 function fakeStore() {
   return {
@@ -88,6 +94,25 @@ describe("seedDocuments", () => {
       "richTextSection",
       "imageSection",
     ])
+  })
+
+  it("seeds a dedicated e2e test page: noIndex, every Section type, the sentinel", () => {
+    const testPage = pages.find((page) => page._id === E2E_TEST_PAGE_ID)
+
+    expect(testPage?.address).toBe(E2E_TEST_PAGE_ADDRESS)
+    expect(testPage?.header?.[0]._type).toBe("pageTitle")
+    expect((testPage?.seo as { noIndex?: boolean })?.noIndex).toBe(true)
+    expect(testPage?.sections?.map((section) => section._type)).toEqual([
+      "nextEvents",
+      "about",
+      "testimonials",
+      "ctaBanner",
+      "founders",
+      "feedback",
+      "richTextSection",
+      "imageSection",
+    ])
+    expect(JSON.stringify(testPage)).toContain(E2E_TEST_SENTINEL)
   })
 
   it("seeds a nested Page with a Hero and a Page with a Title", () => {
