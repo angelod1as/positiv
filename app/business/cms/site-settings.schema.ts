@@ -4,7 +4,7 @@ import {
   hrefSchema,
   type PortableText,
   portableTextSchema,
-} from "./homepage-content.schema"
+} from "./content.schema"
 
 const siteLinkSchema = zod
   .object({

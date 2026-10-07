@@ -14,7 +14,7 @@ import {
 } from "~/components/ui/sheet"
 import { headerCopy } from "~/copy/layout"
 import paths from "~/lib/paths"
-import type { PortableText } from "~/business/cms/homepage-content.schema"
+import type { PortableText } from "~/business/cms/content.schema"
 import type { SiteLink } from "~/business/cms/site-settings.schema"
 import type { ProfileWithRoles } from "~types/database/entities.types"
 import { NewsDialog } from "../news-dialog/news-dialog"

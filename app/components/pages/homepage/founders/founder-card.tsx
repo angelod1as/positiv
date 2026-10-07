@@ -1,5 +1,5 @@
 import Instagram from "~/assets/social/instagram.svg"
-import type { HomepageImage } from "~/business/cms/homepage-content.schema"
+import type { HomepageImage } from "~/business/cms/content.schema"
 import { Button } from "~/components/atoms/button/button"
 import type { FCC } from "~types/utils/utils.types"
 

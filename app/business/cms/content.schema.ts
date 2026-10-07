@@ -163,16 +163,6 @@ export const foundersFields = {
   videoTitle: zod.string(),
 }
 
-export const homepageDocumentSchema = zod.object({
-  ...sectionsFields,
-  founders: zod.object({
-    ...foundersFields,
-    people: zod
-      .array(zod.object({ ...personFields, photo: sanityImageSchema }))
-      .min(1),
-  }),
-})
-
 export const homepageContentSchema = zod.object({
   ...sectionsFields,
   founders: zod.object({
@@ -183,7 +173,6 @@ export const homepageContentSchema = zod.object({
   }),
 })
 
-export type HomepageDocument = z.infer<typeof homepageDocumentSchema>
 export type HomepageContent = z.infer<typeof homepageContentSchema>
 export type HomepageImage = z.infer<typeof homepageImageSchema>
 export type PortableText = z.infer<typeof portableTextSchema>

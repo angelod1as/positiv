@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
   longPortableTextSchema,
   portableTextSchema,
-} from "./homepage-content.schema"
+} from "./content.schema"
 
 type Span = { text: string; marks?: string[] }
 type MarkDef = { _key: string; _type: string; href?: string }

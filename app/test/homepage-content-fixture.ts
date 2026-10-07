@@ -2,7 +2,7 @@ import fixture from "../../e2e/fixtures/homepage-content.json"
 import {
   type HomepageContent,
   homepageContentSchema,
-} from "~/business/cms/homepage-content.schema"
+} from "~/business/cms/content.schema"
 
 export const homepageContentFixture: HomepageContent =
   homepageContentSchema.parse({

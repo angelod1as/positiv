@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 import type {
   HomepageContent,
   PortableText,
-} from "~/business/cms/homepage-content.schema"
+} from "~/business/cms/content.schema"
 import { renderWithRouter, screen } from "~/test/test-utils"
 import { HomePageAbout } from "./about"
 

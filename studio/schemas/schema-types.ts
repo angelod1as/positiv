@@ -1,6 +1,5 @@
 import type { SchemaTypeDefinition } from "sanity"
 
-import { homepage } from "./documents/homepage"
 import { page } from "./documents/page"
 import { person } from "./documents/person"
 import { siteSettings } from "./documents/site-settings"
@@ -15,7 +14,6 @@ import { about } from "./sections/about"
 import { ctaBanner } from "./sections/cta-banner"
 import { feedback } from "./sections/feedback"
 import { founders } from "./sections/founders"
-import { hero } from "./sections/hero"
 import { imageSection } from "./sections/image-section"
 import { nextEvents } from "./sections/next-events"
 import { richTextSection } from "./sections/rich-text-section"
@@ -27,7 +25,6 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   seo,
   siteLink,
   person,
-  hero,
   about,
   nextEvents,
   testimonials,
@@ -36,7 +33,6 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   feedback,
   richTextSection,
   imageSection,
-  homepage,
   homepageHero,
   pageHero,
   pageTitle,

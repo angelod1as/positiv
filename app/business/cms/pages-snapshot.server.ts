@@ -1,6 +1,6 @@
 import { createImageUrlBuilder } from "@sanity/image-url"
 import { zod } from "~/lib/helpers/zod"
-import type { HomepageImage } from "./homepage-content.schema"
+import type { HomepageImage } from "./content.schema"
 import { type Page, type PageDocument, pageDocumentSchema } from "./page.schema"
 
 const PHOTO_SIZE = 320

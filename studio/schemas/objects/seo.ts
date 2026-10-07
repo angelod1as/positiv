@@ -12,7 +12,8 @@ export const seo = defineType({
     defineField({
       name: "title",
       title: "Título",
-      description: "Se ficar vazio, usa o título da página",
+      description:
+        "Se ficar vazio, usa o título da página. Na página inicial (endereço /), a aba do navegador mostra o nome do site (Positiv Party), não o título da página — defina um título aqui para mudar isso.",
       type: "string",
     }),
     defineField({

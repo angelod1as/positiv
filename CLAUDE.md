@@ -322,7 +322,7 @@ Public Site content lives in Sanity; the Platform's own labels stay in
   [the ADR](docs/architecture/decisions/20260924-sanity-schema-changes-follow-expand-contract.md).
   Adding a field is one pull request.
 - **Unit tests never call Sanity.** Pass a fake client to the loader, or build
-  content from `e2e/fixtures/homepage-content.json`.
+  content from the committed `e2e/fixtures/*.json`.
 - **`development` mirrors `production`; `pnpm --filter studio refresh-dev`
   restores it** — it reads `production` and writes only `development`. The seed
   is an opt-in showcase. How-to: `studio/README.md`.

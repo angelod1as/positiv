@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import type { HomepageContent } from "~/business/cms/homepage-content.schema"
+import type { HomepageContent } from "~/business/cms/content.schema"
 import { homepageCopy } from "~/copy/homepage"
 import routes from "~/lib/paths"
 import { renderWithRouter, screen } from "~/test/test-utils"

@@ -1,4 +1,4 @@
-import type { HomepageContent } from "~/business/cms/homepage-content.schema"
+import type { HomepageContent } from "~/business/cms/content.schema"
 import { HomePageTitle } from "../home-title/home-title"
 import { Section } from "../section/section"
 import { TestimonialCard } from "./testimonial-card"

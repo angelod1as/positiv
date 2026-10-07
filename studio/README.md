@@ -163,18 +163,11 @@ is unaffected either way: it reads the committed fixtures, not the dataset.
 
 ### Update the e2e fixtures
 
-`e2e/fixtures/homepage-content.json` is what the app's `homepageQuery` returns
-from `development`. It feeds the e2e Sanity mock and the unit tests. When the
-query or the content changes, regenerate it with a read-only, anonymous query:
-
-From the repository root:
-
-```bash
-pnpm --filter studio exec sanity documents query \
-  "$(pnpm exec tsx -e 'import { homepageQuery } from "./app/business/cms/homepage-query"; process.stdout.write(homepageQuery)')" \
-  --dataset development --anonymous --api-version 2026-09-24 \
-  > e2e/fixtures/homepage-content.json
-```
+`e2e/fixtures/homepage-content.json` is a static fixture of the homepage
+content shape. It feeds the HomePage component unit tests through
+`app/test/homepage-content-fixture.ts`. It used to be regenerated from the
+app's `homepageQuery`, but that query was removed with the `homepage`
+document type (POS-589); edit the file by hand when the shape changes.
 
 `e2e/fixtures/pages-snapshot.json` and `e2e/fixtures/site-settings.json` are the
 two halves of the app's `siteSnapshotQuery` — every Page the seed writes and its

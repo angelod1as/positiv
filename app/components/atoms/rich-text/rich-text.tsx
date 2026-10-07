@@ -8,7 +8,7 @@ import { ContentLink } from "~/components/atoms/content-link/content-link"
 import type {
   LongPortableText,
   PortableText,
-} from "~/business/cms/homepage-content.schema"
+} from "~/business/cms/content.schema"
 
 type LinkMark = { _type: "link"; href?: string }
 

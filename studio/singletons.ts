@@ -1,10 +1,8 @@
 import type { DocumentActionComponent, TemplateItem } from "sanity"
 
-export const HOMEPAGE_ID = "homepage"
-
 export const SITE_SETTINGS_ID = "siteSettings"
 
-const singletonTypes = ["homepage", "siteSettings"]
+const singletonTypes = ["siteSettings"]
 
 const actionsSingletonsKeep = ["publish", "discardChanges", "restore"]
 

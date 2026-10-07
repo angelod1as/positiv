@@ -1,4 +1,4 @@
-import type { HomepageContent } from "~/business/cms/homepage-content.schema"
+import type { HomepageContent } from "~/business/cms/content.schema"
 import { Button } from "~/components/atoms/button/button"
 import { RichText } from "~/components/atoms/rich-text/rich-text"
 import paths from "~/lib/paths"

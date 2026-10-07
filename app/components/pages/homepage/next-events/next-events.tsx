@@ -1,6 +1,6 @@
 import { ArrowRightIcon } from "lucide-react"
 import type { FC } from "react"
-import type { HomepageContent } from "~/business/cms/homepage-content.schema"
+import type { HomepageContent } from "~/business/cms/content.schema"
 import { Button } from "~/components/atoms/button/button"
 import { Copy } from "~/components/atoms/copy/copy"
 import {
