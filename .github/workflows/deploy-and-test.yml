@@ -77,7 +77,7 @@ jobs:
           path: coverage/
           retention-days: 30
 
-  # The one place a test talks to Sanity: it reads the published homepage from
+  # The one place a test talks to Sanity: it reads the published Pages from
   # the production dataset, which is public, so it needs no secrets.
   content-contract:
     runs-on: ubuntu-latest
@@ -92,7 +92,7 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
-      - name: Check production content against the homepage contract
+      - name: Check production content against the Page contract
         run: pnpm test:contract
 
   # Deliberately ungated. Waiting on validate-schema and unit-test saved a
