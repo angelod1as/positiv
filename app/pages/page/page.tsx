@@ -9,7 +9,7 @@ import { metaCopy } from "~/copy/meta"
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { createMetaArray, createPageTitle } from "~/lib/helpers/meta"
 import { logger } from "~/lib/logger/logger.server"
-import { getNextEvents } from "~/pages/homepage/fetch/get-next-events"
+import { getNextEvents } from "~/pages/page/fetch/get-next-events"
 import type { Route } from "./+types/page"
 
 const SITE_URL = POSITIV_URL.replace(/\/$/, "")

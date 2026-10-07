@@ -5,7 +5,7 @@ import type { PagesSnapshot } from "~/business/cms/pages-snapshot.server"
 import { siteSnapshotCache } from "~/business/cms/site-snapshot-cache.server"
 import { whatsAppButtonCopy } from "~/copy/layout"
 import { metaCopy } from "~/copy/meta"
-import { getNextEvents } from "~/pages/homepage/fetch/get-next-events"
+import { getNextEvents } from "~/pages/page/fetch/get-next-events"
 import { pagesSnapshotFixture } from "~/test/pages-snapshot-fixture"
 import { renderWithRouter, screen } from "~/test/test-utils"
 import type { Route } from "./+types/page"
@@ -19,7 +19,7 @@ vi.mock("~/business/cms/site-snapshot-cache.server", () => ({
   siteSnapshotCache: { get: vi.fn() },
 }))
 
-vi.mock("~/pages/homepage/fetch/get-next-events", () => ({
+vi.mock("~/pages/page/fetch/get-next-events", () => ({
   getNextEvents: vi.fn(),
 }))
 
