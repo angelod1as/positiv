@@ -1,7 +1,7 @@
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, Route, Routes } from "react-router"
 import { describe, expect, it } from "vitest"
-import type { PortableText } from "~/business/cms/homepage-content.schema"
+import type { PortableText } from "~/business/cms/content.schema"
 import { render, renderWithRouter, screen } from "~/test/test-utils"
 import { RichText } from "./rich-text"
 

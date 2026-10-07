@@ -9,7 +9,7 @@ import {
   portableTextSchema,
   sanityImageSchema,
   sectionsFields,
-} from "./homepage-content.schema"
+} from "./content.schema"
 
 export function isReservedAddress(address: string) {
   return reservedAddresses.includes(address.split("/")[1])

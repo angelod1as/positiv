@@ -1,8 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
-import { homepageQuery } from "../../app/business/cms/homepage-query"
 import { createSanityClient, SANITY_API_VERSION } from "../../app/business/cms/sanity-client.server"
 import { siteSnapshotQuery } from "../../app/business/cms/site-snapshot-query"
-import fixture from "../fixtures/homepage-content.json"
 import pagesFixture from "../fixtures/pages-snapshot.json"
 import siteSettingsFixture from "../fixtures/site-settings.json"
 import {
@@ -15,6 +13,8 @@ import {
 const env = vi.hoisted<Record<string, unknown>>(() => ({}))
 
 vi.mock("varlock/env", () => ({ ENV: env }))
+
+const snapshot = { pages: pagesFixture, siteSettings: siteSettingsFixture }
 
 let origin: string
 
@@ -32,28 +32,18 @@ function queryUrl(query: string, dataset = E2E_SANITY_DATASET) {
 }
 
 describe("sanity mock server", () => {
-  it("answers the homepage query with the fixture, in the Query API envelope", async () => {
-    const response = await fetch(queryUrl(homepageQuery))
+  it("answers the site snapshot query with the fixtures, in the Query API envelope", async () => {
+    const response = await fetch(queryUrl(siteSnapshotQuery))
 
     expect(response.status).toBe(200)
     expect(response.headers.get("content-type")).toMatch(/^application\/json/)
-    expect(await response.json()).toEqual({ result: fixture, ms: 1, query: homepageQuery })
-  })
-
-  it("answers the site snapshot query with the Pages and Site Settings fixtures", async () => {
-    const response = await fetch(`${queryUrl(siteSnapshotQuery)}&returnQuery=false`)
-
-    expect(response.status).toBe(200)
-    expect(await response.json()).toEqual({
-      result: { pages: pagesFixture, siteSettings: siteSettingsFixture },
-      ms: 1,
-    })
+    expect(await response.json()).toEqual({ result: snapshot, ms: 1, query: siteSnapshotQuery })
   })
 
   it("leaves the query out of the envelope when asked to, as the client does", async () => {
-    const response = await fetch(`${queryUrl(homepageQuery)}&returnQuery=false`)
+    const response = await fetch(`${queryUrl(siteSnapshotQuery)}&returnQuery=false`)
 
-    expect(await response.json()).toEqual({ result: fixture, ms: 1 })
+    expect(await response.json()).toEqual({ result: snapshot, ms: 1 })
   })
 
   it("refuses a query it has no answer for, rather than returning null for it", async () => {
@@ -64,13 +54,13 @@ describe("sanity mock server", () => {
   })
 
   it("does not serve a dataset other than the e2e one", async () => {
-    const response = await fetch(queryUrl(homepageQuery, "production"))
+    const response = await fetch(queryUrl(siteSnapshotQuery, "production"))
 
     expect(response.status).toBe(404)
   })
 
   it("does not serve an api version the client is not pinned to", async () => {
-    const params = new URLSearchParams({ query: homepageQuery })
+    const params = new URLSearchParams({ query: siteSnapshotQuery })
     const response = await fetch(`${origin}/v2021-10-21/data/query/${E2E_SANITY_DATASET}?${params}`)
 
     expect(response.status).toBe(404)
@@ -87,8 +77,8 @@ describe("sanity mock server", () => {
     env.SANITY_DATASET = E2E_SANITY_DATASET
     env.SANITY_API_HOST = origin
 
-    const content = await createSanityClient().fetch(homepageQuery)
+    const content = await createSanityClient().fetch(siteSnapshotQuery)
 
-    expect(content).toEqual(fixture)
+    expect(content).toEqual(snapshot)
   })
 })

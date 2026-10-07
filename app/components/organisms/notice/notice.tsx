@@ -3,7 +3,7 @@ import { type ReactNode, useEffect, useState } from "react"
 import { Alert, AlertDescription } from "~/components/ui/alert"
 import { Copy } from "~/components/atoms/copy/copy"
 import { RichText } from "~/components/atoms/rich-text/rich-text"
-import type { PortableText } from "~/business/cms/homepage-content.schema"
+import type { PortableText } from "~/business/cms/content.schema"
 import { noticeCopy } from "~/copy/layout"
 import { Button } from "~/components/ui/button"
 

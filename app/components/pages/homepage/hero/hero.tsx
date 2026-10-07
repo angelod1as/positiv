@@ -1,4 +1,4 @@
-import type { HomepageContent } from "~/business/cms/homepage-content.schema"
+import type { HomepageContent } from "~/business/cms/content.schema"
 import { RichText } from "~/components/atoms/rich-text/rich-text"
 import { Section } from "../section/section"
 

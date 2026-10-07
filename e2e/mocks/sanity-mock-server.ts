@@ -2,12 +2,11 @@
 // test so the suite never reads a real dataset. The app's client, given a custom
 // apiHost, sends every query — CDN or not — to
 // GET <apiHost>/v<apiVersion>/data/query/<dataset>?query=…, and this answers the
-// homepage and site snapshot queries there with the recorded fixtures.
+// site snapshot query there with the recorded fixtures.
 import { readFileSync } from "node:fs"
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 import type { AddressInfo } from "node:net"
 import { join } from "node:path"
-import { homepageQuery } from "../../app/business/cms/homepage-query"
 import { SANITY_API_VERSION } from "../../app/business/cms/sanity-client.server"
 import { siteSnapshotQuery } from "../../app/business/cms/site-snapshot-query"
 
@@ -21,7 +20,6 @@ function readFixture(name: string): unknown {
 }
 
 const RESULTS = new Map<string, unknown>([
-  [homepageQuery, readFixture("homepage-content.json")],
   [
     siteSnapshotQuery,
     {
