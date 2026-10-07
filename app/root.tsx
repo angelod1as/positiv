@@ -26,7 +26,10 @@ import { newsletterSubscribeCopy } from "~/copy/newsletter"
 import { POSITIV_EMAIL } from "~/lib/constants/constants"
 import type { Route } from "./+types/root"
 import "./app.css"
+import { VisualEditing } from "@sanity/visual-editing/react-router"
 import { getContext } from "./business/auth/auth.server"
+import { isDraftModeEnabled } from "./business/cms/draft-mode.server"
+import { getDraftSiteSnapshot } from "./business/cms/draft-snapshot.server"
 import { loadSiteSettings } from "./business/cms/site-settings.server"
 import { subscribeProfileToNewsletter } from "./business/newsletter/auto-subscribe.server"
 import { getSubscriptionStatus } from "./business/newsletter/subscription-helpers.server"
@@ -105,7 +108,10 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export async function loader({ params, request }: Route.LoaderArgs) {
-  const siteSettings = loadSiteSettings()
+  const draftMode = await isDraftModeEnabled(request)
+  const siteSettings = loadSiteSettings(
+    draftMode ? { get: getDraftSiteSnapshot } : undefined,
+  )
 
   try {
     const { currentProfile, currentUser, isProdInDev, supabaseHeaders } =
@@ -169,6 +175,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         isThereAnyNews: shouldShowNews,
         needsProfileUpdate,
         shouldShowNewsletterModal,
+        draftMode,
         ...(await siteSettings),
       },
       { headers },
@@ -183,6 +190,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       isThereAnyNews: null,
       needsProfileUpdate: false,
       shouldShowNewsletterModal: false,
+      draftMode,
       ...(await siteSettings),
     }
   }
@@ -292,6 +300,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
     shouldShowNewsletterModal = false,
     siteSettings,
     editorialSystemUnavailable = false,
+    draftMode = false,
   } = loaderData
 
   const location = useLocation()
@@ -344,6 +353,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
         currentProfile={currentProfile}
         siteSettings={siteSettings}
       />
+      {draftMode && <VisualEditing />}
     </>
   )
 }
