@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest"
 import type {
-  HomepageContent,
+  PageContent,
   PortableText,
 } from "~/business/cms/content.schema"
 import { homepageCopy } from "~/copy/homepage"
-import { homepageContentFixture } from "~/test/homepage-content-fixture"
+import { pageContentFixture } from "~/test/page-content-fixture"
 import { renderWithRouter, screen } from "~/test/test-utils"
-import { HomePageFounders } from "./home-page-founders"
+import { FoundersSection } from "./founders-section"
 
 const paragraph = (key: string, text: string): PortableText[number] => ({
   _type: "block",
@@ -16,8 +16,8 @@ const paragraph = (key: string, text: string): PortableText[number] => ({
   children: [{ _type: "span", _key: `${key}s0`, text, marks: [] }],
 })
 
-const founders: HomepageContent["founders"] = {
-  ...homepageContentFixture.founders,
+const founders: PageContent["founders"] = {
+  ...pageContentFixture.founders,
   title: "Quem organiza",
   videoUrl: "https://youtu.be/dQw4w9WgXcQ",
   videoTitle: "Vídeo das pessoas fundadoras",
@@ -51,9 +51,9 @@ const founders: HomepageContent["founders"] = {
   ],
 }
 
-describe("HomePageFounders", () => {
+describe("FoundersSection", () => {
   it("renders the Editor's title and every founder's name and pronouns", () => {
-    renderWithRouter(<HomePageFounders content={founders} />)
+    renderWithRouter(<FoundersSection content={founders} />)
 
     expect(
       screen.getByRole("heading", { level: 2, name: "Quem organiza" }),
@@ -70,7 +70,7 @@ describe("HomePageFounders", () => {
   })
 
   it("renders each founder's photo from the content", () => {
-    renderWithRouter(<HomePageFounders content={founders} />)
+    renderWithRouter(<FoundersSection content={founders} />)
 
     const photo = screen.getByRole("img", { name: "Bia sorrindo" })
     expect(photo).toHaveAttribute(
@@ -82,14 +82,14 @@ describe("HomePageFounders", () => {
   })
 
   it("renders each founder's bio as paragraphs", () => {
-    renderWithRouter(<HomePageFounders content={founders} />)
+    renderWithRouter(<FoundersSection content={founders} />)
 
     expect(screen.getByText("Primeiro parágrafo.").tagName).toBe("P")
     expect(screen.getByText("Segundo.").tagName).toBe("P")
   })
 
   it("links each founder's Instagram", () => {
-    renderWithRouter(<HomePageFounders content={founders} />)
+    renderWithRouter(<FoundersSection content={founders} />)
 
     const links = screen.getAllByRole("link", {
       name: homepageCopy.founders.instagramIconAlt,
@@ -101,7 +101,7 @@ describe("HomePageFounders", () => {
   })
 
   it("embeds the Editor's YouTube video with its title", () => {
-    renderWithRouter(<HomePageFounders content={founders} />)
+    renderWithRouter(<FoundersSection content={founders} />)
 
     expect(screen.getByTitle("Vídeo das pessoas fundadoras")).toHaveAttribute(
       "src",
@@ -111,7 +111,7 @@ describe("HomePageFounders", () => {
 
   it("leaves the video out when the link is not a YouTube video", () => {
     renderWithRouter(
-      <HomePageFounders
+      <FoundersSection
         content={{ ...founders, videoUrl: "https://vimeo.com/123456" }}
       />,
     )

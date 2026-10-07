@@ -1,6 +1,6 @@
 import { createImageUrlBuilder } from "@sanity/image-url"
 import { zod } from "~/lib/helpers/zod"
-import type { HomepageImage } from "./content.schema"
+import type { PageImage } from "./content.schema"
 import { type Page, type PageDocument, pageDocumentSchema } from "./page.schema"
 
 const PHOTO_SIZE = 320
@@ -131,7 +131,7 @@ function resolveSection(
 function resolveImage(
   image: ImageDocument,
   builder: ImageUrlBuilder,
-): HomepageImage {
+): PageImage {
   const crop = image.crop ?? { top: 0, bottom: 0, left: 0, right: 0 }
   const croppedWidth = image.dimensions.width * (1 - crop.left - crop.right)
   const croppedHeight = image.dimensions.height * (1 - crop.top - crop.bottom)

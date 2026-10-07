@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { renderWithRouter, screen } from "~/test/test-utils"
-import { HomePageNextEventsSkeleton } from "./next-events-skeleton"
+import { NextEventsSectionSkeleton } from "./next-events-section-skeleton"
 
 const content = {
   title: "Agenda do editor",
@@ -8,9 +8,9 @@ const content = {
   count: 3,
 }
 
-describe("HomePageNextEventsSkeleton", () => {
+describe("NextEventsSectionSkeleton", () => {
   it("renders the Editor's section title and subtitle while events load", () => {
-    renderWithRouter(<HomePageNextEventsSkeleton content={content} />)
+    renderWithRouter(<NextEventsSectionSkeleton content={content} />)
 
     expect(
       screen.getByRole("heading", { level: 2, name: "Agenda do editor" }),

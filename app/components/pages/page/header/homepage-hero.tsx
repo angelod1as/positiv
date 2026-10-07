@@ -1,12 +1,12 @@
-import type { HomepageContent } from "~/business/cms/content.schema"
+import type { PageContent } from "~/business/cms/content.schema"
 import { RichText } from "~/components/atoms/rich-text/rich-text"
 import { Section } from "../section/section"
 
-type HomePageHeroProps = {
-  content: HomepageContent["hero"]
+type HomepageHeroProps = {
+  content: PageContent["hero"]
 }
 
-export const HomePageHero = ({ content }: HomePageHeroProps) => {
+export const HomepageHero = ({ content }: HomepageHeroProps) => {
   return (
     <Section className="w-full py-12 md:py-24 lg:py-32">
       <div className="px-4 md:px-6">

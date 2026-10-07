@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest"
-import type { HomepageContent } from "~/business/cms/content.schema"
+import type { PageContent } from "~/business/cms/content.schema"
 import { renderWithRouter, screen } from "~/test/test-utils"
-import { HomePageTestimonials } from "./home-page-testimonials"
+import { TestimonialsSection } from "./testimonials-section"
 
-const testimonials: HomepageContent["testimonials"] = {
+const testimonials: PageContent["testimonials"] = {
   title: "Depoimentos do editor",
   subtitle: "Quem foi conta.",
   quotes: [
@@ -12,9 +12,9 @@ const testimonials: HomepageContent["testimonials"] = {
   ],
 }
 
-describe("HomePageTestimonials", () => {
+describe("TestimonialsSection", () => {
   it("renders the Editor's title and subtitle", () => {
-    renderWithRouter(<HomePageTestimonials content={testimonials} />)
+    renderWithRouter(<TestimonialsSection content={testimonials} />)
 
     expect(
       screen.getByRole("heading", { level: 2, name: "Depoimentos do editor" }),
@@ -23,7 +23,7 @@ describe("HomePageTestimonials", () => {
   })
 
   it("renders every quote with its author, as the Editor wrote it", () => {
-    renderWithRouter(<HomePageTestimonials content={testimonials} />)
+    renderWithRouter(<TestimonialsSection content={testimonials} />)
 
     expect(screen.getByText("B., 25")).toBeInTheDocument()
     expect(screen.getByText("D., 51")).toBeInTheDocument()

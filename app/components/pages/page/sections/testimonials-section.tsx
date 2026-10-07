@@ -1,22 +1,22 @@
-import type { HomepageContent } from "~/business/cms/content.schema"
-import { HomePageTitle } from "../home-title/home-title"
+import type { PageContent } from "~/business/cms/content.schema"
+import { SectionTitle } from "./section-title"
 import { Section } from "../section/section"
 import { TestimonialCard } from "./testimonial-card"
 
-type HomePageTestimonialsProps = {
-  content: HomepageContent["testimonials"]
+type TestimonialsSectionProps = {
+  content: PageContent["testimonials"]
 }
 
-export const HomePageTestimonials = ({
+export const TestimonialsSection = ({
   content,
-}: HomePageTestimonialsProps) => {
+}: TestimonialsSectionProps) => {
   return (
     <Section>
       <div className="px-4 md:px-6">
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
-          <HomePageTitle subtitle={content.subtitle}>
+          <SectionTitle subtitle={content.subtitle}>
             {content.title}
-          </HomePageTitle>
+          </SectionTitle>
 
           <div className="grid grid-cols-1 gap-6 md:gap-8 pt-8 max-w-3xl">
             {content.quotes.map(({ _key, author, quote }) => (
