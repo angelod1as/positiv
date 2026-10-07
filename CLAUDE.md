@@ -323,6 +323,13 @@ Public Site content lives in Sanity; the Platform's own labels stay in
   Adding a field is one pull request.
 - **Unit tests never call Sanity.** Pass a fake client to the loader, or build
   content from `e2e/fixtures/homepage-content.json`.
+- **`development` mirrors `production`; `pnpm --filter studio refresh-dev`
+  restores it** — it reads `production` and writes only `development`. The seed
+  is an opt-in showcase. How-to: `studio/README.md`.
+- **The e2e fixtures are generated from the seed** (`pnpm --filter studio
+  fixtures`), guarded by a staleness test. The e2e suite asserts a seed-owned
+  test Page, never Editor content, and nothing writes that Page to `production`.
+  How-to: `studio/README.md`.
 
 ## News Dialog Updates
 

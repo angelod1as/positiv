@@ -1,7 +1,7 @@
 [
   {
     "_id": "page-home",
-    "_updatedAt": "2026-09-30T12:00:00Z",
+    "_updatedAt": "2026-10-06T00:00:00Z",
     "address": "/",
     "header": [
       {
@@ -405,7 +405,7 @@
   },
   {
     "_id": "seed-page-sobre",
-    "_updatedAt": "2026-09-30T12:05:00Z",
+    "_updatedAt": "2026-10-06T00:00:00Z",
     "address": "/sobre",
     "header": [
       {
@@ -448,7 +448,7 @@
   },
   {
     "_id": "seed-page-sobre-equipe",
-    "_updatedAt": "2026-09-30T12:10:00Z",
+    "_updatedAt": "2026-10-06T00:00:00Z",
     "address": "/sobre/equipe",
     "header": [
       {
@@ -555,7 +555,7 @@
   },
   {
     "_id": "page-codigo-de-conduta",
-    "_updatedAt": "2026-09-30T12:15:00Z",
+    "_updatedAt": "2026-10-06T00:00:00Z",
     "address": "/codigo-de-conduta",
     "header": [
       {
@@ -1029,14 +1029,291 @@
             "markDefs": [],
             "style": "normal"
           }
-        ]
+        ],
+        "title": null
       }
     ],
     "seo": {
-      "_type": "seo",
       "description": "Código de conduta da Positiv",
-      "noIndex": false
+      "image": null,
+      "noIndex": false,
+      "title": null
     },
     "title": "Código de Conduta"
+  },
+  {
+    "_id": "page-e2e-test",
+    "_updatedAt": "2026-10-06T00:00:00Z",
+    "address": "/pagina-de-teste",
+    "header": [
+      {
+        "_type": "pageTitle",
+        "intro": "Página exclusiva dos testes end-to-end: exercita todos os componentes.",
+        "title": "Página de teste"
+      }
+    ],
+    "sections": [
+      {
+        "_key": "next-events",
+        "_type": "nextEvents",
+        "count": 3,
+        "subtitle": "Confira nossos próximos encontros.",
+        "title": "Próximos eventos"
+      },
+      {
+        "_key": "about",
+        "_type": "about",
+        "cards": [
+          {
+            "_key": "card-0",
+            "body": [
+              {
+                "_key": "p0",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "s0",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Texto de exemplo para os testes end-to-end."
+                  }
+                ],
+                "markDefs": [],
+                "style": "normal"
+              }
+            ],
+            "title": "para quem?"
+          },
+          {
+            "_key": "card-1",
+            "body": [
+              {
+                "_key": "p0",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "s0",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Texto de exemplo para os testes end-to-end."
+                  }
+                ],
+                "markDefs": [],
+                "style": "normal"
+              }
+            ],
+            "title": "como funciona?"
+          },
+          {
+            "_key": "card-2",
+            "body": [
+              {
+                "_key": "p0",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "s0",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Texto de exemplo para os testes end-to-end."
+                  }
+                ],
+                "markDefs": [],
+                "style": "normal"
+              }
+            ],
+            "title": "e depois?"
+          }
+        ],
+        "title": "Como assim?"
+      },
+      {
+        "_key": "testimonials",
+        "_type": "testimonials",
+        "quotes": [
+          {
+            "_key": "quote",
+            "author": "A., 32",
+            "quote": "Libertador."
+          }
+        ],
+        "subtitle": "Experiências reais.",
+        "title": "Quem vai, nunca esquece"
+      },
+      {
+        "_key": "cta-banner",
+        "_type": "ctaBanner",
+        "body": [
+          {
+            "_key": "p0",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Faça login para se inscrever."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          }
+        ],
+        "title": "Não perca nossos próximos eventos"
+      },
+      {
+        "_key": "founders",
+        "_type": "founders",
+        "people": [
+          {
+            "_id": "seed-person-ana",
+            "bio": [
+              {
+                "_key": "p0",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "s0",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Ana Exemplo é uma pessoa fictícia do conteúdo de desenvolvimento."
+                  }
+                ],
+                "markDefs": [],
+                "style": "normal"
+              }
+            ],
+            "instagram": "positiv.seed",
+            "name": "Ana Exemplo",
+            "photo": {
+              "alt": "Foto de Ana Exemplo",
+              "asset": {
+                "_ref": "image-8b97adcf62f1edd1fb35ab19806a468de3acca6e-1000x184-png",
+                "_type": "reference"
+              },
+              "crop": null,
+              "hotspot": null
+            },
+            "pronouns": "elu/delu"
+          },
+          {
+            "_id": "seed-person-bia",
+            "bio": [
+              {
+                "_key": "p0",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "s0",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Bia Exemplo é uma pessoa fictícia do conteúdo de desenvolvimento."
+                  }
+                ],
+                "markDefs": [],
+                "style": "normal"
+              }
+            ],
+            "instagram": "positiv.seed",
+            "name": "Bia Exemplo",
+            "photo": {
+              "alt": "Foto de Bia Exemplo",
+              "asset": {
+                "_ref": "image-8b97adcf62f1edd1fb35ab19806a468de3acca6e-1000x184-png",
+                "_type": "reference"
+              },
+              "crop": null,
+              "hotspot": null
+            },
+            "pronouns": "elu/delu"
+          }
+        ],
+        "title": "Quem faz a Positiv?",
+        "videoTitle": "Vídeo de apresentação",
+        "videoUrl": "https://www.youtube.com/watch?v=WIveBynr7Yc"
+      },
+      {
+        "_key": "feedback",
+        "_type": "feedback",
+        "body": [
+          {
+            "_key": "p0",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Estamos sempre buscando melhorias."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          }
+        ],
+        "ctaLabel": "Deixar feedback",
+        "title": "Nos deixe um feedback"
+      },
+      {
+        "_key": "rich-text",
+        "_type": "richTextSection",
+        "body": [
+          {
+            "_key": "heading",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "heading-span",
+                "_type": "span",
+                "marks": [],
+                "text": "Seção de teste"
+              }
+            ],
+            "markDefs": [],
+            "style": "h2"
+          },
+          {
+            "_key": "sentinel",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "sentinel-span",
+                "_type": "span",
+                "marks": [],
+                "text": "Se você chegou aqui, parabéns, encontrou nossa página de teste."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          }
+        ],
+        "title": "Aviso"
+      },
+      {
+        "_key": "image",
+        "_type": "imageSection",
+        "caption": "Uma legenda de exemplo",
+        "image": {
+          "alt": "Imagem de exemplo dos testes end-to-end",
+          "asset": {
+            "_ref": "image-8b97adcf62f1edd1fb35ab19806a468de3acca6e-1000x184-png",
+            "_type": "reference"
+          },
+          "crop": null,
+          "dimensions": {
+            "height": 184,
+            "width": 1000
+          },
+          "hotspot": null
+        }
+      }
+    ],
+    "seo": {
+      "description": "Página exclusiva dos testes end-to-end.",
+      "image": null,
+      "noIndex": true,
+      "title": null
+    },
+    "title": "Página de teste"
   }
 ]

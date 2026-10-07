@@ -23,6 +23,8 @@ pnpm workspace package, deployed to Sanity's hosting at
 | `page-actions.ts`                   | Keeps the Page at `/` from being deleted or unpublished                          |
 | `structure.ts`, `singletons.ts`     | The desk: both "Página inicial", "Páginas", "Configurações do site", "Pessoas"   |
 | `seed/`                             | The development seed — see below                                                 |
+| `fixtures/`                         | Generates the e2e fixtures from the seed — see below                             |
+| `refresh-dev/`                      | Mirrors production into development — see below                                  |
 | `migrations/`                       | Content migrations — see below                                                   |
 
 A field's `validation` replaces the validation of the type it uses. A field
@@ -99,41 +101,65 @@ Desenvolvimento addresses use `hrefRule` from `rich-text.ts`, the same rule as
 the rich text link: https or a path starting with `/`. The news dialog is not
 here; it stays Platform code.
 
-### Seed development
+### Development mirrors production
 
-Development content comes from `seed/seed.ts`, never from edits by hand or
-by an agent:
+`development` is meant to look like production, so local development shows what
+is live. It is a sandbox: break it freely, then restore the mirror with one
+command.
+
+```bash
+pnpm --filter studio refresh-dev            # preview (dry run)
+pnpm --filter studio refresh-dev --no-dry-run
+```
+
+`refresh-dev` exports `production` (read-only, assets included), deletes the
+`development` documents production lacks — seed leftovers — so the result is a
+true mirror, then imports with `createOrReplace`. Source and target are
+hard-coded: it refuses to write anywhere but `development` and never writes
+`production`. It dry-runs, printing the document counts, until you add
+`--no-dry-run`, and it is idempotent. The orchestration is covered by
+`refresh-dev/run.test.ts`.
+
+It removes development-only assets too, for a true mirror, and computes the
+delete list from a document list read just before the export — so a change
+published to `production` mid-run is picked up only on the next refresh. If the
+import fails partway, `development` keeps what was imported and its leftovers;
+re-run to finish the mirror. It reuses the token `getCliClient` finds, so prefer
+one without write access to `production` — the hard-coded target guards the code,
+not a hand-edited script.
+
+### Seed development (opt-in showcase)
+
+The seed is an opt-in showcase, no longer a required step. Load it into
+`development` when you want every Section type on screen — to try a migration,
+say. `refresh-dev` undoes it.
 
 ```bash
 pnpm --filter studio seed
 ```
 
 It writes the Page at `/` with every Section type, `/sobre` with a Title,
-`/sobre/equipe` with a Hero, two fictional People, and Site Settings with a
-Navigation, a full footer and a Notice. It is idempotent —
-fixed ids and `createOrReplace` — so run it as often as you like; it
-overwrites those documents and nothing else. It refuses any dataset other
-than `development`, whatever `SANITY_STUDIO_DATASET` says.
+`/sobre/equipe` with a Hero, the e2e test Page, two fictional People, and Site
+Settings with a Navigation, a full footer and a Notice. It is idempotent —
+fixed ids and `createOrReplace` — so run it as often as you like; it overwrites
+those documents and nothing else. It refuses any dataset other than
+`development`, whatever `SANITY_STUDIO_DATASET` says.
 
 A ticket that adds a Section type or a field extends the seed in the same pull
-request; `seed/seed.test.ts` validates every seeded document against the
-schema.
+request; `seed/seed.test.ts` validates every seeded document against the schema.
 
-### Refresh development from production
+### The e2e test Page
 
-Only if `development` has drifted too far to be useful. The export reads
-production; the import writes to `development` alone, replacing documents with
-the same ids:
+The seed owns a dedicated Page at `/pagina-de-teste` (`page-e2e-test`,
+`noIndex`), carrying every Section type and a fixed sentinel string. The e2e
+suite asserts against it rather than against Editor-managed content, so deleting
+or renaming a real Page never breaks the tests. It lives only in the seed and in
+the generated fixtures — nothing writes it to `production` — and the offline e2e
+mock serves it from the committed fixtures, never from a dataset.
 
-```bash
-cd studio
-pnpm exec sanity datasets export production production.tar.gz
-pnpm exec sanity datasets import production.tar.gz --dataset development --replace
-rm production.tar.gz
-```
-
-Check the dataset name on the import line twice. Never import into
-`production`.
+`refresh-dev` deletes the `development` documents production lacks, so a mirror
+drops the test Page from `development` until the seed is run again. The e2e suite
+is unaffected either way: it reads the committed fixtures, not the dataset.
 
 ### Update the e2e fixtures
 
@@ -150,22 +176,19 @@ pnpm --filter studio exec sanity documents query \
   > e2e/fixtures/homepage-content.json
 ```
 
-`e2e/fixtures/pages-snapshot.json` and `e2e/fixtures/site-settings.json` are
-the two halves of the app's `siteSnapshotQuery` — every Page the seed writes and
-its Site Settings. Run the seed first, then:
+`e2e/fixtures/pages-snapshot.json` and `e2e/fixtures/site-settings.json` are the
+two halves of the app's `siteSnapshotQuery` — every Page the seed writes and its
+Site Settings. They are generated from the seed in code, with no network:
 
 ```bash
-pnpm --filter studio exec sanity documents query \
-  "$(pnpm exec tsx -e 'import { pagesQuery } from "./app/business/cms/pages-query"; process.stdout.write(pagesQuery)')" \
-  --dataset development --anonymous --api-version 2026-09-24 \
-  > e2e/fixtures/pages-snapshot.json
-pnpm --filter studio exec sanity documents query \
-  "$(pnpm exec tsx -e 'import { siteSettingsQuery } from "./app/business/cms/site-snapshot-query"; process.stdout.write(siteSettingsQuery)')" \
-  --dataset development --anonymous --api-version 2026-09-24 \
-  > e2e/fixtures/site-settings.json
+pnpm --filter studio fixtures
 ```
 
-Commit the fixtures when they change.
+It resolves the seed documents through `siteSnapshotQuery` with groq-js —
+Person references expanded, image URLs and dimensions built from a fixed stub —
+and writes both files. `fixtures/fixtures.test.ts` fails when the committed
+fixtures drift from the seed, so regenerate and commit them whenever
+`seed/seed.ts` changes.
 
 ## Deploy
 
