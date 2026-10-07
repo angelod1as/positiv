@@ -42,10 +42,10 @@ export const Footer: FC<FooterProps> = ({
       <div className="px-4 md:px-6">
         <div
           data-testid="footer-grid"
-          className="grid grid-cols-1 text-muted-foreground lg:grid-cols-2  gap-4  justify-end items-start text-center"
+          className="grid grid-cols-1 text-muted-foreground lg:grid-cols-2 gap-4 items-start text-center"
         >
           {hasColumns && (
-            <div className="flex flex-wrap justify-center gap-8 text-center">
+            <div className="flex flex-wrap justify-center gap-8">
               {columns.map((column) => (
                 <div key={column._key}>
                   <p id={`footer-column-${column._key}`} className="font-bold">

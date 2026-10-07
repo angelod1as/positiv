@@ -58,7 +58,20 @@ describe("Footer", () => {
     it("lays out the link columns and the rest as two grid children", () => {
       renderFooter(siteSettings)
 
-      expect(screen.getByTestId("footer-grid").children).toHaveLength(2)
+      const grid = screen.getByTestId("footer-grid")
+      expect(grid.children).toHaveLength(2)
+
+      const [columnsCell, restCell] = grid.children
+      expect(
+        within(columnsCell as HTMLElement).getByRole("list", {
+          name: "A Positiv",
+        }),
+      ).toBeInTheDocument()
+      expect(
+        within(restCell as HTMLElement).getByText(
+          "© 2025 Positiv. Todos os direitos reservados.",
+        ),
+      ).toBeInTheDocument()
     })
   })
 
@@ -93,10 +106,12 @@ describe("Footer", () => {
       expect(screen.getByText(newsDialogCopy.trigger)).toBeInTheDocument()
     })
 
-    it("lays out the rest as a single grid child", () => {
+    it("lays out the rest as a single, full-width grid child", () => {
       renderFooter(null)
 
-      expect(screen.getByTestId("footer-grid").children).toHaveLength(1)
+      const grid = screen.getByTestId("footer-grid")
+      expect(grid.children).toHaveLength(1)
+      expect(grid.children[0]).toHaveClass("lg:col-span-2")
     })
   })
 })
