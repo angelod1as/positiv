@@ -87,7 +87,7 @@ export const page = defineType({
           if ((id === HOMEPAGE_PAGE_ID) !== (address === "/")) {
             return id === HOMEPAGE_PAGE_ID
               ? "Esta é a página inicial: o endereço dela é sempre /"
-              : "Só a página inicial usa o endereço /. Abra “Página inicial (nova)” no menu."
+              : "Só a página inicial usa o endereço /. Abra “Página inicial” no menu."
           }
 
           const pagesAtAddress = await context

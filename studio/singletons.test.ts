@@ -23,12 +23,6 @@ function names(actions: DocumentActionComponent[]) {
 }
 
 describe("singletonActions", () => {
-  it("keeps the homepage from being deleted, duplicated or unpublished", () => {
-    expect(
-      names(singletonActions(allActions, { schemaType: "homepage" })),
-    ).toEqual(["publish", "discardChanges", "restore"])
-  })
-
   it("keeps Site Settings from being deleted, duplicated or unpublished", () => {
     expect(
       names(singletonActions(allActions, { schemaType: "siteSettings" })),
@@ -43,13 +37,13 @@ describe("singletonActions", () => {
 })
 
 describe("withoutSingletons", () => {
-  it("offers people, but not a second homepage, when creating a document", () => {
+  it("offers every non-singleton template, including a homepage, now that only Site Settings is a singleton", () => {
     const templates: TemplateItem[] = [
       { templateId: "homepage" },
       { templateId: "person" },
     ]
 
-    expect(withoutSingletons(templates)).toEqual([{ templateId: "person" }])
+    expect(withoutSingletons(templates)).toEqual(templates)
   })
 
   it("does not offer a second Site Settings when creating a document", () => {
