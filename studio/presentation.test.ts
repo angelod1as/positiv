@@ -2,10 +2,20 @@ import { describe, expect, it } from "vitest"
 
 import { resolve } from "./presentation"
 
-const locations = resolve.locations as Record<
-  string,
-  { resolve: (doc: unknown) => { locations: { title: string; href: string }[]; message?: string } }
->
+type Location = { title: string; href: string }
+
+const locations = (
+  resolve as {
+    locations: {
+      page: {
+        resolve: (doc: { title?: string; address?: string }) => {
+          locations: Location[]
+        }
+      }
+      siteSettings: { message?: string; locations: Location[] }
+    }
+  }
+).locations
 
 describe("Presentation locations", () => {
   it("places a Page at its own address", () => {
@@ -21,9 +31,9 @@ describe("Presentation locations", () => {
   })
 
   it("marks Site Settings as shown on every page", () => {
-    const result = locations.siteSettings.resolve({})
-
-    expect(result.message).toContain("todas as páginas")
-    expect(result.locations).toEqual([{ title: "Página inicial", href: "/" }])
+    expect(locations.siteSettings.message).toContain("todas as páginas")
+    expect(locations.siteSettings.locations).toEqual([
+      { title: "Página inicial", href: "/" },
+    ])
   })
 })

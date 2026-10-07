@@ -14,11 +14,9 @@ export const resolve: PresentationPluginOptions["resolve"] = {
       }),
     }),
     siteSettings: defineLocations({
-      resolve: () => ({
-        message: "Aparece em todas as páginas do site",
-        tone: "positive",
-        locations: [{ title: "Página inicial", href: "/" }],
-      }),
+      message: "Aparece em todas as páginas do site",
+      tone: "positive",
+      locations: [{ title: "Página inicial", href: "/" }],
     }),
   },
 }

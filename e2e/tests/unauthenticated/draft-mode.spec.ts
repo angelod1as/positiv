@@ -31,7 +31,8 @@ test.describe('Draft mode is closed to visitors', () => {
     const sitePage = new SitePage(page)
 
     const response = await sitePage.goto(TEST_PAGE_ADDRESS)
-    const html = await response!.text()
+    expect(response).toBeTruthy()
+    const html = (await response?.text()) ?? ''
 
     expect(html).not.toContain(E2E_SANITY_VIEWER_TOKEN)
   })
