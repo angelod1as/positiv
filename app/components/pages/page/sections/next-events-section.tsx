@@ -1,6 +1,6 @@
 import { ArrowRightIcon } from "lucide-react"
 import type { FC } from "react"
-import type { HomepageContent } from "~/business/cms/content.schema"
+import type { PageContent } from "~/business/cms/content.schema"
 import { Button } from "~/components/atoms/button/button"
 import { Copy } from "~/components/atoms/copy/copy"
 import {
@@ -15,7 +15,7 @@ import { homepageCopy } from "~/copy/homepage"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import routes from "~/lib/paths"
 import type { Event } from "~types/database/entities.types"
-import { HomePageTitle } from "../home-title/home-title"
+import { SectionTitle } from "./section-title"
 import { Section } from "../section/section"
 
 const {
@@ -24,11 +24,11 @@ const {
 
 const { nextEvents } = homepageCopy
 
-type HomePageNextEventsProps = {
-  content: HomepageContent["nextEvents"]
+type NextEventsSectionProps = {
+  content: PageContent["nextEvents"]
   events: Array<Event>
 }
-export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({
+export const NextEventsSection: FC<NextEventsSectionProps> = ({
   content,
   events,
 }) => {
@@ -36,9 +36,9 @@ export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({
     <Section>
       <div className="px-4 md:px-6">
         <div className="flex flex-col items-center justify-center space-y-4 ">
-          <HomePageTitle subtitle={content.subtitle}>
+          <SectionTitle subtitle={content.subtitle}>
             {content.title}
-          </HomePageTitle>
+          </SectionTitle>
 
           <div className="flex lg:flex-row flex-col gap-8 items-stretch justify-center">
             {events.map(

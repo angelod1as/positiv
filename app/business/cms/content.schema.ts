@@ -96,7 +96,7 @@ export const sanityImageSchema = zod.object({
     .nullish(),
 })
 
-export const homepageImageSchema = zod.object({
+export const pageImageSchema = zod.object({
   url: zod.url(),
   alt: zod.string(),
   width: zod.number(),
@@ -163,17 +163,17 @@ export const foundersFields = {
   videoTitle: zod.string(),
 }
 
-export const homepageContentSchema = zod.object({
+export const pageContentSchema = zod.object({
   ...sectionsFields,
   founders: zod.object({
     ...foundersFields,
     people: zod
-      .array(zod.object({ ...personFields, photo: homepageImageSchema }))
+      .array(zod.object({ ...personFields, photo: pageImageSchema }))
       .min(1),
   }),
 })
 
-export type HomepageContent = z.infer<typeof homepageContentSchema>
-export type HomepageImage = z.infer<typeof homepageImageSchema>
+export type PageContent = z.infer<typeof pageContentSchema>
+export type PageImage = z.infer<typeof pageImageSchema>
 export type PortableText = z.infer<typeof portableTextSchema>
 export type LongPortableText = z.infer<typeof longPortableTextSchema>

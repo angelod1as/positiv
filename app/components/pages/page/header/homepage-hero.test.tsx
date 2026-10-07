@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest"
-import type { HomepageContent } from "~/business/cms/content.schema"
+import type { PageContent } from "~/business/cms/content.schema"
 import { renderWithRouter, screen } from "~/test/test-utils"
-import { HomePageHero } from "./hero"
+import { HomepageHero } from "./homepage-hero"
 
-const hero: HomepageContent["hero"] = {
+const hero: PageContent["hero"] = {
   title: "título do editor",
   subtitle: [
     {
@@ -19,9 +19,9 @@ const hero: HomepageContent["hero"] = {
   ],
 }
 
-describe("HomePageHero", () => {
+describe("HomepageHero", () => {
   it("renders the Editor's title as the page heading", () => {
-    renderWithRouter(<HomePageHero content={hero} />)
+    renderWithRouter(<HomepageHero content={hero} />)
 
     expect(
       screen.getByRole("heading", { level: 1, name: "título do editor" }),
@@ -29,7 +29,7 @@ describe("HomePageHero", () => {
   })
 
   it("renders the Editor's rich-text subtitle inline", () => {
-    const { container } = renderWithRouter(<HomePageHero content={hero} />)
+    const { container } = renderWithRouter(<HomepageHero content={hero} />)
 
     const subtitle = container.querySelector("h1 + p")
     expect(subtitle).toHaveTextContent("para quem busca algo novo")

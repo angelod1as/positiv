@@ -163,9 +163,9 @@ is unaffected either way: it reads the committed fixtures, not the dataset.
 
 ### Update the e2e fixtures
 
-`e2e/fixtures/homepage-content.json` is a static fixture of the homepage
-content shape. It feeds the HomePage component unit tests through
-`app/test/homepage-content-fixture.ts`. It used to be regenerated from the
+`e2e/fixtures/page-content.json` is a static fixture of the Page
+content shape. It feeds the Page section component unit tests through
+`app/test/page-content-fixture.ts`. It used to be regenerated from the
 app's `homepageQuery`, but that query was removed with the `homepage`
 document type (POS-589); edit the file by hand when the shape changes.
 

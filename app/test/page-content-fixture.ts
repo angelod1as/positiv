@@ -1,11 +1,11 @@
-import fixture from "../../e2e/fixtures/homepage-content.json"
+import fixture from "../../e2e/fixtures/page-content.json"
 import {
-  type HomepageContent,
-  homepageContentSchema,
+  type PageContent,
+  pageContentSchema,
 } from "~/business/cms/content.schema"
 
-export const homepageContentFixture: HomepageContent =
-  homepageContentSchema.parse({
+export const pageContentFixture: PageContent =
+  pageContentSchema.parse({
     ...fixture,
     founders: {
       ...fixture.founders,

@@ -1,10 +1,10 @@
 import { Copy } from "~/components/atoms/copy/copy"
 import type { FCC } from "~types/utils/utils.types"
 
-type HomePageTitleProps = {
+type SectionTitleProps = {
   subtitle?: string
 }
-export const HomePageTitle: FCC<HomePageTitleProps> = ({
+export const SectionTitle: FCC<SectionTitleProps> = ({
   children,
   subtitle,
 }) => {

@@ -3,8 +3,8 @@ import { zod } from "~/lib/helpers/zod"
 import { reservedAddresses } from "../../reserved-addresses"
 import {
   foundersFields,
-  homepageImageSchema,
   longPortableTextSchema,
+  pageImageSchema,
   personFields,
   portableTextSchema,
   sanityImageSchema,
@@ -91,11 +91,11 @@ const pageSectionSchema = zod.discriminatedUnion("_type", [
   section("founders", {
     ...foundersFields,
     people: zod
-      .array(zod.object({ ...personFields, photo: homepageImageSchema }))
+      .array(zod.object({ ...personFields, photo: pageImageSchema }))
       .min(1),
   }),
   section("imageSection", {
-    image: homepageImageSchema,
+    image: pageImageSchema,
     caption: zod.string().nullish(),
   }),
 ])
@@ -137,7 +137,7 @@ export const pageSchema = zod.object({
   address: addressSchema,
   header: pageHeaderSchema,
   sections: sectionsSchema(pageSectionSchema),
-  seo: zod.object({ ...seoFields, image: homepageImageSchema.nullish() }),
+  seo: zod.object({ ...seoFields, image: pageImageSchema.nullish() }),
 })
 
 export type PageDocument = z.infer<typeof pageDocumentSchema>

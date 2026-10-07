@@ -1,25 +1,25 @@
-import type { HomepageContent } from "~/business/cms/content.schema"
+import type { PageContent } from "~/business/cms/content.schema"
 import { RichText } from "~/components/atoms/rich-text/rich-text"
 import { homepageCopy } from "~/copy/homepage"
 import { youtubeEmbedUrl } from "~/lib/helpers/youtube-embed-url"
-import { HomePageTitle } from "../home-title/home-title"
+import { SectionTitle } from "./section-title"
 import { Section } from "../section/section"
 import { FounderCard } from "./founder-card"
 
 const { founders } = homepageCopy
 
-type HomePageFoundersProps = {
-  content: HomepageContent["founders"]
+type FoundersSectionProps = {
+  content: PageContent["founders"]
 }
 
-export const HomePageFounders = ({ content }: HomePageFoundersProps) => {
+export const FoundersSection = ({ content }: FoundersSectionProps) => {
   const videoSrc = youtubeEmbedUrl(content.videoUrl)
 
   return (
     <Section>
       <div className="px-4 md:px-6 flex flex-col items-center gap-12">
         <div className="flex flex-col items-center justify-center space-y-4 text-center max-w-(--breakpoint-lg)">
-          <HomePageTitle>{content.title}</HomePageTitle>
+          <SectionTitle>{content.title}</SectionTitle>
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:gap-12 pt-8">
             {content.people.map(
               ({ _id, name, pronouns, instagram, bio, photo }) => (

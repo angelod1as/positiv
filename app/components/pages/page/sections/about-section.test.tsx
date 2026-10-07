@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest"
 import type {
-  HomepageContent,
+  PageContent,
   PortableText,
 } from "~/business/cms/content.schema"
 import { renderWithRouter, screen } from "~/test/test-utils"
-import { HomePageAbout } from "./about"
+import { AboutSection } from "./about-section"
 
 const paragraph = (key: string, text: string): PortableText[number] => ({
   _type: "block",
@@ -14,7 +14,7 @@ const paragraph = (key: string, text: string): PortableText[number] => ({
   children: [{ _type: "span", _key: `${key}s0`, text, marks: [] }],
 })
 
-const about: HomepageContent["about"] = {
+const about: PageContent["about"] = {
   title: "Por que vir?",
   cards: [
     { _key: "a", title: "primeiro card", body: [paragraph("b0", "texto um")] },
@@ -27,9 +27,9 @@ const about: HomepageContent["about"] = {
   ],
 }
 
-describe("HomePageAbout", () => {
+describe("AboutSection", () => {
   it("renders the Editor's section title", () => {
-    renderWithRouter(<HomePageAbout content={about} />)
+    renderWithRouter(<AboutSection content={about} />)
 
     expect(
       screen.getByRole("heading", { level: 2, name: "Por que vir?" }),
@@ -37,7 +37,7 @@ describe("HomePageAbout", () => {
   })
 
   it("renders every card with its title and rich-text body as paragraphs", () => {
-    renderWithRouter(<HomePageAbout content={about} />)
+    renderWithRouter(<AboutSection content={about} />)
 
     for (const title of ["primeiro card", "segundo card", "terceiro card"]) {
       expect(

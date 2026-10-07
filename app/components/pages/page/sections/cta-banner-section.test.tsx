@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest"
-import type { HomepageContent } from "~/business/cms/content.schema"
+import type { PageContent } from "~/business/cms/content.schema"
 import { homepageCopy } from "~/copy/homepage"
 import routes from "~/lib/paths"
 import { renderWithRouter, screen } from "~/test/test-utils"
-import { HomePageCtaBanner } from "./home-page-cta-banner"
+import { CtaBannerSection } from "./cta-banner-section"
 
-const ctaBanner: HomepageContent["ctaBanner"] = {
+const ctaBanner: PageContent["ctaBanner"] = {
   title: "Chamada do editor",
   body: [
     {
@@ -21,10 +21,10 @@ const ctaBanner: HomepageContent["ctaBanner"] = {
   ],
 }
 
-describe("HomePageCtaBanner", () => {
+describe("CtaBannerSection", () => {
   it("renders the Editor's title and inline rich-text body", () => {
     renderWithRouter(
-      <HomePageCtaBanner content={ctaBanner} isLoggedIn={false} />,
+      <CtaBannerSection content={ctaBanner} isLoggedIn={false} />,
     )
 
     expect(
@@ -38,7 +38,7 @@ describe("HomePageCtaBanner", () => {
 
   it("sends a visitor to the login page", () => {
     renderWithRouter(
-      <HomePageCtaBanner content={ctaBanner} isLoggedIn={false} />,
+      <CtaBannerSection content={ctaBanner} isLoggedIn={false} />,
     )
 
     expect(
@@ -47,7 +47,7 @@ describe("HomePageCtaBanner", () => {
   })
 
   it("sends a logged-in participant to the dashboard", () => {
-    renderWithRouter(<HomePageCtaBanner content={ctaBanner} isLoggedIn />)
+    renderWithRouter(<CtaBannerSection content={ctaBanner} isLoggedIn />)
 
     expect(
       screen.getByRole("link", { name: homepageCopy.ctaBanner.loggedInCta }),

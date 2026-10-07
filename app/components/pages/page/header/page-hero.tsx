@@ -1,6 +1,6 @@
 import type { PageHeader } from "~/business/cms/page.schema"
 import { RichText } from "~/components/atoms/rich-text/rich-text"
-import { Section } from "~/components/pages/homepage/section/section"
+import { Section } from "../section/section"
 
 type PageHeroProps = {
   content: Extract<PageHeader, { _type: "pageHero" }>

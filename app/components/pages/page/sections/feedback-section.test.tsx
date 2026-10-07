@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
-import type { HomepageContent } from "~/business/cms/content.schema"
+import type { PageContent } from "~/business/cms/content.schema"
 
 vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router")
@@ -12,9 +12,9 @@ vi.mock("react-router", async () => {
   }
 })
 
-import { HomePageFeedback } from "./home-page-feedback"
+import { FeedbackSection } from "./feedback-section"
 
-const feedback: HomepageContent["feedback"] = {
+const feedback: PageContent["feedback"] = {
   title: "Conte pra gente",
   body: [
     {
@@ -31,9 +31,9 @@ const feedback: HomepageContent["feedback"] = {
   ctaLabel: "Mandar opinião",
 }
 
-describe("HomePageFeedback", () => {
+describe("FeedbackSection", () => {
   it("should render the section title", () => {
-    render(<HomePageFeedback content={feedback} />)
+    render(<FeedbackSection content={feedback} />)
 
     expect(
       screen.getByRole("heading", { level: 2, name: "Conte pra gente" }),
@@ -41,7 +41,7 @@ describe("HomePageFeedback", () => {
   })
 
   it("should render the description text inline", () => {
-    render(<HomePageFeedback content={feedback} />)
+    render(<FeedbackSection content={feedback} />)
 
     const emphasis = screen.getByText("importa")
     expect(emphasis.tagName).toBe("EM")
@@ -50,7 +50,7 @@ describe("HomePageFeedback", () => {
   })
 
   it("should render a link button to the feedback page", () => {
-    render(<HomePageFeedback content={feedback} />)
+    render(<FeedbackSection content={feedback} />)
 
     const link = screen.getByRole("link", { name: "Mandar opinião" })
     expect(link).toBeInTheDocument()

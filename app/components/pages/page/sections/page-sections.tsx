@@ -1,13 +1,13 @@
 import { Suspense } from "react"
 import { Await } from "react-router"
 import type { PageSection } from "~/business/cms/page.schema"
-import { HomePageAbout } from "~/components/pages/homepage/about/about"
-import { HomePageCtaBanner } from "~/components/pages/homepage/cta-banner/home-page-cta-banner"
-import { HomePageFeedback } from "~/components/pages/homepage/feedback/home-page-feedback"
-import { HomePageFounders } from "~/components/pages/homepage/founders/home-page-founders"
-import { HomePageNextEvents } from "~/components/pages/homepage/next-events/next-events"
-import { HomePageNextEventsSkeleton } from "~/components/pages/homepage/next-events/next-events-skeleton"
-import { HomePageTestimonials } from "~/components/pages/homepage/testimonials/home-page-testimonials"
+import { AboutSection } from "./about-section"
+import { CtaBannerSection } from "./cta-banner-section"
+import { FeedbackSection } from "./feedback-section"
+import { FoundersSection } from "./founders-section"
+import { NextEventsSection } from "./next-events-section"
+import { NextEventsSectionSkeleton } from "./next-events-section-skeleton"
+import { TestimonialsSection } from "./testimonials-section"
 import type { Event } from "~types/database/entities.types"
 import { ImageSection } from "./image-section"
 import { RichTextSection } from "./rich-text-section"
@@ -29,12 +29,12 @@ export const PageSections = ({
         return (
           <Suspense
             key={section._key}
-            fallback={<HomePageNextEventsSkeleton content={section} />}
+            fallback={<NextEventsSectionSkeleton content={section} />}
           >
             <Await resolve={events}>
               {(resolvedEvents) =>
                 resolvedEvents && resolvedEvents.length > 0 ? (
-                  <HomePageNextEvents
+                  <NextEventsSection
                     content={section}
                     events={resolvedEvents}
                   />
@@ -44,21 +44,21 @@ export const PageSections = ({
           </Suspense>
         )
       case "about":
-        return <HomePageAbout key={section._key} content={section} />
+        return <AboutSection key={section._key} content={section} />
       case "testimonials":
-        return <HomePageTestimonials key={section._key} content={section} />
+        return <TestimonialsSection key={section._key} content={section} />
       case "ctaBanner":
         return (
-          <HomePageCtaBanner
+          <CtaBannerSection
             key={section._key}
             content={section}
             isLoggedIn={isLoggedIn}
           />
         )
       case "founders":
-        return <HomePageFounders key={section._key} content={section} />
+        return <FoundersSection key={section._key} content={section} />
       case "feedback":
-        return <HomePageFeedback key={section._key} content={section} />
+        return <FeedbackSection key={section._key} content={section} />
       case "richTextSection":
         return <RichTextSection key={section._key} content={section} />
       case "imageSection":

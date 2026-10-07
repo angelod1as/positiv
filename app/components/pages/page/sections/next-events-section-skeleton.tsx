@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card"
-import type { HomepageContent } from "~/business/cms/content.schema"
-import { HomePageTitle } from "../home-title/home-title"
+import type { PageContent } from "~/business/cms/content.schema"
+import { SectionTitle } from "./section-title"
 import { Section } from "../section/section"
 
 const EventCardSkeleton = () => {
@@ -36,20 +36,20 @@ const EventCardSkeleton = () => {
   )
 }
 
-type HomePageNextEventsSkeletonProps = {
-  content: HomepageContent["nextEvents"]
+type NextEventsSectionSkeletonProps = {
+  content: PageContent["nextEvents"]
 }
 
-export const HomePageNextEventsSkeleton = ({
+export const NextEventsSectionSkeleton = ({
   content,
-}: HomePageNextEventsSkeletonProps) => {
+}: NextEventsSectionSkeletonProps) => {
   return (
     <Section>
       <div className="px-4 md:px-6">
         <div className="flex flex-col items-center justify-center space-y-4">
-          <HomePageTitle subtitle={content.subtitle}>
+          <SectionTitle subtitle={content.subtitle}>
             {content.title}
-          </HomePageTitle>
+          </SectionTitle>
 
           <div
             className="flex lg:flex-row flex-col gap-8 items-stretch justify-center"
