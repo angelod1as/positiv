@@ -80,6 +80,12 @@ importers:
       '@sanity/image-url':
         specifier: ^2.1.1
         version: 2.1.1
+      '@sanity/preview-url-secret':
+        specifier: ^4.1.5
+        version: 4.1.5(@sanity/client@8.7.0(vitest@3.2.4))
+      '@sanity/visual-editing':
+        specifier: ^6.1.2
+        version: 6.1.2(@sanity/client@8.7.0(vitest@3.2.4))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router@7.6.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)(styled-components@6.5.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3)(vitest@3.2.4)
       '@supabase/ssr':
         specifier: ^0.6.1
         version: 0.6.1(@supabase/supabase-js@2.50.2)
@@ -4261,6 +4267,12 @@ packages:
       react: ^19.2.2
       sanity: ^6.0.0-0
 
+  '@sanity/visual-editing-csm@3.0.18':
+    resolution: {integrity: sha512-s+54hWA0g/YIVLP8Vq0JzQqRS34OP5tiV/m0AkF3ycBaaUX+9H1Lobc0lZv5w0rHc+FXwSy0Y55Kn1Rh0CvMOA==}
+    engines: {node: '>=20.19 <22 || >=22.12'}
+    peerDependencies:
+      '@sanity/client': ^7.26.2 || ^8.0.0
+
   '@sanity/visual-editing-types@2.1.1':
     resolution: {integrity: sha512-t/Aa2HclwUHzNY/CGeQMEVDb4Dc5izI7SwdqwTeSSMc+f0hRgAa2PG3PuBOmpyCta0GGMm7febk4FMWqF+iwaA==}
     engines: {node: '>=20.19 <22 || >=22.12'}
@@ -4269,6 +4281,30 @@ packages:
       '@sanity/types': '*'
     peerDependenciesMeta:
       '@sanity/types':
+        optional: true
+
+  '@sanity/visual-editing@6.1.2':
+    resolution: {integrity: sha512-0FzlvCd3ciTgzDZbvF+eJscrW48IzxaADgehKQxsQ2WBwCDg4iD2oRDSVhkb90f4atyRZ2Hfdt+PTCCAcN7sAw==}
+    engines: {node: '>=22.12'}
+    peerDependencies:
+      '@sanity/client': ^7.26.2 || ^8.0.0
+      '@sveltejs/kit': '>= 2'
+      next: '>=16.0.0-0'
+      react: ^19.2
+      react-dom: ^19.2
+      react-router: '>= 7'
+      styled-components: ^6.1
+      svelte: '>= 4'
+    peerDependenciesMeta:
+      '@sanity/client':
+        optional: true
+      '@sveltejs/kit':
+        optional: true
+      next:
+        optional: true
+      react-router:
+        optional: true
+      svelte:
         optional: true
 
   '@sanity/workbench-cli@2.8.0':
@@ -16216,6 +16252,11 @@ snapshots:
     transitivePeerDependencies:
       - '@sanity/types'
 
+  '@sanity/preview-url-secret@4.1.5(@sanity/client@8.7.0(vitest@3.2.4))':
+    dependencies:
+      '@sanity/client': 8.7.0(vitest@3.2.4)
+      '@sanity/uuid': 3.0.3
+
   '@sanity/preview-url-secret@4.1.5(@sanity/client@8.9.0(vitest@3.2.4))':
     dependencies:
       '@sanity/client': 8.9.0(vitest@3.2.4)
@@ -16484,11 +16525,55 @@ snapshots:
       - styled-components
       - vitest
 
+  '@sanity/visual-editing-csm@3.0.18(@sanity/client@8.7.0(vitest@3.2.4))(@sanity/types@6.17.0(@types/react@19.2.18)(vitest@3.2.4))(typescript@5.8.3)':
+    dependencies:
+      '@sanity/client': 8.7.0(vitest@3.2.4)
+      '@sanity/visual-editing-types': 2.1.1(@sanity/client@8.7.0(vitest@3.2.4))(@sanity/types@6.17.0(@types/react@19.2.18)(vitest@3.2.4))
+      valibot: 1.5.0(typescript@5.8.3)
+    transitivePeerDependencies:
+      - '@sanity/types'
+      - typescript
+
   '@sanity/visual-editing-types@2.1.1(@sanity/client@7.27.0)(@sanity/types@6.17.0(@types/react@19.2.18)(vitest@3.2.4))':
     dependencies:
       '@sanity/client': 7.27.0
     optionalDependencies:
       '@sanity/types': 6.17.0(@types/react@19.2.18)(vitest@3.2.4)
+
+  '@sanity/visual-editing-types@2.1.1(@sanity/client@8.7.0(vitest@3.2.4))(@sanity/types@6.17.0(@types/react@19.2.18)(vitest@3.2.4))':
+    dependencies:
+      '@sanity/client': 8.7.0(vitest@3.2.4)
+    optionalDependencies:
+      '@sanity/types': 6.17.0(@types/react@19.2.18)(vitest@3.2.4)
+
+  '@sanity/visual-editing@6.1.2(@sanity/client@8.7.0(vitest@3.2.4))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router@7.6.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)(styled-components@6.5.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3)(vitest@3.2.4)':
+    dependencies:
+      '@sanity/comlink': 4.0.3
+      '@sanity/icons': 5.2.3(react@19.2.8)
+      '@sanity/mutate': 0.18.2(vitest@3.2.4)(xstate@5.33.2)
+      '@sanity/presentation-comlink': 2.2.3(@sanity/types@6.17.0(@types/react@19.2.18)(vitest@3.2.4))
+      '@sanity/preview-url-secret': 4.1.5(@sanity/client@8.7.0(vitest@3.2.4))
+      '@sanity/types': 6.17.0(@types/react@19.2.18)(vitest@3.2.4)
+      '@sanity/ui': 4.2.7(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(styled-components@6.5.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8))
+      '@sanity/visual-editing-csm': 3.0.18(@sanity/client@8.7.0(vitest@3.2.4))(@sanity/types@6.17.0(@types/react@19.2.18)(vitest@3.2.4))(typescript@5.8.3)
+      '@sanity/visual-editing-types': 2.1.1(@sanity/client@8.7.0(vitest@3.2.4))(@sanity/types@6.17.0(@types/react@19.2.18)(vitest@3.2.4))
+      '@vercel/stega': 1.1.0
+      dequal: 2.0.3
+      lodash-es: 4.18.1
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+      react-is: 19.3.0
+      rxjs: 7.8.2
+      scroll-into-view-if-needed: 3.1.0
+      styled-components: 6.5.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      xstate: 5.33.2
+    optionalDependencies:
+      '@sanity/client': 8.7.0(vitest@3.2.4)
+      react-router: 7.6.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+    transitivePeerDependencies:
+      - '@types/react'
+      - typescript
+      - vitest
 
   '@sanity/workbench-cli@2.8.0(@noble/hashes@2.4.0)(@rolldown/plugin-babel@0.2.4(@babel/core@7.29.7(supports-color@8.1.1))(@babel/runtime@7.29.7)(rolldown@1.2.11)(vite@8.3.1(@types/node@24.13.3)(jiti@2.7.0)(tsx@4.20.3)(yaml@2.9.1)))(@types/node@24.13.3)(@types/react@19.2.18)(jiti@2.7.0)(tsx@4.20.3)(typescript@5.8.3)(vitest@3.2.4)(yaml@2.9.1)':
     dependencies:
@@ -18442,7 +18527,7 @@ snapshots:
       dom-serializer: 0.1.1
       entities: 1.1.2
       htmlparser2: 3.10.1
-      lodash: 4.17.21
+      lodash: 4.18.1
       parse5: 3.0.3
 
   chokidar@3.5.1:
@@ -20596,7 +20681,7 @@ snapshots:
       cli-width: 3.0.0
       external-editor: 3.1.0
       figures: 3.2.0
-      lodash: 4.17.21
+      lodash: 4.18.1
       mute-stream: 0.0.8
       run-async: 2.4.1
       rxjs: 6.6.7
