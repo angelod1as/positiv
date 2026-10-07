@@ -12,6 +12,8 @@
     "lint": "tsc --noEmit && eslint .",
     "test": "vitest --run",
     "seed": "sanity exec seed/cli.ts --with-user-token",
+    "fixtures": "tsx fixtures/cli.ts",
+    "refresh-dev": "sanity exec refresh-dev/cli.ts --with-user-token --",
     "migrate:homepage-to-page": "sanity exec migrations/homepage-to-page/cli.ts --with-user-token --",
     "migrate:code-of-conduct-to-page": "sanity exec migrations/code-of-conduct-to-page/cli.ts --with-user-token --",
     "migrate:remove-footer-development": "sanity exec migrations/remove-footer-development/cli.ts --with-user-token --"
@@ -27,10 +29,14 @@
   "devDependencies": {
     "@sanity/client": "^8.9.0",
     "@sanity/eslint-config-studio": "^7",
+    "@sanity/export": "^6.2.1",
+    "@sanity/import": "^7.0.4",
     "@sanity/schema": "6.17.0",
     "@sanity/validation": "6.17.0",
     "@types/react": "^19.2.18",
     "eslint": "^10.8.1",
+    "groq-js": "^1.30.3",
+    "tsx": "^4.20.3",
     "typescript": "^5.8",
     "vitest": "^3.2.4"
   }
