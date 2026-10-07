@@ -1,105 +1,75 @@
 import { test, expect } from '@playwright/test'
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { homepageCopy } from '../../../app/copy/homepage'
 import { errorsCopy } from '../../../app/copy/errors'
+import { testPageContent } from '../../fixtures/test-page-content'
 import { SitePage } from '../../pages/SitePage'
 
-type RichTextBlock = { style?: string; children: { text: string }[] }
-
-type FixturePage = {
-  title: string
-  address: string
-  header: { title: string; intro?: string }[]
-  sections: {
-    _type: string
-    title?: string
-    people?: { name: string }[]
-    body?: RichTextBlock[]
-  }[]
-  seo: { description: string }
-}
-
-// Read rather than imported, for the reason given in mocks/sanity-mock-server.ts.
-const pages = JSON.parse(
-  readFileSync(join(process.cwd(), 'e2e', 'fixtures', 'pages-snapshot.json'), 'utf8'),
-) as FixturePage[]
-
-function fixturePage(address: string): FixturePage {
-  const page = pages.find((candidate) => candidate.address === address)
-  if (!page) throw new Error(`The fixture has no Page at ${address}`)
-  return page
-}
+// The e2e suite asserts against one Page the seed owns, never against
+// Editor-managed content, so deleting or renaming a real Page cannot break it.
+const {
+  address: TEST_PAGE_ADDRESS,
+  sentinel: TEST_PAGE_SENTINEL,
+  aboutTitle: ABOUT_SECTION_TITLE,
+  richTextHeading: RICH_TEXT_HEADING,
+  founderName: FOUNDER_NAME,
+  imageAlt: IMAGE_SECTION_ALT,
+  seoDescription: SEO_DESCRIPTION,
+} = testPageContent
+const CANONICAL = `https://www.positivparty.com${TEST_PAGE_ADDRESS}`
 
 test.describe('Pages from Sanity', () => {
-  test('a nested Page renders its Page Header and its Sections', async ({ page }) => {
-    const team = fixturePage('/sobre/equipe')
-    const [founders] = team.sections
-    const sitePage = new SitePage(page)
-
-    const response = await sitePage.goto(team.address)
-
-    expect(response?.status()).toBe(200)
-    await expect(sitePage.title).toHaveText(team.header[0].title)
-    await expect(sitePage.sectionTitle(founders.title ?? '')).toBeVisible()
-    for (const person of founders.people ?? []) {
-      await expect(sitePage.personName(person.name)).toBeVisible()
-    }
-  })
-
-  test('a Page with a Title renders its introduction', async ({ page }) => {
-    const about = fixturePage('/sobre')
-    const sitePage = new SitePage(page)
-
-    await sitePage.goto(about.address)
-
-    await expect(sitePage.title).toHaveText(about.header[0].title)
-    await expect(page.getByText(about.header[0].intro ?? '')).toBeVisible()
-  })
-
-  test('the code of conduct renders its Title and a heading from its Rich Text', async ({
+  test('the test Page loads and renders its header and every Section', async ({
     page,
   }) => {
-    const conduct = fixturePage('/codigo-de-conduta')
-    const richText = conduct.sections.find(
-      (section) => section._type === 'richTextSection',
-    )
-    const firstHeading = (richText?.body ?? []).find(
-      (block) => block.style === 'h2',
-    )
-    const headingText = (firstHeading?.children ?? [])
-      .map((child) => child.text)
-      .join('')
     const sitePage = new SitePage(page)
 
-    const response = await sitePage.goto(conduct.address)
+    const response = await sitePage.goto(TEST_PAGE_ADDRESS)
 
     expect(response?.status()).toBe(200)
-    await expect(sitePage.title).toHaveText(conduct.header[0].title)
-    expect(headingText).not.toBe('')
-    await expect(sitePage.sectionTitle(headingText)).toBeVisible()
+    await expect(sitePage.title).toBeVisible()
+    await expect(page.getByText(TEST_PAGE_SENTINEL)).toBeVisible()
+    await expect(sitePage.sectionTitle(ABOUT_SECTION_TITLE)).toBeVisible()
+    await expect(sitePage.sectionTitle(RICH_TEXT_HEADING)).toBeVisible()
+    await expect(sitePage.personName(FOUNDER_NAME)).toBeVisible()
+    await expect(page.getByRole('img', { name: IMAGE_SECTION_ALT })).toBeVisible()
   })
 
-  test('a Page carries its SEO meta', async ({ page }) => {
-    const team = fixturePage('/sobre/equipe')
+  test('the Next Events Section renders the events it loads from the backend', async ({
+    page,
+  }) => {
     const sitePage = new SitePage(page)
 
-    await sitePage.goto(team.address)
+    await sitePage.goto(TEST_PAGE_ADDRESS)
 
-    await expect(page).toHaveTitle(`${team.title} | Positiv Party`)
-    await expect(sitePage.meta('description')).toHaveAttribute('content', team.seo.description)
+    // The Section renders only when events load, so an apply link proves the
+    // backend-driven component works — without asserting any event's content.
+    await expect(
+      page.getByRole('link', { name: homepageCopy.nextEvents.apply }).first(),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('link', { name: homepageCopy.nextEvents.learnMore }),
+    ).toBeVisible()
+  })
+
+  test('a Page carries its SEO meta and canonical URL', async ({ page }) => {
+    const sitePage = new SitePage(page)
+
+    await sitePage.goto(TEST_PAGE_ADDRESS)
+
+    await expect(sitePage.meta('description')).toHaveAttribute(
+      'content',
+      SEO_DESCRIPTION,
+    )
     await expect(sitePage.metaProperty('og:description')).toHaveAttribute(
       'content',
-      team.seo.description,
-    )
-    await expect(sitePage.canonical()).toHaveAttribute(
-      'href',
-      'https://www.positivparty.com/sobre/equipe',
+      SEO_DESCRIPTION,
     )
     await expect(sitePage.metaProperty('og:url')).toHaveAttribute(
       'content',
-      'https://www.positivparty.com/sobre/equipe',
+      CANONICAL,
     )
-    await expect(sitePage.meta('robots')).toHaveCount(0)
+    await expect(sitePage.canonical()).toHaveAttribute('href', CANONICAL)
+    await expect(sitePage.meta('robots')).toHaveAttribute('content', 'noindex')
   })
 
   test('an address no Page has returns 404', async ({ page }) => {
