@@ -61,6 +61,10 @@ export default [
   route("/robots.txt", "routes/robots[.txt].ts"),
   route("/sitemap.xml", "routes/sitemap[.xml].ts"),
 
+  // Draft-mode handshake for Sanity's Presentation tool
+  route("/api/preview-mode/enable", "pages/api/preview-mode/enable.ts"),
+  route("/api/preview-mode/disable", "pages/api/preview-mode/disable.ts"),
+
   // PUBLIC
   index("pages/page/page.tsx", { id: "homepage" }),
   route("/auth/confirm", "pages/auth/confirm.tsx"),
