@@ -11,6 +11,7 @@ import {
 import {
   E2E_SANITY_DATASET,
   E2E_SANITY_PROJECT_ID,
+  E2E_SANITY_VIEWER_TOKEN,
   startSanityMockServer,
   stopSanityMockServer,
 } from "./mocks/sanity-mock-server"
@@ -101,6 +102,9 @@ async function startProductionServer() {
         SANITY_API_HOST: sanityUrl,
         SANITY_PROJECT_ID: E2E_SANITY_PROJECT_ID,
         SANITY_DATASET: E2E_SANITY_DATASET,
+        // A sentinel viewer token, so draft-mode.spec can prove it never
+        // reaches the browser; the suite only exercises the visitor path.
+        SANITY_VIEWER_TOKEN: E2E_SANITY_VIEWER_TOKEN,
       },
       detached: false,
       killSignal: "SIGTERM"
