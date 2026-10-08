@@ -3,19 +3,12 @@ import { ENV } from "varlock/env"
 
 type DraftSessionData = { draft: true }
 
-const isProduction = ENV.APP_ENV === "production"
-
 const { getSession, commitSession, destroySession } =
   createCookieSessionStorage<DraftSessionData>({
     cookie: {
       name: "__sanity_preview",
       httpOnly: true,
       path: "/",
-      // The Studio frames the app on a different origin, so the cookie set
-      // during the handshake only rides the framed requests when SameSite is
-      // None, which the browser allows only over HTTPS.
-      sameSite: isProduction ? "none" : "lax",
-      secure: isProduction,
       secrets: [ENV.COOKIE_SECRET || ""],
     },
   })
@@ -24,10 +17,20 @@ function hasSecret(): boolean {
   return (ENV.COOKIE_SECRET || "").length > 0
 }
 
-// The Studio frames the app on another origin, so in production the cookie is a
-// third-party cookie. Chrome blocks those unless they are partitioned (CHIPS);
-// the attribute is ignored where it is not yet supported. react-router's cookie
-// serializer does not emit it, so append it to the Set-Cookie string.
+// SameSite, Secure and Partitioned have to agree, and all three are read from
+// the environment at call time so a server whose APP_ENV changes after this
+// module loads cannot end up with a half-applied set. The Studio frames the app
+// on a different origin, so in production the cookie is a third-party cookie:
+// it only rides the framed requests when SameSite is None (which the browser
+// allows only over HTTPS, hence Secure) and Chrome only stores it when it is
+// also partitioned (CHIPS).
+function cookieSecurity(): { sameSite: "none" | "lax"; secure: boolean } {
+  const isProduction = ENV.APP_ENV === "production"
+  return { sameSite: isProduction ? "none" : "lax", secure: isProduction }
+}
+
+// react-router's cookie serializer does not emit Partitioned, so append it to
+// the Set-Cookie string. The attribute is ignored where it is not supported.
 function withPartitioned(setCookie: string): string {
   return ENV.APP_ENV === "production" ? `${setCookie}; Partitioned` : setCookie
 }
@@ -64,10 +67,10 @@ export async function enableDraftMode(request: Request): Promise<string> {
   }
   const session = await getSession(request.headers.get("Cookie"))
   session.set("draft", true)
-  return withPartitioned(await commitSession(session))
+  return withPartitioned(await commitSession(session, cookieSecurity()))
 }
 
 export async function disableDraftMode(request: Request): Promise<string> {
   const session = await getSession(request.headers.get("Cookie"))
-  return withPartitioned(await destroySession(session))
+  return withPartitioned(await destroySession(session, cookieSecurity()))
 }

@@ -79,11 +79,33 @@ describe("the draft-mode cookie", () => {
     expect(setCookie).not.toMatch(/Partitioned/i)
   })
 
-  it("partitions the cookie in production for the framed Studio", async () => {
+  it("stays lax and unsecured outside production", async () => {
+    const setCookie = await enableDraftMode(new Request("http://localhost/"))
+
+    expect(setCookie).toMatch(/SameSite=Lax/i)
+    expect(setCookie).not.toMatch(/Secure/i)
+    expect(setCookie).not.toMatch(/Partitioned/i)
+  })
+
+  it("is cross-site, secured and partitioned in production for the framed Studio", async () => {
     env.APP_ENV = "production"
 
     const setCookie = await enableDraftMode(new Request("http://localhost/"))
 
+    // A partitioned third-party cookie is only valid alongside SameSite=None
+    // and Secure; the three attributes must agree or the browser drops it.
+    expect(setCookie).toMatch(/SameSite=None/i)
+    expect(setCookie).toMatch(/Secure/i)
+    expect(setCookie).toMatch(/Partitioned/i)
+  })
+
+  it("clears the cookie with the same production attributes", async () => {
+    env.APP_ENV = "production"
+
+    const setCookie = await disableDraftMode(new Request("http://localhost/"))
+
+    expect(setCookie).toMatch(/SameSite=None/i)
+    expect(setCookie).toMatch(/Secure/i)
     expect(setCookie).toMatch(/Partitioned/i)
   })
 })
