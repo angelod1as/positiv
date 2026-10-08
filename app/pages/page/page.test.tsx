@@ -130,11 +130,9 @@ describe("Page loader", () => {
 
     const result = loader(homepageArgs)
 
-    // Flush the draft-mode cookie check; the session stays unresolved, so the
-    // snapshot still loads without waiting for it.
-    await new Promise((resolve) => setTimeout(resolve, 0))
-
-    expect(siteSnapshotCache.get).toHaveBeenCalled()
+    // The session stays unresolved, so the snapshot still loads without waiting
+    // for it; waitFor rides out the draft-mode cookie check.
+    await vi.waitFor(() => expect(siteSnapshotCache.get).toHaveBeenCalled())
     resolveContext({
       currentUser: null,
       currentProfile: null,

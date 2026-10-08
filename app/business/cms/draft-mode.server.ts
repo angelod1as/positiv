@@ -20,7 +20,14 @@ const { getSession, commitSession, destroySession } =
     },
   })
 
+function hasSecret(): boolean {
+  return (ENV.COOKIE_SECRET || "").length > 0
+}
+
 export async function isDraftModeEnabled(request: Request): Promise<boolean> {
+  // Without a secret the cookie would be signed with an empty key and anyone
+  // could forge it, so draft mode stays off.
+  if (!hasSecret()) return false
   try {
     const session = await getSession(request.headers.get("Cookie"))
     return session.get("draft") === true
@@ -32,6 +39,9 @@ export async function isDraftModeEnabled(request: Request): Promise<boolean> {
 }
 
 export async function enableDraftMode(request: Request): Promise<string> {
+  if (!hasSecret()) {
+    throw new Error("COOKIE_SECRET must be set to enable draft mode")
+  }
   const session = await getSession(request.headers.get("Cookie"))
   session.set("draft", true)
   return commitSession(session)

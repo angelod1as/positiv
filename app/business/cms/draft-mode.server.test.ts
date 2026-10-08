@@ -66,3 +66,22 @@ describe("the draft-mode cookie", () => {
     expect(setCookie).not.toMatch(/Expires/i)
   })
 })
+
+describe("without a cookie secret", () => {
+  it("never reports draft mode, even with a cookie present", async () => {
+    const setCookie = await enableDraftMode(new Request("http://localhost/"))
+    env.COOKIE_SECRET = ""
+
+    expect(
+      await isDraftModeEnabled(requestWith(cookieFrom(setCookie))),
+    ).toBe(false)
+  })
+
+  it("refuses to enable draft mode", async () => {
+    env.COOKIE_SECRET = ""
+
+    await expect(
+      enableDraftMode(new Request("http://localhost/")),
+    ).rejects.toThrow()
+  })
+})
