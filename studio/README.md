@@ -188,8 +188,12 @@ fixtures drift from the seed, so regenerate and commit them whenever
 A merge to `main` deploys the Studio from `.github/workflows/production.yml`
 (the `deploy-studio` job), authenticated by the `SANITY_AUTH_TOKEN` repository
 secret. The job sets `SANITY_STUDIO_DATASET=production`, so the deployed Studio
-opens `production`; `scripts/production-workflow.test.ts` fails if it goes
-missing. Nobody needs to deploy by hand.
+opens `production`, and `SANITY_STUDIO_PREVIEW_ORIGIN=https://www.positivparty.com`,
+so the Presentation tool frames the live site instead of `localhost:5173`. Both
+are `SANITY_STUDIO_*` values inlined at build time, so they belong in this CI
+job — the one that builds the hosted Studio — not in Coolify, which never builds
+it. `scripts/production-workflow.test.ts` fails if either goes missing. Nobody
+needs to deploy by hand.
 
 The Studio and the app deploy separately, so the Studio's schema is live
 minutes before or after the app that reads it.
