@@ -16,6 +16,8 @@ function safeRedirect(target: string | null, requestUrl: string): string {
   }
 }
 
+// A GET that mutates, but it only clears the caller's own draft cookie, so a
+// cross-site request can at most drop an editor out of preview.
 export async function loader({ request }: Route.LoaderArgs) {
   const redirectTo = safeRedirect(
     new URL(request.url).searchParams.get("redirect"),

@@ -7,9 +7,16 @@ import {
 export const previewOrigin =
   process.env.SANITY_STUDIO_PREVIEW_ORIGIN || "http://localhost:5173"
 
-// A Page's address is its whole path, so the route only has to fire on every
-// depth the site uses; the Page is found from the pathname, not the segments.
-const pageRoutes = ["/", "/:a", "/:a/:b", "/:a/:b/:c"]
+// A Page's address is its whole path, so the route only has to fire on the URL;
+// the Page is found from the pathname, not the segments. The schema puts no
+// limit on address depth, so cover more levels than any realistic page needs.
+const MAX_PAGE_DEPTH = 6
+const pageRoutes = [
+  "/",
+  ...Array.from({ length: MAX_PAGE_DEPTH }, (_, depth) =>
+    Array.from({ length: depth + 1 }, (_, segment) => `:s${segment}`).join("/"),
+  ).map((pattern) => `/${pattern}`),
+]
 
 export const resolve: PresentationPluginOptions["resolve"] = {
   mainDocuments: defineDocuments([
