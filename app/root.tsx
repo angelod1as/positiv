@@ -29,8 +29,8 @@ import "./app.css"
 import { VisualEditing } from "@sanity/visual-editing/react-router"
 import { getContext } from "./business/auth/auth.server"
 import { isDraftModeEnabled } from "./business/cms/draft-mode.server"
-import { getDraftSiteSnapshot } from "./business/cms/draft-snapshot.server"
 import { loadSiteSettings } from "./business/cms/site-settings.server"
+import { loadSiteSnapshot } from "./business/cms/site-snapshot-source.server"
 import { subscribeProfileToNewsletter } from "./business/newsletter/auto-subscribe.server"
 import { getSubscriptionStatus } from "./business/newsletter/subscription-helpers.server"
 import {
@@ -109,9 +109,9 @@ export function meta({}: Route.MetaArgs) {
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   const draftMode = await isDraftModeEnabled(request)
-  const siteSettings = loadSiteSettings(
-    draftMode ? { get: getDraftSiteSnapshot } : undefined,
-  )
+  const siteSettings = loadSiteSettings({
+    get: () => loadSiteSnapshot(request),
+  })
 
   try {
     const { currentProfile, currentUser, isProdInDev, supabaseHeaders } =

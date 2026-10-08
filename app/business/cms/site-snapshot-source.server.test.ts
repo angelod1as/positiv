@@ -37,4 +37,22 @@ describe("loadSiteSnapshot", () => {
     await expect(loadSiteSnapshot(new Request("http://x/"))).resolves.toBe(draft)
     expect(cacheGet).not.toHaveBeenCalled()
   })
+
+  it("fetches the draft snapshot once per request, shared across loaders", async () => {
+    isDraftModeEnabled.mockResolvedValue(true)
+    const request = new Request("http://x/")
+
+    await Promise.all([loadSiteSnapshot(request), loadSiteSnapshot(request)])
+
+    expect(getDraftSiteSnapshot).toHaveBeenCalledTimes(1)
+  })
+
+  it("fetches again for a different request", async () => {
+    isDraftModeEnabled.mockResolvedValue(true)
+
+    await loadSiteSnapshot(new Request("http://x/a"))
+    await loadSiteSnapshot(new Request("http://x/b"))
+
+    expect(getDraftSiteSnapshot).toHaveBeenCalledTimes(2)
+  })
 })
