@@ -205,6 +205,11 @@ jobs:
       # Inlined into the build. Without it the deployed Studio would open
       # development, the local default.
       SANITY_STUDIO_DATASET: production
+      # Also inlined into the build. presentation.ts falls back to
+      # http://localhost:5173, so without this the hosted Studio frames a laptop
+      # that is not running. Coolify never builds the Studio, so it has to be
+      # set here, not there. Not a secret.
+      SANITY_STUDIO_PREVIEW_ORIGIN: https://www.positivparty.com
 
     steps:
       - uses: actions/checkout@v4

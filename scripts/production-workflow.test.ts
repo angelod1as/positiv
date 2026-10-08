@@ -95,4 +95,15 @@ describe("production workflow", () => {
     // time, so the job that builds the deployed Studio is where it has to be.
     expect(jobBlock("deploy-studio")).toContain("SANITY_STUDIO_DATASET: production")
   })
+
+  it("points the Studio's preview at the production site, not at localhost", () => {
+    // presentation.ts falls back to http://localhost:5173, so the hosted
+    // Studio frames a laptop that is not running unless the origin is set. Like
+    // the dataset it is a SANITY_STUDIO_* value inlined at build time, so it
+    // belongs in the job that builds the deployed Studio, not in Coolify, which
+    // never builds it.
+    expect(jobBlock("deploy-studio")).toContain(
+      "SANITY_STUDIO_PREVIEW_ORIGIN: https://www.positivparty.com",
+    )
+  })
 })
