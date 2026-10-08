@@ -53,6 +53,20 @@ describe("EventCard", () => {
     expect(getByText("R$ 50,00")).toBeInTheDocument()
   })
 
+  it("leads with the Pix price when card payments are enabled", () => {
+    const { getByText } = render(
+      <EventCard
+        event={mockEvent}
+        data-testid="test-card"
+        cardPaymentsEnabled
+      />,
+    )
+
+    expect(getByText("R$ 45,00")).toBeInTheDocument()
+    expect(getByText("no Pix")).toBeInTheDocument()
+    expect(getByText("R$ 50,00")).toBeInTheDocument()
+  })
+
   it("should pass isAdmin prop to EventCardFooter when isAdmin is true", () => {
     const { getByTestId } = render(
       <EventCard event={mockEvent} data-testid="test-card" isAdmin={true} />,

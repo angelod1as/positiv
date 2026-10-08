@@ -11,8 +11,8 @@ import {
 
 import { EventStatusBadge } from "~/components/atoms/badges/badges"
 import { Badge } from "~/components/ui/badge"
+import { EventPrice } from "~/components/molecules/event-price/event-price"
 import { eventCardCopy } from "~/copy/events"
-import { formatCurrency } from "~/lib/helpers/format-currency"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { generateGoogleCalendarLink } from "~/lib/helpers/generate-google-calendar-link"
 import type { Event } from "~types/database/entities.types"
@@ -23,12 +23,14 @@ type EventCardProps = {
   "data-testid": string
   isAdmin?: boolean
   directApply?: boolean
+  cardPaymentsEnabled?: boolean
 }
 export const EventCard: FC<EventCardProps> = ({
   event,
   "data-testid": dataTestId,
   isAdmin,
   directApply,
+  cardPaymentsEnabled,
 }) => {
   const googleLink = generateGoogleCalendarLink(event)
 
@@ -69,7 +71,10 @@ export const EventCard: FC<EventCardProps> = ({
         <div className="flex flex-col gap-4">
           <div>
             {ticket_price && (
-              <DataPair pair={["Valor", formatCurrency(ticket_price)]} />
+              <EventPrice
+                base={ticket_price}
+                cardPaymentsEnabled={cardPaymentsEnabled}
+              />
             )}
             {location && <DataPair pair={["Local", location]} />}
             <div className="flex flex-wrap gap-2 mt-2">
