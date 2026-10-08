@@ -10,6 +10,9 @@ export const previewOrigin =
 // A Page's address is its whole path, so the route only has to fire on the URL;
 // the Page is found from the pathname, not the segments. The schema puts no
 // limit on address depth, so cover more levels than any realistic page needs.
+// A Page nested deeper than this gets no route match and so no Presentation
+// document mapping: it still renders, but loses the "Used on" banner and
+// open-in-Studio. Raise MAX_PAGE_DEPTH if pages ever go deeper.
 const MAX_PAGE_DEPTH = 6
 const pageRoutes = [
   "/",

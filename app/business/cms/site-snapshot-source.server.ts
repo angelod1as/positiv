@@ -6,6 +6,9 @@ import type { SiteSnapshot } from "./site-snapshot.server"
 // The root and Page loaders both read the snapshot in one navigation. The
 // published path already shares a cached value; the draft path has no cache, so
 // memoise it per request to keep a navigation to a single Sanity round-trip.
+// This relies on React Router handing both loaders the same Request instance
+// per navigation (single fetch); if that ever stops holding, the only cost is a
+// second draft fetch, never a wrong render.
 const draftSnapshotByRequest = new WeakMap<Request, Promise<SiteSnapshot>>()
 
 function draftSnapshotFor(request: Request): Promise<SiteSnapshot> {
