@@ -9,6 +9,7 @@ import {
 const env = vi.hoisted<Record<string, unknown>>(() => ({
   APP_ENV: "test",
   COOKIE_SECRET: "test-secret",
+  SANITY_VIEWER_TOKEN: "viewer-token",
 }))
 
 vi.mock("varlock/env", () => ({ ENV: env }))
@@ -16,6 +17,7 @@ vi.mock("varlock/env", () => ({ ENV: env }))
 beforeEach(() => {
   env.APP_ENV = "test"
   env.COOKIE_SECRET = "test-secret"
+  env.SANITY_VIEWER_TOKEN = "viewer-token"
 })
 
 function cookieFrom(setCookie: string): string {
@@ -39,6 +41,15 @@ describe("isDraftModeEnabled", () => {
     expect(
       await isDraftModeEnabled(requestWith(cookieFrom(setCookie))),
     ).toBe(true)
+  })
+
+  it("is off without the viewer token, even with a valid cookie", async () => {
+    const cookie = cookieFrom(
+      await enableDraftMode(new Request("http://localhost/")),
+    )
+    env.SANITY_VIEWER_TOKEN = undefined
+
+    expect(await isDraftModeEnabled(requestWith(cookie))).toBe(false)
   })
 
   it("is off again after the cookie is destroyed", async () => {

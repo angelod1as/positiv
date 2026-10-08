@@ -26,8 +26,9 @@ function hasSecret(): boolean {
 
 export async function isDraftModeEnabled(request: Request): Promise<boolean> {
   // Without a secret the cookie would be signed with an empty key and anyone
-  // could forge it, so draft mode stays off.
-  if (!hasSecret()) return false
+  // could forge it; without the token the draft loaders cannot read drafts.
+  // Draft mode stays off in both cases.
+  if (!hasSecret() || !ENV.SANITY_VIEWER_TOKEN) return false
   try {
     const session = await getSession(request.headers.get("Cookie"))
     return session.get("draft") === true
