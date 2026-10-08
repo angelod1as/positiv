@@ -5,7 +5,9 @@ import { enableDraftMode } from "~/business/cms/draft-mode.server"
 import type { Route } from "./+types/enable"
 
 export async function loader({ request }: Route.LoaderArgs) {
-  if (!ENV.SANITY_VIEWER_TOKEN) {
+  // Both are checked before validatePreviewUrl, which consumes the one-time
+  // secret, so a misconfigured server does not burn the editor's handshake.
+  if (!ENV.SANITY_VIEWER_TOKEN || !ENV.COOKIE_SECRET) {
     return new Response("Draft mode is not configured", { status: 500 })
   }
 

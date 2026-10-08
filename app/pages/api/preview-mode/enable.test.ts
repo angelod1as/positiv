@@ -21,6 +21,7 @@ function requestFor(url = "http://localhost/api/preview-mode/enable?x=1") {
 beforeEach(() => {
   vi.clearAllMocks()
   env.SANITY_VIEWER_TOKEN = "viewer-token"
+  env.COOKIE_SECRET = "cookie-secret"
   createDraftReadClient.mockReturnValue({ withConfig: vi.fn() })
   enableDraftMode.mockResolvedValue("__sanity_preview=signed; Path=/; HttpOnly")
 })
@@ -28,6 +29,15 @@ beforeEach(() => {
 describe("the enable-preview handshake", () => {
   it("refuses with 500 when the viewer token is not configured", async () => {
     env.SANITY_VIEWER_TOKEN = undefined
+
+    const response = await loader({ request: requestFor() } as never)
+
+    expect(response.status).toBe(500)
+    expect(validatePreviewUrl).not.toHaveBeenCalled()
+  })
+
+  it("refuses with 500 when the cookie secret is missing, before touching the secret", async () => {
+    env.COOKIE_SECRET = undefined
 
     const response = await loader({ request: requestFor() } as never)
 
