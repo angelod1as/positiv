@@ -7,6 +7,7 @@ import { getContext, getUserContext } from "~/business/auth/auth.server"
 import { applyToEvent } from "~/business/participant/apply-to-event.server"
 import { cancelApplicationToEvent } from "~/business/participant/cancel-application-to-event.server"
 import { hasEverApplied } from "~/business/participant/has-ever-applied.server"
+import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
 import { EventCard } from "~/components/organisms/event-card/event-card"
 import { EventListSkeleton } from "~/components/organisms/event-list/event-list-skeleton"
@@ -65,6 +66,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     events,
     hasEverApplied: await hasEverApplied(currentProfile.id),
     isAdmin: currentProfile.is_admin ?? false,
+    cardPaymentsEnabled: await isCardPaymentsEnabled(),
   }
 }
 
@@ -134,7 +136,8 @@ export const EventsContent: FC<{
   events: Event[]
   hasEverApplied: boolean
   isAdmin?: boolean
-}> = ({ events, hasEverApplied, isAdmin }) => {
+  cardPaymentsEnabled?: boolean
+}> = ({ events, hasEverApplied, isAdmin, cardPaymentsEnabled }) => {
   const { applied, available } = splitEvents(events)
 
   return (
@@ -155,6 +158,7 @@ export const EventsContent: FC<{
                 data-testid="event-card-applied"
                 key={event.id}
                 event={event}
+                cardPaymentsEnabled={cardPaymentsEnabled}
               />
             ))}
           </div>
@@ -173,6 +177,7 @@ export const EventsContent: FC<{
                 key={event.id}
                 event={event}
                 directApply={isAdmin}
+                cardPaymentsEnabled={cardPaymentsEnabled}
               />
             ))}
           </div>
@@ -193,6 +198,7 @@ const DashboardPage = ({ loaderData }: Route.ComponentProps) => {
             events={events}
             hasEverApplied={loaderData.hasEverApplied}
             isAdmin={loaderData.isAdmin}
+            cardPaymentsEnabled={loaderData.cardPaymentsEnabled}
           />
         )}
       </Await>

@@ -4,6 +4,7 @@ import {
   getRecentProfiles,
 } from "~/business/admin/admin.server"
 import { getRecentFeedbacks } from "~/business/feedback/feedback.server"
+import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
 import { EventCard } from "~/components/organisms/event-card/event-card"
 import { AdminDashboardEventsTable } from "~/components/organisms/tables/admin/events-table"
 import { RecentFeedbacksTable } from "~/components/organisms/tables/admin/recent-feedbacks-table"
@@ -25,20 +26,24 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export async function loader() {
-  const [events, recentProfiles, feedbacksResult] = await Promise.all([
-    getEventsForDashboard(),
-    getRecentProfiles(),
-    getRecentFeedbacks(10),
-  ])
+  const [events, recentProfiles, feedbacksResult, cardPaymentsEnabled] =
+    await Promise.all([
+      getEventsForDashboard(),
+      getRecentProfiles(),
+      getRecentFeedbacks(10),
+      isCardPaymentsEnabled(),
+    ])
   return {
     events,
     recentProfiles,
     recentFeedbacks: feedbacksResult.success ? feedbacksResult.data : [],
+    cardPaymentsEnabled,
   }
 }
 
 const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
-  const { events, recentProfiles, recentFeedbacks } = loaderData
+  const { events, recentProfiles, recentFeedbacks, cardPaymentsEnabled } =
+    loaderData
 
   const activeEvents = events
     .filter(
@@ -62,6 +67,7 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
                 event={event}
                 isAdmin={true}
                 data-testid="admin-event-card"
+                cardPaymentsEnabled={cardPaymentsEnabled}
               />
             ))}
           </div>

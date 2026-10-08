@@ -74,6 +74,10 @@ vi.mock("~/business/admin/admin.server", () => ({
   ]),
 }))
 
+vi.mock("~/business/settings/app-settings.server", () => ({
+  isCardPaymentsEnabled: vi.fn().mockResolvedValue(false),
+}))
+
 vi.mock("~/business/feedback/feedback.server", () => ({
   getRecentFeedbacks: vi.fn().mockResolvedValue({
     success: true,

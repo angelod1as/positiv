@@ -17,6 +17,10 @@ vi.mock("~/business/participant/has-ever-applied.server", () => ({
   hasEverApplied: vi.fn(),
 }))
 
+vi.mock("~/business/settings/app-settings.server", () => ({
+  isCardPaymentsEnabled: vi.fn(),
+}))
+
 vi.mock("~/lib/analytics/umami.server", () => ({
   trackServerEvent: vi.fn(),
 }))
@@ -29,6 +33,7 @@ import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { getContext, getUserContext } from "~/business/auth/auth.server"
 import { applyToEvent } from "~/business/participant/apply-to-event.server"
 import { hasEverApplied } from "~/business/participant/has-ever-applied.server"
+import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
 import { getNextEvents } from "../page/fetch/get-next-events"
 import { action, loader } from "./dashboard-page"
 
@@ -36,6 +41,7 @@ const mockGetContext = vi.mocked(getContext)
 const mockGetUserContext = vi.mocked(getUserContext)
 const mockApplyToEvent = vi.mocked(applyToEvent)
 const mockHasEverApplied = vi.mocked(hasEverApplied)
+const mockIsCardPaymentsEnabled = vi.mocked(isCardPaymentsEnabled)
 const mockTrackServerEvent = vi.mocked(trackServerEvent)
 const mockGetNextEvents = vi.mocked(getNextEvents)
 
@@ -171,6 +177,7 @@ describe("dashboard loader", () => {
       data: [],
     } as unknown as Awaited<ReturnType<typeof getNextEvents>>)
     mockHasEverApplied.mockResolvedValue(true)
+    mockIsCardPaymentsEnabled.mockResolvedValue(false)
   })
 
   const load = (isAdmin: boolean) => {
@@ -195,5 +202,12 @@ describe("dashboard loader", () => {
 
   it("tells the page that anyone else may not", async () => {
     await expect(load(false)).resolves.toMatchObject({ isAdmin: false })
+  })
+
+  it("passes the card-payments flag through to the page", async () => {
+    mockIsCardPaymentsEnabled.mockResolvedValue(true)
+    await expect(load(false)).resolves.toMatchObject({
+      cardPaymentsEnabled: true,
+    })
   })
 })
