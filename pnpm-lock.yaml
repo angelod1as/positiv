@@ -75,17 +75,17 @@ importers:
         specifier: ^7.6.0
         version: 7.6.3(react-router@7.6.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(supports-color@8.1.1)(typescript@5.8.3)
       '@sanity/client':
-        specifier: ^8.7.0
-        version: 8.7.0(vitest@3.2.4)
+        specifier: ^8.9.0
+        version: 8.9.0(vitest@3.2.4)
       '@sanity/image-url':
         specifier: ^2.1.1
         version: 2.1.1
       '@sanity/preview-url-secret':
         specifier: ^4.1.5
-        version: 4.1.5(@sanity/client@8.7.0(vitest@3.2.4))
+        version: 4.1.5(@sanity/client@8.9.0(vitest@3.2.4))
       '@sanity/visual-editing':
         specifier: ^6.1.2
-        version: 6.1.2(@sanity/client@8.7.0(vitest@3.2.4))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router@7.6.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)(styled-components@6.5.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3)(vitest@3.2.4)
+        version: 6.1.2(@sanity/client@8.9.0(vitest@3.2.4))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router@7.6.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)(styled-components@6.5.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3)(vitest@3.2.4)
       '@supabase/ssr':
         specifier: ^0.6.1
         version: 0.6.1(@supabase/supabase-js@2.50.2)
@@ -4042,10 +4042,6 @@ packages:
     resolution: {integrity: sha512-qPVfGFo0bjUmRRtrx8mk1a2UnPPM93CFQr97bNacm2J3nShdhJlR6goNA/pQ7eRQO9uEG8moyUNrINYVGXgpPA==}
     engines: {node: '>=20'}
 
-  '@sanity/client@8.7.0':
-    resolution: {integrity: sha512-bzec0hVvvr+K6o9+0qc32eXGeV26wAx2QeB0M4lwTUwXQYIWWkuxEP+HABoi2nj11fG2SJskvbgaiV/XBBUNNg==}
-    engines: {node: '>=22.12.0'}
-
   '@sanity/client@8.9.0':
     resolution: {integrity: sha512-V6kFNH6xvz29ot66zTVVyzZ34dIGzVJHzQJXEV2ljGVZEelHRoMayhErsTDac/ZR7ej8Spz39qEMYCaJWg176g==}
     engines: {node: '>=22.12.0'}
@@ -7275,15 +7271,6 @@ packages:
     resolution: {integrity: sha512-IfkbWqOGO2kd2Ccgiz/NIzk3bcwjtVqBm3RNa3j/veHg2q7c1DgS3EXrCrvIWH0jbNTbhkdblnxBP7Dm8CiH+A==}
     engines: {node: '>=14.0.0'}
 
-  get-it@9.5.8:
-    resolution: {integrity: sha512-0Dh/tZwR5pEb8v7C+05oe+mKAqJUSvwzzdt/mfix/kue1c9PA828gZZu5RXx/TNXEYWHzDOdlOC4jv4gMCccYQ==}
-    engines: {node: '>=22.12.0'}
-    peerDependencies:
-      vitest: '>=2.0.0'
-    peerDependenciesMeta:
-      vitest:
-        optional: true
-
   get-it@9.6.1:
     resolution: {integrity: sha512-uxMgcolbhJTz8f/cOHLcgde3A0gwqv5p6m8OJ2WJqn7NBi79krofZdp95FD0+7N9UUpmAe76vIEX3kDFijRahg==}
     engines: {node: '>=22.12.0'}
@@ -8246,8 +8233,8 @@ packages:
   leac@0.6.0:
     resolution: {integrity: sha512-y+SqErxb8h7nE/fiEX07jsbuhrpO9lL8eca7/Y1nuWV2moNlXhyd59iDGcRf6moVyDMbmTNzL40SUyrFU/yDpg==}
 
-  legacy-javascript@0.0.1:
-    resolution: {integrity: sha512-lPyntS4/aS7jpuvOlitZDFifBCb4W8L/3QU0PLbUTUj+zYah8rfVjYic88yG7ZKTxhS5h9iz7duT8oUXKszLhg==}
+  legacy-javascript@0.0.2:
+    resolution: {integrity: sha512-6cMw8OPPX9VOgnWwL6Y7vbNCpd45/RmGMrcSJGaOF4FZfTdEbtlSDUs2ZvHleTUsqSDuKthzHvD6C//jW8ETBA==}
 
   leven@4.1.0:
     resolution: {integrity: sha512-KZ9W9nWDT7rF7Dazg8xyLHGLrmpgq2nVNFUckhqdW3szVP6YhCpp/RAnpmVExA9JvrMynjwSLVrEj3AepHR6ew==}
@@ -10892,10 +10879,6 @@ packages:
 
   undici@7.29.0:
     resolution: {integrity: sha512-IDxfleLmmbSskfWSUATiN1nfn2rDuvnMOqb5CWR92iIfojA0Ud+ulOAAEQ57LPr9rWmsreUyf5lwyao+7GNNVw==}
-    engines: {node: '>=20.18.1'}
-
-  undici@7.29.1:
-    resolution: {integrity: sha512-RYONW2MeafgYlkVOKYKkA/Ag7BmXqgIWCa8t1m0JcxrQg9pI9lEqRhAOruOBCbAohOa/gkCF+iPi9hrgvTzu6Q==}
     engines: {node: '>=20.18.1'}
 
   undici@7.30.0:
@@ -14899,7 +14882,7 @@ snapshots:
 
   '@paulirish/trace_engine@0.0.61':
     dependencies:
-      legacy-javascript: 0.0.1
+      legacy-javascript: 0.0.2
       third-party-web: 0.30.0
 
   '@pkgjs/parseargs@0.11.0':
@@ -16033,15 +16016,6 @@ snapshots:
       nanoid: 3.3.19
       rxjs: 7.8.2
 
-  '@sanity/client@8.7.0(vitest@3.2.4)':
-    dependencies:
-      eventsource: 5.1.2
-      get-it: 9.5.8(vitest@3.2.4)
-      obug: 3.0.0
-      rxjs: 7.8.2
-    transitivePeerDependencies:
-      - vitest
-
   '@sanity/client@8.9.0(vitest@3.2.4)':
     dependencies:
       eventsource: 5.1.2
@@ -16254,11 +16228,6 @@ snapshots:
       xstate: 5.33.2
     transitivePeerDependencies:
       - '@sanity/types'
-
-  '@sanity/preview-url-secret@4.1.5(@sanity/client@8.7.0(vitest@3.2.4))':
-    dependencies:
-      '@sanity/client': 8.7.0(vitest@3.2.4)
-      '@sanity/uuid': 3.0.3
 
   '@sanity/preview-url-secret@4.1.5(@sanity/client@8.9.0(vitest@3.2.4))':
     dependencies:
@@ -16528,10 +16497,10 @@ snapshots:
       - styled-components
       - vitest
 
-  '@sanity/visual-editing-csm@3.0.18(@sanity/client@8.7.0(vitest@3.2.4))(@sanity/types@6.17.0(@types/react@19.2.18)(vitest@3.2.4))(typescript@5.8.3)':
+  '@sanity/visual-editing-csm@3.0.18(@sanity/client@8.9.0(vitest@3.2.4))(@sanity/types@6.17.0(@types/react@19.2.18)(vitest@3.2.4))(typescript@5.8.3)':
     dependencies:
-      '@sanity/client': 8.7.0(vitest@3.2.4)
-      '@sanity/visual-editing-types': 2.1.1(@sanity/client@8.7.0(vitest@3.2.4))(@sanity/types@6.17.0(@types/react@19.2.18)(vitest@3.2.4))
+      '@sanity/client': 8.9.0(vitest@3.2.4)
+      '@sanity/visual-editing-types': 2.1.1(@sanity/client@8.9.0(vitest@3.2.4))(@sanity/types@6.17.0(@types/react@19.2.18)(vitest@3.2.4))
       valibot: 1.5.0(typescript@5.8.3)
     transitivePeerDependencies:
       - '@sanity/types'
@@ -16543,23 +16512,23 @@ snapshots:
     optionalDependencies:
       '@sanity/types': 6.17.0(@types/react@19.2.18)(vitest@3.2.4)
 
-  '@sanity/visual-editing-types@2.1.1(@sanity/client@8.7.0(vitest@3.2.4))(@sanity/types@6.17.0(@types/react@19.2.18)(vitest@3.2.4))':
+  '@sanity/visual-editing-types@2.1.1(@sanity/client@8.9.0(vitest@3.2.4))(@sanity/types@6.17.0(@types/react@19.2.18)(vitest@3.2.4))':
     dependencies:
-      '@sanity/client': 8.7.0(vitest@3.2.4)
+      '@sanity/client': 8.9.0(vitest@3.2.4)
     optionalDependencies:
       '@sanity/types': 6.17.0(@types/react@19.2.18)(vitest@3.2.4)
 
-  '@sanity/visual-editing@6.1.2(@sanity/client@8.7.0(vitest@3.2.4))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router@7.6.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)(styled-components@6.5.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3)(vitest@3.2.4)':
+  '@sanity/visual-editing@6.1.2(@sanity/client@8.9.0(vitest@3.2.4))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router@7.6.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)(styled-components@6.5.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3)(vitest@3.2.4)':
     dependencies:
       '@sanity/comlink': 4.0.3
       '@sanity/icons': 5.2.3(react@19.2.8)
       '@sanity/mutate': 0.18.2(vitest@3.2.4)(xstate@5.33.2)
       '@sanity/presentation-comlink': 2.2.3(@sanity/types@6.17.0(@types/react@19.2.18)(vitest@3.2.4))
-      '@sanity/preview-url-secret': 4.1.5(@sanity/client@8.7.0(vitest@3.2.4))
+      '@sanity/preview-url-secret': 4.1.5(@sanity/client@8.9.0(vitest@3.2.4))
       '@sanity/types': 6.17.0(@types/react@19.2.18)(vitest@3.2.4)
       '@sanity/ui': 4.2.7(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(styled-components@6.5.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8))
-      '@sanity/visual-editing-csm': 3.0.18(@sanity/client@8.7.0(vitest@3.2.4))(@sanity/types@6.17.0(@types/react@19.2.18)(vitest@3.2.4))(typescript@5.8.3)
-      '@sanity/visual-editing-types': 2.1.1(@sanity/client@8.7.0(vitest@3.2.4))(@sanity/types@6.17.0(@types/react@19.2.18)(vitest@3.2.4))
+      '@sanity/visual-editing-csm': 3.0.18(@sanity/client@8.9.0(vitest@3.2.4))(@sanity/types@6.17.0(@types/react@19.2.18)(vitest@3.2.4))(typescript@5.8.3)
+      '@sanity/visual-editing-types': 2.1.1(@sanity/client@8.9.0(vitest@3.2.4))(@sanity/types@6.17.0(@types/react@19.2.18)(vitest@3.2.4))
       '@vercel/stega': 1.1.0
       dequal: 2.0.3
       lodash-es: 4.18.1
@@ -16571,7 +16540,7 @@ snapshots:
       styled-components: 6.5.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       xstate: 5.33.2
     optionalDependencies:
-      '@sanity/client': 8.7.0(vitest@3.2.4)
+      '@sanity/client': 8.9.0(vitest@3.2.4)
       react-router: 7.6.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
     transitivePeerDependencies:
       - '@types/react'
@@ -20230,12 +20199,6 @@ snapshots:
       through2: 4.0.2
       tunnel-agent: 0.6.0
 
-  get-it@9.5.8(vitest@3.2.4):
-    dependencies:
-      undici: 7.29.1
-    optionalDependencies:
-      vitest: 3.2.4(@types/debug@4.1.12)(@types/node@24.13.3)(@vitest/ui@3.2.4)(jsdom@26.1.0(supports-color@8.1.1))(lightningcss@1.33.0)(supports-color@8.1.1)
-
   get-it@9.6.1(vitest@3.2.4):
     dependencies:
       undici: 7.30.0
@@ -21237,7 +21200,7 @@ snapshots:
 
   leac@0.6.0: {}
 
-  legacy-javascript@0.0.1: {}
+  legacy-javascript@0.0.2: {}
 
   leven@4.1.0: {}
 
@@ -24377,8 +24340,6 @@ snapshots:
   undici-types@7.18.2: {}
 
   undici@7.29.0: {}
-
-  undici@7.29.1: {}
 
   undici@7.30.0: {}
 
