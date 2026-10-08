@@ -14,7 +14,9 @@ vi.mock("~/business/cms/draft-mode.server", () => ({ enableDraftMode }))
 
 import { loader } from "./enable"
 
-function requestFor(url = "http://localhost/api/preview-mode/enable?x=1") {
+function requestFor(
+  url = "http://localhost/api/preview-mode/enable?sanity-preview-secret=abc",
+) {
   return new Request(url)
 }
 
@@ -42,6 +44,15 @@ describe("the enable-preview handshake", () => {
     const response = await loader({ request: requestFor() } as never)
 
     expect(response.status).toBe(500)
+    expect(validatePreviewUrl).not.toHaveBeenCalled()
+  })
+
+  it("rejects a request without a preview secret before calling Sanity", async () => {
+    const response = await loader({
+      request: new Request("http://localhost/api/preview-mode/enable"),
+    } as never)
+
+    expect(response.status).toBe(401)
     expect(validatePreviewUrl).not.toHaveBeenCalled()
   })
 

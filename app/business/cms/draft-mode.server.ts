@@ -24,6 +24,14 @@ function hasSecret(): boolean {
   return (ENV.COOKIE_SECRET || "").length > 0
 }
 
+// The Studio frames the app on another origin, so in production the cookie is a
+// third-party cookie. Chrome blocks those unless they are partitioned (CHIPS);
+// the attribute is ignored where it is not yet supported. react-router's cookie
+// serializer does not emit it, so append it to the Set-Cookie string.
+function withPartitioned(setCookie: string): string {
+  return ENV.APP_ENV === "production" ? `${setCookie}; Partitioned` : setCookie
+}
+
 export async function isDraftModeEnabled(request: Request): Promise<boolean> {
   // Without a secret the cookie would be signed with an empty key and anyone
   // could forge it; without the token the draft loaders cannot read drafts.
@@ -56,10 +64,10 @@ export async function enableDraftMode(request: Request): Promise<string> {
   }
   const session = await getSession(request.headers.get("Cookie"))
   session.set("draft", true)
-  return commitSession(session)
+  return withPartitioned(await commitSession(session))
 }
 
 export async function disableDraftMode(request: Request): Promise<string> {
   const session = await getSession(request.headers.get("Cookie"))
-  return destroySession(session)
+  return withPartitioned(await destroySession(session))
 }

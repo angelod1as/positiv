@@ -76,6 +76,15 @@ describe("the draft-mode cookie", () => {
     expect(setCookie).toMatch(/HttpOnly/i)
     expect(setCookie).not.toMatch(/Max-Age/i)
     expect(setCookie).not.toMatch(/Expires/i)
+    expect(setCookie).not.toMatch(/Partitioned/i)
+  })
+
+  it("partitions the cookie in production for the framed Studio", async () => {
+    env.APP_ENV = "production"
+
+    const setCookie = await enableDraftMode(new Request("http://localhost/"))
+
+    expect(setCookie).toMatch(/Partitioned/i)
   })
 })
 
