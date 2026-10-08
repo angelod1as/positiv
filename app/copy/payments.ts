@@ -6,6 +6,11 @@ import { formatInTimeZone } from "date-fns-tz"
 import { formatCurrency } from "~/lib/helpers/format-currency"
 
 export const paymentsCopy = {
+  dualPrice: {
+    label: "Valor",
+    pix: "no Pix",
+    cardSuffix: `no cartão · economize ${PIX_DISCOUNT_PERCENT}% no Pix`,
+  },
   options: {
     label: (option: PaymentOption) => {
       if (option.method === "pix") {
