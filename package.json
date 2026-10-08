@@ -102,6 +102,7 @@
     "slugify": "^1.6.6",
     "sonner": "^2.0.3",
     "string-ts": "^2.2.1",
+    "styled-components": "^6.1.18",
     "tailwind-merge": "^3.2.0",
     "varlock": "^1.16.1",
     "winston": "^3.19.0",

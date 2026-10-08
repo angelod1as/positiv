@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest"
 import { renderToStaticMarkup } from "react-dom/server"
+import { renderWithRouter, screen } from "~/test/test-utils"
+import type { Route } from "./+types/root"
 
 vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router")
@@ -24,6 +26,20 @@ vi.mock("~/components/ui/tooltip", () => ({
   TooltipProvider: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>
   ),
+}))
+
+vi.mock("~/components/organisms/header/header", () => ({ Header: () => null }))
+vi.mock("~/components/organisms/footer/footer", () => ({ Footer: () => null }))
+vi.mock(
+  "~/components/organisms/profile-update-guard/profile-update-guard",
+  () => ({ ProfileUpdateGuard: () => null }),
+)
+vi.mock("~/components/organisms/newsletter-subscription-modal", () => ({
+  NewsletterSubscriptionModal: () => null,
+}))
+
+vi.mock("@sanity/visual-editing/react-router", () => ({
+  VisualEditing: () => <div data-testid="visual-editing" />,
 }))
 
 const { ENV } = vi.hoisted(() => ({ ENV: {} as Record<string, unknown> }))
@@ -76,5 +92,29 @@ describe("Layout", () => {
       const umamiScript = document.querySelector("script[data-website-id]")
       expect(umamiScript).toBeNull()
     })
+  })
+})
+
+describe("App visual editing", () => {
+  async function renderApp(draftMode: boolean) {
+    vi.resetModules()
+    const { default: App } = await import("./root")
+    renderWithRouter(
+      <App
+        {...({ loaderData: { draftMode, siteSettings: null } } as Route.ComponentProps)}
+      />,
+    )
+  }
+
+  it("mounts the visual editing runtime in draft mode", { timeout: 15000 }, async () => {
+    await renderApp(true)
+
+    expect(await screen.findByTestId("visual-editing")).toBeInTheDocument()
+  })
+
+  it("never mounts the visual editing runtime for a visitor", { timeout: 15000 }, async () => {
+    await renderApp(false)
+
+    expect(screen.queryByTestId("visual-editing")).not.toBeInTheDocument()
   })
 })

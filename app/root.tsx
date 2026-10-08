@@ -1,5 +1,5 @@
 import { inputFromForm } from "composable-functions"
-import { useEffect, type ReactNode } from "react"
+import { lazy, Suspense, useEffect, type ReactNode } from "react"
 import {
   data,
   isRouteErrorResponse,
@@ -26,7 +26,6 @@ import { newsletterSubscribeCopy } from "~/copy/newsletter"
 import { POSITIV_EMAIL } from "~/lib/constants/constants"
 import type { Route } from "./+types/root"
 import "./app.css"
-import { VisualEditing } from "@sanity/visual-editing/react-router"
 import { getContext } from "./business/auth/auth.server"
 import { isDraftModeEnabled } from "./business/cms/draft-mode.server"
 import { loadSiteSettings } from "./business/cms/site-settings.server"
@@ -61,6 +60,15 @@ import "@fontsource/nunito/latin-700-italic.css"
 import "@fontsource/nunito/latin-ext-700-italic.css"
 import "@fontsource/nunito/latin-700.css"
 import "@fontsource/nunito/latin-ext-700.css"
+
+// Only editors in draft mode load the visual-editing runtime (and its large
+// transitive deps). A static import would ship it to every visitor, so it is
+// code-split behind a lazy import and mounted under `draftMode`.
+const VisualEditing = lazy(() =>
+  import("@sanity/visual-editing/react-router").then((module) => ({
+    default: module.VisualEditing,
+  })),
+)
 
 export const links: Route.LinksFunction = () => []
 
@@ -353,7 +361,11 @@ export default function App({ loaderData }: Route.ComponentProps) {
         currentProfile={currentProfile}
         siteSettings={siteSettings}
       />
-      {draftMode && <VisualEditing />}
+      {draftMode && (
+        <Suspense fallback={null}>
+          <VisualEditing />
+        </Suspense>
+      )}
     </>
   )
 }
