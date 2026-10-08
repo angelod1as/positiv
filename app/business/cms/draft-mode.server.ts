@@ -38,6 +38,17 @@ export async function isDraftModeEnabled(request: Request): Promise<boolean> {
   }
 }
 
+export async function applyDraftCacheControl(
+  request: Request,
+  headers: Headers,
+): Promise<void> {
+  // Draft content shares the published URL, so a shared cache in front of the
+  // app must not store a draft render and hand it to visitors.
+  if (await isDraftModeEnabled(request)) {
+    headers.set("Cache-Control", "private, no-store")
+  }
+}
+
 export async function enableDraftMode(request: Request): Promise<string> {
   if (!hasSecret()) {
     throw new Error("COOKIE_SECRET must be set to enable draft mode")

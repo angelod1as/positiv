@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
+  applyDraftCacheControl,
   disableDraftMode,
   enableDraftMode,
   isDraftModeEnabled,
@@ -64,6 +65,27 @@ describe("the draft-mode cookie", () => {
     expect(setCookie).toMatch(/HttpOnly/i)
     expect(setCookie).not.toMatch(/Max-Age/i)
     expect(setCookie).not.toMatch(/Expires/i)
+  })
+})
+
+describe("applyDraftCacheControl", () => {
+  it("marks a draft response uncacheable", async () => {
+    const cookie = cookieFrom(
+      await enableDraftMode(new Request("http://localhost/")),
+    )
+    const headers = new Headers()
+
+    await applyDraftCacheControl(requestWith(cookie), headers)
+
+    expect(headers.get("Cache-Control")).toBe("private, no-store")
+  })
+
+  it("leaves a visitor response cacheable", async () => {
+    const headers = new Headers()
+
+    await applyDraftCacheControl(new Request("http://localhost/"), headers)
+
+    expect(headers.get("Cache-Control")).toBeNull()
   })
 })
 
