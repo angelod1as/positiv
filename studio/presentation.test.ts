@@ -4,6 +4,17 @@ import { resolve } from "./presentation"
 
 type Location = { title: string; href: string }
 
+const mainDocuments = (
+  resolve as unknown as {
+    mainDocuments: {
+      resolve: (ctx: { path: string }) => {
+        filter: string
+        params: Record<string, string>
+      }
+    }[]
+  }
+).mainDocuments
+
 const locations = (
   resolve as {
     locations: {
@@ -16,6 +27,21 @@ const locations = (
     }
   }
 ).locations
+
+describe("Presentation main documents", () => {
+  it("maps a previewed path back to the Page at that address", () => {
+    const result = mainDocuments[0].resolve({ path: "/sobre/equipe" })
+
+    expect(result.filter).toContain('_type == "page"')
+    expect(result.params).toEqual({ address: "/sobre/equipe" })
+  })
+
+  it("maps the homepage path to the Page at /", () => {
+    expect(mainDocuments[0].resolve({ path: "/" }).params).toEqual({
+      address: "/",
+    })
+  })
+})
 
 describe("Presentation locations", () => {
   it("places a Page at its own address", () => {
