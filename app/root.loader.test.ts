@@ -39,6 +39,12 @@ vi.mock("composable-functions", () => ({
   inputFromForm: vi.fn(),
 }))
 
+const isDraftModeEnabled = vi.hoisted(() => vi.fn())
+const getDraftSiteSnapshot = vi.hoisted(() => vi.fn())
+
+vi.mock("./business/cms/draft-mode.server", () => ({ isDraftModeEnabled }))
+vi.mock("./business/cms/draft-snapshot.server", () => ({ getDraftSiteSnapshot }))
+
 describe("root loader", () => {
   let mockGetContext: ReturnType<typeof vi.fn>
   let mockGetToast: ReturnType<typeof vi.fn>
@@ -59,6 +65,8 @@ describe("root loader", () => {
       pages: new Map(),
       siteSettings: null,
     })
+    isDraftModeEnabled.mockResolvedValue(false)
+    getDraftSiteSnapshot.mockResolvedValue({ pages: new Map(), siteSettings: null })
   })
 
   afterEach(() => {
@@ -142,6 +150,53 @@ describe("root loader", () => {
     expect(setCookies).toContain(
       "sb-access-token=new-token; Path=/; HttpOnly",
     )
+  })
+
+  describe("draft mode", () => {
+    it("flags draft mode and bypasses the published cache when previewing", async () => {
+      isDraftModeEnabled.mockResolvedValue(true)
+      getDraftSiteSnapshot.mockResolvedValue({
+        pages: new Map(),
+        siteSettings: { navigation: [] },
+      })
+      mockGetContext.mockResolvedValue({
+        currentProfile: null,
+        currentUser: null,
+        isProdInDev: false,
+        supabaseHeaders: new Headers(),
+        supabase: {},
+        host: "localhost",
+      })
+      mockGetToast.mockResolvedValue({ toast: null, headers: new Headers() })
+
+      const request = new Request("http://localhost:5173/")
+      const result = (await loader({ request, params: {} } as never)) as {
+        data: { draftMode: boolean }
+      }
+
+      expect(result.data.draftMode).toBe(true)
+      expect(getDraftSiteSnapshot).toHaveBeenCalled()
+    })
+
+    it("leaves draft mode off for an ordinary visitor", async () => {
+      mockGetContext.mockResolvedValue({
+        currentProfile: null,
+        currentUser: null,
+        isProdInDev: false,
+        supabaseHeaders: new Headers(),
+        supabase: {},
+        host: "localhost",
+      })
+      mockGetToast.mockResolvedValue({ toast: null, headers: new Headers() })
+
+      const request = new Request("http://localhost:5173/")
+      const result = (await loader({ request, params: {} } as never)) as {
+        data: { draftMode: boolean }
+      }
+
+      expect(result.data.draftMode).toBe(false)
+      expect(getDraftSiteSnapshot).not.toHaveBeenCalled()
+    })
   })
 
   describe("needsProfileUpdate", () => {

@@ -12,6 +12,9 @@ import { siteSnapshotQuery } from "../../app/business/cms/site-snapshot-query"
 
 export const E2E_SANITY_PROJECT_ID = "e2emock"
 export const E2E_SANITY_DATASET = "e2e"
+// A stand-in viewer token the server runs with, so a test can assert it never
+// reaches the browser. It is not a real credential.
+export const E2E_SANITY_VIEWER_TOKEN = "e2e-viewer-token-sentinel"
 
 // Read rather than imported: Playwright loads this file as native ESM, where a
 // JSON import needs an import attribute the project's TypeScript target rejects.

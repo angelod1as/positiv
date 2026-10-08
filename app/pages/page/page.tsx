@@ -1,7 +1,7 @@
 import { getContext } from "~/business/auth/auth.server"
 import { isReservedAddress } from "~/business/cms/page.schema"
 import { findPage } from "~/business/cms/pages-snapshot.server"
-import { siteSnapshotCache } from "~/business/cms/site-snapshot-cache.server"
+import { loadSiteSnapshot } from "~/business/cms/site-snapshot-source.server"
 import { FloatingWhatsAppButton } from "~/components/atoms/floating-whatsapp-button/floating-whatsapp-button"
 import { PageHeader } from "~/components/pages/page/header/page-header"
 import { PageSections } from "~/components/pages/page/sections/page-sections"
@@ -29,9 +29,9 @@ async function loadEvents(profileId: string | undefined, count: number) {
   return result.data
 }
 
-async function loadSnapshot() {
+async function loadSnapshot(request: Request) {
   try {
-    return (await siteSnapshotCache.get()).pages
+    return (await loadSiteSnapshot(request)).pages
   } catch (error) {
     logger.error("Could not load the Pages", {
       error: error instanceof Error ? error.message : String(error),
@@ -48,7 +48,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
   const [{ currentUser, currentProfile }, snapshot] = await Promise.all([
     getContext(request, params),
-    loadSnapshot(),
+    loadSnapshot(request),
   ])
 
   const page = findPage(snapshot, address)

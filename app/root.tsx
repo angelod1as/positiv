@@ -1,5 +1,5 @@
 import { inputFromForm } from "composable-functions"
-import { useEffect, type ReactNode } from "react"
+import { lazy, Suspense, useEffect, type ReactNode } from "react"
 import {
   data,
   isRouteErrorResponse,
@@ -27,7 +27,9 @@ import { POSITIV_EMAIL } from "~/lib/constants/constants"
 import type { Route } from "./+types/root"
 import "./app.css"
 import { getContext } from "./business/auth/auth.server"
+import { isDraftModeEnabled } from "./business/cms/draft-mode.server"
 import { loadSiteSettings } from "./business/cms/site-settings.server"
+import { loadSiteSnapshot } from "./business/cms/site-snapshot-source.server"
 import { subscribeProfileToNewsletter } from "./business/newsletter/auto-subscribe.server"
 import { getSubscriptionStatus } from "./business/newsletter/subscription-helpers.server"
 import {
@@ -58,6 +60,15 @@ import "@fontsource/nunito/latin-700-italic.css"
 import "@fontsource/nunito/latin-ext-700-italic.css"
 import "@fontsource/nunito/latin-700.css"
 import "@fontsource/nunito/latin-ext-700.css"
+
+// Only editors in draft mode load the visual-editing runtime (and its large
+// transitive deps). A static import would ship it to every visitor, so it is
+// code-split behind a lazy import and mounted under `draftMode`.
+const VisualEditing = lazy(() =>
+  import("@sanity/visual-editing/react-router").then((module) => ({
+    default: module.VisualEditing,
+  })),
+)
 
 export const links: Route.LinksFunction = () => []
 
@@ -105,7 +116,10 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export async function loader({ params, request }: Route.LoaderArgs) {
-  const siteSettings = loadSiteSettings()
+  const draftMode = await isDraftModeEnabled(request)
+  const siteSettings = loadSiteSettings({
+    get: () => loadSiteSnapshot(request),
+  })
 
   try {
     const { currentProfile, currentUser, isProdInDev, supabaseHeaders } =
@@ -169,6 +183,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         isThereAnyNews: shouldShowNews,
         needsProfileUpdate,
         shouldShowNewsletterModal,
+        draftMode,
         ...(await siteSettings),
       },
       { headers },
@@ -183,6 +198,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       isThereAnyNews: null,
       needsProfileUpdate: false,
       shouldShowNewsletterModal: false,
+      draftMode,
       ...(await siteSettings),
     }
   }
@@ -292,6 +308,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
     shouldShowNewsletterModal = false,
     siteSettings,
     editorialSystemUnavailable = false,
+    draftMode = false,
   } = loaderData
 
   const location = useLocation()
@@ -344,6 +361,11 @@ export default function App({ loaderData }: Route.ComponentProps) {
         currentProfile={currentProfile}
         siteSettings={siteSettings}
       />
+      {draftMode && (
+        <Suspense fallback={null}>
+          <VisualEditing />
+        </Suspense>
+      )}
     </>
   )
 }

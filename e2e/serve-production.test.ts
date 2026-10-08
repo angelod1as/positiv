@@ -6,6 +6,7 @@ const { spawn, asaasMock, sanityMock } = vi.hoisted(() => ({
   sanityMock: {
     E2E_SANITY_PROJECT_ID: 'e2e-project',
     E2E_SANITY_DATASET: 'e2e-dataset',
+    E2E_SANITY_VIEWER_TOKEN: 'e2e-viewer-token',
     startSanityMockServer: vi.fn(async (port: number) => `http://127.0.0.1:${port}`),
     stopSanityMockServer: vi.fn(async () => {}),
   },
@@ -181,6 +182,7 @@ describe('the Sanity the server under test talks to', () => {
       SANITY_API_HOST: 'http://127.0.0.1:5303',
       SANITY_PROJECT_ID: 'e2e-project',
       SANITY_DATASET: 'e2e-dataset',
+      SANITY_VIEWER_TOKEN: 'e2e-viewer-token',
     })
   })
 

@@ -25,7 +25,9 @@ type EnvSchemaItem = { isSensitive?: boolean; isDynamic?: boolean }
 // payments can be switched on, and inlining them would freeze that answer
 // into the build. The Sanity items pick what the homepage reads: inlined, a
 // build run with a laptop's .env would ship the development dataset to
-// production.
+// production. SANITY_VIEWER_TOKEN is the sharpest case: it reads drafts, so
+// inlining it would ship a read-everything credential into the browser bundle
+// — it must stay runtime (@sensitive, never @static).
 const MUST_RESOLVE_AT_RUNTIME = [
   "APP_ENV",
   "APP_URL",
@@ -37,6 +39,7 @@ const MUST_RESOLVE_AT_RUNTIME = [
   "SANITY_API_HOST",
   "SANITY_DATASET",
   "SANITY_PROJECT_ID",
+  "SANITY_VIEWER_TOKEN",
   "TELEGRAM_ALERTS_ENABLED",
   "TELEGRAM_CHAT_ID",
 ]

@@ -243,6 +243,17 @@ export type CoercedEnvSchema = {
   SANITY_API_HOST?: string;
   
   /**
+   * **SANITY_VIEWER_TOKEN** 🔐 _sensitive_  
+   * Viewer token that the draft-mode handshake and the draft loaders use to read  
+   * unpublished content. Server-only: it never carries @static, so it is never  
+   * inlined into the browser bundle. Create one with the "Viewer" role at  
+   * sanity.io/manage and set it locally and in Coolify; leaving it unset keeps  
+   * draft mode off and the public site reads published content as before.  
+   * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M29%2022h-5a2.003%202.003%200%200%201-2-2v-6a2%202%200%200%201%202-2h5v2h-5v6h5ZM18%2012h-4V8h-2v14h6a2.003%202.003%200%200%200%202-2v-6a2%202%200%200%200-2-2m-4%208v-6h4v6Zm-6-8H3v2h5v2H4a2%202%200%200%200-2%202v2a2%202%200%200%200%202%202h6v-8a2%202%200%200%200-2-2m0%208H4v-2h4Z%22%2F%3E%3C%2Fsvg%3E)   
+   */
+  SANITY_VIEWER_TOKEN?: string;
+  
+  /**
    * **VITE_GTM_ID**  
    * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M29%2022h-5a2.003%202.003%200%200%201-2-2v-6a2%202%200%200%201%202-2h5v2h-5v6h5ZM18%2012h-4V8h-2v14h6a2.003%202.003%200%200%200%202-2v-6a2%202%200%200%200-2-2m-4%208v-6h4v6Zm-6-8H3v2h5v2H4a2%202%200%200%200-2%202v2a2%202%200%200%200%202%202h6v-8a2%202%200%200%200-2-2m0%208H4v-2h4Z%22%2F%3E%3C%2Fsvg%3E)   
    */
@@ -493,11 +504,11 @@ export type CoercedEnvSchema = {
   
 };
 
-type _CoercedEnvSchema_c1b619cd = CoercedEnvSchema;
+type _CoercedEnvSchema_855d440e = CoercedEnvSchema;
 
 declare module 'varlock/env' {
-  export interface TypedEnvSchema extends Readonly<_CoercedEnvSchema_c1b619cd> {}
-  export interface PublicTypedEnvSchema extends Readonly<Pick<_CoercedEnvSchema_c1b619cd, 'APP_ENV' | 'NODE_ENV' | 'CI' | 'IS_PROD_IN_DEV' | 'IS_PROD' | 'APP_URL' | 'VITE_APP_DOMAIN' | 'VITE_SUPABASE_URL' | 'VITE_SUPABASE_ANON_KEY' | 'SUPABASE_PROJECT_ID' | 'SUPABASE_URL' | 'VITE_TURNSTILE_SITE_KEY' | 'IAM_USER_NAME' | 'LISTMONK_API_URL' | 'SANITY_PROJECT_ID' | 'SANITY_DATASET' | 'SANITY_API_HOST' | 'VITE_GTM_ID' | 'VITE_UMAMI_WEBSITE_ID' | 'VITE_UMAMI_URL' | 'TELEGRAM_ALERTS_ENABLED' | 'TELEGRAM_CHAT_ID' | 'ASAAS_API_URL' | 'TEST_USER_ADMIN_EMAIL' | 'E2E_MODE' | 'STRICT_CLEANUP' | 'LINEAR_TEAM_ID' | 'VITEST_MIN_FORKS' | 'VITEST_MAX_FORKS' | 'VPS_USER' | 'VPS_BACKUP_PATH' | 'TELEGRAM_TO'>> {}
+  export interface TypedEnvSchema extends Readonly<_CoercedEnvSchema_855d440e> {}
+  export interface PublicTypedEnvSchema extends Readonly<Pick<_CoercedEnvSchema_855d440e, 'APP_ENV' | 'NODE_ENV' | 'CI' | 'IS_PROD_IN_DEV' | 'IS_PROD' | 'APP_URL' | 'VITE_APP_DOMAIN' | 'VITE_SUPABASE_URL' | 'VITE_SUPABASE_ANON_KEY' | 'SUPABASE_PROJECT_ID' | 'SUPABASE_URL' | 'VITE_TURNSTILE_SITE_KEY' | 'IAM_USER_NAME' | 'LISTMONK_API_URL' | 'SANITY_PROJECT_ID' | 'SANITY_DATASET' | 'SANITY_API_HOST' | 'VITE_GTM_ID' | 'VITE_UMAMI_WEBSITE_ID' | 'VITE_UMAMI_URL' | 'TELEGRAM_ALERTS_ENABLED' | 'TELEGRAM_CHAT_ID' | 'ASAAS_API_URL' | 'TEST_USER_ADMIN_EMAIL' | 'E2E_MODE' | 'STRICT_CLEANUP' | 'LINEAR_TEAM_ID' | 'VITEST_MIN_FORKS' | 'VITEST_MAX_FORKS' | 'VPS_USER' | 'VPS_BACKUP_PATH' | 'TELEGRAM_TO'>> {}
 }
 
 
@@ -507,11 +518,11 @@ export type EnvSchemaAsStrings = {
       : (CoercedEnvSchema[Property] extends boolean ? ('true' | 'false') : string)
 };
 
-type _EnvSchemaAsStrings_c1b619cd = EnvSchemaAsStrings;
+type _EnvSchemaAsStrings_855d440e = EnvSchemaAsStrings;
 declare global {
 
   // add types for global process.env
   namespace NodeJS {
-    interface ProcessEnv extends _EnvSchemaAsStrings_c1b619cd {}
+    interface ProcessEnv extends _EnvSchemaAsStrings_855d440e {}
   }
 }
