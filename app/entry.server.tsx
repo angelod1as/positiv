@@ -8,10 +8,11 @@ import type { AppLoadContext, EntryContext } from "react-router"
 import { ServerRouter } from "react-router"
 import { applyDraftCacheControl } from "./business/cms/draft-mode.server"
 
-// The react-router framework default, with one addition: applyDraftCacheControl
-// on both the document response (handleRequest) and the client-navigation data
-// responses (handleDataRequest), so a draft render is never cached and served
-// to a visitor. Keep in sync with the default when upgrading react-router.
+// The react-router 7.6.3 framework default (npx react-router reveal), with one
+// addition: applyDraftCacheControl on both the document response
+// (handleRequest) and the client-navigation data responses
+// (handleDataRequest), so a draft render is never cached and served to a
+// visitor. Re-reveal and re-diff when upgrading react-router.
 export const streamTimeout = 5_000
 
 export async function handleDataRequest(

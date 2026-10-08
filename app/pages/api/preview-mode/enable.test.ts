@@ -84,4 +84,15 @@ describe("the enable-preview handshake", () => {
     expect(response.status).toBe(307)
     expect(response.headers.get("Location")).toBe("/")
   })
+
+  it("refuses an off-site redirectTo and falls back home", async () => {
+    validatePreviewUrl.mockResolvedValue({
+      isValid: true,
+      redirectTo: "//evil.example",
+    })
+
+    const response = await loader({ request: requestFor() } as never)
+
+    expect(response.headers.get("Location")).toBe("/")
+  })
 })

@@ -3,6 +3,7 @@ import { urlSearchParamPreviewSecret } from "@sanity/preview-url-secret/constant
 import { ENV } from "varlock/env"
 import { createDraftReadClient } from "~/business/cms/draft-read-client.server"
 import { enableDraftMode } from "~/business/cms/draft-mode.server"
+import { safeRedirect } from "~/lib/helpers/safe-redirect"
 import type { Route } from "./+types/enable"
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -30,7 +31,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   return new Response(null, {
     status: 307,
     headers: {
-      Location: redirectTo,
+      Location: safeRedirect(redirectTo, "/"),
       "Set-Cookie": await enableDraftMode(request),
     },
   })

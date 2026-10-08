@@ -22,24 +22,22 @@ describe("the disable-preview route", () => {
     expect(response.headers.get("Set-Cookie")).toContain("Max-Age=0")
   })
 
-  it.each(["/sobre", "http://localhost/sobre"])(
-    "honours the same-origin redirect %j",
-    async (target) => {
-      const request = new Request(
-        `http://localhost/api/preview-mode/disable?redirect=${encodeURIComponent(target)}`,
-      )
+  it("honours a same-site relative redirect", async () => {
+    const request = new Request(
+      "http://localhost/api/preview-mode/disable?redirect=%2Fsobre",
+    )
 
-      const response = await loader({ request } as never)
+    const response = await loader({ request } as never)
 
-      expect(response.headers.get("Location")).toBe("/sobre")
-    },
-  )
+    expect(response.headers.get("Location")).toBe("/sobre")
+  })
 
   it.each([
     "https://evil.example",
     "//evil.example",
     "/\\evil.example",
     "\\/evil.example",
+    "http://localhost/sobre",
     "/\t/evil.example",
     "/\n/evil.example",
   ])("refuses the off-site redirect %j and falls back home", async (target) => {
