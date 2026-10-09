@@ -117,14 +117,28 @@ describe("resolvePagesSnapshot in draft mode", () => {
     ).toThrow(/page-sobre \(\/sobre\)/)
   })
 
-  it("drops a Page whose shell is malformed instead of failing the snapshot", async () => {
+  it("keeps a draft Page with a valid address but a broken shell, as placeholders", async () => {
+    const snapshot = await draft([
+      page({
+        title: 123,
+        seo: { description: 123 },
+        header: [{ _type: "pageHero", _key: "header" }],
+        sections: [{ _type: "about", _key: "broken-about" }],
+      }),
+    ])
+    const resolved = snapshot.get("/sobre")
+
+    expect(resolved).toBeDefined()
+    expect(resolved?.header._type).toBe("placeholder")
+    expect(resolved?.sections.map(({ _type }) => _type)).toEqual([
+      "placeholder",
+    ])
+  })
+
+  it("drops a draft Page whose address is unusable, keeping the rest", async () => {
     const snapshot = await draft([
       page(),
-      page({
-        _id: "page-bad",
-        address: "/bad",
-        seo: { description: 123 },
-      }),
+      page({ _id: "page-bad", address: "sem-barra" }),
     ])
 
     expect([...snapshot.keys()]).toEqual(["/sobre"])

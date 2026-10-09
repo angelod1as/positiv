@@ -48,7 +48,7 @@ export function resolvePagesSnapshot(
       const resolved = resolveDraftPage(document, builder)
       if (!resolved) {
         console.warn(
-          `Draft Page dropped, its shell is malformed: ${describe(document)}`,
+          `Draft Page dropped, its address is unusable: ${describe(document)}`,
         )
       } else if (snapshot.has(resolved.address)) {
         console.warn(
