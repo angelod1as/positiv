@@ -43,8 +43,7 @@ vi.mock("./components/pages/root/visual-editing", () => ({
 }))
 
 vi.mock("./components/pages/root/live-app-shell", () => ({
-  LiveAppShell: ({ render }: { render: (s: null) => React.ReactNode }) =>
-    render(null),
+  LiveAppShell: () => null,
 }))
 
 const { ENV } = vi.hoisted(() => ({ ENV: {} as Record<string, unknown> }))

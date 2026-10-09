@@ -1,11 +1,11 @@
 import type { QueryResponseInitial } from "@sanity/react-loader"
-import type { ReactNode } from "react"
+import { useEffect, useMemo } from "react"
 import { useQuery } from "~/business/cms/live-loader"
-import { resolveSiteSettings } from "~/business/cms/resolve-snapshot"
+import {
+  draftSettingsSchema,
+  resolveSiteSettings,
+} from "~/business/cms/resolve-snapshot"
 import type { SiteSettings } from "~/business/cms/site-settings.schema"
-import { zod } from "~/lib/helpers/zod"
-
-const draftSettingsSchema = zod.object({ siteSettings: zod.unknown() })
 
 type LiveAppShellProps = {
   snapshot: {
@@ -13,19 +13,25 @@ type LiveAppShellProps = {
     query: string
     params: Record<string, never>
   }
-  render: (siteSettings: SiteSettings | null) => ReactNode
+  onSiteSettings: (siteSettings: SiteSettings | null) => void
 }
 
 // Subscribes to the same snapshot query the Page does, so the Studio pushes
-// Site Settings edits over postMessage on the one live connection. A half-saved
-// edit that fails validation falls back to the plain chrome rather than taking
-// the whole preview down.
-export function LiveAppShell({ snapshot, render }: LiveAppShellProps) {
+// Site Settings edits over the one live connection, and reports each resolved
+// value up. It renders nothing, so the chrome it feeds never changes tree
+// position and so never remounts when this live code loads.
+export function LiveAppShell({ snapshot, onSiteSettings }: LiveAppShellProps) {
   const { data } = useQuery<unknown>(snapshot.query, snapshot.params, {
     initial: snapshot.initial,
   })
 
-  return <>{render(siteSettingsFrom(data))}</>
+  const siteSettings = useMemo(() => siteSettingsFrom(data), [data])
+
+  useEffect(() => {
+    onSiteSettings(siteSettings)
+  }, [siteSettings, onSiteSettings])
+
+  return null
 }
 
 function siteSettingsFrom(data: unknown): SiteSettings | null {

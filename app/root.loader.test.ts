@@ -208,6 +208,69 @@ describe("root loader", () => {
       expect(siteSnapshotCache.get).not.toHaveBeenCalled()
     })
 
+    it("starts the draft read without waiting for the session", async () => {
+      isDraftModeEnabled.mockResolvedValue(true)
+      type Context = Awaited<ReturnType<typeof mockGetContext>>
+      let resolveContext: (context: Context) => void = () => {}
+      mockGetContext.mockReturnValue(
+        new Promise<Context>((resolve) => {
+          resolveContext = resolve
+        }),
+      )
+      mockGetToast.mockResolvedValue({ toast: null, headers: new Headers() })
+
+      const request = new Request("http://localhost:5173/")
+      const result = loader({ request, params: {} } as never)
+
+      await vi.waitFor(() =>
+        expect(loadDraftSnapshotQuery).toHaveBeenCalled(),
+      )
+      resolveContext({
+        currentProfile: null,
+        currentUser: null,
+        isProdInDev: false,
+        supabaseHeaders: new Headers(),
+        supabase: {},
+        host: "localhost",
+      } as unknown as Context)
+      await result
+    })
+
+    it("degrades to the published snapshot when the draft fetch fails", async () => {
+      isDraftModeEnabled.mockResolvedValue(true)
+      loadDraftSnapshotQuery.mockRejectedValue(new Error("402 over quota"))
+      const { siteSnapshotCache } = await import(
+        "./business/cms/site-snapshot-cache.server"
+      )
+      const siteSettings = siteSettingsSchema.parse(siteSettingsDocument())
+      vi.mocked(siteSnapshotCache.get).mockResolvedValue({
+        pages: new Map(),
+        siteSettings,
+      })
+      mockGetContext.mockResolvedValue({
+        currentProfile: null,
+        currentUser: null,
+        isProdInDev: false,
+        supabaseHeaders: new Headers(),
+        supabase: {},
+        host: "localhost",
+      })
+      mockGetToast.mockResolvedValue({ toast: null, headers: new Headers() })
+
+      const request = new Request("http://localhost:5173/")
+      const result = (await loader({ request, params: {} } as never)) as {
+        data: {
+          draftMode: boolean
+          liveSnapshot: unknown
+          siteSettings: unknown
+        }
+      }
+
+      expect(result.data.draftMode).toBe(true)
+      expect(result.data.liveSnapshot).toBeUndefined()
+      expect(result.data.siteSettings).toEqual(siteSettings)
+    })
+
     it("leaves draft mode off for an ordinary visitor", async () => {
       mockGetContext.mockResolvedValue({
         currentProfile: null,

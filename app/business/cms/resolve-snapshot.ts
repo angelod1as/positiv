@@ -24,6 +24,10 @@ export type ClientConfig = { projectId?: string; dataset?: string }
 
 export type SnapshotMode = "published" | "draft"
 
+export const draftPagesSchema = zod.object({ pages: zod.unknown() })
+
+export const draftSettingsSchema = zod.object({ siteSettings: zod.unknown() })
+
 type ImageUrlBuilder = ReturnType<typeof createImageUrlBuilder>
 type SectionDocument = PageDocument["sections"][number]
 type ImageDocument = Extract<

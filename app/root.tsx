@@ -1,5 +1,5 @@
 import { inputFromForm } from "composable-functions"
-import { lazy, Suspense, useEffect, type ReactNode } from "react"
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react"
 import {
   data,
   isRouteErrorResponse,
@@ -28,15 +28,19 @@ import type { Route } from "./+types/root"
 import "./app.css"
 import { getContext } from "./business/auth/auth.server"
 import { isDraftModeEnabled } from "./business/cms/draft-mode.server"
-import { loadDraftSnapshotQuery } from "./business/cms/live-loader.server"
-import { resolveSiteSettings } from "./business/cms/resolve-snapshot"
+import {
+  type DraftSnapshotQuery,
+  loadDraftSnapshotQuery,
+} from "./business/cms/live-loader.server"
+import {
+  draftSettingsSchema,
+  resolveSiteSettings,
+} from "./business/cms/resolve-snapshot"
 import type { SiteSettings } from "./business/cms/site-settings.schema"
 import {
   type LoadedSiteSettings,
   loadSiteSettings,
 } from "./business/cms/site-settings.server"
-import { loadSiteSnapshot } from "./business/cms/site-snapshot-source.server"
-import { zod } from "./lib/helpers/zod"
 import { subscribeProfileToNewsletter } from "./business/newsletter/auto-subscribe.server"
 import { getSubscriptionStatus } from "./business/newsletter/subscription-helpers.server"
 import {
@@ -69,18 +73,13 @@ import "@fontsource/nunito/latin-ext-700-italic.css"
 import "@fontsource/nunito/latin-700.css"
 import "@fontsource/nunito/latin-ext-700.css"
 
-// Only editors in draft mode load the visual-editing runtime (and its large
-// transitive deps). A static import would ship it to every visitor, so it is
-// code-split behind a lazy import and mounted under `draftMode`.
+// Lazy so the live-mode runtime and its deps never reach a visitor's bundle.
 const VisualEditing = lazy(() =>
   import("./components/pages/root/visual-editing").then((module) => ({
     default: module.VisualEditing,
   })),
 )
 
-// Only editors in draft mode load the live Site Settings consumer (and the
-// react-loader it drags in). Visitors render the chrome from the loader value
-// alone, so the lazy boundary keeps the live code out of their bundle.
 const LiveAppShell = lazy(() =>
   import("./components/pages/root/live-app-shell").then((module) => ({
     default: module.LiveAppShell,
@@ -132,8 +131,6 @@ export function meta({}: Route.MetaArgs) {
   ]
 }
 
-const draftSettingsSchema = zod.object({ siteSettings: zod.unknown() })
-
 function siteSettingsFromDraft(data: unknown): LoadedSiteSettings {
   try {
     const { siteSettings } = draftSettingsSchema.parse(data)
@@ -147,24 +144,41 @@ function siteSettingsFromDraft(data: unknown): LoadedSiteSettings {
   }
 }
 
+function liveSnapshotFrom(draft: DraftSnapshotQuery | null) {
+  if (!draft) return undefined
+  return {
+    initial: draft.initial,
+    query: draft.query,
+    params: draft.params,
+    clientConfig: draft.clientConfig,
+  }
+}
+
+function siteSettingsFor(
+  draft: DraftSnapshotQuery | null,
+): Promise<LoadedSiteSettings> | LoadedSiteSettings {
+  // A null draft means the published path, or a draft read that failed and
+  // degrades to the published, cached snapshot.
+  return draft ? siteSettingsFromDraft(draft.initial.data) : loadSiteSettings()
+}
+
 export async function loader({ params, request }: Route.LoaderArgs) {
   const draftMode = await isDraftModeEnabled(request)
-  const draft = draftMode ? await loadDraftSnapshotQuery(request) : null
-  const liveSnapshot = draft
-    ? {
-        initial: draft.initial,
-        query: draft.query,
-        params: draft.params,
-        clientConfig: draft.clientConfig,
-      }
-    : undefined
-  const siteSettings = draft
-    ? siteSettingsFromDraft(draft.initial.data)
-    : loadSiteSettings({ get: () => loadSiteSnapshot(request) })
+  // Start the draft read alongside the session so the two run in parallel. A
+  // failed draft fetch degrades to the published snapshot rather than taking
+  // the whole response down.
+  const draftQuery: Promise<DraftSnapshotQuery | null> = draftMode
+    ? loadDraftSnapshotQuery(request).catch((error) => {
+        console.error("Could not load the draft snapshot", error)
+        return null
+      })
+    : Promise.resolve(null)
 
   try {
-    const { currentProfile, currentUser, isProdInDev, supabaseHeaders } =
-      await getContext(request, params)
+    const [{ currentProfile, currentUser, isProdInDev, supabaseHeaders }, draft] =
+      await Promise.all([getContext(request, params), draftQuery])
+    const liveSnapshot = liveSnapshotFrom(draft)
+    const siteSettings = siteSettingsFor(draft)
     const { toast, headers } = await getToast(request)
 
     supabaseHeaders.forEach((value, key) => {
@@ -232,6 +246,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     )
   } catch (error) {
     console.error("Root loader error", error)
+    const draft = await draftQuery
     return {
       currentUser: null,
       currentProfile: null,
@@ -241,8 +256,8 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       needsProfileUpdate: false,
       shouldShowNewsletterModal: false,
       draftMode,
-      liveSnapshot,
-      ...(await siteSettings),
+      liveSnapshot: liveSnapshotFrom(draft),
+      ...(await siteSettingsFor(draft)),
     }
   }
 }
@@ -435,31 +450,34 @@ export default function App({ loaderData }: Route.ComponentProps) {
   )
   const showNewsletterModal = shouldShowNewsletterModal && !isAuthFlow
 
-  const renderShell = (settings: SiteSettings | null) => (
-    <AppShell
-      profile={currentProfile}
-      userEmail={currentUser?.email ?? undefined}
-      isProdInDev={isProdInDev}
-      isThereAnyNews={isThereAnyNews ?? false}
-      needsProfileUpdate={needsProfileUpdate}
-      currentPath={location.pathname}
-      showNewsletterModal={showNewsletterModal}
-      siteSettings={settings}
-      editorialSystemUnavailable={editorialSystemUnavailable}
-    />
-  )
+  // In draft mode live edits replace the Site Settings in place. The shell
+  // stays at a fixed tree position so loading the live chunk never remounts it
+  // or the routed page; undefined means no live value has arrived yet.
+  const [liveSiteSettings, setLiveSiteSettings] = useState<
+    SiteSettings | null | undefined
+  >(undefined)
+  const activeSiteSettings =
+    liveSiteSettings === undefined ? siteSettings : liveSiteSettings
 
   return (
     <>
-      {draftMode && liveSnapshot ? (
-        <Suspense fallback={renderShell(siteSettings)}>
-          <LiveAppShell snapshot={liveSnapshot} render={renderShell} />
-        </Suspense>
-      ) : (
-        renderShell(siteSettings)
-      )}
+      <AppShell
+        profile={currentProfile}
+        userEmail={currentUser?.email ?? undefined}
+        isProdInDev={isProdInDev}
+        isThereAnyNews={isThereAnyNews ?? false}
+        needsProfileUpdate={needsProfileUpdate}
+        currentPath={location.pathname}
+        showNewsletterModal={showNewsletterModal}
+        siteSettings={activeSiteSettings}
+        editorialSystemUnavailable={editorialSystemUnavailable}
+      />
       {draftMode && liveSnapshot && (
         <Suspense fallback={null}>
+          <LiveAppShell
+            snapshot={liveSnapshot}
+            onSiteSettings={setLiveSiteSettings}
+          />
           <VisualEditing clientConfig={liveSnapshot.clientConfig} />
         </Suspense>
       )}

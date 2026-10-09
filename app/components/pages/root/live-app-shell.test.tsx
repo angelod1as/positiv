@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { useQuery } from "~/business/cms/live-loader"
 import { siteSettingsSchema } from "~/business/cms/site-settings.schema"
+import { render } from "~/test/test-utils"
 import { siteSettingsDocument } from "~/test/site-settings-documents"
 import { LiveAppShell } from "./live-app-shell"
 
@@ -23,37 +24,37 @@ describe("LiveAppShell", () => {
     vi.clearAllMocks()
   })
 
-  it("subscribes to the snapshot query and renders the resolved Site Settings", () => {
+  it("subscribes to the snapshot query and reports the resolved Site Settings", () => {
     liveWith({ pages: [], siteSettings: siteSettingsDocument() })
-    const render = vi.fn(() => null)
+    const onSiteSettings = vi.fn()
 
-    LiveAppShell({ snapshot, render })
+    render(<LiveAppShell snapshot={snapshot} onSiteSettings={onSiteSettings} />)
 
     expect(useQuery).toHaveBeenCalledWith(
       "the-snapshot-query",
       {},
       { initial: { data: null } },
     )
-    expect(render).toHaveBeenCalledWith(
+    expect(onSiteSettings).toHaveBeenCalledWith(
       siteSettingsSchema.parse(siteSettingsDocument()),
     )
   })
 
-  it("renders the chrome with no Site Settings when the live data has none", () => {
+  it("reports no Site Settings when the live data has none", () => {
     liveWith({ pages: [], siteSettings: null })
-    const render = vi.fn(() => null)
+    const onSiteSettings = vi.fn()
 
-    LiveAppShell({ snapshot, render })
+    render(<LiveAppShell snapshot={snapshot} onSiteSettings={onSiteSettings} />)
 
-    expect(render).toHaveBeenCalledWith(null)
+    expect(onSiteSettings).toHaveBeenCalledWith(null)
   })
 
   it("falls back to no Site Settings when a half-saved edit fails validation", () => {
     liveWith({ pages: [], siteSettings: { navigation: "not-an-array" } })
-    const render = vi.fn(() => null)
+    const onSiteSettings = vi.fn()
 
-    LiveAppShell({ snapshot, render })
+    render(<LiveAppShell snapshot={snapshot} onSiteSettings={onSiteSettings} />)
 
-    expect(render).toHaveBeenCalledWith(null)
+    expect(onSiteSettings).toHaveBeenCalledWith(null)
   })
 })
