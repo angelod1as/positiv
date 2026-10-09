@@ -5,8 +5,8 @@ import { createQueryStore } from "@sanity/react-loader"
 // non-.server module, so the browser can import the type without reaching into
 // a server-only file.
 export type LiveClientConfig = {
-  projectId: string
-  dataset: string
+  projectId?: string
+  dataset?: string
   apiVersion: string
   apiHost?: string
 }

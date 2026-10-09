@@ -343,7 +343,7 @@ export function Layout(props: { children: ReactNode }) {
 type AppShellProps = {
   profile: ProfileWithRoles | null
   userEmail?: string
-  isProdInDev: boolean | null
+  isProdInDev: boolean | null | undefined
   isThereAnyNews: boolean
   needsProfileUpdate: boolean
   currentPath: string

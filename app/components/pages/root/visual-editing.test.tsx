@@ -31,11 +31,11 @@ describe("VisualEditing", () => {
   it("drives live mode with a publishable client that carries no token", () => {
     render(<VisualEditing clientConfig={clientConfig} />)
 
-    const { client } = vi.mocked(useLiveMode).mock.calls[0][0]
-    const config = client.config()
-    expect(config.projectId).toBe("8ojkallk")
-    expect(config.dataset).toBe("development")
-    expect(config.useCdn).toBe(false)
-    expect(config.token).toBeUndefined()
+    const config = vi.mocked(useLiveMode).mock.lastCall?.[0]?.client?.config()
+    expect(config).toBeDefined()
+    expect(config?.projectId).toBe("8ojkallk")
+    expect(config?.dataset).toBe("development")
+    expect(config?.useCdn).toBe(false)
+    expect(config?.token).toBeUndefined()
   })
 })
