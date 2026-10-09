@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react"
+import { lazy, Suspense, useCallback, useState } from "react"
 import { getContext } from "~/business/auth/auth.server"
 import { isDraftModeEnabled } from "~/business/cms/draft-mode.server"
 import { loadDraftSnapshotQuery } from "~/business/cms/live-loader.server"
@@ -87,10 +87,20 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       }),
     ])
 
+    let draftPages: ReturnType<typeof resolvePagesSnapshot> | null = null
     if (draft) {
-      const { pages } = draftPagesSchema.parse(draft.initial.data)
-      const snapshot = resolvePagesSnapshot(pages, draft.clientConfig, "draft")
-      const page = pageOr5xx(findPage(snapshot, address), address)
+      try {
+        const { pages } = draftPagesSchema.parse(draft.initial.data)
+        draftPages = resolvePagesSnapshot(pages, draft.clientConfig, "draft")
+      } catch (error) {
+        logger.error("Could not resolve the draft Pages", {
+          error: error instanceof Error ? error.message : String(error),
+        })
+      }
+    }
+
+    if (draft && draftPages) {
+      const page = pageOr5xx(findPage(draftPages, address), address)
 
       return {
         draftMode: true as const,
@@ -105,8 +115,9 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       }
     }
 
-    // The draft read failed (e.g. over quota) — degrade to the published
-    // snapshot rather than turning the route into a 500.
+    // The draft read failed (e.g. over quota) or its data would not resolve —
+    // degrade to the published snapshot rather than turning the route into a
+    // 500.
     const snapshot = await loadPublishedSnapshot()
     const page = pageOr5xx(findPage(snapshot, address), address)
 
@@ -169,18 +180,28 @@ export function meta({ data }: Route.MetaArgs) {
 
 export default function PageRoute({ loaderData }: Route.ComponentProps) {
   const { page, events, isLoggedIn } = loaderData
+  const address = loaderData.draftMode ? loaderData.address : undefined
 
   // Live Page held per address: a null result keeps the last good one, and a
   // value from another address is ignored, so navigating never shows a stale
   // Page. Fixed tree position keeps loading the live chunk from remounting it.
   const [live, setLive] = useState<{ address: string; page: Page } | null>(null)
 
+  // Stable so DraftPageRoute's effect fires when the live Page changes, not on
+  // every commit — a fresh onPage each render would spin setLive endlessly.
+  const onPage = useCallback(
+    (next: Page | null) => {
+      if (next && address) setLive({ address, page: next })
+    },
+    [address],
+  )
+
   if (!loaderData.draftMode) {
     return <PageContent page={page} events={events} isLoggedIn={isLoggedIn} />
   }
 
-  const { address } = loaderData
-  const activePage = live?.address === address ? live.page : page
+  const activePage =
+    live && live.address === loaderData.address ? live.page : page
 
   return (
     <>
@@ -191,10 +212,8 @@ export default function PageRoute({ loaderData }: Route.ComponentProps) {
           query={loaderData.query}
           params={loaderData.params}
           clientConfig={loaderData.clientConfig}
-          address={address}
-          onPage={(next) => {
-            if (next) setLive({ address, page: next })
-          }}
+          address={loaderData.address}
+          onPage={onPage}
         />
       </Suspense>
     </>

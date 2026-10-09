@@ -15,12 +15,16 @@ import type { Route } from "./+types/page"
 import PageRoute, { loader, meta } from "./page"
 
 const { captured } = vi.hoisted(() => ({
-  captured: { onPage: undefined as ((page: unknown) => void) | undefined },
+  captured: {
+    onPage: undefined as ((page: unknown) => void) | undefined,
+    onPages: [] as ((page: unknown) => void)[],
+  },
 }))
 
 vi.mock("./draft-page-route", () => ({
   DraftPageRoute: ({ onPage }: { onPage: (page: unknown) => void }) => {
     captured.onPage = onPage
+    captured.onPages.push(onPage)
     return null
   },
 }))
@@ -301,6 +305,25 @@ describe("Page loader in draft mode", () => {
     expect(result.draftMode).toBe(false)
     expect(result.page).toEqual(published.get("/sobre"))
   })
+
+  it("degrades to the published snapshot when the draft data cannot be resolved", async () => {
+    vi.mocked(loadDraftSnapshotQuery).mockResolvedValue({
+      initial: { data: { pages: "not a list of documents" } },
+      query: "the-snapshot-query",
+      params: {},
+      clientConfig,
+    } as unknown as Awaited<ReturnType<typeof loadDraftSnapshotQuery>>)
+    const published = await pagesSnapshotFixture()
+    vi.mocked(siteSnapshotCache.get).mockResolvedValue({
+      pages: published,
+      siteSettings: null,
+    })
+
+    const result = await loader(argsFor("/sobre"))
+
+    expect(result.draftMode).toBe(false)
+    expect(result.page).toEqual(published.get("/sobre"))
+  })
 })
 
 describe("Page meta", () => {
@@ -424,6 +447,7 @@ describe("Page meta", () => {
 describe("Page route", () => {
   beforeEach(async () => {
     snapshot = await pagesSnapshotFixture()
+    captured.onPages = []
   })
 
   function renderPage(page: Page) {
@@ -525,5 +549,25 @@ describe("Page route", () => {
       />,
     )
     expect(whatsAppLink()).toBeInTheDocument()
+  })
+
+  it("hands DraftPageRoute a stable onPage so its live effect cannot loop", async () => {
+    renderWithRouter(
+      <PageRoute
+        {...({
+          loaderData: draftLoaderData("/", pageAt("/")),
+        } as unknown as Route.ComponentProps)}
+      />,
+    )
+    await waitFor(() => expect(captured.onPage).toBeDefined())
+
+    const first = captured.onPage
+    // A live edit arrives, so PageRoute re-renders. DraftPageRoute runs its
+    // effect on `[page, onPage]`; if onPage changed identity here the effect
+    // would re-fire and setLive would spin. It must be the same reference.
+    act(() => captured.onPage?.(pageAt("/sobre")))
+
+    expect(captured.onPage).toBe(first)
+    expect(new Set(captured.onPages).size).toBe(1)
   })
 })
