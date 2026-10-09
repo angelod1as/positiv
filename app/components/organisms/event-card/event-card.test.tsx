@@ -63,8 +63,8 @@ describe("EventCard", () => {
     )
 
     expect(getByText("R$ 45,00")).toBeInTheDocument()
-    expect(getByText("no Pix")).toBeInTheDocument()
-    expect(getByText("R$ 50,00")).toBeInTheDocument()
+    expect(getByText("no Pix · economize 10%")).toBeInTheDocument()
+    expect(getByText("R$ 50,00 no cartão")).toBeInTheDocument()
   })
 
   it("should pass isAdmin prop to EventCardFooter when isAdmin is true", () => {

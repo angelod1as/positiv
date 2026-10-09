@@ -16,8 +16,7 @@ describe("EventPrice", () => {
     )
 
     expect(getByText("R$ 225,00")).toBeInTheDocument()
-    expect(getByText("no Pix")).toBeInTheDocument()
-    expect(getByText("R$ 250,00")).toBeInTheDocument()
-    expect(getByText(/economize 10% no Pix/)).toBeInTheDocument()
+    expect(getByText("no Pix · economize 10%")).toBeInTheDocument()
+    expect(getByText("R$ 250,00 no cartão")).toBeInTheDocument()
   })
 })

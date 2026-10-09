@@ -24,15 +24,14 @@ export const EventPrice: FC<EventPriceProps> = ({
       <span className="text-xs font-bold text-muted-foreground">
         {dualPrice.label}
       </span>
-      <span className="flex items-baseline gap-1.5">
+      <span className="flex flex-wrap items-baseline gap-1.5">
         <span className="text-2xl font-bold text-primary tabular-nums">
           {formatCurrency(pixPrice(base))}
         </span>
         <span className="text-sm text-muted-foreground">{dualPrice.pix}</span>
       </span>
-      <span className="text-sm text-muted-foreground">
-        <span className="line-through tabular-nums">{formatCurrency(base)}</span>{" "}
-        {dualPrice.cardSuffix}
+      <span className="text-sm text-muted-foreground tabular-nums">
+        {formatCurrency(base)} {dualPrice.cardSuffix}
       </span>
     </div>
   )
