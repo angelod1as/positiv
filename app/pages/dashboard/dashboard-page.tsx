@@ -60,13 +60,18 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   // rather than one after the other
   const events = loadEvents(currentProfile.id)
 
+  const [everApplied, cardPaymentsEnabled] = await Promise.all([
+    hasEverApplied(currentProfile.id),
+    isCardPaymentsEnabled(),
+  ])
+
   // Return object with unawaited promise for streaming
   // No defer() wrapper needed in React Router 7
   return {
     events,
-    hasEverApplied: await hasEverApplied(currentProfile.id),
+    hasEverApplied: everApplied,
     isAdmin: currentProfile.is_admin ?? false,
-    cardPaymentsEnabled: await isCardPaymentsEnabled(),
+    cardPaymentsEnabled,
   }
 }
 

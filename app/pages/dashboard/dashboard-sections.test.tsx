@@ -23,6 +23,7 @@ const renderContent = (props: {
   events: Event[]
   hasEverApplied: boolean
   isAdmin?: boolean
+  cardPaymentsEnabled?: boolean
 }) => {
   const router = createMemoryRouter(
     [
@@ -33,6 +34,7 @@ const renderContent = (props: {
             events={props.events}
             hasEverApplied={props.hasEverApplied}
             isAdmin={props.isAdmin}
+            cardPaymentsEnabled={props.cardPaymentsEnabled}
           />
         ),
       },
@@ -62,6 +64,17 @@ describe("Dashboard sections", () => {
         "Mas ter conta não te coloca em nenhuma festa. Escolha um evento abaixo e envie sua candidatura.",
       ),
     ).not.toBeInTheDocument()
+  })
+
+  it("forwards the card-payments flag to the event cards", () => {
+    renderContent({
+      events: [makeEvent({ is_applied: false, ticket_price: 12000 })],
+      hasEverApplied: true,
+      cardPaymentsEnabled: true,
+    })
+
+    expect(screen.getByText("no Pix · economize 10%")).toBeInTheDocument()
+    expect(screen.getByText("R$ 108,00")).toBeInTheDocument()
   })
 
   it("always renders the applied section, with an empty state", () => {

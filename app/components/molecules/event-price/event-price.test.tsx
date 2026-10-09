@@ -19,4 +19,13 @@ describe("EventPrice", () => {
     expect(getByText("no Pix · economize 10%")).toBeInTheDocument()
     expect(getByText("R$ 250,00 no cartão")).toBeInTheDocument()
   })
+
+  it("floors the discounted Pix price to the cent", () => {
+    const { getByText } = render(
+      <EventPrice base={2409} cardPaymentsEnabled />,
+    )
+
+    expect(getByText("R$ 21,68")).toBeInTheDocument()
+    expect(getByText("R$ 24,09 no cartão")).toBeInTheDocument()
+  })
 })

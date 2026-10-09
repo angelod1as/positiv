@@ -21,9 +21,6 @@ export const EventPrice: FC<EventPriceProps> = ({
 
   return (
     <div className="flex flex-col">
-      <span className="text-xs font-bold text-muted-foreground">
-        {dualPrice.label}
-      </span>
       <span className="flex flex-wrap items-baseline gap-1.5">
         <span className="font-bold tabular-nums">
           {formatCurrency(pixPrice(base))}
