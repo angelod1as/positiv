@@ -1,9 +1,6 @@
 import { createQueryStore } from "@sanity/react-loader"
 
-// The publishable config the browser needs to build image URLs and the
-// live-mode client. It never carries the Viewer token. Defined here, in the
-// non-.server module, so the browser can import the type without reaching into
-// a server-only file.
+// The publishable config the browser needs; it never carries the Viewer token.
 export type LiveClientConfig = {
   projectId?: string
   dataset?: string
@@ -11,9 +8,8 @@ export type LiveClientConfig = {
   apiHost?: string
 }
 
-// client: false keeps a fetching client out of the browser bundle — in the
-// browser the Studio pushes draft data over postMessage through useLiveMode, so
-// no query ever reaches api.sanity.io from the client. ssr: true lets the
-// server loader seed the first render with loadQuery.
+// client: false keeps a fetching client out of the browser bundle, so no query
+// reaches api.sanity.io from the client; the Studio pushes draft data over
+// postMessage through useLiveMode instead. ssr: true seeds the first render.
 export const { loadQuery, setServerClient, useQuery, useLiveMode } =
   createQueryStore({ client: false, ssr: true })

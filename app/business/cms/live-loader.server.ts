@@ -18,9 +18,8 @@ export type DraftSnapshotQuery = {
 
 type LoadQuery = typeof serverLoadQuery
 
-// The draft read client is bound on first real use, not at import, so loading
-// this module never needs the Viewer token or a configured projectId — tests
-// that inject their own loadQuery never touch it.
+// Bound on first real use, not at import, so loading the module needs no token
+// or projectId and tests that inject their own loadQuery never touch it.
 let serverClientBound = false
 function ensureServerClient(): void {
   if (serverClientBound) return
@@ -28,10 +27,9 @@ function ensureServerClient(): void {
   serverClientBound = true
 }
 
-// The published clientConfig that the browser needs to build image URLs and the
-// live-mode client. projectId and dataset are not secret — they appear in every
-// CDN image URL — and the Viewer token is deliberately left out so it never
-// reaches the browser. Read at call time, so a runtime override still applies.
+// projectId and dataset are not secret (they appear in every CDN image URL);
+// the Viewer token is left out so it never reaches the browser. Read at call
+// time so a runtime override still applies.
 function liveClientConfig(): LiveClientConfig {
   return {
     projectId: ENV.SANITY_PROJECT_ID,
@@ -41,11 +39,8 @@ function liveClientConfig(): LiveClientConfig {
   }
 }
 
-// The root and Page loaders both read the snapshot in one navigation. Memoise
-// the draft query per request so a navigation costs a single api.sanity.io
-// call; every later edit then arrives over postMessage, free of charge. React
-// Router hands both loaders the same Request per navigation (single fetch); if
-// that ever stops holding, the only cost is a second draft fetch.
+// Memoised per request so the root and Page loaders share one api.sanity.io
+// call per navigation; later edits arrive over postMessage, free of charge.
 const draftQueryByRequest = new WeakMap<Request, Promise<DraftSnapshotQuery>>()
 
 export function loadDraftSnapshotQuery(
