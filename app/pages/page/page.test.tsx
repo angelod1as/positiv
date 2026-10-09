@@ -10,9 +10,20 @@ import { metaCopy } from "~/copy/meta"
 import { getNextEvents } from "~/pages/page/fetch/get-next-events"
 import { headers as docHeaders, page as pageDocument } from "~/test/page-documents"
 import { pagesSnapshotFixture } from "~/test/pages-snapshot-fixture"
-import { renderWithRouter, screen } from "~/test/test-utils"
+import { act, renderWithRouter, screen, waitFor } from "~/test/test-utils"
 import type { Route } from "./+types/page"
 import PageRoute, { loader, meta } from "./page"
+
+const { captured } = vi.hoisted(() => ({
+  captured: { onPage: undefined as ((page: unknown) => void) | undefined },
+}))
+
+vi.mock("./draft-page-route", () => ({
+  DraftPageRoute: ({ onPage }: { onPage: (page: unknown) => void }) => {
+    captured.onPage = onPage
+    return null
+  },
+}))
 
 vi.mock("~/business/auth/auth.server", () => ({
   getContext: vi.fn(),
@@ -422,6 +433,32 @@ describe("Page route", () => {
   it("leaves the WhatsApp button off every other Page", () => {
     renderPage(pageAt("/sobre"))
 
+    expect(whatsAppLink()).toBeNull()
+  })
+
+  it("shows the loader Page in draft mode and swaps it when a live edit arrives", async () => {
+    const loaderData = {
+      draftMode: true,
+      page: pageAt("/"),
+      events: undefined,
+      isLoggedIn: false,
+      initial: { data: null },
+      query: "the-snapshot-query",
+      params: {},
+      clientConfig: { projectId: "p", dataset: "d", apiVersion: "v" },
+      address: "/",
+    }
+    renderWithRouter(
+      <PageRoute {...({ loaderData } as unknown as Route.ComponentProps)} />,
+    )
+
+    expect(whatsAppLink()).toBeInTheDocument()
+    await waitFor(() => expect(captured.onPage).toBeDefined())
+
+    act(() => captured.onPage?.(null))
+    expect(whatsAppLink()).toBeInTheDocument()
+
+    act(() => captured.onPage?.(pageAt("/sobre")))
     expect(whatsAppLink()).toBeNull()
   })
 })

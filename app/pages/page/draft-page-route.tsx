@@ -1,11 +1,12 @@
 import type { QueryResponseInitial } from "@sanity/react-loader"
+import { useEffect, useMemo } from "react"
 import { type LiveClientConfig, useQuery } from "~/business/cms/live-loader"
-import { findPage, resolvePagesSnapshot } from "~/business/cms/resolve-snapshot"
-import { zod } from "~/lib/helpers/zod"
-import type { Event } from "~types/database/entities.types"
-import { PageContent } from "./page-content"
-
-const draftPagesSchema = zod.object({ pages: zod.unknown() })
+import type { Page } from "~/business/cms/page.schema"
+import {
+  draftPagesSchema,
+  findPage,
+  resolvePagesSnapshot,
+} from "~/business/cms/resolve-snapshot"
 
 type DraftPageRouteProps = {
   initial: QueryResponseInitial<unknown>
@@ -13,8 +14,7 @@ type DraftPageRouteProps = {
   params: Record<string, never>
   clientConfig: LiveClientConfig
   address: string
-  events: Promise<Event[] | undefined> | undefined
-  isLoggedIn: boolean
+  onPage: (page: Page | null) => void
 }
 
 export function DraftPageRoute({
@@ -23,16 +23,23 @@ export function DraftPageRoute({
   params,
   clientConfig,
   address,
-  events,
-  isLoggedIn,
+  onPage,
 }: DraftPageRouteProps) {
   const { data } = useQuery<unknown>(query, params, { initial })
 
-  const { pages } = draftPagesSchema.parse(data)
-  const snapshot = resolvePagesSnapshot(pages, clientConfig, "draft")
-  const page = findPage(snapshot, address)
+  const page = useMemo(() => {
+    try {
+      const { pages } = draftPagesSchema.parse(data)
+      const snapshot = resolvePagesSnapshot(pages, clientConfig, "draft")
+      return findPage(snapshot, address) ?? null
+    } catch {
+      return null
+    }
+  }, [data, clientConfig, address])
 
-  if (!page) return null
+  useEffect(() => {
+    onPage(page)
+  }, [page, onPage])
 
-  return <PageContent page={page} events={events} isLoggedIn={isLoggedIn} />
+  return null
 }

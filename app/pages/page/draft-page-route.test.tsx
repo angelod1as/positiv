@@ -1,8 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { useQuery } from "~/business/cms/live-loader"
-import { whatsAppButtonCopy } from "~/copy/layout"
 import { headers as docHeaders, page as pageDocument } from "~/test/page-documents"
-import { renderWithRouter, screen } from "~/test/test-utils"
+import { render } from "~/test/test-utils"
 import { DraftPageRoute } from "./draft-page-route"
 
 vi.mock("~/business/cms/live-loader", () => ({ useQuery: vi.fn() }))
@@ -19,18 +18,18 @@ function liveWith(...docs: unknown[]) {
   } as unknown as ReturnType<typeof useQuery>)
 }
 
-function renderAt(address: string) {
-  renderWithRouter(
+function renderAt(address: string, onPage = vi.fn()) {
+  render(
     <DraftPageRoute
       initial={{ data: null } as never}
       query="the-snapshot-query"
       params={{}}
       clientConfig={clientConfig}
       address={address}
-      events={undefined}
-      isLoggedIn={false}
+      onPage={onPage}
     />,
   )
+  return onPage
 }
 
 const home = () =>
@@ -53,70 +52,49 @@ describe("DraftPageRoute", () => {
     )
   })
 
-  it("renders the Page the live data resolves to", () => {
+  it("reports the Page the live data resolves to", () => {
     liveWith(home())
 
-    renderAt("/")
+    const onPage = renderAt("/")
 
-    expect(
-      screen.getByRole("link", { name: whatsAppButtonCopy.ariaLabel }),
-    ).toBeInTheDocument()
+    expect(onPage).toHaveBeenCalledWith(
+      expect.objectContaining({ address: "/" }),
+    )
   })
 
-  it("follows the live data when the Studio pushes a change", () => {
-    liveWith(pageDocument({ address: "/sobre", header: [docHeaders.pageTitle] }))
-
-    const { rerender } = renderWithRouter(
-      <DraftPageRoute
-        initial={{ data: null } as never}
-        query="the-snapshot-query"
-        params={{}}
-        clientConfig={clientConfig}
-        address="/sobre"
-        events={undefined}
-        isLoggedIn={false}
-      />,
-    )
-    expect(
-      screen.getByText(docHeaders.pageTitle.title),
-    ).toBeInTheDocument()
-
+  it("reports the new Page when the Studio pushes a change", () => {
     liveWith(
       pageDocument({
         address: "/sobre",
         header: [{ ...docHeaders.pageTitle, title: "Título novo" }],
       }),
     )
-    rerender(
-      <DraftPageRoute
-        initial={{ data: null } as never}
-        query="the-snapshot-query"
-        params={{}}
-        clientConfig={clientConfig}
-        address="/sobre"
-        events={undefined}
-        isLoggedIn={false}
-      />,
-    )
 
-    expect(screen.getByText("Título novo")).toBeInTheDocument()
+    const onPage = renderAt("/sobre")
+
+    expect(onPage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        address: "/sobre",
+        header: expect.objectContaining({ title: "Título novo" }),
+      }),
+    )
   })
 
-  it("renders nothing when the live data has no Page at the address", () => {
+  it("reports null when the live data has no Page at the address", () => {
     liveWith(pageDocument({ address: "/sobre", header: [docHeaders.pageTitle] }))
 
-    const { container } = renderWithRouter(
-      <DraftPageRoute
-        initial={{ data: null } as never}
-        query="the-snapshot-query"
-        params={{}}
-        clientConfig={clientConfig}
-        address="/nao-existe"
-        events={undefined}
-        isLoggedIn={false}
-      />,
-    )
+    const onPage = renderAt("/nao-existe")
 
-    expect(container).toBeEmptyDOMElement()
+    expect(onPage).toHaveBeenCalledWith(null)
+  })
+
+  it("reports null rather than throwing when the live data is malformed", () => {
+    vi.mocked(useQuery).mockReturnValue({
+      data: { not: "a snapshot" },
+    } as unknown as ReturnType<typeof useQuery>)
+
+    const onPage = renderAt("/")
+
+    expect(onPage).toHaveBeenCalledWith(null)
   })
 })

@@ -1,15 +1,18 @@
-import { lazy, Suspense } from "react"
+import { lazy, Suspense, useState } from "react"
 import { getContext } from "~/business/auth/auth.server"
 import { isDraftModeEnabled } from "~/business/cms/draft-mode.server"
 import { loadDraftSnapshotQuery } from "~/business/cms/live-loader.server"
 import { isReservedAddress } from "~/business/cms/page.schema"
 import type { Page } from "~/business/cms/page.schema"
-import { findPage, resolvePagesSnapshot } from "~/business/cms/resolve-snapshot"
+import {
+  draftPagesSchema,
+  findPage,
+  resolvePagesSnapshot,
+} from "~/business/cms/resolve-snapshot"
 import { loadSiteSnapshot } from "~/business/cms/site-snapshot-source.server"
 import { metaCopy } from "~/copy/meta"
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { createMetaArray, createPageTitle } from "~/lib/helpers/meta"
-import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
 import { getNextEvents } from "~/pages/page/fetch/get-next-events"
 import { PageContent } from "./page-content"
@@ -23,8 +26,6 @@ const DraftPageRoute = lazy(() =>
 
 const SITE_URL = POSITIV_URL.replace(/\/$/, "")
 const HOMEPAGE_ADDRESS = "/"
-
-const draftPagesSchema = zod.object({ pages: zod.unknown() })
 
 function notFound() {
   return new Response(null, { status: 404 })
@@ -150,25 +151,30 @@ export function meta({ data }: Route.MetaArgs) {
 export default function PageRoute({ loaderData }: Route.ComponentProps) {
   const { page, events, isLoggedIn } = loaderData
 
-  if (loaderData.draftMode) {
-    return (
-      <Suspense
-        fallback={
-          <PageContent page={page} events={events} isLoggedIn={isLoggedIn} />
-        }
-      >
+  // In draft mode a live edit replaces the Page in place. The content stays at
+  // a fixed tree position so loading the live chunk never remounts it; undefined
+  // means no live value yet, and a null live result keeps the last good Page.
+  const [livePage, setLivePage] = useState<Page | null | undefined>(undefined)
+
+  if (!loaderData.draftMode) {
+    return <PageContent page={page} events={events} isLoggedIn={isLoggedIn} />
+  }
+
+  const activePage = livePage === undefined ? page : (livePage ?? page)
+
+  return (
+    <>
+      <PageContent page={activePage} events={events} isLoggedIn={isLoggedIn} />
+      <Suspense fallback={null}>
         <DraftPageRoute
           initial={loaderData.initial}
           query={loaderData.query}
           params={loaderData.params}
           clientConfig={loaderData.clientConfig}
           address={loaderData.address}
-          events={events}
-          isLoggedIn={isLoggedIn}
+          onPage={setLivePage}
         />
       </Suspense>
-    )
-  }
-
-  return <PageContent page={page} events={events} isLoggedIn={isLoggedIn} />
+    </>
+  )
 }
