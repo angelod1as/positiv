@@ -41,6 +41,7 @@ import {
   type LoadedSiteSettings,
   loadSiteSettings,
 } from "./business/cms/site-settings.server"
+import { logger } from "~/lib/logger/logger.server"
 import { subscribeProfileToNewsletter } from "./business/newsletter/auto-subscribe.server"
 import { getSubscriptionStatus } from "./business/newsletter/subscription-helpers.server"
 import {
@@ -139,7 +140,9 @@ function siteSettingsFromDraft(data: unknown): LoadedSiteSettings {
       editorialSystemUnavailable: false,
     }
   } catch (error) {
-    console.error("Could not resolve the draft Site Settings", error)
+    logger.error("Could not resolve the draft Site Settings", {
+      error: error instanceof Error ? error.message : String(error),
+    })
     return { siteSettings: null, editorialSystemUnavailable: true }
   }
 }
@@ -169,7 +172,9 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   // the whole response down.
   const draftQuery: Promise<DraftSnapshotQuery | null> = draftMode
     ? loadDraftSnapshotQuery(request).catch((error) => {
-        console.error("Could not load the draft snapshot", error)
+        logger.error("Could not load the draft snapshot", {
+          error: error instanceof Error ? error.message : String(error),
+        })
         return null
       })
     : Promise.resolve(null)
