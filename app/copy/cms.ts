@@ -2,8 +2,6 @@ export const cmsPreviewCopy = {
   incompleteSection: "Seção incompleta",
   incompleteHeader: "Cabeçalho incompleto",
   missingPrefix: "falta",
-  separator: ", ",
-  and: " e ",
   genericMissing: "conteúdo obrigatório",
   fieldLabels: {
     title: "o título",

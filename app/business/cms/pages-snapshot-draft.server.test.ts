@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { headers, page, sections } from "~/test/page-documents"
+import { headers, page, paragraph, sections } from "~/test/page-documents"
 import { resolvePagesSnapshot } from "./pages-snapshot.server"
 
 const config = { projectId: "8ojkallk", dataset: "development" }
@@ -30,6 +30,26 @@ describe("resolvePagesSnapshot in draft mode", () => {
     expect(
       placeholder?._type === "placeholder" ? placeholder.missing : [],
     ).toContain("title")
+  })
+
+  it("reports a nested Section failure by its top-level field", async () => {
+    const brokenCards = {
+      _type: "about",
+      _key: "nested-about",
+      title: "Como assim?",
+      cards: [
+        { _key: "c0", title: "ok", body: paragraph("texto") },
+        { _key: "c1", title: "ok", body: paragraph("texto") },
+        { _key: "c2" },
+      ],
+    }
+    const snapshot = await draft([page({ sections: [brokenCards] })])
+    const placeholder = snapshot.get("/sobre")?.sections[0]
+
+    expect(placeholder?._type).toBe("placeholder")
+    expect(placeholder?._type === "placeholder" ? placeholder.missing : []).toEqual(
+      ["cards"],
+    )
   })
 
   it("renders a placeholder for an invalid Page Header", async () => {

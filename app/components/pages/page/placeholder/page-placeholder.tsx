@@ -6,6 +6,11 @@ type PagePlaceholderProps = {
   variant: "section" | "header"
 }
 
+const listFormatter = new Intl.ListFormat("pt-BR", {
+  style: "long",
+  type: "conjunction",
+})
+
 const labelFor = (field: string) =>
   cmsPreviewCopy.fieldLabels[
     field as keyof typeof cmsPreviewCopy.fieldLabels
@@ -14,8 +19,7 @@ const labelFor = (field: string) =>
 const describeMissing = (missing: string[]) => {
   const labels = [...new Set(missing.map(labelFor))]
   if (labels.length === 0) return cmsPreviewCopy.genericMissing
-  if (labels.length === 1) return labels[0]
-  return `${labels.slice(0, -1).join(cmsPreviewCopy.separator)}${cmsPreviewCopy.and}${labels[labels.length - 1]}`
+  return listFormatter.format(labels)
 }
 
 export const PagePlaceholder = ({ missing, variant }: PagePlaceholderProps) => {
@@ -27,7 +31,7 @@ export const PagePlaceholder = ({ missing, variant }: PagePlaceholderProps) => {
 
   const notice = (
     <p
-      role="status"
+      role="note"
       className="mx-auto max-w-(--breakpoint-md) rounded-md border-2 border-dashed border-amber-400 bg-amber-50 px-4 py-6 text-center text-amber-900"
     >
       {message}

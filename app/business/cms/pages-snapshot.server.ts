@@ -1,6 +1,7 @@
 import { createImageUrlBuilder } from "@sanity/image-url"
 import type { z } from "zod"
 import { zod } from "~/lib/helpers/zod"
+import { logger } from "~/lib/logger/logger.server"
 import type { PageImage } from "./content.schema"
 import {
   type Page,
@@ -44,7 +45,11 @@ export function resolvePagesSnapshot(
   for (const document of response) {
     if (mode === "draft") {
       const resolved = resolveDraftPage(document, builder)
-      if (resolved && !snapshot.has(resolved.address)) {
+      if (!resolved) {
+        logger.warn(`Draft Page dropped, its shell is malformed: ${describe(document)}`)
+      } else if (snapshot.has(resolved.address)) {
+        logger.warn(`Draft Page dropped, another Page has its address: ${describe(document)}`)
+      } else {
         snapshot.set(resolved.address, resolved)
       }
       continue
