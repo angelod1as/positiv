@@ -1,16 +1,13 @@
 import type { QueryResponseInitial } from "@sanity/react-loader"
 import { ENV } from "varlock/env"
 import { createDraftReadClient } from "./draft-read-client.server"
-import { loadQuery as serverLoadQuery, setServerClient } from "./live-loader"
+import {
+  type LiveClientConfig,
+  loadQuery as serverLoadQuery,
+  setServerClient,
+} from "./live-loader"
 import { SANITY_API_VERSION } from "./sanity-client.server"
 import { siteSnapshotQuery } from "./site-snapshot-query"
-
-export type LiveClientConfig = {
-  projectId: string
-  dataset: string
-  apiVersion: string
-  apiHost?: string
-}
 
 export type DraftSnapshotQuery = {
   initial: QueryResponseInitial<unknown>

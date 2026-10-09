@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import * as authServer from "~/business/auth/auth.server"
+import { isDraftModeEnabled } from "~/business/cms/draft-mode.server"
+import { loadDraftSnapshotQuery } from "~/business/cms/live-loader.server"
 import type { Page } from "~/business/cms/page.schema"
-import type { PagesSnapshot } from "~/business/cms/pages-snapshot.server"
+import type { PagesSnapshot } from "~/business/cms/resolve-snapshot"
 import { siteSnapshotCache } from "~/business/cms/site-snapshot-cache.server"
 import { whatsAppButtonCopy } from "~/copy/layout"
 import { metaCopy } from "~/copy/meta"
 import { getNextEvents } from "~/pages/page/fetch/get-next-events"
+import { headers as docHeaders, page as pageDocument } from "~/test/page-documents"
 import { pagesSnapshotFixture } from "~/test/pages-snapshot-fixture"
 import { renderWithRouter, screen } from "~/test/test-utils"
 import type { Route } from "./+types/page"
@@ -13,6 +16,14 @@ import PageRoute, { loader, meta } from "./page"
 
 vi.mock("~/business/auth/auth.server", () => ({
   getContext: vi.fn(),
+}))
+
+vi.mock("~/business/cms/draft-mode.server", () => ({
+  isDraftModeEnabled: vi.fn(),
+}))
+
+vi.mock("~/business/cms/live-loader.server", () => ({
+  loadDraftSnapshotQuery: vi.fn(),
 }))
 
 vi.mock("~/business/cms/site-snapshot-cache.server", () => ({
@@ -91,6 +102,7 @@ describe("Page loader", () => {
 
     expect(result.page).toEqual(pageAt("/sobre/equipe"))
     expect(result.isLoggedIn).toBe(true)
+    expect(result.draftMode).toBe(false)
   })
 
   it("finds the Page when the address ends with a slash", async () => {
@@ -193,6 +205,74 @@ describe("Page loader", () => {
     const result = await loader(argsFor("/agenda"))
 
     await expect(result.events).resolves.toBeUndefined()
+  })
+})
+
+describe("Page loader in draft mode", () => {
+  const clientConfig = {
+    projectId: "8ojkallk",
+    dataset: "development",
+    apiVersion: "2026-09-24",
+  }
+
+  function draftWith(...docs: unknown[]) {
+    vi.mocked(loadDraftSnapshotQuery).mockResolvedValue({
+      initial: { data: { pages: docs, siteSettings: null } },
+      query: "the-snapshot-query",
+      params: {},
+      clientConfig,
+    } as unknown as Awaited<ReturnType<typeof loadDraftSnapshotQuery>>)
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(isDraftModeEnabled).mockResolvedValue(true)
+    vi.mocked(getNextEvents).mockResolvedValue({
+      success: true,
+      data: [],
+      errors: [],
+    })
+    signedInAs(undefined)
+  })
+
+  it("hands the component the raw initial data, query, params and config", async () => {
+    draftWith(pageDocument({ address: "/sobre" }))
+
+    const result = await loader(argsFor("/sobre"))
+
+    expect(result.draftMode).toBe(true)
+    expect(result.query).toBe("the-snapshot-query")
+    expect(result.params).toEqual({})
+    expect(result.clientConfig).toEqual(clientConfig)
+    expect(result.initial).toBeDefined()
+  })
+
+  it("resolves the Page from the raw draft documents", async () => {
+    draftWith(
+      pageDocument({
+        _id: "page-home",
+        address: "/",
+        header: [docHeaders.homepageHero],
+      }),
+    )
+
+    const result = await loader(homepageArgs)
+
+    expect(result.page.address).toBe("/")
+  })
+
+  it("reads drafts without touching the published snapshot cache", async () => {
+    draftWith(pageDocument({ address: "/sobre" }))
+
+    await loader(argsFor("/sobre"))
+
+    expect(siteSnapshotCache.get).not.toHaveBeenCalled()
+  })
+
+  it("throws a 404 for a draft address no Page has", async () => {
+    draftWith(pageDocument({ address: "/sobre" }))
+
+    expect(await statusOf(loader(argsFor("/nao-existe")))).toBe(404)
   })
 })
 
