@@ -1,7 +1,17 @@
 import { createImageUrlBuilder } from "@sanity/image-url"
+import type { z } from "zod"
 import { zod } from "~/lib/helpers/zod"
 import type { PageImage } from "./content.schema"
-import { type Page, type PageDocument, pageDocumentSchema } from "./page.schema"
+import {
+  type Page,
+  type PageDocument,
+  type PageHeader,
+  type PageSection,
+  draftPageShellSchema,
+  pageDocumentSchema,
+  pageHeaderSchema,
+  pageSectionDocumentSchema,
+} from "./page.schema"
 
 const PHOTO_SIZE = 320
 const IMAGE_MAX_WIDTH = 1600
@@ -10,6 +20,8 @@ const SHARING_IMAGE = { width: 1200, height: 630 }
 export type PagesSnapshot = ReadonlyMap<string, Page>
 
 export type ClientConfig = { projectId?: string; dataset?: string }
+
+export type SnapshotMode = "published" | "draft"
 
 type ImageUrlBuilder = ReturnType<typeof createImageUrlBuilder>
 type SectionDocument = PageDocument["sections"][number]
@@ -21,6 +33,7 @@ type ImageDocument = Extract<
 export function resolvePagesSnapshot(
   documents: unknown,
   { projectId, dataset }: ClientConfig,
+  mode: SnapshotMode = "published",
 ): PagesSnapshot {
   const response = zod.array(zod.unknown()).parse(documents)
   const builder = createImageUrlBuilder({
@@ -31,6 +44,22 @@ export function resolvePagesSnapshot(
   const failures: string[] = []
 
   for (const document of response) {
+    if (mode === "draft") {
+      const resolved = resolveDraftPage(document, builder)
+      if (!resolved) {
+        console.warn(
+          `Draft Page dropped, its address is unusable: ${describe(document)}`,
+        )
+      } else if (snapshot.has(resolved.address)) {
+        console.warn(
+          `Draft Page dropped, another Page has its address: ${describe(document)}`,
+        )
+      } else {
+        snapshot.set(resolved.address, resolved)
+      }
+      continue
+    }
+
     const result = pageDocumentSchema.safeParse(document)
     if (!result.success) {
       failures.push(
@@ -70,30 +99,89 @@ function describe(document: unknown) {
 }
 
 function resolvePage(document: PageDocument, builder: ImageUrlBuilder): Page {
-  const { image, ...seo } = document.seo
-
   return {
     ...document,
     header: document.header[0],
     sections: document.sections.map((section) =>
       resolveSection(section, builder),
     ),
-    seo: {
-      ...seo,
-      image: image
-        ? {
-            url: builder
-              .image(image)
-              .width(SHARING_IMAGE.width)
-              .height(SHARING_IMAGE.height)
-              .fit("crop")
-              .auto("format")
-              .url(),
-            alt: image.alt,
-            ...SHARING_IMAGE,
-          }
-        : image,
-    },
+    seo: resolveSeo(document.seo, builder),
+  }
+}
+
+function resolveDraftPage(
+  document: unknown,
+  builder: ImageUrlBuilder,
+): Page | null {
+  const shell = draftPageShellSchema.safeParse(document)
+  if (!shell.success) return null
+
+  const { header, sections, seo, ...rest } = shell.data
+  return {
+    ...rest,
+    header: resolveDraftHeader(header),
+    sections: sections.map((section, index) =>
+      resolveDraftSection(section, index, builder),
+    ),
+    seo: resolveSeo(seo, builder),
+  }
+}
+
+function resolveDraftHeader(header: unknown[]): PageHeader {
+  const result = pageHeaderSchema.safeParse(header[0])
+  if (result.success) return result.data
+  return { _type: "placeholder", missing: missingFields(result.error) }
+}
+
+function resolveDraftSection(
+  section: unknown,
+  index: number,
+  builder: ImageUrlBuilder,
+): PageSection {
+  const result = pageSectionDocumentSchema.safeParse(section)
+  if (result.success) return resolveSection(result.data, builder)
+  return {
+    _type: "placeholder",
+    _key: keyOf(section, index),
+    missing: missingFields(result.error),
+  }
+}
+
+function keyOf(section: unknown, index: number): string {
+  const result = zod.object({ _key: zod.string() }).safeParse(section)
+  return result.success ? result.data._key : `placeholder-${index}`
+}
+
+function missingFields(error: z.ZodError): string[] {
+  const fields = new Set<string>()
+  for (const issue of error.issues) {
+    const [first] = issue.path
+    if (typeof first === "string") fields.add(first)
+  }
+  return [...fields]
+}
+
+function resolveSeo(
+  seo: PageDocument["seo"],
+  builder: ImageUrlBuilder,
+): Page["seo"] {
+  const { image, ...rest } = seo
+
+  return {
+    ...rest,
+    image: image
+      ? {
+          url: builder
+            .image(image)
+            .width(SHARING_IMAGE.width)
+            .height(SHARING_IMAGE.height)
+            .fit("crop")
+            .auto("format")
+            .url(),
+          alt: image.alt,
+          ...SHARING_IMAGE,
+        }
+      : image,
   }
 }
 

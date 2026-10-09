@@ -9,6 +9,7 @@ import { NextEventsSection } from "./next-events-section"
 import { NextEventsSectionSkeleton } from "./next-events-section-skeleton"
 import { TestimonialsSection } from "./testimonials-section"
 import type { Event } from "~types/database/entities.types"
+import { PagePlaceholder } from "../placeholder/page-placeholder"
 import { ImageSection } from "./image-section"
 import { RichTextSection } from "./rich-text-section"
 
@@ -63,6 +64,14 @@ export const PageSections = ({
         return <RichTextSection key={section._key} content={section} />
       case "imageSection":
         return <ImageSection key={section._key} content={section} />
+      case "placeholder":
+        return (
+          <PagePlaceholder
+            key={section._key}
+            variant="section"
+            missing={section.missing}
+          />
+        )
     }
   })
 }

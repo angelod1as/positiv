@@ -77,6 +77,19 @@ describe("getSiteSnapshot", () => {
     await expect(getSiteSnapshot(client)).rejects.toThrow(/page-sobre/)
   })
 
+  it("validates each Section on its own in draft mode", async () => {
+    respondWith({
+      pages: [page({ sections: [{ _type: "about", _key: "broken" }] })],
+      siteSettings: null,
+    })
+
+    const { pages } = await getSiteSnapshot(client, "draft")
+
+    expect(pages.get("/sobre")?.sections.map(({ _type }) => _type)).toEqual([
+      "placeholder",
+    ])
+  })
+
   it("accepts the snapshot recorded from the development seed", async () => {
     respondWith({ pages: pagesFixture, siteSettings: siteSettingsFixture })
 

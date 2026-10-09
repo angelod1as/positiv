@@ -66,7 +66,7 @@ const imageDimensionsSchema = zod.object({
   height: zod.number().positive(),
 })
 
-const pageSectionDocumentSchema = zod.discriminatedUnion("_type", [
+export const pageSectionDocumentSchema = zod.discriminatedUnion("_type", [
   ...sharedSections,
   section("founders", {
     ...foundersFields,
@@ -130,6 +130,25 @@ export const pageDocumentSchema = zod.object({
   seo: zod.object({ ...seoFields, image: sanityImageSchema.nullish() }),
 })
 
+const DRAFT_FALLBACK_DATE = "1970-01-01T00:00:00.000Z"
+
+const draftSeoShellSchema = zod
+  .object({ ...seoFields, image: sanityImageSchema.nullish() })
+  .catch({ title: null, description: "", noIndex: true, image: null })
+
+// In draft mode only the address has to be valid, so the Page can be routed to
+// and keyed. Everything else falls back to a safe default, so an incomplete
+// shell still renders its Header and Section placeholders instead of 404ing.
+export const draftPageShellSchema = zod.object({
+  _id: zod.string().catch("unknown"),
+  _updatedAt: zod.iso.datetime().catch(DRAFT_FALLBACK_DATE),
+  title: zod.string().catch(""),
+  address: addressSchema,
+  header: zod.array(zod.unknown()).catch([]),
+  sections: zod.array(zod.unknown()).catch([]),
+  seo: draftSeoShellSchema,
+})
+
 export const pageSchema = zod.object({
   _id: zod.string(),
   _updatedAt: zod.iso.datetime(),
@@ -141,6 +160,20 @@ export const pageSchema = zod.object({
 })
 
 export type PageDocument = z.infer<typeof pageDocumentSchema>
-export type Page = z.infer<typeof pageSchema>
-export type PageHeader = Page["header"]
-export type PageSection = Page["sections"][number]
+
+export type HeaderPlaceholder = { _type: "placeholder"; missing: string[] }
+export type SectionPlaceholder = {
+  _type: "placeholder"
+  _key: string
+  missing: string[]
+}
+
+type ValidPage = z.infer<typeof pageSchema>
+
+export type PageHeader = ValidPage["header"] | HeaderPlaceholder
+export type PageSection = ValidPage["sections"][number] | SectionPlaceholder
+
+export type Page = Omit<ValidPage, "header" | "sections"> & {
+  header: PageHeader
+  sections: PageSection[]
+}

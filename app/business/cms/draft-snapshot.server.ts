@@ -4,5 +4,5 @@ import { getSiteSnapshot, type SiteSnapshot } from "./site-snapshot.server"
 export function getDraftSiteSnapshot(
   client = createDraftReadClient(),
 ): Promise<SiteSnapshot> {
-  return getSiteSnapshot(client)
+  return getSiteSnapshot(client, "draft")
 }

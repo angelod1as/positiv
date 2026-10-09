@@ -1,4 +1,5 @@
 import type { PageHeader as PageHeaderContent } from "~/business/cms/page.schema"
+import { PagePlaceholder } from "../placeholder/page-placeholder"
 import { HomepageHero } from "./homepage-hero"
 import { PageHero } from "./page-hero"
 import { PageTitle } from "./page-title"
@@ -15,5 +16,7 @@ export const PageHeader = ({ header }: PageHeaderProps) => {
       return <PageHero content={header} />
     case "pageTitle":
       return <PageTitle content={header} />
+    case "placeholder":
+      return <PagePlaceholder variant="header" missing={header.missing} />
   }
 }

@@ -94,4 +94,24 @@ describe("PageSections", () => {
 
     expect(renderedSectionTitles(page)).toEqual(sectionTitles(page))
   })
+
+  it("renders a placeholder in place of an incomplete Section, keeping the valid ones", async () => {
+    const page = await pageFixture("/sobre/equipe")
+
+    renderWithRouter(
+      <PageSections
+        sections={[
+          { _type: "placeholder", _key: "broken", missing: ["title"] },
+          ...page.sections,
+        ]}
+        events={undefined}
+        isLoggedIn={false}
+      />,
+    )
+
+    expect(
+      screen.getByText("Seção incompleta: falta o título"),
+    ).toBeInTheDocument()
+    expect(renderedSectionTitles(page)).toEqual(sectionTitles(page))
+  })
 })
