@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { enableVisualEditing } from "@sanity/visual-editing"
+import { VisualEditing as SanityVisualEditing } from "@sanity/visual-editing/react-router"
 import { useLiveMode } from "~/business/cms/live-loader"
 import { render } from "~/test/test-utils"
 import { VisualEditing } from "./visual-editing"
 
-vi.mock("@sanity/visual-editing", () => ({
-  enableVisualEditing: vi.fn(() => () => {}),
+vi.mock("@sanity/visual-editing/react-router", () => ({
+  VisualEditing: vi.fn(() => null),
 }))
 
 vi.mock("~/business/cms/live-loader", () => ({ useLiveMode: vi.fn() }))
@@ -24,8 +24,15 @@ describe("VisualEditing", () => {
   it("draws the overlays and opens the live-mode connection", () => {
     render(<VisualEditing clientConfig={clientConfig} />)
 
-    expect(enableVisualEditing).toHaveBeenCalled()
+    expect(SanityVisualEditing).toHaveBeenCalled()
     expect(useLiveMode).toHaveBeenCalled()
+  })
+
+  it("disables loader revalidation so only live mode updates the preview", () => {
+    render(<VisualEditing clientConfig={clientConfig} />)
+
+    const props = vi.mocked(SanityVisualEditing).mock.lastCall?.[0]
+    expect(props?.refresh?.({} as never, () => false)).toBe(false)
   })
 
   it("drives live mode with a publishable client that carries no token", () => {

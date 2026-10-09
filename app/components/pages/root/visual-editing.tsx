@@ -1,14 +1,9 @@
 import { createClient } from "@sanity/client"
-import { enableVisualEditing } from "@sanity/visual-editing"
-import { useEffect, useMemo } from "react"
+import { VisualEditing as SanityVisualEditing } from "@sanity/visual-editing/react-router"
+import { useMemo } from "react"
 import type { LiveClientConfig } from "~/business/cms/live-loader"
 import { useLiveMode } from "~/business/cms/live-loader"
 
-// Live mode replaces the route revalidation that re-ran the loaders on every
-// edit. enableVisualEditing draws the click-to-edit overlays; useLiveMode opens
-// the comlink the Studio pushes draft data down, so an edit updates the preview
-// over postMessage with no request to api.sanity.io. The client is publishable
-// only — it never carries the Viewer token.
 export function VisualEditing({
   clientConfig,
 }: {
@@ -29,8 +24,11 @@ export function VisualEditing({
     [clientConfig],
   )
 
-  useEffect(() => enableVisualEditing(), [])
   useLiveMode({ client })
 
-  return null
+  // The react-router component wires the history adapter that keeps the Studio's
+  // Presentation URL in step with in-preview navigation. refresh returns false
+  // so live mode is the only update path: no loader revalidation, no request to
+  // api.sanity.io per edit.
+  return <SanityVisualEditing refresh={() => false} />
 }
