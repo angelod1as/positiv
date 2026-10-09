@@ -25,11 +25,12 @@ const responseSchema = zod.object({
 
 export async function getSiteSnapshot(
   client: SiteClient = createSanityClient(),
+  mode: "published" | "draft" = "published",
 ): Promise<SiteSnapshot> {
   const response = responseSchema.parse(await client.fetch(siteSnapshotQuery))
 
   return {
-    pages: resolvePagesSnapshot(response.pages, client.config()),
+    pages: resolvePagesSnapshot(response.pages, client.config(), mode),
     siteSettings: resolveSiteSettings(response.siteSettings),
   }
 }

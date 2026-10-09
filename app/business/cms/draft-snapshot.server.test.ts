@@ -16,6 +16,6 @@ describe("getDraftSiteSnapshot", () => {
     getSiteSnapshot.mockResolvedValue(snapshot)
 
     await expect(getDraftSiteSnapshot()).resolves.toBe(snapshot)
-    expect(getSiteSnapshot).toHaveBeenCalledWith(draftClient)
+    expect(getSiteSnapshot).toHaveBeenCalledWith(draftClient, "draft")
   })
 })
