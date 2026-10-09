@@ -61,6 +61,7 @@ const createMockComponentProps = (
       events: events as LoaderData["events"],
       recentProfiles: [] as LoaderData["recentProfiles"],
       recentFeedbacks: [] as LoaderData["recentFeedbacks"],
+      cardPaymentsEnabled: false,
     },
     params: {},
     matches: [] as unknown as Route.ComponentProps["matches"],

@@ -74,6 +74,10 @@ vi.mock("~/business/admin/admin.server", () => ({
   ]),
 }))
 
+vi.mock("~/business/settings/app-settings.server", () => ({
+  isCardPaymentsEnabled: vi.fn().mockResolvedValue(false),
+}))
+
 vi.mock("~/business/feedback/feedback.server", () => ({
   getRecentFeedbacks: vi.fn().mockResolvedValue({
     success: true,
@@ -94,9 +98,18 @@ vi.mock("~/business/feedback/feedback.server", () => ({
 }))
 
 // Import after mocking
+import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
 import { loader } from "./dashboard-page"
 
 describe("Dashboard Page Loader", () => {
+  it("passes the card-payments flag through to the page", async () => {
+    vi.mocked(isCardPaymentsEnabled).mockResolvedValueOnce(true)
+
+    const result = await loader()
+
+    expect(result.cardPaymentsEnabled).toBe(true)
+  })
+
   it("should load events with only required fields", async () => {
     const result = await loader()
 
