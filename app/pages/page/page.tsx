@@ -9,7 +9,7 @@ import {
   findPage,
   resolvePagesSnapshot,
 } from "~/business/cms/resolve-snapshot"
-import { loadSiteSnapshot } from "~/business/cms/site-snapshot-source.server"
+import { siteSnapshotCache } from "~/business/cms/site-snapshot-cache.server"
 import { metaCopy } from "~/copy/meta"
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { createMetaArray, createPageTitle } from "~/lib/helpers/meta"
@@ -41,9 +41,9 @@ async function loadEvents(profileId: string | undefined, count: number) {
   return result.data
 }
 
-async function loadSnapshot(request: Request) {
+async function loadPublishedSnapshot() {
   try {
-    return (await loadSiteSnapshot(request)).pages
+    return (await siteSnapshotCache.get()).pages
   } catch (error) {
     logger.error("Could not load the Pages", {
       error: error instanceof Error ? error.message : String(error),
@@ -79,21 +79,40 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   if (await isDraftModeEnabled(request)) {
     const [{ currentUser, currentProfile }, draft] = await Promise.all([
       getContext(request, params),
-      loadDraftSnapshotQuery(request),
+      loadDraftSnapshotQuery(request).catch((error) => {
+        logger.error("Could not load the draft snapshot", {
+          error: error instanceof Error ? error.message : String(error),
+        })
+        return null
+      }),
     ])
 
-    const { pages } = draftPagesSchema.parse(draft.initial.data)
-    const snapshot = resolvePagesSnapshot(pages, draft.clientConfig, "draft")
+    if (draft) {
+      const { pages } = draftPagesSchema.parse(draft.initial.data)
+      const snapshot = resolvePagesSnapshot(pages, draft.clientConfig, "draft")
+      const page = pageOr5xx(findPage(snapshot, address), address)
+
+      return {
+        draftMode: true as const,
+        page,
+        initial: draft.initial,
+        query: draft.query,
+        params: draft.params,
+        clientConfig: draft.clientConfig,
+        address,
+        events: eventsFor(page, currentProfile?.id),
+        isLoggedIn: !!currentUser?.id,
+      }
+    }
+
+    // The draft read failed (e.g. over quota) — degrade to the published
+    // snapshot rather than turning the route into a 500.
+    const snapshot = await loadPublishedSnapshot()
     const page = pageOr5xx(findPage(snapshot, address), address)
 
     return {
-      draftMode: true as const,
+      draftMode: false as const,
       page,
-      initial: draft.initial,
-      query: draft.query,
-      params: draft.params,
-      clientConfig: draft.clientConfig,
-      address,
       events: eventsFor(page, currentProfile?.id),
       isLoggedIn: !!currentUser?.id,
     }
@@ -101,7 +120,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
   const [{ currentUser, currentProfile }, snapshot] = await Promise.all([
     getContext(request, params),
-    loadSnapshot(request),
+    loadPublishedSnapshot(),
   ])
 
   const page = pageOr5xx(findPage(snapshot, address), address)
@@ -151,16 +170,17 @@ export function meta({ data }: Route.MetaArgs) {
 export default function PageRoute({ loaderData }: Route.ComponentProps) {
   const { page, events, isLoggedIn } = loaderData
 
-  // In draft mode a live edit replaces the Page in place. The content stays at
-  // a fixed tree position so loading the live chunk never remounts it; undefined
-  // means no live value yet, and a null live result keeps the last good Page.
-  const [livePage, setLivePage] = useState<Page | null | undefined>(undefined)
+  // Live Page held per address: a null result keeps the last good one, and a
+  // value from another address is ignored, so navigating never shows a stale
+  // Page. Fixed tree position keeps loading the live chunk from remounting it.
+  const [live, setLive] = useState<{ address: string; page: Page } | null>(null)
 
   if (!loaderData.draftMode) {
     return <PageContent page={page} events={events} isLoggedIn={isLoggedIn} />
   }
 
-  const activePage = livePage === undefined ? page : (livePage ?? page)
+  const { address } = loaderData
+  const activePage = live?.address === address ? live.page : page
 
   return (
     <>
@@ -171,8 +191,10 @@ export default function PageRoute({ loaderData }: Route.ComponentProps) {
           query={loaderData.query}
           params={loaderData.params}
           clientConfig={loaderData.clientConfig}
-          address={loaderData.address}
-          onPage={setLivePage}
+          address={address}
+          onPage={(next) => {
+            if (next) setLive({ address, page: next })
+          }}
         />
       </Suspense>
     </>

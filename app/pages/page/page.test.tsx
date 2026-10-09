@@ -285,6 +285,22 @@ describe("Page loader in draft mode", () => {
 
     expect(await statusOf(loader(argsFor("/nao-existe")))).toBe(404)
   })
+
+  it("degrades to the published snapshot when the draft read fails", async () => {
+    vi.mocked(loadDraftSnapshotQuery).mockRejectedValue(
+      new Error("402 over quota"),
+    )
+    const published = await pagesSnapshotFixture()
+    vi.mocked(siteSnapshotCache.get).mockResolvedValue({
+      pages: published,
+      siteSettings: null,
+    })
+
+    const result = await loader(argsFor("/sobre"))
+
+    expect(result.draftMode).toBe(false)
+    expect(result.page).toEqual(published.get("/sobre"))
+  })
 })
 
 describe("Page meta", () => {
@@ -436,29 +452,78 @@ describe("Page route", () => {
     expect(whatsAppLink()).toBeNull()
   })
 
-  it("shows the loader Page in draft mode and swaps it when a live edit arrives", async () => {
-    const loaderData = {
+  function draftLoaderData(address: string, page: Page) {
+    return {
       draftMode: true,
-      page: pageAt("/"),
+      page,
       events: undefined,
       isLoggedIn: false,
       initial: { data: null },
       query: "the-snapshot-query",
       params: {},
       clientConfig: { projectId: "p", dataset: "d", apiVersion: "v" },
-      address: "/",
+      address,
     }
+  }
+
+  it("shows the loader Page in draft mode and swaps it when a live edit arrives", async () => {
     renderWithRouter(
-      <PageRoute {...({ loaderData } as unknown as Route.ComponentProps)} />,
+      <PageRoute
+        {...({
+          loaderData: draftLoaderData("/", pageAt("/")),
+        } as unknown as Route.ComponentProps)}
+      />,
     )
 
     expect(whatsAppLink()).toBeInTheDocument()
     await waitFor(() => expect(captured.onPage).toBeDefined())
 
-    act(() => captured.onPage?.(null))
-    expect(whatsAppLink()).toBeInTheDocument()
+    act(() => captured.onPage?.(pageAt("/sobre")))
+    expect(whatsAppLink()).toBeNull()
+  })
+
+  it("keeps the last good live Page when a later edit fails validation", async () => {
+    renderWithRouter(
+      <PageRoute
+        {...({
+          loaderData: draftLoaderData("/", pageAt("/")),
+        } as unknown as Route.ComponentProps)}
+      />,
+    )
+    await waitFor(() => expect(captured.onPage).toBeDefined())
 
     act(() => captured.onPage?.(pageAt("/sobre")))
     expect(whatsAppLink()).toBeNull()
+
+    // A half-saved edit resolves to no Page; the last good one stays, so this
+    // does not fall back to the loader's Homepage.
+    act(() => captured.onPage?.(null))
+    expect(whatsAppLink()).toBeNull()
+  })
+
+  it("drops a stale live Page after navigating to another address", async () => {
+    const { rerender } = renderWithRouter(
+      <PageRoute
+        {...({
+          loaderData: draftLoaderData("/", pageAt("/")),
+        } as unknown as Route.ComponentProps)}
+      />,
+    )
+    await waitFor(() => expect(captured.onPage).toBeDefined())
+
+    act(() => captured.onPage?.(pageAt("/sobre")))
+    expect(whatsAppLink()).toBeNull()
+
+    // Navigate to another address with the Homepage as the fresh loader Page.
+    // The stale live Page belonged to "/", so it is ignored and the loader
+    // Page wins.
+    rerender(
+      <PageRoute
+        {...({
+          loaderData: draftLoaderData("/outra", pageAt("/")),
+        } as unknown as Route.ComponentProps)}
+      />,
+    )
+    expect(whatsAppLink()).toBeInTheDocument()
   })
 })
