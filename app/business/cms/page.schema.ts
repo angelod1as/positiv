@@ -66,7 +66,7 @@ const imageDimensionsSchema = zod.object({
   height: zod.number().positive(),
 })
 
-const pageSectionDocumentSchema = zod.discriminatedUnion("_type", [
+export const pageSectionDocumentSchema = zod.discriminatedUnion("_type", [
   ...sharedSections,
   section("founders", {
     ...foundersFields,
@@ -130,6 +130,13 @@ export const pageDocumentSchema = zod.object({
   seo: zod.object({ ...seoFields, image: sanityImageSchema.nullish() }),
 })
 
+export const draftPageShellSchema = pageDocumentSchema
+  .omit({ header: true, sections: true })
+  .extend({
+    header: zod.array(zod.unknown()),
+    sections: zod.array(zod.unknown()),
+  })
+
 export const pageSchema = zod.object({
   _id: zod.string(),
   _updatedAt: zod.iso.datetime(),
@@ -141,6 +148,20 @@ export const pageSchema = zod.object({
 })
 
 export type PageDocument = z.infer<typeof pageDocumentSchema>
-export type Page = z.infer<typeof pageSchema>
-export type PageHeader = Page["header"]
-export type PageSection = Page["sections"][number]
+
+export type HeaderPlaceholder = { _type: "placeholder"; missing: string[] }
+export type SectionPlaceholder = {
+  _type: "placeholder"
+  _key: string
+  missing: string[]
+}
+
+type ValidPage = z.infer<typeof pageSchema>
+
+export type PageHeader = ValidPage["header"] | HeaderPlaceholder
+export type PageSection = ValidPage["sections"][number] | SectionPlaceholder
+
+export type Page = Omit<ValidPage, "header" | "sections"> & {
+  header: PageHeader
+  sections: PageSection[]
+}
