@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { pageSchema } from "./page.schema"
-import { findPage } from "./pages-snapshot.server"
+import { findPage } from "./resolve-snapshot"
 import { createProductionReadClient } from "./production-read-client.server"
 import { getSiteSnapshot } from "./site-snapshot.server"
 

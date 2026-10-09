@@ -84,6 +84,13 @@ export function resolvePagesSnapshot(
   return snapshot
 }
 
+export function findPage(
+  snapshot: PagesSnapshot,
+  address: string,
+): Page | undefined {
+  return snapshot.get(address.length > 1 ? address.replace(/\/$/, "") : address)
+}
+
 export function resolveSiteSettings(document: unknown): SiteSettings | null {
   if (document === null || document === undefined) return null
 

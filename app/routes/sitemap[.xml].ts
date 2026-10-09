@@ -1,4 +1,4 @@
-import type { PagesSnapshot } from "~/business/cms/pages-snapshot.server"
+import type { PagesSnapshot } from "~/business/cms/resolve-snapshot"
 import { siteSnapshotCache } from "~/business/cms/site-snapshot-cache.server"
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { logger } from "~/lib/logger/logger.server"
