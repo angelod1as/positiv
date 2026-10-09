@@ -44,6 +44,16 @@ describe("PageHeader", () => {
     },
   )
 
+  it("renders a placeholder in place of an incomplete Page Header", () => {
+    renderWithRouter(
+      <PageHeader header={{ _type: "placeholder", missing: ["title"] }} />,
+    )
+
+    expect(
+      screen.getByText("Cabeçalho incompleto: falta o título"),
+    ).toBeInTheDocument()
+  })
+
   it("renders the Homepage Hero as the homepage does", () => {
     const { container } = renderWithRouter(
       <PageHeader header={headers.homepageHero} />,
