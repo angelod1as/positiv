@@ -367,9 +367,8 @@ type AppShellProps = {
   editorialSystemUnavailable: boolean
 }
 
-// The site chrome, rendered from whichever Site Settings it is handed: the
-// loader value for visitors, or the live value in draft mode. It holds no
-// effects, so re-rendering it as live edits arrive is free of side effects.
+// Effect-free chrome, so re-rendering it as live edits arrive is side-effect
+// free. Fed the loader value for visitors or the live value in draft mode.
 function AppShell({
   profile,
   userEmail,
@@ -450,9 +449,8 @@ export default function App({ loaderData }: Route.ComponentProps) {
   )
   const showNewsletterModal = shouldShowNewsletterModal && !isAuthFlow
 
-  // In draft mode live edits replace the Site Settings in place. The shell
-  // stays at a fixed tree position so loading the live chunk never remounts it
-  // or the routed page; undefined means no live value has arrived yet.
+  // Live Site Settings swap in place; the shell stays put so loading the live
+  // chunk never remounts it. undefined means no live value has arrived yet.
   const [liveSiteSettings, setLiveSiteSettings] = useState<
     SiteSettings | null | undefined
   >(undefined)

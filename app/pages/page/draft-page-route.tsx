@@ -32,7 +32,10 @@ export function DraftPageRoute({
       const { pages } = draftPagesSchema.parse(data)
       const snapshot = resolvePagesSnapshot(pages, clientConfig, "draft")
       return findPage(snapshot, address) ?? null
-    } catch {
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.warn("Live draft Page could not be resolved", error)
+      }
       return null
     }
   }, [data, clientConfig, address])

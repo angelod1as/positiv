@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest"
 import { headers, image, page, sections, seo } from "~/test/page-documents"
 import { siteSettingsDocument } from "~/test/site-settings-documents"
-// The browser imports the transform straight from the shared module, never from
-// the .server re-export, because live draft data arrives raw in the browser and
-// has to be transformed there. These tests pin that entry point.
+// The browser imports the transform straight from this shared, non-.server
+// module, because live draft data arrives raw in the browser and is transformed
+// there. These tests pin that entry point.
 import { resolvePagesSnapshot, resolveSiteSettings } from "./resolve-snapshot"
 
 const config = { projectId: "8ojkallk", dataset: "development" }

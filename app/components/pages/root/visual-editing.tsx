@@ -26,9 +26,7 @@ export function VisualEditing({
 
   useLiveMode({ client })
 
-  // The react-router component wires the history adapter that keeps the Studio's
-  // Presentation URL in step with in-preview navigation. refresh returns false
-  // so live mode is the only update path: no loader revalidation, no request to
-  // api.sanity.io per edit.
+  // The react-router component supplies the history adapter; refresh returns
+  // false so live mode is the only update path — no revalidation, no API call.
   return <SanityVisualEditing refresh={() => false} />
 }

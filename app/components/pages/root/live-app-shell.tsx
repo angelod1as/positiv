@@ -16,10 +16,8 @@ type LiveAppShellProps = {
   onSiteSettings: (siteSettings: SiteSettings | null) => void
 }
 
-// Subscribes to the same snapshot query the Page does, so the Studio pushes
-// Site Settings edits over the one live connection, and reports each resolved
-// value up. It renders nothing, so the chrome it feeds never changes tree
-// position and so never remounts when this live code loads.
+// Reports live Site Settings up and renders nothing, so the chrome it feeds
+// keeps its tree position and never remounts when this live code loads.
 export function LiveAppShell({ snapshot, onSiteSettings }: LiveAppShellProps) {
   const { data } = useQuery<unknown>(snapshot.query, snapshot.params, {
     initial: snapshot.initial,
@@ -37,7 +35,10 @@ export function LiveAppShell({ snapshot, onSiteSettings }: LiveAppShellProps) {
 function siteSettingsFrom(data: unknown): SiteSettings | null {
   try {
     return resolveSiteSettings(draftSettingsSchema.parse(data).siteSettings)
-  } catch {
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.warn("Live draft Site Settings could not be resolved", error)
+    }
     return null
   }
 }
