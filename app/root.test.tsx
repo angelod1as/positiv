@@ -38,8 +38,13 @@ vi.mock("~/components/organisms/newsletter-subscription-modal", () => ({
   NewsletterSubscriptionModal: () => null,
 }))
 
-vi.mock("@sanity/visual-editing/react-router", () => ({
+vi.mock("./components/pages/root/visual-editing", () => ({
   VisualEditing: () => <div data-testid="visual-editing" />,
+}))
+
+vi.mock("./components/pages/root/live-app-shell", () => ({
+  LiveAppShell: ({ render }: { render: (s: null) => React.ReactNode }) =>
+    render(null),
 }))
 
 const { ENV } = vi.hoisted(() => ({ ENV: {} as Record<string, unknown> }))
@@ -99,9 +104,23 @@ describe("App visual editing", () => {
   async function renderApp(draftMode: boolean) {
     vi.resetModules()
     const { default: App } = await import("./root")
+    const liveSnapshot = draftMode
+      ? {
+          initial: { data: null },
+          query: "the-snapshot-query",
+          params: {},
+          clientConfig: {
+            projectId: "8ojkallk",
+            dataset: "development",
+            apiVersion: "2026-09-24",
+          },
+        }
+      : undefined
     renderWithRouter(
       <App
-        {...({ loaderData: { draftMode, siteSettings: null } } as Route.ComponentProps)}
+        {...({
+          loaderData: { draftMode, liveSnapshot, siteSettings: null },
+        } as Route.ComponentProps)}
       />,
     )
   }

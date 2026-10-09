@@ -73,7 +73,7 @@ import "@fontsource/nunito/latin-ext-700.css"
 // transitive deps). A static import would ship it to every visitor, so it is
 // code-split behind a lazy import and mounted under `draftMode`.
 const VisualEditing = lazy(() =>
-  import("@sanity/visual-editing/react-router").then((module) => ({
+  import("./components/pages/root/visual-editing").then((module) => ({
     default: module.VisualEditing,
   })),
 )
@@ -151,7 +151,12 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   const draftMode = await isDraftModeEnabled(request)
   const draft = draftMode ? await loadDraftSnapshotQuery(request) : null
   const liveSnapshot = draft
-    ? { initial: draft.initial, query: draft.query, params: draft.params }
+    ? {
+        initial: draft.initial,
+        query: draft.query,
+        params: draft.params,
+        clientConfig: draft.clientConfig,
+      }
     : undefined
   const siteSettings = draft
     ? siteSettingsFromDraft(draft.initial.data)
@@ -453,9 +458,9 @@ export default function App({ loaderData }: Route.ComponentProps) {
       ) : (
         renderShell(siteSettings)
       )}
-      {draftMode && (
+      {draftMode && liveSnapshot && (
         <Suspense fallback={null}>
-          <VisualEditing />
+          <VisualEditing clientConfig={liveSnapshot.clientConfig} />
         </Suspense>
       )}
     </>
