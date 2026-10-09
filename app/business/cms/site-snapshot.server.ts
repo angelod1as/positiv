@@ -4,9 +4,10 @@ import {
   type PagesSnapshot,
   type SnapshotMode,
   resolvePagesSnapshot,
-} from "./pages-snapshot.server"
+  resolveSiteSettings,
+} from "./resolve-snapshot"
 import { createSanityClient } from "./sanity-client.server"
-import { type SiteSettings, siteSettingsSchema } from "./site-settings.schema"
+import type { SiteSettings } from "./site-settings.schema"
 import { siteSnapshotQuery } from "./site-snapshot-query"
 
 export type SiteSnapshot = {
@@ -34,16 +35,4 @@ export async function getSiteSnapshot(
     pages: resolvePagesSnapshot(response.pages, client.config(), mode),
     siteSettings: resolveSiteSettings(response.siteSettings),
   }
-}
-
-function resolveSiteSettings(document: unknown): SiteSettings | null {
-  if (document === null || document === undefined) return null
-
-  const result = siteSettingsSchema.safeParse(document)
-  if (!result.success) {
-    throw new Error(
-      `Site Settings failed validation, so the snapshot is not served:\n${zod.prettifyError(result.error)}`,
-    )
-  }
-  return result.data
 }
