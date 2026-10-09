@@ -21,6 +21,8 @@ export type PagesSnapshot = ReadonlyMap<string, Page>
 
 export type ClientConfig = { projectId?: string; dataset?: string }
 
+export type SnapshotMode = "published" | "draft"
+
 type ImageUrlBuilder = ReturnType<typeof createImageUrlBuilder>
 type SectionDocument = PageDocument["sections"][number]
 type ImageDocument = Extract<
@@ -31,7 +33,7 @@ type ImageDocument = Extract<
 export function resolvePagesSnapshot(
   documents: unknown,
   { projectId, dataset }: ClientConfig,
-  mode: "published" | "draft" = "published",
+  mode: SnapshotMode = "published",
 ): PagesSnapshot {
   const response = zod.array(zod.unknown()).parse(documents)
   const builder = createImageUrlBuilder({

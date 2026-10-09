@@ -47,9 +47,37 @@ describe("resolvePagesSnapshot in draft mode", () => {
     const placeholder = snapshot.get("/sobre")?.sections[0]
 
     expect(placeholder?._type).toBe("placeholder")
-    expect(placeholder?._type === "placeholder" ? placeholder.missing : []).toEqual(
-      ["cards"],
-    )
+    expect(
+      placeholder?._type === "placeholder" ? placeholder.missing : [],
+    ).toEqual(["cards"])
+  })
+
+  it("gives each incomplete Section its own placeholder key", async () => {
+    const snapshot = await draft([
+      page({
+        sections: [
+          { _type: "about", _key: "broken-1" },
+          { _type: "feedback", _key: "broken-2" },
+        ],
+      }),
+    ])
+    const sections = snapshot.get("/sobre")?.sections
+
+    expect(sections?.map(({ _type }) => _type)).toEqual([
+      "placeholder",
+      "placeholder",
+    ])
+    expect(sections?.map(({ _key }) => _key)).toEqual(["broken-1", "broken-2"])
+  })
+
+  it("drops a draft Page whose address another Page already took", async () => {
+    const snapshot = await draft([
+      page({ _id: "page-first" }),
+      page({ _id: "page-second" }),
+    ])
+
+    expect([...snapshot.keys()]).toEqual(["/sobre"])
+    expect(snapshot.get("/sobre")?._id).toBe("page-first")
   })
 
   it("renders a placeholder for an invalid Page Header", async () => {

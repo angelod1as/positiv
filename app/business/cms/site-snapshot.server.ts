@@ -2,6 +2,7 @@ import { zod } from "~/lib/helpers/zod"
 import {
   type ClientConfig,
   type PagesSnapshot,
+  type SnapshotMode,
   resolvePagesSnapshot,
 } from "./pages-snapshot.server"
 import { createSanityClient } from "./sanity-client.server"
@@ -25,7 +26,7 @@ const responseSchema = zod.object({
 
 export async function getSiteSnapshot(
   client: SiteClient = createSanityClient(),
-  mode: "published" | "draft" = "published",
+  mode: SnapshotMode = "published",
 ): Promise<SiteSnapshot> {
   const response = responseSchema.parse(await client.fetch(siteSnapshotQuery))
 
