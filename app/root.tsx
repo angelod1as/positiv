@@ -28,8 +28,15 @@ import type { Route } from "./+types/root"
 import "./app.css"
 import { getContext } from "./business/auth/auth.server"
 import { isDraftModeEnabled } from "./business/cms/draft-mode.server"
-import { loadSiteSettings } from "./business/cms/site-settings.server"
+import { loadDraftSnapshotQuery } from "./business/cms/live-loader.server"
+import { resolveSiteSettings } from "./business/cms/resolve-snapshot"
+import type { SiteSettings } from "./business/cms/site-settings.schema"
+import {
+  type LoadedSiteSettings,
+  loadSiteSettings,
+} from "./business/cms/site-settings.server"
 import { loadSiteSnapshot } from "./business/cms/site-snapshot-source.server"
+import { zod } from "./lib/helpers/zod"
 import { subscribeProfileToNewsletter } from "./business/newsletter/auto-subscribe.server"
 import { getSubscriptionStatus } from "./business/newsletter/subscription-helpers.server"
 import {
@@ -41,6 +48,7 @@ import { Header } from "./components/organisms/header/header"
 import { NEWS_VERSION } from "./components/organisms/news-dialog/news-utils"
 import { NewsletterSubscriptionModal } from "./components/organisms/newsletter-subscription-modal"
 import { ProfileUpdateGuard } from "./components/organisms/profile-update-guard/profile-update-guard"
+import type { ProfileWithRoles } from "~types/database/entities.types"
 
 import "@fontsource/dm-sans/400-italic.css"
 import "@fontsource/dm-sans/400.css"
@@ -67,6 +75,15 @@ import "@fontsource/nunito/latin-ext-700.css"
 const VisualEditing = lazy(() =>
   import("@sanity/visual-editing/react-router").then((module) => ({
     default: module.VisualEditing,
+  })),
+)
+
+// Only editors in draft mode load the live Site Settings consumer (and the
+// react-loader it drags in). Visitors render the chrome from the loader value
+// alone, so the lazy boundary keeps the live code out of their bundle.
+const LiveAppShell = lazy(() =>
+  import("./components/pages/root/live-app-shell").then((module) => ({
+    default: module.LiveAppShell,
   })),
 )
 
@@ -115,11 +132,30 @@ export function meta({}: Route.MetaArgs) {
   ]
 }
 
+const draftSettingsSchema = zod.object({ siteSettings: zod.unknown() })
+
+function siteSettingsFromDraft(data: unknown): LoadedSiteSettings {
+  try {
+    const { siteSettings } = draftSettingsSchema.parse(data)
+    return {
+      siteSettings: resolveSiteSettings(siteSettings),
+      editorialSystemUnavailable: false,
+    }
+  } catch (error) {
+    console.error("Could not resolve the draft Site Settings", error)
+    return { siteSettings: null, editorialSystemUnavailable: true }
+  }
+}
+
 export async function loader({ params, request }: Route.LoaderArgs) {
   const draftMode = await isDraftModeEnabled(request)
-  const siteSettings = loadSiteSettings({
-    get: () => loadSiteSnapshot(request),
-  })
+  const draft = draftMode ? await loadDraftSnapshotQuery(request) : null
+  const liveSnapshot = draft
+    ? { initial: draft.initial, query: draft.query, params: draft.params }
+    : undefined
+  const siteSettings = draft
+    ? siteSettingsFromDraft(draft.initial.data)
+    : loadSiteSettings({ get: () => loadSiteSnapshot(request) })
 
   try {
     const { currentProfile, currentUser, isProdInDev, supabaseHeaders } =
@@ -184,6 +220,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         needsProfileUpdate,
         shouldShowNewsletterModal,
         draftMode,
+        liveSnapshot,
         ...(await siteSettings),
       },
       { headers },
@@ -199,6 +236,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       needsProfileUpdate: false,
       shouldShowNewsletterModal: false,
       draftMode,
+      liveSnapshot,
       ...(await siteSettings),
     }
   }
@@ -297,6 +335,61 @@ export function Layout(props: { children: ReactNode }) {
   )
 }
 
+type AppShellProps = {
+  profile: ProfileWithRoles | null
+  userEmail?: string
+  isProdInDev: boolean | null
+  isThereAnyNews: boolean
+  needsProfileUpdate: boolean
+  currentPath: string
+  showNewsletterModal: boolean
+  siteSettings: SiteSettings | null
+  editorialSystemUnavailable: boolean
+}
+
+// The site chrome, rendered from whichever Site Settings it is handed: the
+// loader value for visitors, or the live value in draft mode. It holds no
+// effects, so re-rendering it as live edits arrive is free of side effects.
+function AppShell({
+  profile,
+  userEmail,
+  isProdInDev,
+  isThereAnyNews,
+  needsProfileUpdate,
+  currentPath,
+  showNewsletterModal,
+  siteSettings,
+  editorialSystemUnavailable,
+}: AppShellProps) {
+  return (
+    <>
+      <Header
+        isProdInDev={Boolean(isProdInDev)}
+        profile={profile}
+        userEmail={userEmail}
+        isThereAnyNews={isThereAnyNews}
+        navigation={siteSettings?.navigation}
+        notice={siteSettings?.notice}
+        editorialSystemUnavailable={editorialSystemUnavailable}
+      />
+      <ProfileUpdateGuard
+        currentProfile={profile}
+        currentPath={currentPath}
+        needsProfileUpdate={needsProfileUpdate}
+      />
+      <NewsletterSubscriptionModal open={showNewsletterModal} />
+      <div className="flex flex-col grow mt-[var(--site-header-height,4rem)]">
+        <Outlet />
+      </div>
+      <Footer
+        isThereAnyNews={isThereAnyNews}
+        currentProfile={profile}
+        siteSettings={siteSettings}
+      />
+    </>
+  )
+}
+
 export default function App({ loaderData }: Route.ComponentProps) {
   const {
     currentUser,
@@ -309,6 +402,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
     siteSettings,
     editorialSystemUnavailable = false,
     draftMode = false,
+    liveSnapshot,
   } = loaderData
 
   const location = useLocation()
@@ -336,31 +430,29 @@ export default function App({ loaderData }: Route.ComponentProps) {
   )
   const showNewsletterModal = shouldShowNewsletterModal && !isAuthFlow
 
+  const renderShell = (settings: SiteSettings | null) => (
+    <AppShell
+      profile={currentProfile}
+      userEmail={currentUser?.email ?? undefined}
+      isProdInDev={isProdInDev}
+      isThereAnyNews={isThereAnyNews ?? false}
+      needsProfileUpdate={needsProfileUpdate}
+      currentPath={location.pathname}
+      showNewsletterModal={showNewsletterModal}
+      siteSettings={settings}
+      editorialSystemUnavailable={editorialSystemUnavailable}
+    />
+  )
+
   return (
     <>
-      <Header
-        isProdInDev={Boolean(isProdInDev)}
-        profile={currentProfile}
-        userEmail={currentUser?.email}
-        isThereAnyNews={isThereAnyNews ?? false}
-        navigation={siteSettings?.navigation}
-        notice={siteSettings?.notice}
-        editorialSystemUnavailable={editorialSystemUnavailable}
-      />
-      <ProfileUpdateGuard
-        currentProfile={currentProfile}
-        currentPath={location.pathname}
-        needsProfileUpdate={needsProfileUpdate}
-      />
-      <NewsletterSubscriptionModal open={showNewsletterModal} />
-      <div className="flex flex-col grow mt-[var(--site-header-height,4rem)]">
-        <Outlet />
-      </div>
-      <Footer
-        isThereAnyNews={isThereAnyNews ?? false}
-        currentProfile={currentProfile}
-        siteSettings={siteSettings}
-      />
+      {draftMode && liveSnapshot ? (
+        <Suspense fallback={renderShell(siteSettings)}>
+          <LiveAppShell snapshot={liveSnapshot} render={renderShell} />
+        </Suspense>
+      ) : (
+        renderShell(siteSettings)
+      )}
       {draftMode && (
         <Suspense fallback={null}>
           <VisualEditing />
