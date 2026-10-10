@@ -203,6 +203,10 @@ export default function PageRoute({ loaderData }: Route.ComponentProps) {
   const activePage =
     live && live.address === loaderData.address ? live.page : page
 
+  // events is fetched server-side from the Page's nextEvents section at load
+  // time, so a live edit swaps the Page but not this data: adding or recounting
+  // a nextEvents section only takes effect on reload. Accepted for preview —
+  // recomputing live would need a per-edit server round-trip.
   return (
     <>
       <PageContent page={activePage} events={events} isLoggedIn={isLoggedIn} />
