@@ -23,22 +23,32 @@ export function LiveAppShell({ snapshot, onSiteSettings }: LiveAppShellProps) {
     initial: snapshot.initial,
   })
 
-  const siteSettings = useMemo(() => siteSettingsFrom(data), [data])
+  const result = useMemo(() => siteSettingsFrom(data), [data])
 
   useEffect(() => {
-    onSiteSettings(siteSettings)
-  }, [siteSettings, onSiteSettings])
+    // A legitimately empty document reports null; an invalid transient edit
+    // reports nothing, so the chrome keeps its last good value rather than
+    // blanking while an editor types, matching PageRoute's last-good Page.
+    if (result.ok) onSiteSettings(result.siteSettings)
+  }, [result, onSiteSettings])
 
   return null
 }
 
-function siteSettingsFrom(data: unknown): SiteSettings | null {
+type LiveSiteSettingsResult =
+  | { ok: true; siteSettings: SiteSettings | null }
+  | { ok: false }
+
+function siteSettingsFrom(data: unknown): LiveSiteSettingsResult {
   try {
-    return resolveSiteSettings(draftSettingsSchema.parse(data).siteSettings)
+    const siteSettings = resolveSiteSettings(
+      draftSettingsSchema.parse(data).siteSettings,
+    )
+    return { ok: true, siteSettings }
   } catch (error) {
     if (import.meta.env.DEV) {
       console.warn("Live draft Site Settings could not be resolved", error)
     }
-    return null
+    return { ok: false }
   }
 }

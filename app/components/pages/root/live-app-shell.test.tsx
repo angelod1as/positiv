@@ -49,12 +49,14 @@ describe("LiveAppShell", () => {
     expect(onSiteSettings).toHaveBeenCalledWith(null)
   })
 
-  it("falls back to no Site Settings when a half-saved edit fails validation", () => {
+  it("keeps the last good Site Settings when a half-saved edit fails validation", () => {
     liveWith({ pages: [], siteSettings: { navigation: "not-an-array" } })
     const onSiteSettings = vi.fn()
 
     render(<LiveAppShell snapshot={snapshot} onSiteSettings={onSiteSettings} />)
 
-    expect(onSiteSettings).toHaveBeenCalledWith(null)
+    // An invalid transient edit must not blank the chrome — it reports nothing,
+    // so the last good Site Settings stay, matching PageRoute's last-good Page.
+    expect(onSiteSettings).not.toHaveBeenCalled()
   })
 })
