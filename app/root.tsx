@@ -17,6 +17,7 @@ import { ENV } from "varlock/env"
 import { isValidCpf } from "~/lib/helpers/cpf"
 import { isValidPhone } from "~/lib/helpers/phone"
 import { useMarkHydrated } from "~/lib/hooks/use-mark-hydrated"
+import { logger } from "~/lib/logger/logger.server"
 import { Copy } from "~/components/atoms/copy/copy"
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import { TooltipProvider } from "~/components/ui/tooltip"
@@ -41,7 +42,6 @@ import {
   type LoadedSiteSettings,
   loadSiteSettings,
 } from "./business/cms/site-settings.server"
-import { logger } from "~/lib/logger/logger.server"
 import { subscribeProfileToNewsletter } from "./business/newsletter/auto-subscribe.server"
 import { getSubscriptionStatus } from "./business/newsletter/subscription-helpers.server"
 import {

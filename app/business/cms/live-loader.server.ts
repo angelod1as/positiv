@@ -41,6 +41,10 @@ function liveClientConfig(): LiveClientConfig {
 
 // Memoised per request so the root and Page loaders share one api.sanity.io
 // call per navigation; later edits arrive over postMessage, free of charge.
+// The key is the Request React Router hands every loader of a single
+// navigation — it passes one instance to all of them, so the two loaders hit
+// the same entry. If that ever stopped holding, the miss would cost a second
+// fetch, never correctness.
 const draftQueryByRequest = new WeakMap<Request, Promise<DraftSnapshotQuery>>()
 
 export function loadDraftSnapshotQuery(
