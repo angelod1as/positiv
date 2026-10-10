@@ -35,6 +35,7 @@ function liveClientConfig(): LiveClientConfig {
     projectId: ENV.SANITY_PROJECT_ID,
     dataset: ENV.SANITY_DATASET,
     apiVersion: SANITY_API_VERSION,
+    studioUrl: ENV.SANITY_STUDIO_URL,
     ...(ENV.SANITY_API_HOST && { apiHost: ENV.SANITY_API_HOST }),
   }
 }
