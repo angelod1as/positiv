@@ -66,4 +66,19 @@ describe("loadDraftSnapshotQuery", () => {
 
     expect(loadQuery).toHaveBeenCalledTimes(2)
   })
+
+  it("memoises a rejected load per request, so the root and Page loaders share one failed fetch", async () => {
+    const request = new Request("http://x/")
+    const loadQuery = vi.fn(async () => {
+      throw new Error("over quota")
+    }) as unknown as Parameters<typeof loadDraftSnapshotQuery>[1]
+
+    const first = loadDraftSnapshotQuery(request, loadQuery)
+    const second = loadDraftSnapshotQuery(request, loadQuery)
+
+    expect(second).toBe(first)
+    await expect(first).rejects.toThrow("over quota")
+    await expect(second).rejects.toThrow("over quota")
+    expect(loadQuery).toHaveBeenCalledTimes(1)
+  })
 })
