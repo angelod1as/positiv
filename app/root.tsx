@@ -33,15 +33,12 @@ import {
   type DraftSnapshotQuery,
   loadDraftSnapshotQuery,
 } from "./business/cms/live-loader.server"
-import {
-  draftSettingsSchema,
-  resolveSiteSettings,
-} from "./business/cms/resolve-snapshot"
 import type { SiteSettings } from "./business/cms/site-settings.schema"
 import {
   type LoadedSiteSettings,
   loadSiteSettings,
 } from "./business/cms/site-settings.server"
+import { siteSettingsFromDraft } from "./business/cms/site-settings-from-draft.server"
 import { subscribeProfileToNewsletter } from "./business/newsletter/auto-subscribe.server"
 import { getSubscriptionStatus } from "./business/newsletter/subscription-helpers.server"
 import {
@@ -132,21 +129,6 @@ export function meta({}: Route.MetaArgs) {
   ]
 }
 
-function siteSettingsFromDraft(data: unknown): LoadedSiteSettings {
-  try {
-    const { siteSettings } = draftSettingsSchema.parse(data)
-    return {
-      siteSettings: resolveSiteSettings(siteSettings),
-      editorialSystemUnavailable: false,
-    }
-  } catch (error) {
-    logger.error("Could not resolve the draft Site Settings", {
-      error: error instanceof Error ? error.message : String(error),
-    })
-    return { siteSettings: null, editorialSystemUnavailable: true }
-  }
-}
-
 function liveSnapshotFrom(draft: DraftSnapshotQuery | null) {
   if (!draft) return undefined
   return {
@@ -159,7 +141,7 @@ function liveSnapshotFrom(draft: DraftSnapshotQuery | null) {
 
 function siteSettingsFor(
   draft: DraftSnapshotQuery | null,
-): Promise<LoadedSiteSettings> | LoadedSiteSettings {
+): Promise<LoadedSiteSettings> {
   // A null draft means the published path, or a draft read that failed and
   // degrades to the published, cached snapshot.
   return draft ? siteSettingsFromDraft(draft.initial.data) : loadSiteSettings()
@@ -456,11 +438,16 @@ export default function App({ loaderData }: Route.ComponentProps) {
 
   // Live Site Settings swap in place; the shell stays put so loading the live
   // chunk never remounts it. undefined means no live value has arrived yet.
+  // The live value only applies while its snapshot is present — if a later
+  // navigation drops liveSnapshot, the chrome reverts to the loader value
+  // rather than keeping a stale live one.
   const [liveSiteSettings, setLiveSiteSettings] = useState<
     SiteSettings | null | undefined
   >(undefined)
   const activeSiteSettings =
-    liveSiteSettings === undefined ? siteSettings : liveSiteSettings
+    liveSnapshot && liveSiteSettings !== undefined
+      ? liveSiteSettings
+      : siteSettings
 
   return (
     <>

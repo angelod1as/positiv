@@ -28,7 +28,11 @@ vi.mock("~/components/ui/tooltip", () => ({
   ),
 }))
 
-vi.mock("~/components/organisms/header/header", () => ({ Header: () => null }))
+vi.mock("~/components/organisms/header/header", () => ({
+  Header: ({ navigation }: { navigation?: Array<{ label?: string }> }) => (
+    <div data-testid="chrome">{navigation?.[0]?.label ?? "NONE"}</div>
+  ),
+}))
 vi.mock("~/components/organisms/footer/footer", () => ({ Footer: () => null }))
 vi.mock(
   "~/components/organisms/profile-update-guard/profile-update-guard",
@@ -42,9 +46,25 @@ vi.mock("./components/pages/root/visual-editing", () => ({
   VisualEditing: () => <div data-testid="visual-editing" />,
 }))
 
-vi.mock("./components/pages/root/live-app-shell", () => ({
-  LiveAppShell: () => null,
+const liveControl = vi.hoisted(() => ({
+  report: false,
+  value: undefined as unknown,
 }))
+vi.mock("./components/pages/root/live-app-shell", async () => {
+  const { useEffect } = await import("react")
+  return {
+    LiveAppShell: ({
+      onSiteSettings,
+    }: {
+      onSiteSettings: (value: unknown) => void
+    }) => {
+      useEffect(() => {
+        if (liveControl.report) onSiteSettings(liveControl.value)
+      }, [onSiteSettings])
+      return null
+    },
+  }
+})
 
 const { ENV } = vi.hoisted(() => ({ ENV: {} as Record<string, unknown> }))
 vi.mock("varlock/env", () => ({ ENV }))
@@ -134,5 +154,87 @@ describe("App visual editing", () => {
     await renderApp(false)
 
     expect(screen.queryByTestId("visual-editing")).not.toBeInTheDocument()
+  })
+})
+
+describe("App live Site Settings", () => {
+  const snapshot = {
+    initial: { data: null },
+    query: "the-snapshot-query",
+    params: {},
+    clientConfig: {
+      projectId: "8ojkallk",
+      dataset: "development",
+      apiVersion: "2026-09-24",
+    },
+  }
+  const loaderBase = { siteSettings: { navigation: [{ label: "LOADER" }] } }
+
+  async function renderLive(options: {
+    liveSnapshot: unknown
+    report: boolean
+    value?: unknown
+  }) {
+    liveControl.report = options.report
+    liveControl.value = options.value
+    vi.resetModules()
+    const { default: App } = await import("./root")
+    const result = renderWithRouter(
+      <App
+        {...({
+          loaderData: {
+            draftMode: true,
+            liveSnapshot: options.liveSnapshot,
+            ...loaderBase,
+          },
+        } as Route.ComponentProps)}
+      />,
+    )
+    return { App, result }
+  }
+
+  it("swaps in the live Site Settings reported through onSiteSettings", { timeout: 15000 }, async () => {
+    await renderLive({
+      liveSnapshot: snapshot,
+      report: true,
+      value: { navigation: [{ label: "LIVE" }] },
+    })
+
+    expect(await screen.findByText("LIVE")).toBeInTheDocument()
+  })
+
+  it("shows the loader Site Settings until a live value arrives", { timeout: 15000 }, async () => {
+    await renderLive({ liveSnapshot: snapshot, report: false })
+
+    expect(await screen.findByText("LOADER")).toBeInTheDocument()
+  })
+
+  it("treats a live empty document as blank chrome, distinct from no value yet", { timeout: 15000 }, async () => {
+    await renderLive({ liveSnapshot: snapshot, report: true, value: null })
+
+    expect(await screen.findByText("NONE")).toBeInTheDocument()
+  })
+
+  it("reverts to the loader Site Settings when the live snapshot goes away", { timeout: 15000 }, async () => {
+    const { App, result } = await renderLive({
+      liveSnapshot: snapshot,
+      report: true,
+      value: { navigation: [{ label: "LIVE" }] },
+    })
+    expect(await screen.findByText("LIVE")).toBeInTheDocument()
+
+    result.rerender(
+      <App
+        {...({
+          loaderData: {
+            draftMode: true,
+            liveSnapshot: undefined,
+            ...loaderBase,
+          },
+        } as Route.ComponentProps)}
+      />,
+    )
+
+    expect(await screen.findByText("LOADER")).toBeInTheDocument()
   })
 })
