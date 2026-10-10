@@ -24,6 +24,12 @@ const DraftPageRoute = lazy(() =>
   })),
 )
 
+const OverlayProvider = lazy(() =>
+  import("~/components/pages/page/overlay/overlay-provider").then((module) => ({
+    default: module.OverlayProvider,
+  })),
+)
+
 const SITE_URL = POSITIV_URL.replace(/\/$/, "")
 const HOMEPAGE_ADDRESS = "/"
 
@@ -207,9 +213,20 @@ export default function PageRoute({ loaderData }: Route.ComponentProps) {
   // time, so a live edit swaps the Page but not this data: adding or recounting
   // a nextEvents section only takes effect on reload. Accepted for preview —
   // recomputing live would need a per-edit server round-trip.
+  const content = (
+    <PageContent page={activePage} events={events} isLoggedIn={isLoggedIn} />
+  )
+
   return (
     <>
-      <PageContent page={activePage} events={events} isLoggedIn={isLoggedIn} />
+      <Suspense fallback={content}>
+        <OverlayProvider
+          pageId={activePage._id}
+          studioUrl={loaderData.clientConfig.studioUrl}
+        >
+          {content}
+        </OverlayProvider>
+      </Suspense>
       <Suspense fallback={null}>
         <DraftPageRoute
           initial={loaderData.initial}

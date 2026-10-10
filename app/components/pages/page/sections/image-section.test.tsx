@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { render, screen } from "~/test/test-utils"
+import { OverlayProvider } from "../overlay/overlay-provider"
 import { ImageSection } from "./image-section"
 
 const content = {
@@ -38,5 +39,28 @@ describe("ImageSection", () => {
     )
 
     expect(container.querySelector("figcaption")).toBeNull()
+  })
+
+  it("marks the image for click-to-edit in draft mode", () => {
+    render(
+      <OverlayProvider pageId="page-1" studioUrl="https://positiv.sanity.studio">
+        <ImageSection content={{ ...content, _key: "img-block" }} />
+      </OverlayProvider>,
+    )
+
+    const attr = screen
+      .getByRole("img", { name: "Imagem de exemplo" })
+      .getAttribute("data-sanity")
+    expect(attr).toContain("id=page-1")
+    expect(attr).toContain("type=page")
+    expect(attr).toContain("path=sections:img-block.image")
+  })
+
+  it("carries no edit attribute outside draft mode", () => {
+    render(<ImageSection content={content} />)
+
+    expect(
+      screen.getByRole("img", { name: "Imagem de exemplo" }),
+    ).not.toHaveAttribute("data-sanity")
   })
 })
