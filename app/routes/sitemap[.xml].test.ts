@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { resolvePagesSnapshot } from "~/business/cms/pages-snapshot.server"
+import { resolvePagesSnapshot } from "~/business/cms/resolve-snapshot"
 import { siteSnapshotCache } from "~/business/cms/site-snapshot-cache.server"
 import { page, seo } from "~/test/page-documents"
 import { loader } from "./sitemap[.xml]"

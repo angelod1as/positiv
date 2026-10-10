@@ -1,16 +1,28 @@
+import { lazy, Suspense, useCallback, useState } from "react"
 import { getContext } from "~/business/auth/auth.server"
+import { isDraftModeEnabled } from "~/business/cms/draft-mode.server"
+import { loadDraftSnapshotQuery } from "~/business/cms/live-loader.server"
 import { isReservedAddress } from "~/business/cms/page.schema"
-import { findPage } from "~/business/cms/pages-snapshot.server"
-import { loadSiteSnapshot } from "~/business/cms/site-snapshot-source.server"
-import { FloatingWhatsAppButton } from "~/components/atoms/floating-whatsapp-button/floating-whatsapp-button"
-import { PageHeader } from "~/components/pages/page/header/page-header"
-import { PageSections } from "~/components/pages/page/sections/page-sections"
+import type { Page } from "~/business/cms/page.schema"
+import {
+  draftPagesSchema,
+  findPage,
+  resolvePagesSnapshot,
+} from "~/business/cms/resolve-snapshot"
+import { siteSnapshotCache } from "~/business/cms/site-snapshot-cache.server"
 import { metaCopy } from "~/copy/meta"
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { createMetaArray, createPageTitle } from "~/lib/helpers/meta"
 import { logger } from "~/lib/logger/logger.server"
 import { getNextEvents } from "~/pages/page/fetch/get-next-events"
+import { PageContent } from "./page-content"
 import type { Route } from "./+types/page"
+
+const DraftPageRoute = lazy(() =>
+  import("./draft-page-route").then((module) => ({
+    default: module.DraftPageRoute,
+  })),
+)
 
 const SITE_URL = POSITIV_URL.replace(/\/$/, "")
 const HOMEPAGE_ADDRESS = "/"
@@ -29,9 +41,9 @@ async function loadEvents(profileId: string | undefined, count: number) {
   return result.data
 }
 
-async function loadSnapshot(request: Request) {
+async function loadPublishedSnapshot() {
   try {
-    return (await loadSiteSnapshot(request)).pages
+    return (await siteSnapshotCache.get()).pages
   } catch (error) {
     logger.error("Could not load the Pages", {
       error: error instanceof Error ? error.message : String(error),
@@ -40,18 +52,7 @@ async function loadSnapshot(request: Request) {
   }
 }
 
-export async function loader({ params, request }: Route.LoaderArgs) {
-  const address = `/${params["*"] ?? ""}`
-  if (isReservedAddress(address)) {
-    throw notFound()
-  }
-
-  const [{ currentUser, currentProfile }, snapshot] = await Promise.all([
-    getContext(request, params),
-    loadSnapshot(request),
-  ])
-
-  const page = findPage(snapshot, address)
+function pageOr5xx(page: Page | undefined, address: string): Page {
   if (!page && address === HOMEPAGE_ADDRESS) {
     logger.error("There is no Page at /, so the Homepage is down")
     throw new Response(null, { status: 503 })
@@ -59,16 +60,86 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   if (!page) {
     throw notFound()
   }
+  return page
+}
 
+function eventsFor(page: Page, profileId: string | undefined) {
   const nextEvents = page.sections.find(
     (section) => section._type === "nextEvents",
   )
+  return nextEvents ? loadEvents(profileId, nextEvents.count) : undefined
+}
+
+export async function loader({ params, request }: Route.LoaderArgs) {
+  const address = `/${params["*"] ?? ""}`
+  if (isReservedAddress(address)) {
+    throw notFound()
+  }
+
+  if (await isDraftModeEnabled(request)) {
+    const [{ currentUser, currentProfile }, draft] = await Promise.all([
+      getContext(request, params),
+      loadDraftSnapshotQuery(request).catch((error) => {
+        logger.error("Could not load the draft snapshot", {
+          error: error instanceof Error ? error.message : String(error),
+        })
+        return null
+      }),
+    ])
+
+    let draftPages: ReturnType<typeof resolvePagesSnapshot> | null = null
+    if (draft) {
+      try {
+        const { pages } = draftPagesSchema.parse(draft.initial.data)
+        draftPages = resolvePagesSnapshot(pages, draft.clientConfig, "draft")
+      } catch (error) {
+        logger.error("Could not resolve the draft Pages", {
+          error: error instanceof Error ? error.message : String(error),
+        })
+      }
+    }
+
+    if (draft && draftPages) {
+      const page = pageOr5xx(findPage(draftPages, address), address)
+
+      return {
+        draftMode: true as const,
+        page,
+        initial: draft.initial,
+        query: draft.query,
+        params: draft.params,
+        clientConfig: draft.clientConfig,
+        address,
+        events: eventsFor(page, currentProfile?.id),
+        isLoggedIn: !!currentUser?.id,
+      }
+    }
+
+    // The draft read failed (e.g. over quota) or its data would not resolve —
+    // degrade to the published snapshot rather than turning the route into a
+    // 500.
+    const snapshot = await loadPublishedSnapshot()
+    const page = pageOr5xx(findPage(snapshot, address), address)
+
+    return {
+      draftMode: false as const,
+      page,
+      events: eventsFor(page, currentProfile?.id),
+      isLoggedIn: !!currentUser?.id,
+    }
+  }
+
+  const [{ currentUser, currentProfile }, snapshot] = await Promise.all([
+    getContext(request, params),
+    loadPublishedSnapshot(),
+  ])
+
+  const page = pageOr5xx(findPage(snapshot, address), address)
 
   return {
+    draftMode: false as const,
     page,
-    events: nextEvents
-      ? loadEvents(currentProfile?.id, nextEvents.count)
-      : undefined,
+    events: eventsFor(page, currentProfile?.id),
     isLoggedIn: !!currentUser?.id,
   }
 }
@@ -109,18 +180,46 @@ export function meta({ data }: Route.MetaArgs) {
 
 export default function PageRoute({ loaderData }: Route.ComponentProps) {
   const { page, events, isLoggedIn } = loaderData
+  const address = loaderData.draftMode ? loaderData.address : undefined
 
+  // Live Page held per address: a null result keeps the last good one, and a
+  // value from another address is ignored, so navigating never shows a stale
+  // Page. Fixed tree position keeps loading the live chunk from remounting it.
+  const [live, setLive] = useState<{ address: string; page: Page } | null>(null)
+
+  // Stable so DraftPageRoute's effect fires when the live Page changes, not on
+  // every commit — a fresh onPage each render would spin setLive endlessly.
+  const onPage = useCallback(
+    (next: Page | null) => {
+      if (next && address) setLive({ address, page: next })
+    },
+    [address],
+  )
+
+  if (!loaderData.draftMode) {
+    return <PageContent page={page} events={events} isLoggedIn={isLoggedIn} />
+  }
+
+  const activePage =
+    live && live.address === loaderData.address ? live.page : page
+
+  // events is fetched server-side from the Page's nextEvents section at load
+  // time, so a live edit swaps the Page but not this data: adding or recounting
+  // a nextEvents section only takes effect on reload. Accepted for preview —
+  // recomputing live would need a per-edit server round-trip.
   return (
     <>
-      <div>
-        <PageHeader header={page.header} />
-        <PageSections
-          sections={page.sections}
-          events={events}
-          isLoggedIn={isLoggedIn}
+      <PageContent page={activePage} events={events} isLoggedIn={isLoggedIn} />
+      <Suspense fallback={null}>
+        <DraftPageRoute
+          initial={loaderData.initial}
+          query={loaderData.query}
+          params={loaderData.params}
+          clientConfig={loaderData.clientConfig}
+          address={loaderData.address}
+          onPage={onPage}
         />
-      </div>
-      {page.address === HOMEPAGE_ADDRESS && <FloatingWhatsAppButton />}
+      </Suspense>
     </>
   )
 }

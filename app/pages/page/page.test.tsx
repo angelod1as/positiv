@@ -1,18 +1,44 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import * as authServer from "~/business/auth/auth.server"
+import { isDraftModeEnabled } from "~/business/cms/draft-mode.server"
+import { loadDraftSnapshotQuery } from "~/business/cms/live-loader.server"
 import type { Page } from "~/business/cms/page.schema"
-import type { PagesSnapshot } from "~/business/cms/pages-snapshot.server"
+import type { PagesSnapshot } from "~/business/cms/resolve-snapshot"
 import { siteSnapshotCache } from "~/business/cms/site-snapshot-cache.server"
 import { whatsAppButtonCopy } from "~/copy/layout"
 import { metaCopy } from "~/copy/meta"
 import { getNextEvents } from "~/pages/page/fetch/get-next-events"
+import { headers as docHeaders, page as pageDocument } from "~/test/page-documents"
 import { pagesSnapshotFixture } from "~/test/pages-snapshot-fixture"
-import { renderWithRouter, screen } from "~/test/test-utils"
+import { act, renderWithRouter, screen, waitFor } from "~/test/test-utils"
 import type { Route } from "./+types/page"
 import PageRoute, { loader, meta } from "./page"
 
+const { captured } = vi.hoisted(() => ({
+  captured: {
+    onPage: undefined as ((page: unknown) => void) | undefined,
+    onPages: [] as ((page: unknown) => void)[],
+  },
+}))
+
+vi.mock("./draft-page-route", () => ({
+  DraftPageRoute: ({ onPage }: { onPage: (page: unknown) => void }) => {
+    captured.onPage = onPage
+    captured.onPages.push(onPage)
+    return null
+  },
+}))
+
 vi.mock("~/business/auth/auth.server", () => ({
   getContext: vi.fn(),
+}))
+
+vi.mock("~/business/cms/draft-mode.server", () => ({
+  isDraftModeEnabled: vi.fn(),
+}))
+
+vi.mock("~/business/cms/live-loader.server", () => ({
+  loadDraftSnapshotQuery: vi.fn(),
 }))
 
 vi.mock("~/business/cms/site-snapshot-cache.server", () => ({
@@ -91,6 +117,7 @@ describe("Page loader", () => {
 
     expect(result.page).toEqual(pageAt("/sobre/equipe"))
     expect(result.isLoggedIn).toBe(true)
+    expect(result.draftMode).toBe(false)
   })
 
   it("finds the Page when the address ends with a slash", async () => {
@@ -193,6 +220,109 @@ describe("Page loader", () => {
     const result = await loader(argsFor("/agenda"))
 
     await expect(result.events).resolves.toBeUndefined()
+  })
+})
+
+describe("Page loader in draft mode", () => {
+  const clientConfig = {
+    projectId: "8ojkallk",
+    dataset: "development",
+    apiVersion: "2026-09-24",
+  }
+
+  function draftWith(...docs: unknown[]) {
+    vi.mocked(loadDraftSnapshotQuery).mockResolvedValue({
+      initial: { data: { pages: docs, siteSettings: null } },
+      query: "the-snapshot-query",
+      params: {},
+      clientConfig,
+    } as unknown as Awaited<ReturnType<typeof loadDraftSnapshotQuery>>)
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(isDraftModeEnabled).mockResolvedValue(true)
+    vi.mocked(getNextEvents).mockResolvedValue({
+      success: true,
+      data: [],
+      errors: [],
+    })
+    signedInAs(undefined)
+  })
+
+  it("hands the component the raw initial data, query, params and config", async () => {
+    draftWith(pageDocument({ address: "/sobre" }))
+
+    const result = await loader(argsFor("/sobre"))
+
+    expect(result.draftMode).toBe(true)
+    expect(result.query).toBe("the-snapshot-query")
+    expect(result.params).toEqual({})
+    expect(result.clientConfig).toEqual(clientConfig)
+    expect(result.initial).toBeDefined()
+  })
+
+  it("resolves the Page from the raw draft documents", async () => {
+    draftWith(
+      pageDocument({
+        _id: "page-home",
+        address: "/",
+        header: [docHeaders.homepageHero],
+      }),
+    )
+
+    const result = await loader(homepageArgs)
+
+    expect(result.page.address).toBe("/")
+  })
+
+  it("reads drafts without touching the published snapshot cache", async () => {
+    draftWith(pageDocument({ address: "/sobre" }))
+
+    await loader(argsFor("/sobre"))
+
+    expect(siteSnapshotCache.get).not.toHaveBeenCalled()
+  })
+
+  it("throws a 404 for a draft address no Page has", async () => {
+    draftWith(pageDocument({ address: "/sobre" }))
+
+    expect(await statusOf(loader(argsFor("/nao-existe")))).toBe(404)
+  })
+
+  it("degrades to the published snapshot when the draft read fails", async () => {
+    vi.mocked(loadDraftSnapshotQuery).mockRejectedValue(
+      new Error("402 over quota"),
+    )
+    const published = await pagesSnapshotFixture()
+    vi.mocked(siteSnapshotCache.get).mockResolvedValue({
+      pages: published,
+      siteSettings: null,
+    })
+
+    const result = await loader(argsFor("/sobre"))
+
+    expect(result.draftMode).toBe(false)
+    expect(result.page).toEqual(published.get("/sobre"))
+  })
+
+  it("degrades to the published snapshot when the draft data cannot be resolved", async () => {
+    vi.mocked(loadDraftSnapshotQuery).mockResolvedValue({
+      initial: { data: { pages: "not a list of documents" } },
+      query: "the-snapshot-query",
+      params: {},
+      clientConfig,
+    } as unknown as Awaited<ReturnType<typeof loadDraftSnapshotQuery>>)
+    const published = await pagesSnapshotFixture()
+    vi.mocked(siteSnapshotCache.get).mockResolvedValue({
+      pages: published,
+      siteSettings: null,
+    })
+
+    const result = await loader(argsFor("/sobre"))
+
+    expect(result.draftMode).toBe(false)
+    expect(result.page).toEqual(published.get("/sobre"))
   })
 })
 
@@ -317,6 +447,7 @@ describe("Page meta", () => {
 describe("Page route", () => {
   beforeEach(async () => {
     snapshot = await pagesSnapshotFixture()
+    captured.onPages = []
   })
 
   function renderPage(page: Page) {
@@ -343,5 +474,100 @@ describe("Page route", () => {
     renderPage(pageAt("/sobre"))
 
     expect(whatsAppLink()).toBeNull()
+  })
+
+  function draftLoaderData(address: string, page: Page) {
+    return {
+      draftMode: true,
+      page,
+      events: undefined,
+      isLoggedIn: false,
+      initial: { data: null },
+      query: "the-snapshot-query",
+      params: {},
+      clientConfig: { projectId: "p", dataset: "d", apiVersion: "v" },
+      address,
+    }
+  }
+
+  it("shows the loader Page in draft mode and swaps it when a live edit arrives", async () => {
+    renderWithRouter(
+      <PageRoute
+        {...({
+          loaderData: draftLoaderData("/", pageAt("/")),
+        } as unknown as Route.ComponentProps)}
+      />,
+    )
+
+    expect(whatsAppLink()).toBeInTheDocument()
+    await waitFor(() => expect(captured.onPage).toBeDefined())
+
+    act(() => captured.onPage?.(pageAt("/sobre")))
+    expect(whatsAppLink()).toBeNull()
+  })
+
+  it("keeps the last good live Page when a later edit fails validation", async () => {
+    renderWithRouter(
+      <PageRoute
+        {...({
+          loaderData: draftLoaderData("/", pageAt("/")),
+        } as unknown as Route.ComponentProps)}
+      />,
+    )
+    await waitFor(() => expect(captured.onPage).toBeDefined())
+
+    act(() => captured.onPage?.(pageAt("/sobre")))
+    expect(whatsAppLink()).toBeNull()
+
+    // A half-saved edit resolves to no Page; the last good one stays, so this
+    // does not fall back to the loader's Homepage.
+    act(() => captured.onPage?.(null))
+    expect(whatsAppLink()).toBeNull()
+  })
+
+  it("drops a stale live Page after navigating to another address", async () => {
+    const { rerender } = renderWithRouter(
+      <PageRoute
+        {...({
+          loaderData: draftLoaderData("/", pageAt("/")),
+        } as unknown as Route.ComponentProps)}
+      />,
+    )
+    await waitFor(() => expect(captured.onPage).toBeDefined())
+
+    act(() => captured.onPage?.(pageAt("/sobre")))
+    expect(whatsAppLink()).toBeNull()
+
+    // Navigate to another address with the Homepage as the fresh loader Page.
+    // The stale live Page belonged to "/", so it is ignored and the loader
+    // Page wins.
+    rerender(
+      <PageRoute
+        {...({
+          loaderData: draftLoaderData("/outra", pageAt("/")),
+        } as unknown as Route.ComponentProps)}
+      />,
+    )
+    expect(whatsAppLink()).toBeInTheDocument()
+  })
+
+  it("hands DraftPageRoute a stable onPage so its live effect cannot loop", async () => {
+    renderWithRouter(
+      <PageRoute
+        {...({
+          loaderData: draftLoaderData("/", pageAt("/")),
+        } as unknown as Route.ComponentProps)}
+      />,
+    )
+    await waitFor(() => expect(captured.onPage).toBeDefined())
+
+    const first = captured.onPage
+    // A live edit arrives, so PageRoute re-renders. DraftPageRoute runs its
+    // effect on `[page, onPage]`; if onPage changed identity here the effect
+    // would re-fire and setLive would spin. It must be the same reference.
+    act(() => captured.onPage?.(pageAt("/sobre")))
+
+    expect(captured.onPage).toBe(first)
+    expect(new Set(captured.onPages).size).toBe(1)
   })
 })

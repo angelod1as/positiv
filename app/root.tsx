@@ -1,5 +1,5 @@
 import { inputFromForm } from "composable-functions"
-import { lazy, Suspense, useEffect, type ReactNode } from "react"
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react"
 import {
   data,
   isRouteErrorResponse,
@@ -17,6 +17,7 @@ import { ENV } from "varlock/env"
 import { isValidCpf } from "~/lib/helpers/cpf"
 import { isValidPhone } from "~/lib/helpers/phone"
 import { useMarkHydrated } from "~/lib/hooks/use-mark-hydrated"
+import { logger } from "~/lib/logger/logger.server"
 import { Copy } from "~/components/atoms/copy/copy"
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import { TooltipProvider } from "~/components/ui/tooltip"
@@ -28,8 +29,16 @@ import type { Route } from "./+types/root"
 import "./app.css"
 import { getContext } from "./business/auth/auth.server"
 import { isDraftModeEnabled } from "./business/cms/draft-mode.server"
-import { loadSiteSettings } from "./business/cms/site-settings.server"
-import { loadSiteSnapshot } from "./business/cms/site-snapshot-source.server"
+import {
+  type DraftSnapshotQuery,
+  loadDraftSnapshotQuery,
+} from "./business/cms/live-loader.server"
+import type { SiteSettings } from "./business/cms/site-settings.schema"
+import {
+  type LoadedSiteSettings,
+  loadSiteSettings,
+} from "./business/cms/site-settings.server"
+import { siteSettingsFromDraft } from "./business/cms/site-settings-from-draft.server"
 import { subscribeProfileToNewsletter } from "./business/newsletter/auto-subscribe.server"
 import { getSubscriptionStatus } from "./business/newsletter/subscription-helpers.server"
 import {
@@ -41,6 +50,7 @@ import { Header } from "./components/organisms/header/header"
 import { NEWS_VERSION } from "./components/organisms/news-dialog/news-utils"
 import { NewsletterSubscriptionModal } from "./components/organisms/newsletter-subscription-modal"
 import { ProfileUpdateGuard } from "./components/organisms/profile-update-guard/profile-update-guard"
+import type { ProfileWithRoles } from "~types/database/entities.types"
 
 import "@fontsource/dm-sans/400-italic.css"
 import "@fontsource/dm-sans/400.css"
@@ -61,12 +71,16 @@ import "@fontsource/nunito/latin-ext-700-italic.css"
 import "@fontsource/nunito/latin-700.css"
 import "@fontsource/nunito/latin-ext-700.css"
 
-// Only editors in draft mode load the visual-editing runtime (and its large
-// transitive deps). A static import would ship it to every visitor, so it is
-// code-split behind a lazy import and mounted under `draftMode`.
+// Lazy so the live-mode runtime and its deps never reach a visitor's bundle.
 const VisualEditing = lazy(() =>
-  import("@sanity/visual-editing/react-router").then((module) => ({
+  import("./components/pages/root/visual-editing").then((module) => ({
     default: module.VisualEditing,
+  })),
+)
+
+const LiveAppShell = lazy(() =>
+  import("./components/pages/root/live-app-shell").then((module) => ({
+    default: module.LiveAppShell,
   })),
 )
 
@@ -115,15 +129,43 @@ export function meta({}: Route.MetaArgs) {
   ]
 }
 
+function liveSnapshotFrom(draft: DraftSnapshotQuery | null) {
+  if (!draft) return undefined
+  return {
+    initial: draft.initial,
+    query: draft.query,
+    params: draft.params,
+    clientConfig: draft.clientConfig,
+  }
+}
+
+function siteSettingsFor(
+  draft: DraftSnapshotQuery | null,
+): Promise<LoadedSiteSettings> {
+  // A null draft means the published path, or a draft read that failed and
+  // degrades to the published, cached snapshot.
+  return draft ? siteSettingsFromDraft(draft.initial.data) : loadSiteSettings()
+}
+
 export async function loader({ params, request }: Route.LoaderArgs) {
   const draftMode = await isDraftModeEnabled(request)
-  const siteSettings = loadSiteSettings({
-    get: () => loadSiteSnapshot(request),
-  })
+  // Start the draft read alongside the session so the two run in parallel. A
+  // failed draft fetch degrades to the published snapshot rather than taking
+  // the whole response down.
+  const draftQuery: Promise<DraftSnapshotQuery | null> = draftMode
+    ? loadDraftSnapshotQuery(request).catch((error) => {
+        logger.error("Could not load the draft snapshot", {
+          error: error instanceof Error ? error.message : String(error),
+        })
+        return null
+      })
+    : Promise.resolve(null)
 
   try {
-    const { currentProfile, currentUser, isProdInDev, supabaseHeaders } =
-      await getContext(request, params)
+    const [{ currentProfile, currentUser, isProdInDev, supabaseHeaders }, draft] =
+      await Promise.all([getContext(request, params), draftQuery])
+    const liveSnapshot = liveSnapshotFrom(draft)
+    const siteSettings = siteSettingsFor(draft)
     const { toast, headers } = await getToast(request)
 
     supabaseHeaders.forEach((value, key) => {
@@ -184,12 +226,14 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         needsProfileUpdate,
         shouldShowNewsletterModal,
         draftMode,
+        liveSnapshot,
         ...(await siteSettings),
       },
       { headers },
     )
   } catch (error) {
     console.error("Root loader error", error)
+    const draft = await draftQuery
     return {
       currentUser: null,
       currentProfile: null,
@@ -199,7 +243,8 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       needsProfileUpdate: false,
       shouldShowNewsletterModal: false,
       draftMode,
-      ...(await siteSettings),
+      liveSnapshot: liveSnapshotFrom(draft),
+      ...(await siteSettingsFor(draft)),
     }
   }
 }
@@ -297,6 +342,60 @@ export function Layout(props: { children: ReactNode }) {
   )
 }
 
+type AppShellProps = {
+  profile: ProfileWithRoles | null
+  userEmail?: string
+  isProdInDev: boolean | null | undefined
+  isThereAnyNews: boolean
+  needsProfileUpdate: boolean
+  currentPath: string
+  showNewsletterModal: boolean
+  siteSettings: SiteSettings | null
+  editorialSystemUnavailable: boolean
+}
+
+// Effect-free chrome, so re-rendering it as live edits arrive is side-effect
+// free. Fed the loader value for visitors or the live value in draft mode.
+function AppShell({
+  profile,
+  userEmail,
+  isProdInDev,
+  isThereAnyNews,
+  needsProfileUpdate,
+  currentPath,
+  showNewsletterModal,
+  siteSettings,
+  editorialSystemUnavailable,
+}: AppShellProps) {
+  return (
+    <>
+      <Header
+        isProdInDev={Boolean(isProdInDev)}
+        profile={profile}
+        userEmail={userEmail}
+        isThereAnyNews={isThereAnyNews}
+        navigation={siteSettings?.navigation}
+        notice={siteSettings?.notice}
+        editorialSystemUnavailable={editorialSystemUnavailable}
+      />
+      <ProfileUpdateGuard
+        currentProfile={profile}
+        currentPath={currentPath}
+        needsProfileUpdate={needsProfileUpdate}
+      />
+      <NewsletterSubscriptionModal open={showNewsletterModal} />
+      <div className="flex flex-col grow mt-[var(--site-header-height,4rem)]">
+        <Outlet />
+      </div>
+      <Footer
+        isThereAnyNews={isThereAnyNews}
+        currentProfile={profile}
+        siteSettings={siteSettings}
+      />
+    </>
+  )
+}
+
 export default function App({ loaderData }: Route.ComponentProps) {
   const {
     currentUser,
@@ -309,6 +408,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
     siteSettings,
     editorialSystemUnavailable = false,
     draftMode = false,
+    liveSnapshot,
   } = loaderData
 
   const location = useLocation()
@@ -336,34 +436,39 @@ export default function App({ loaderData }: Route.ComponentProps) {
   )
   const showNewsletterModal = shouldShowNewsletterModal && !isAuthFlow
 
+  // Live Site Settings swap in place; the shell stays put so loading the live
+  // chunk never remounts it. undefined means no live value has arrived yet.
+  // The live value only applies while its snapshot is present — if a later
+  // navigation drops liveSnapshot, the chrome reverts to the loader value
+  // rather than keeping a stale live one.
+  const [liveSiteSettings, setLiveSiteSettings] = useState<
+    SiteSettings | null | undefined
+  >(undefined)
+  const activeSiteSettings =
+    liveSnapshot && liveSiteSettings !== undefined
+      ? liveSiteSettings
+      : siteSettings
+
   return (
     <>
-      <Header
-        isProdInDev={Boolean(isProdInDev)}
+      <AppShell
         profile={currentProfile}
-        userEmail={currentUser?.email}
+        userEmail={currentUser?.email ?? undefined}
+        isProdInDev={isProdInDev}
         isThereAnyNews={isThereAnyNews ?? false}
-        navigation={siteSettings?.navigation}
-        notice={siteSettings?.notice}
+        needsProfileUpdate={needsProfileUpdate}
+        currentPath={location.pathname}
+        showNewsletterModal={showNewsletterModal}
+        siteSettings={activeSiteSettings}
         editorialSystemUnavailable={editorialSystemUnavailable}
       />
-      <ProfileUpdateGuard
-        currentProfile={currentProfile}
-        currentPath={location.pathname}
-        needsProfileUpdate={needsProfileUpdate}
-      />
-      <NewsletterSubscriptionModal open={showNewsletterModal} />
-      <div className="flex flex-col grow mt-[var(--site-header-height,4rem)]">
-        <Outlet />
-      </div>
-      <Footer
-        isThereAnyNews={isThereAnyNews ?? false}
-        currentProfile={currentProfile}
-        siteSettings={siteSettings}
-      />
-      {draftMode && (
+      {draftMode && liveSnapshot && (
         <Suspense fallback={null}>
-          <VisualEditing />
+          <LiveAppShell
+            snapshot={liveSnapshot}
+            onSiteSettings={setLiveSiteSettings}
+          />
+          <VisualEditing clientConfig={liveSnapshot.clientConfig} />
         </Suspense>
       )}
     </>

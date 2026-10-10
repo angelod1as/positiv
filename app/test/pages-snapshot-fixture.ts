@@ -2,7 +2,7 @@ import fixture from "../../e2e/fixtures/pages-snapshot.json"
 import {
   findPage,
   resolvePagesSnapshot,
-} from "~/business/cms/pages-snapshot.server"
+} from "~/business/cms/resolve-snapshot"
 
 export const pagesSnapshotFixture = async () =>
   resolvePagesSnapshot(fixture, { projectId: "test", dataset: "development" })

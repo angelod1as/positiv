@@ -12,6 +12,7 @@ import {
   pageHeaderSchema,
   pageSectionDocumentSchema,
 } from "./page.schema"
+import { type SiteSettings, siteSettingsSchema } from "./site-settings.schema"
 
 const PHOTO_SIZE = 320
 const IMAGE_MAX_WIDTH = 1600
@@ -22,6 +23,10 @@ export type PagesSnapshot = ReadonlyMap<string, Page>
 export type ClientConfig = { projectId?: string; dataset?: string }
 
 export type SnapshotMode = "published" | "draft"
+
+export const draftPagesSchema = zod.object({ pages: zod.unknown() })
+
+export const draftSettingsSchema = zod.object({ siteSettings: zod.unknown() })
 
 type ImageUrlBuilder = ReturnType<typeof createImageUrlBuilder>
 type SectionDocument = PageDocument["sections"][number]
@@ -88,6 +93,18 @@ export function findPage(
   address: string,
 ): Page | undefined {
   return snapshot.get(address.length > 1 ? address.replace(/\/$/, "") : address)
+}
+
+export function resolveSiteSettings(document: unknown): SiteSettings | null {
+  if (document === null || document === undefined) return null
+
+  const result = siteSettingsSchema.safeParse(document)
+  if (!result.success) {
+    throw new Error(
+      `Site Settings failed validation, so the snapshot is not served:\n${zod.prettifyError(result.error)}`,
+    )
+  }
+  return result.data
 }
 
 function describe(document: unknown) {

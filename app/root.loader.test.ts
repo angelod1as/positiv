@@ -40,10 +40,10 @@ vi.mock("composable-functions", () => ({
 }))
 
 const isDraftModeEnabled = vi.hoisted(() => vi.fn())
-const getDraftSiteSnapshot = vi.hoisted(() => vi.fn())
+const loadDraftSnapshotQuery = vi.hoisted(() => vi.fn())
 
 vi.mock("./business/cms/draft-mode.server", () => ({ isDraftModeEnabled }))
-vi.mock("./business/cms/draft-snapshot.server", () => ({ getDraftSiteSnapshot }))
+vi.mock("./business/cms/live-loader.server", () => ({ loadDraftSnapshotQuery }))
 
 describe("root loader", () => {
   let mockGetContext: ReturnType<typeof vi.fn>
@@ -66,7 +66,16 @@ describe("root loader", () => {
       siteSettings: null,
     })
     isDraftModeEnabled.mockResolvedValue(false)
-    getDraftSiteSnapshot.mockResolvedValue({ pages: new Map(), siteSettings: null })
+    loadDraftSnapshotQuery.mockResolvedValue({
+      initial: { data: { pages: [], siteSettings: null } },
+      query: "the-snapshot-query",
+      params: {},
+      clientConfig: {
+        projectId: "8ojkallk",
+        dataset: "development",
+        apiVersion: "2026-09-24",
+      },
+    })
   })
 
   afterEach(() => {
@@ -153,11 +162,90 @@ describe("root loader", () => {
   })
 
   describe("draft mode", () => {
-    it("flags draft mode and bypasses the published cache when previewing", async () => {
+    it("flags draft mode, carries the live snapshot and bypasses the published cache", async () => {
       isDraftModeEnabled.mockResolvedValue(true)
-      getDraftSiteSnapshot.mockResolvedValue({
+      loadDraftSnapshotQuery.mockResolvedValue({
+        initial: {
+          data: { pages: [], siteSettings: siteSettingsDocument() },
+        },
+        query: "the-snapshot-query",
+        params: {},
+        clientConfig: {
+          projectId: "8ojkallk",
+          dataset: "development",
+          apiVersion: "2026-09-24",
+        },
+      })
+      mockGetContext.mockResolvedValue({
+        currentProfile: null,
+        currentUser: null,
+        isProdInDev: false,
+        supabaseHeaders: new Headers(),
+        supabase: {},
+        host: "localhost",
+      })
+      mockGetToast.mockResolvedValue({ toast: null, headers: new Headers() })
+
+      const { siteSnapshotCache } = await import(
+        "./business/cms/site-snapshot-cache.server"
+      )
+
+      const request = new Request("http://localhost:5173/")
+      const result = (await loader({ request, params: {} } as never)) as {
+        data: {
+          draftMode: boolean
+          liveSnapshot: { query: string }
+          siteSettings: unknown
+        }
+      }
+
+      expect(result.data.draftMode).toBe(true)
+      expect(result.data.liveSnapshot.query).toBe("the-snapshot-query")
+      expect(result.data.siteSettings).toEqual(
+        siteSettingsSchema.parse(siteSettingsDocument()),
+      )
+      expect(loadDraftSnapshotQuery).toHaveBeenCalled()
+      expect(siteSnapshotCache.get).not.toHaveBeenCalled()
+    })
+
+    it("starts the draft read without waiting for the session", async () => {
+      isDraftModeEnabled.mockResolvedValue(true)
+      type Context = Awaited<ReturnType<typeof mockGetContext>>
+      let resolveContext: (context: Context) => void = () => {}
+      mockGetContext.mockReturnValue(
+        new Promise<Context>((resolve) => {
+          resolveContext = resolve
+        }),
+      )
+      mockGetToast.mockResolvedValue({ toast: null, headers: new Headers() })
+
+      const request = new Request("http://localhost:5173/")
+      const result = loader({ request, params: {} } as never)
+
+      await vi.waitFor(() =>
+        expect(loadDraftSnapshotQuery).toHaveBeenCalled(),
+      )
+      resolveContext({
+        currentProfile: null,
+        currentUser: null,
+        isProdInDev: false,
+        supabaseHeaders: new Headers(),
+        supabase: {},
+        host: "localhost",
+      } as unknown as Context)
+      await result
+    })
+
+    it("degrades to the published snapshot when the draft fetch fails", async () => {
+      isDraftModeEnabled.mockResolvedValue(true)
+      loadDraftSnapshotQuery.mockRejectedValue(new Error("402 over quota"))
+      const { siteSnapshotCache } = await import(
+        "./business/cms/site-snapshot-cache.server"
+      )
+      const siteSettings = siteSettingsSchema.parse(siteSettingsDocument())
+      vi.mocked(siteSnapshotCache.get).mockResolvedValue({
         pages: new Map(),
-        siteSettings: { navigation: [] },
+        siteSettings,
       })
       mockGetContext.mockResolvedValue({
         currentProfile: null,
@@ -171,11 +259,16 @@ describe("root loader", () => {
 
       const request = new Request("http://localhost:5173/")
       const result = (await loader({ request, params: {} } as never)) as {
-        data: { draftMode: boolean }
+        data: {
+          draftMode: boolean
+          liveSnapshot: unknown
+          siteSettings: unknown
+        }
       }
 
       expect(result.data.draftMode).toBe(true)
-      expect(getDraftSiteSnapshot).toHaveBeenCalled()
+      expect(result.data.liveSnapshot).toBeUndefined()
+      expect(result.data.siteSettings).toEqual(siteSettings)
     })
 
     it("leaves draft mode off for an ordinary visitor", async () => {
@@ -191,11 +284,12 @@ describe("root loader", () => {
 
       const request = new Request("http://localhost:5173/")
       const result = (await loader({ request, params: {} } as never)) as {
-        data: { draftMode: boolean }
+        data: { draftMode: boolean; liveSnapshot: unknown }
       }
 
       expect(result.data.draftMode).toBe(false)
-      expect(getDraftSiteSnapshot).not.toHaveBeenCalled()
+      expect(result.data.liveSnapshot).toBeUndefined()
+      expect(loadDraftSnapshotQuery).not.toHaveBeenCalled()
     })
   })
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 import fixture from "../../../e2e/fixtures/pages-snapshot.json"
 import { headers, image, page, sections, seo } from "~/test/page-documents"
 import { pageSchema } from "./page.schema"
-import { findPage, resolvePagesSnapshot } from "./pages-snapshot.server"
+import { findPage, resolvePagesSnapshot } from "./resolve-snapshot"
 
 let documents: unknown
 

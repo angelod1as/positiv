@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { headers, page, paragraph, sections } from "~/test/page-documents"
-import { resolvePagesSnapshot } from "./pages-snapshot.server"
+import { resolvePagesSnapshot } from "./resolve-snapshot"
 
 const config = { projectId: "8ojkallk", dataset: "development" }
 
