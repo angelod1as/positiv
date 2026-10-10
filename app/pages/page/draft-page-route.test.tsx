@@ -10,6 +10,7 @@ const clientConfig = {
   projectId: "8ojkallk",
   dataset: "development",
   apiVersion: "2026-09-24",
+  studioUrl: "https://positiv.sanity.studio",
 }
 
 function liveWith(...docs: unknown[]) {
