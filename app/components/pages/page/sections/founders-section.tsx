@@ -25,6 +25,7 @@ export const FoundersSection = ({ content }: FoundersSectionProps) => {
               ({ _id, name, pronouns, instagram, bio, photo }) => (
                 <FounderCard
                   key={_id}
+                  personId={_id}
                   photo={photo}
                   name={name}
                   pronounsLabel={founders.pronounsLabel(pronouns)}

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { createDraftReadClient } from "./draft-read-client.server"
+import { stegaFilter } from "./stega-filter"
 
 const env = vi.hoisted<Record<string, unknown>>(() => ({}))
 
@@ -10,6 +11,7 @@ beforeEach(() => {
   env.SANITY_DATASET = "development"
   env.SANITY_API_HOST = undefined
   env.SANITY_VIEWER_TOKEN = "viewer-token"
+  env.SANITY_STUDIO_URL = "https://positiv.sanity.studio"
 })
 
 describe("createDraftReadClient", () => {
@@ -22,6 +24,14 @@ describe("createDraftReadClient", () => {
     expect(config.useCdn).toBe(false)
     expect(config.perspective).toBe("drafts")
     expect(config.token).toBe("viewer-token")
+  })
+
+  it("encodes drafts with stega pointing at the hosted Studio, through the filter", () => {
+    const stega = createDraftReadClient().config().stega
+
+    expect(stega?.enabled).toBe(true)
+    expect(stega?.studioUrl).toBe("https://positiv.sanity.studio")
+    expect(stega?.filter).toBe(stegaFilter)
   })
 
   it("talks to Sanity's own API when SANITY_API_HOST is unset", () => {

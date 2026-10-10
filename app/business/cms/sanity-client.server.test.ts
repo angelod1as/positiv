@@ -23,6 +23,10 @@ describe("createSanityClient", () => {
     expect(config.token).toBeUndefined()
   })
 
+  it("never encodes stega, so published responses stay clean", () => {
+    expect(createSanityClient().config().stega?.enabled ?? false).toBe(false)
+  })
+
   it("talks to Sanity's own CDN when SANITY_API_HOST is unset", () => {
     const config = createSanityClient().config()
 
