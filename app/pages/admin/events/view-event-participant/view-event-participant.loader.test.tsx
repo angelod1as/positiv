@@ -5,6 +5,7 @@ import {
   getParticipantFullEventHistory,
   getProfileById,
 } from "~/business/admin/admin.server"
+import { getPaymentsForParticipant } from "~/business/payment/payment-totals.server"
 import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
 import { loader } from "./view-event-participant"
 
@@ -37,7 +38,9 @@ vi.mock("~/business/payment/payment-messages.server", async (importActual) => ({
   ...(await importActual<
     typeof import("~/business/payment/payment-messages.server")
   >()),
-  loadWhatsappPaymentMessage: vi.fn(async () => "Pague {{link}} até {{data}}."),
+  loadWhatsappPaymentMessage: vi.fn(
+    async () => "Oi {{nome}}, pague {{link}} até {{data}}.",
+  ),
 }))
 
 type ProfileResult = Awaited<ReturnType<typeof getProfileById>>
@@ -148,4 +151,68 @@ describe("view event participant loader", () => {
       })
     },
   )
+
+  it("hands the modal a message built for the active charge, named by social_name", async () => {
+    vi.mocked(getProfileById).mockResolvedValue({
+      success: true,
+      data: {
+        id: "profile-1",
+        social_name: "Ana Social",
+        full_name: "Ana Legal",
+      },
+      errors: [],
+    } as unknown as ProfileResult)
+    vi.mocked(getEventParticipantBasic).mockResolvedValue({
+      success: true,
+      data: { id: "participant-1", event_title: "Festa" },
+      errors: [],
+    } as unknown as ParticipantResult)
+    vi.mocked(getParticipantFullEventHistory).mockResolvedValue({
+      success: true,
+      data: [],
+      errors: [],
+    } as unknown as Awaited<ReturnType<typeof getParticipantFullEventHistory>>)
+    vi.mocked(getPaymentsForParticipant).mockResolvedValue({
+      active: { id: "pay-1", due_at: "2026-09-01T12:00:00Z", base_amount: 25000 },
+      payments: [],
+      totals: {},
+    } as unknown as Awaited<ReturnType<typeof getPaymentsForParticipant>>)
+
+    const { whatsappMessage } = (await runLoader()) as {
+      whatsappMessage: string | null
+    }
+
+    expect(whatsappMessage).toContain("Ana Social")
+    expect(whatsappMessage).toContain("/pagamento/pay-1")
+    expect(whatsappMessage).toContain("01/09/2026")
+  })
+
+  it("hands the modal no message when there is no active charge", async () => {
+    vi.mocked(getProfileById).mockResolvedValue({
+      success: true,
+      data: { id: "profile-1", full_name: "Ana" },
+      errors: [],
+    } as unknown as ProfileResult)
+    vi.mocked(getEventParticipantBasic).mockResolvedValue({
+      success: true,
+      data: { id: "participant-1", event_title: "Festa" },
+      errors: [],
+    } as unknown as ParticipantResult)
+    vi.mocked(getParticipantFullEventHistory).mockResolvedValue({
+      success: true,
+      data: [],
+      errors: [],
+    } as unknown as Awaited<ReturnType<typeof getParticipantFullEventHistory>>)
+    vi.mocked(getPaymentsForParticipant).mockResolvedValue({
+      active: null,
+      payments: [],
+      totals: {},
+    } as unknown as Awaited<ReturnType<typeof getPaymentsForParticipant>>)
+
+    const { whatsappMessage } = (await runLoader()) as {
+      whatsappMessage: string | null
+    }
+
+    expect(whatsappMessage).toBeNull()
+  })
 })

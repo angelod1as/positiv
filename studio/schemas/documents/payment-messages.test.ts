@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import { PAYMENT_MESSAGE_VARIABLES as APP_PAYMENT_MESSAGE_VARIABLES } from "../../../app/business/payment/payment-message"
 import { pathsOf } from "../../test/errors"
 import { validateDocumentOf } from "../../test/validate"
 import {
@@ -62,6 +63,15 @@ describe("unknownVariableProblem", () => {
   it("names the first unknown variable it finds", () => {
     const problem = unknownVariableProblem("{{link}} e {{boleto}}")
     expect(problem).toContain("{{boleto}}")
+  })
+
+  // The app renderer keeps its own copy of this list across the package
+  // boundary. If one side gains a variable the other does not, the Studio would
+  // accept a message the app rejects. This ties the two together.
+  it("stays in step with the app renderer's variable set", () => {
+    expect([...PAYMENT_MESSAGE_VARIABLES]).toEqual([
+      ...APP_PAYMENT_MESSAGE_VARIABLES,
+    ])
   })
 
   it("passes an empty or missing value", () => {

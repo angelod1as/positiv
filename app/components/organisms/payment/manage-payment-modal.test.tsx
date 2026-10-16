@@ -869,6 +869,23 @@ describe("ManagePaymentModal - the Cobrança section", () => {
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(message)
   })
 
+  it("copies nothing when no message was pre-rendered", async () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[openCharge]}
+        active={openCharge}
+        whatsappMessage={null}
+      />,
+    )
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Copiar mensagem" }),
+    )
+
+    expect(navigator.clipboard.writeText).not.toHaveBeenCalled()
+  })
+
   it("says so when the charge opened but the email did not go out", () => {
     fetcherData = { success: true, intent: "payment-offer", emailSent: false }
 

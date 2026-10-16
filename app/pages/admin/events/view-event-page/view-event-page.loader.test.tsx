@@ -40,7 +40,9 @@ vi.mock("~/business/payment/payment-messages.server", async (importActual) => ({
   ...(await importActual<
     typeof import("~/business/payment/payment-messages.server")
   >()),
-  loadWhatsappPaymentMessage: vi.fn(async () => "Pague {{link}} até {{data}}."),
+  loadWhatsappPaymentMessage: vi.fn(
+    async () => "Oi {{nome}}, pague {{link}} até {{data}}.",
+  ),
 }))
 
 const runLoader = () =>
@@ -94,4 +96,40 @@ describe("view event page loader", () => {
       })
     },
   )
+
+  it("builds a WhatsApp message per participant, keyed by id, for the active charge", async () => {
+    vi.mocked(getProfilesWithExtraDataById).mockResolvedValue({
+      success: true,
+      data: [
+        {
+          id: "ep-1",
+          active_payment_id: "pay-1",
+          social_name: "Ana Social",
+          full_name: "Ana Legal",
+        },
+        {
+          id: "ep-2",
+          active_payment_id: null,
+          social_name: null,
+          full_name: "Bia",
+        },
+      ],
+      errors: [],
+    } as unknown as Awaited<ReturnType<typeof getProfilesWithExtraDataById>>)
+    vi.mocked(getPaymentsForEvent).mockResolvedValue({
+      "ep-1": [
+        { id: "pay-1", due_at: "2026-09-01T12:00:00Z", base_amount: 25000 },
+      ],
+    } as unknown as Awaited<ReturnType<typeof getPaymentsForEvent>>)
+
+    const { whatsappMessageByParticipant } = (await runLoader()) as {
+      whatsappMessageByParticipant: Record<string, string | null>
+    }
+
+    // The active charge's message, named by social_name over full_name.
+    expect(whatsappMessageByParticipant["ep-1"]).toContain("Ana Social")
+    expect(whatsappMessageByParticipant["ep-1"]).toContain("/pagamento/pay-1")
+    // No active charge: no message to copy.
+    expect(whatsappMessageByParticipant["ep-2"]).toBeNull()
+  })
 })
