@@ -1,9 +1,11 @@
 import { zod } from "~/lib/helpers/zod"
+import type { PaymentMessages } from "./payment-messages.schema"
 import {
   type ClientConfig,
   type PagesSnapshot,
   type SnapshotMode,
   resolvePagesSnapshot,
+  resolvePaymentMessages,
   resolveSiteSettings,
 } from "./resolve-snapshot"
 import { createSanityClient } from "./sanity-client.server"
@@ -13,6 +15,7 @@ import { siteSnapshotQuery } from "./site-snapshot-query"
 export type SiteSnapshot = {
   pages: PagesSnapshot
   siteSettings: SiteSettings | null
+  paymentMessages: PaymentMessages | null
 }
 
 type SiteClient = {
@@ -23,6 +26,7 @@ type SiteClient = {
 const responseSchema = zod.object({
   pages: zod.unknown(),
   siteSettings: zod.unknown(),
+  paymentMessages: zod.unknown(),
 })
 
 export async function getSiteSnapshot(
@@ -34,5 +38,6 @@ export async function getSiteSnapshot(
   return {
     pages: resolvePagesSnapshot(response.pages, client.config(), mode),
     siteSettings: resolveSiteSettings(response.siteSettings),
+    paymentMessages: resolvePaymentMessages(response.paymentMessages),
   }
 }

@@ -12,6 +12,10 @@ import {
   pageHeaderSchema,
   pageSectionDocumentSchema,
 } from "./page.schema"
+import {
+  type PaymentMessages,
+  paymentMessagesSchema,
+} from "./payment-messages.schema"
 import { type SiteSettings, siteSettingsSchema } from "./site-settings.schema"
 
 const PHOTO_SIZE = 320
@@ -102,6 +106,20 @@ export function resolveSiteSettings(document: unknown): SiteSettings | null {
   if (!result.success) {
     throw new Error(
       `Site Settings failed validation, so the snapshot is not served:\n${zod.prettifyError(result.error)}`,
+    )
+  }
+  return result.data
+}
+
+export function resolvePaymentMessages(
+  document: unknown,
+): PaymentMessages | null {
+  if (document === null || document === undefined) return null
+
+  const result = paymentMessagesSchema.safeParse(document)
+  if (!result.success) {
+    throw new Error(
+      `Payment Messages failed validation, so the snapshot is not served:\n${zod.prettifyError(result.error)}`,
     )
   }
   return result.data

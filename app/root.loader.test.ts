@@ -64,6 +64,7 @@ describe("root loader", () => {
     vi.mocked(siteSnapshotCache.get).mockResolvedValue({
       pages: new Map(),
       siteSettings: null,
+      paymentMessages: null,
     })
     isDraftModeEnabled.mockResolvedValue(false)
     loadDraftSnapshotQuery.mockResolvedValue({
@@ -246,6 +247,7 @@ describe("root loader", () => {
       vi.mocked(siteSnapshotCache.get).mockResolvedValue({
         pages: new Map(),
         siteSettings,
+        paymentMessages: null,
       })
       mockGetContext.mockResolvedValue({
         currentProfile: null,
@@ -426,6 +428,7 @@ describe("root loader", () => {
       vi.mocked(siteSnapshotCache.get).mockResolvedValue({
         pages: new Map(),
         siteSettings,
+        paymentMessages: null,
       })
 
       const data = await load()
@@ -456,6 +459,7 @@ describe("root loader", () => {
       vi.mocked(siteSnapshotCache.get).mockResolvedValue({
         pages: new Map(),
         siteSettings,
+        paymentMessages: null,
       })
       mockGetContext.mockRejectedValue(new Error("Supabase is down"))
       const request = new Request("http://localhost:5173/")

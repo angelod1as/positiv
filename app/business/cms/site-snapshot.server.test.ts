@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import pagesFixture from "../../../e2e/fixtures/pages-snapshot.json"
 import siteSettingsFixture from "../../../e2e/fixtures/site-settings.json"
 import { page } from "~/test/page-documents"
+import { paymentMessagesDocument } from "~/test/payment-messages-documents"
 import { siteSettingsDocument } from "~/test/site-settings-documents"
 import { siteSnapshotQuery } from "./site-snapshot-query"
 import { getSiteSnapshot } from "./site-snapshot.server"
@@ -57,6 +58,38 @@ describe("getSiteSnapshot", () => {
 
     expect(siteSettings).toBeNull()
     expect(pages.size).toBe(1)
+  })
+
+  it("resolves the Payment Messages", async () => {
+    respondWith({
+      pages: [],
+      siteSettings: null,
+      paymentMessages: paymentMessagesDocument(),
+    })
+
+    const { paymentMessages } = await getSiteSnapshot(client)
+
+    expect(paymentMessages?.whatsappMessage).toContain("{{link}}")
+  })
+
+  it("has no Payment Messages when the document is missing", async () => {
+    respondWith({ pages: [], siteSettings: null, paymentMessages: null })
+
+    const { paymentMessages } = await getSiteSnapshot(client)
+
+    expect(paymentMessages).toBeNull()
+  })
+
+  it("fails the whole snapshot when the Payment Messages break the contract", async () => {
+    respondWith({
+      pages: [],
+      siteSettings: null,
+      paymentMessages: paymentMessagesDocument({
+        whatsappMessage: "Pague em {{boleto}}.",
+      }),
+    })
+
+    await expect(getSiteSnapshot(client)).rejects.toThrow(/Payment Messages/)
   })
 
   it("fails the whole snapshot when the Site Settings break the contract", async () => {

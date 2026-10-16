@@ -17,6 +17,7 @@ const siteSettings = siteSettingsSchema.parse(siteSettingsDocument())
 const snapshot = (settings: SiteSnapshot["siteSettings"]): SiteSnapshot => ({
   pages: new Map(),
   siteSettings: settings,
+  paymentMessages: null,
 })
 
 const load = vi.fn<() => Promise<SiteSnapshot>>()

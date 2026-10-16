@@ -17,6 +17,7 @@ function snapshotOf(documents: unknown[]) {
       dataset: "development",
     }),
     siteSettings: null,
+    paymentMessages: null,
   })
 }
 

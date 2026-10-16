@@ -76,6 +76,7 @@ function withPages(...pages: Page[]) {
   vi.mocked(siteSnapshotCache.get).mockResolvedValue({
     pages: new Map(pages.map((page) => [page.address, page])),
     siteSettings: null,
+    paymentMessages: null,
   })
 }
 
@@ -101,6 +102,7 @@ describe("Page loader", () => {
     vi.mocked(siteSnapshotCache.get).mockResolvedValue({
       pages: snapshot,
       siteSettings: null,
+      paymentMessages: null,
     })
     vi.mocked(getNextEvents).mockResolvedValue({
       success: true,
@@ -298,6 +300,7 @@ describe("Page loader in draft mode", () => {
     vi.mocked(siteSnapshotCache.get).mockResolvedValue({
       pages: published,
       siteSettings: null,
+      paymentMessages: null,
     })
 
     const result = await loader(argsFor("/sobre"))
@@ -317,6 +320,7 @@ describe("Page loader in draft mode", () => {
     vi.mocked(siteSnapshotCache.get).mockResolvedValue({
       pages: published,
       siteSettings: null,
+      paymentMessages: null,
     })
 
     const result = await loader(argsFor("/sobre"))
