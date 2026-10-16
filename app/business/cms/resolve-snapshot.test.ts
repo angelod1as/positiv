@@ -101,6 +101,7 @@ describe("resolvePagesSnapshot, imported on the browser side", () => {
         {
           ...sections.founders.people[0],
           name: encodeAs("Angelo", "$['name']"),
+          pronouns: encodeAs("ele/dele", "$['pronouns']"),
           instagram: encodeAs("angelo", "$['instagram']"),
           photo: { ...image, alt: encodeAs(image.alt, "$['photo']['alt']") },
         },
@@ -119,9 +120,12 @@ describe("resolvePagesSnapshot, imported on the browser side", () => {
 
     // The clean address is why routing still finds the Page.
     expect(resolved).toBeDefined()
-    // Display text stays encoded, so clicking it opens the field.
+    // Display text stays encoded, so clicking it opens the field. pronouns is
+    // free text wrapped as `(${pronouns})`, not a lookup key, so it is display
+    // text too and keeps its stega rather than being filtered.
     expect(resolved?.header._type === "pageHero" && isClean(resolved.header.title)).toBe(false)
     expect(person && isClean(person.name)).toBe(false)
+    expect(person && isClean(person.pronouns)).toBe(false)
     // The filtered fields are clean, so the link, the attribute and the alt work.
     expect(person && isClean(person.instagram)).toBe(true)
     expect(person && isClean(person.photo.alt)).toBe(true)

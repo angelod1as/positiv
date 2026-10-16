@@ -24,9 +24,13 @@ export const OverlayProvider: FCC<OverlayProviderProps> = ({
 
   useEffect(() => {
     let active = true
-    import("@sanity/visual-editing").then((module) => {
-      if (active) setCreate(() => module.createDataAttribute)
-    })
+    import("@sanity/visual-editing")
+      .then((module) => {
+        if (active) setCreate(() => module.createDataAttribute)
+      })
+      .catch((error) => {
+        console.error("Could not load the visual-editing overlay chunk", error)
+      })
     return () => {
       active = false
     }
