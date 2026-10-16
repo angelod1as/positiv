@@ -31,7 +31,23 @@ export const paymentsCopy = {
       option.method === "pix" && option.total < baseAmount
         ? `${PIX_DISCOUNT_PERCENT}% de desconto sobre ${formatCurrency(baseAmount)}`
         : null,
+    // One option as a bullet in the WhatsApp payment message.
+    messageLine: (option: PaymentOption) =>
+      `• ${paymentsCopy.options.label(option)}`,
   },
+  // The default WhatsApp payment message, used when the CMS one is unavailable.
+  // Plain text pasted into WhatsApp (no Markdown); the server interpolates the
+  // {{variables}}. A test pins this to the seed fixture so the two never drift.
+  whatsappDefaultMessage: [
+    "Oi, {{nome}}! Aqui está o link para o pagamento da {{evento}}:",
+    "",
+    "{{link}}",
+    "",
+    "Formas de pagamento:",
+    "{{formas}}",
+    "",
+    "O link vale até {{data}}.",
+  ].join("\n"),
   page: {
     title: "Pagamento",
     heading: (eventTitle: string) => `Pagamento — ${eventTitle}`,
