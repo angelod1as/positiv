@@ -1,6 +1,17 @@
 import { codeOfConductToPage } from "../migrations/code-of-conduct-to-page/transform"
 import { HOMEPAGE_PAGE_ID } from "../schemas/documents/page"
-import { SITE_SETTINGS_ID } from "../singletons"
+import { PAYMENT_MESSAGES_ID, SITE_SETTINGS_ID } from "../singletons"
+
+export const SEED_WHATSAPP_PAYMENT_MESSAGE = [
+  "Oi, {{nome}}! Aqui está o link para o pagamento da {{evento}}:",
+  "",
+  "{{link}}",
+  "",
+  "Formas de pagamento:",
+  "{{formas}}",
+  "",
+  "O link vale até {{data}}.",
+].join("\n")
 
 export const E2E_TEST_PAGE_ID = "page-e2e-test"
 export const E2E_TEST_PAGE_ADDRESS = "/pagina-de-teste"
@@ -444,6 +455,11 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
           "",
         ),
       ],
+    },
+    {
+      _id: PAYMENT_MESSAGES_ID,
+      _type: "paymentMessages",
+      whatsappMessage: SEED_WHATSAPP_PAYMENT_MESSAGE,
     },
   ]
 }

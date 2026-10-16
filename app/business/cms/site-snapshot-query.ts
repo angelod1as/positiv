@@ -12,7 +12,12 @@ export const siteSettingsQuery = `*[_id == "siteSettings"][0]{
   notice
 }`
 
+export const paymentMessagesQuery = `*[_id == "paymentMessages"][0]{
+  whatsappMessage
+}`
+
 export const siteSnapshotQuery = `{
   "pages": ${pagesQuery},
-  "siteSettings": ${siteSettingsQuery}
+  "siteSettings": ${siteSettingsQuery},
+  "paymentMessages": ${paymentMessagesQuery}
 }`

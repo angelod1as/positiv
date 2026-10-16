@@ -88,35 +88,3 @@ describe("paymentsCopy.options.breakdown", () => {
   })
 })
 
-describe("paymentsCopy.whatsappMessage", () => {
-  const options: PaymentOption[] = [pix, cardSixTimes]
-
-  const input = {
-    displayName: "Ana",
-    eventTitle: "Festa de Setembro",
-    paymentUrl: "https://www.positivparty.com/pagamento/abc",
-    dueAt: "2026-09-01T12:00:00Z",
-    options,
-  }
-
-  it("names the person and the event", () => {
-    const message = paymentsCopy.whatsappMessage(input)
-
-    expect(message).toContain("Ana")
-    expect(message).toContain("Festa de Setembro")
-  })
-
-  it("lists every option with its price", () => {
-    const message = paymentsCopy.whatsappMessage(input)
-
-    expect(message).toContain("Pix — R$ 225,00")
-    expect(message).toContain("Cartão 6x de R$ 41,66 (total R$ 250,00)")
-  })
-
-  it("carries the link and the deadline", () => {
-    const message = paymentsCopy.whatsappMessage(input)
-
-    expect(message).toContain("https://www.positivparty.com/pagamento/abc")
-    expect(message).toContain("01/09/2026")
-  })
-})

@@ -2,7 +2,9 @@ import type { DocumentActionComponent, TemplateItem } from "sanity"
 
 export const SITE_SETTINGS_ID = "siteSettings"
 
-const singletonTypes = ["siteSettings"]
+export const PAYMENT_MESSAGES_ID = "paymentMessages"
+
+const singletonTypes = ["siteSettings", "paymentMessages"]
 
 const actionsSingletonsKeep = ["publish", "discardChanges", "restore"]
 

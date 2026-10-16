@@ -2,7 +2,6 @@ import {
   PIX_DISCOUNT_PERCENT,
   type PaymentOption,
 } from "~/business/payment/pricing"
-import { formatInTimeZone } from "date-fns-tz"
 import { formatCurrency } from "~/lib/helpers/format-currency"
 
 export const paymentsCopy = {
@@ -32,29 +31,23 @@ export const paymentsCopy = {
       option.method === "pix" && option.total < baseAmount
         ? `${PIX_DISCOUNT_PERCENT}% de desconto sobre ${formatCurrency(baseAmount)}`
         : null,
+    // One option as a bullet in the WhatsApp payment message.
+    messageLine: (option: PaymentOption) =>
+      `• ${paymentsCopy.options.label(option)}`,
   },
-  // Plain text, not Markdown: this one is pasted into WhatsApp, which renders
-  // none of it. The four-digit year is deliberate — a deadline read on a phone
-  // is the last place to save two characters.
-  whatsappMessage: (input: {
-    displayName: string
-    eventTitle: string
-    paymentUrl: string
-    dueAt: string
-    options: PaymentOption[]
-  }) =>
-    [
-      `Oi, ${input.displayName}! Aqui está o link para o pagamento da ${input.eventTitle}:`,
-      "",
-      input.paymentUrl,
-      "",
-      "Formas de pagamento:",
-      ...input.options.map(
-        (option) => `• ${paymentsCopy.options.label(option)}`,
-      ),
-      "",
-      `O link vale até ${formatInTimeZone(input.dueAt, "America/Sao_Paulo", "dd/MM/yyyy")}.`,
-    ].join("\n"),
+  // The default WhatsApp payment message, used when the CMS one is unavailable.
+  // Plain text pasted into WhatsApp (no Markdown); the server interpolates the
+  // {{variables}}. A test pins this to the seed fixture so the two never drift.
+  whatsappDefaultMessage: [
+    "Oi, {{nome}}! Aqui está o link para o pagamento da {{evento}}:",
+    "",
+    "{{link}}",
+    "",
+    "Formas de pagamento:",
+    "{{formas}}",
+    "",
+    "O link vale até {{data}}.",
+  ].join("\n"),
   page: {
     title: "Pagamento",
     heading: (eventTitle: string) => `Pagamento — ${eventTitle}`,

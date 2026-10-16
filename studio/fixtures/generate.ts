@@ -13,7 +13,11 @@ const FIXTURE_IMAGE_DIMENSIONS = { width: 1000, height: 184 }
 
 const FIXTURE_UPDATED_AT = "2026-10-06T00:00:00Z"
 
-export type SiteSnapshotFixture = { pages: unknown; siteSettings: unknown }
+export type SiteSnapshotFixture = {
+  pages: unknown
+  siteSettings: unknown
+  paymentMessages: unknown
+}
 
 function fixtureDataset() {
   const documents = seedDocuments(FIXTURE_IMAGE_ASSET_ID).map((document) =>

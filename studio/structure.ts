@@ -1,10 +1,11 @@
+import { BillIcon } from "@sanity/icons/Bill"
 import { CogIcon } from "@sanity/icons/Cog"
 import { DocumentsIcon } from "@sanity/icons/Documents"
 import { HomeIcon } from "@sanity/icons/Home"
 import type { StructureResolver } from "sanity/structure"
 
 import { HOMEPAGE_PAGE_ID } from "./schemas/documents/page"
-import { SITE_SETTINGS_ID } from "./singletons"
+import { PAYMENT_MESSAGES_ID, SITE_SETTINGS_ID } from "./singletons"
 
 export const structure: StructureResolver = (S) =>
   S.list()
@@ -31,6 +32,16 @@ export const structure: StructureResolver = (S) =>
             .schemaType("siteSettings")
             .documentId(SITE_SETTINGS_ID)
             .title("Configurações do site"),
+        ),
+      S.listItem()
+        .title("Mensagens de pagamento")
+        .id(PAYMENT_MESSAGES_ID)
+        .icon(BillIcon)
+        .child(
+          S.document()
+            .schemaType("paymentMessages")
+            .documentId(PAYMENT_MESSAGES_ID)
+            .title("Mensagens de pagamento"),
         ),
       S.divider(),
       S.documentTypeListItem("person").title("Pessoas"),

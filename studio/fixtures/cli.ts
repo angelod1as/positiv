@@ -3,7 +3,8 @@ import { fileURLToPath } from "node:url"
 
 import { generateSiteSnapshotFixture, serializeFixture } from "./generate"
 
-const { pages, siteSettings } = await generateSiteSnapshotFixture()
+const { pages, siteSettings, paymentMessages } =
+  await generateSiteSnapshotFixture()
 
 function write(name: string, value: unknown) {
   const path = fileURLToPath(
@@ -15,7 +16,8 @@ function write(name: string, value: unknown) {
 
 write("pages-snapshot.json", pages)
 write("site-settings.json", siteSettings)
+write("payment-messages.json", paymentMessages)
 
 console.log(
-  "Wrote e2e/fixtures/pages-snapshot.json and site-settings.json from the seed.",
+  "Wrote e2e/fixtures/pages-snapshot.json, site-settings.json and payment-messages.json from the seed.",
 )

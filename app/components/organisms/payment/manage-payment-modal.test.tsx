@@ -53,8 +53,7 @@ const baseProps = {
   paymentsEnabled: true,
   spotType: "regular" as const,
   ticketPrice: 22000,
-  eventTitle: "Festa de Setembro",
-  cardPaymentsEnabled: true,
+  whatsappMessage: null as string | null,
   appOrigin: "https://www.positivparty.com",
   providerName: "Asaas",
 }
@@ -849,12 +848,17 @@ describe("ManagePaymentModal - the Cobrança section", () => {
     expect(lastSubmission().get("paymentId")).toBe("open-1")
   })
 
-  it("copies the WhatsApp message for the open charge", async () => {
+  it("copies the pre-rendered WhatsApp message for the open charge", async () => {
+    // The message is interpolated on the server and handed down ready; the
+    // modal only writes it to the clipboard. Its content is covered by
+    // buildWhatsappPaymentMessage's own tests.
+    const message = "Oi, Ana! Pague em .../open-1 até 01/09/2026."
     render(
       <ManagePaymentModal
         {...baseProps}
         payments={[openCharge]}
         active={openCharge}
+        whatsappMessage={message}
       />,
     )
 
@@ -862,43 +866,16 @@ describe("ManagePaymentModal - the Cobrança section", () => {
       screen.getByRole("button", { name: "Copiar mensagem" }),
     )
 
-    const [copied] = vi.mocked(navigator.clipboard.writeText).mock.calls.at(
-      -1,
-    ) ?? [""]
-    expect(copied).toContain("Ana")
-    expect(copied).toContain("Festa de Setembro")
-    expect(copied).toContain(
-      "https://www.positivparty.com/pagamento/open-1",
-    )
-    expect(copied).toContain("Pix —")
-    expect(copied).toContain("01/09/2026")
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(message)
   })
 
-  it("prices the WhatsApp message flat, from the charge's event price", async () => {
-    const charge = { ...openCharge, base_amount: 25000 }
-    render(
-      <ManagePaymentModal {...baseProps} payments={[charge]} active={charge} />,
-    )
-
-    await userEvent.click(
-      screen.getByRole("button", { name: "Copiar mensagem" }),
-    )
-
-    const [copied] = vi.mocked(navigator.clipboard.writeText).mock.calls.at(
-      -1,
-    ) ?? [""]
-    expect(copied).toContain("Pix — R$ 225,00")
-    expect(copied).toContain("Cartão 6x de R$ 41,66 (total R$ 250,00)")
-  })
-
-  it("offers Pix alone in the WhatsApp message while card payments are off", async () => {
-    const charge = { ...openCharge, base_amount: 25000 }
+  it("copies nothing when no message was pre-rendered", async () => {
     render(
       <ManagePaymentModal
         {...baseProps}
-        cardPaymentsEnabled={false}
-        payments={[charge]}
-        active={charge}
+        payments={[openCharge]}
+        active={openCharge}
+        whatsappMessage={null}
       />,
     )
 
@@ -906,11 +883,7 @@ describe("ManagePaymentModal - the Cobrança section", () => {
       screen.getByRole("button", { name: "Copiar mensagem" }),
     )
 
-    const [copied] = vi.mocked(navigator.clipboard.writeText).mock.calls.at(
-      -1,
-    ) ?? [""]
-    expect(copied).toContain("Pix — R$ 250,00")
-    expect(copied).not.toContain("Cartão")
+    expect(navigator.clipboard.writeText).not.toHaveBeenCalled()
   })
 
   it("says so when the charge opened but the email did not go out", () => {
