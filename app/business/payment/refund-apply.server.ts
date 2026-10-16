@@ -5,6 +5,7 @@ import { nextRefundState, type RefundTally } from "./refund-state"
 
 export type RefundablePayment = {
   id: string
+  event_participant_id: string
   amount: number | null
   status: string
   provider_plan_id: string | null
