@@ -162,8 +162,9 @@ describe("createPaymentOffer", () => {
       method: null,
       created_by: adminId,
     })
-    // Seven days, per §2 -- not merely "in the future". The expiry cron and
-    // the deadline in the email both read this.
+    // This event has no time_payment_end, so the charge falls back to seven
+    // days -- not merely "in the future". The expiry cron and the deadline in
+    // the email both read this.
     const sevenDays = 7 * 24 * 60 * 60 * 1000
     expect(new Date(payment.due_at).getTime()).toBeGreaterThan(
       Date.now() + sevenDays - 60_000,
@@ -181,6 +182,48 @@ describe("createPaymentOffer", () => {
       .executeTakeFirstOrThrow()
     expect(queued.kind).toBe("link")
     expect(queued.sent_at).not.toBeNull()
+  })
+
+  it("expires the charge on the event's payment due date", async () => {
+    const paymentEnd = new Date(
+      Date.now() + 15 * 24 * 60 * 60 * 1000,
+    ).toISOString()
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Due-date Event",
+      ticket_price: 22000,
+      time_payment_end: paymentEnd,
+    })
+    const participant = await makeParticipant({ event_id: event.id })
+
+    await createPaymentOffer({ eventParticipantId: participant })
+
+    const [payment] = await paymentsFor(participant)
+    expect(new Date(payment.due_at).getTime()).toBe(
+      new Date(paymentEnd).getTime(),
+    )
+  })
+
+  it("floors a past due date to the minimum window", async () => {
+    const paymentEnd = new Date(
+      Date.now() - 2 * 24 * 60 * 60 * 1000,
+    ).toISOString()
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Past-due Event",
+      ticket_price: 22000,
+      time_payment_end: paymentEnd,
+    })
+    const participant = await makeParticipant({ event_id: event.id })
+
+    await createPaymentOffer({ eventParticipantId: participant })
+
+    const [payment] = await paymentsFor(participant)
+    const threeDays = 3 * 24 * 60 * 60 * 1000
+    expect(new Date(payment.due_at).getTime()).toBeGreaterThan(
+      Date.now() + threeDays - 60_000,
+    )
+    expect(new Date(payment.due_at).getTime()).toBeLessThan(
+      Date.now() + threeDays + 60_000,
+    )
   })
 
   it("uses a custom amount when the admin gives one", async () => {
