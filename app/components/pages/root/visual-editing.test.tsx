@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { VisualEditing as SanityVisualEditing } from "@sanity/visual-editing/react-router"
 import { useLiveMode } from "~/business/cms/live-loader"
 import { stegaFilter } from "~/business/cms/stega-filter"
@@ -21,6 +21,10 @@ const clientConfig = {
 describe("VisualEditing", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   it("draws the overlays and opens the live-mode connection", () => {
@@ -58,9 +62,20 @@ describe("VisualEditing", () => {
   })
 
   it("audits the DOM for stega leaking into unsafe places in development", () => {
+    vi.stubEnv("DEV", true)
+
     render(<VisualEditing clientConfig={clientConfig} />)
 
     const props = vi.mocked(SanityVisualEditing).mock.lastCall?.[0]
     expect(typeof props?.onSuspiciousStega).toBe("function")
+  })
+
+  it("leaves the audit off outside development", () => {
+    vi.stubEnv("DEV", false)
+
+    render(<VisualEditing clientConfig={clientConfig} />)
+
+    const props = vi.mocked(SanityVisualEditing).mock.lastCall?.[0]
+    expect(props?.onSuspiciousStega).toBeUndefined()
   })
 })
