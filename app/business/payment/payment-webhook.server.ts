@@ -9,6 +9,7 @@ import {
 } from "./payment-email-outbox.server"
 import { applyRefundTally, type RefundablePayment } from "./refund-apply.server"
 import { tallyRefunds } from "./refund-state"
+import { POST_PAYMENT_STATUSES } from "./post-payment-statuses"
 
 /**
  * Writes the delivery to the inbox and says whether there is work to do. The
@@ -56,12 +57,6 @@ export async function recordWebhookEvent(
 /** Statuses a charge can still be paid from — including expired: a provider
  *  may let someone pay a Pix after the due date, and the money is real. */
 const PAYABLE = ["pending", "awaiting_payment", "expired"] as const
-
-// Application statuses that already sit at or past the payment. A confirmed
-// payment moves everything else to "paid"; these it leaves alone, so an admin
-// who advanced the participant by hand is never walked back, and "paid" itself
-// makes the move idempotent.
-const POST_PAYMENT_STATUSES = ["paid", "sent_rules", "finalised"] as const
 
 // `payments.id` is a uuid column, and Postgres throws on a value it cannot
 // cast rather than answering no rows. A charge opened by another system on the

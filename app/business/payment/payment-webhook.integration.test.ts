@@ -172,6 +172,7 @@ describe("applyWebhookEvent", () => {
     "pending",
     "talking",
     "think_better",
+    "no_response",
     "sent_payment_data",
   ] as const)(
     "flips a participant at %s to paid on a confirmed payment",
