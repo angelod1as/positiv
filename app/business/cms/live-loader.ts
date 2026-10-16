@@ -6,6 +6,7 @@ export type LiveClientConfig = {
   dataset?: string
   apiVersion: string
   apiHost?: string
+  studioUrl: string
 }
 
 // client: false keeps a fetching client out of the browser bundle, so no query

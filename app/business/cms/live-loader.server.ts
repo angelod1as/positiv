@@ -6,7 +6,7 @@ import {
   loadQuery as serverLoadQuery,
   setServerClient,
 } from "./live-loader"
-import { SANITY_API_VERSION } from "./sanity-client.server"
+import { SANITY_API_VERSION, sanityStudioUrl } from "./sanity-client.server"
 import { siteSnapshotQuery } from "./site-snapshot-query"
 
 export type DraftSnapshotQuery = {
@@ -35,6 +35,7 @@ function liveClientConfig(): LiveClientConfig {
     projectId: ENV.SANITY_PROJECT_ID,
     dataset: ENV.SANITY_DATASET,
     apiVersion: SANITY_API_VERSION,
+    studioUrl: sanityStudioUrl(),
     ...(ENV.SANITY_API_HOST && { apiHost: ENV.SANITY_API_HOST }),
   }
 }

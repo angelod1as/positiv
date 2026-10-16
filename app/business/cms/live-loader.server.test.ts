@@ -10,6 +10,7 @@ beforeEach(() => {
   env.SANITY_PROJECT_ID = "8ojkallk"
   env.SANITY_DATASET = "development"
   env.SANITY_API_HOST = undefined
+  env.SANITY_STUDIO_URL = "https://positiv.sanity.studio"
 })
 
 function fakeLoadQuery() {
@@ -42,6 +43,7 @@ describe("loadDraftSnapshotQuery", () => {
       projectId: expect.any(String),
       dataset: expect.any(String),
       apiVersion: expect.any(String),
+      studioUrl: "https://positiv.sanity.studio",
     })
     expect(JSON.stringify(result.clientConfig)).not.toMatch(/token/i)
   })

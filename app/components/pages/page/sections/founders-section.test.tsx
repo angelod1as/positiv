@@ -5,7 +5,8 @@ import type {
 } from "~/business/cms/content.schema"
 import { homepageCopy } from "~/copy/homepage"
 import { pageContentFixture } from "~/test/page-content-fixture"
-import { renderWithRouter, screen } from "~/test/test-utils"
+import { renderWithRouter, screen, waitFor } from "~/test/test-utils"
+import { OverlayProvider } from "../overlay/overlay-provider"
 import { FoundersSection } from "./founders-section"
 
 const paragraph = (key: string, text: string): PortableText[number] => ({
@@ -119,5 +120,38 @@ describe("FoundersSection", () => {
     expect(
       screen.queryByTitle("Vídeo das pessoas fundadoras"),
     ).not.toBeInTheDocument()
+  })
+
+  it("marks each founder's photo and Instagram button for click-to-edit in draft mode", async () => {
+    renderWithRouter(
+      <OverlayProvider pageId="page-1" studioUrl="https://positiv.sanity.studio">
+        <FoundersSection content={founders} />
+      </OverlayProvider>,
+    )
+
+    // The overlay builder arrives with the dynamically imported draft chunk, so
+    // the attributes fill in after the first paint.
+    await waitFor(() => {
+      const photoAttr = screen
+        .getByRole("img", { name: "Bia sorrindo" })
+        .getAttribute("data-sanity")
+      expect(photoAttr).toContain("id=person-bia")
+      expect(photoAttr).toContain("type=person")
+      expect(photoAttr).toContain("path=photo")
+    })
+
+    const instagramAttr = screen
+      .getAllByRole("link", { name: homepageCopy.founders.instagramIconAlt })[0]
+      .getAttribute("data-sanity")
+    expect(instagramAttr).toContain("id=person-bia")
+    expect(instagramAttr).toContain("path=instagram")
+  })
+
+  it("leaves the founder photo unmarked outside draft mode", () => {
+    renderWithRouter(<FoundersSection content={founders} />)
+
+    expect(
+      screen.getByRole("img", { name: "Bia sorrindo" }),
+    ).not.toHaveAttribute("data-sanity")
   })
 })

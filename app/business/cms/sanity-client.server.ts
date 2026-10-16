@@ -3,6 +3,12 @@ import { ENV } from "varlock/env"
 
 export const SANITY_API_VERSION = "2026-09-24"
 
+// The one place the Studio URL is read, so the draft read client and the live
+// client config cannot drift apart. Read at call time, like every other ENV.
+export function sanityStudioUrl(): string {
+  return ENV.SANITY_STUDIO_URL
+}
+
 export function createSanityClient() {
   return createClient({
     projectId: ENV.SANITY_PROJECT_ID,

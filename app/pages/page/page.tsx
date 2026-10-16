@@ -10,6 +10,7 @@ import {
   resolvePagesSnapshot,
 } from "~/business/cms/resolve-snapshot"
 import { siteSnapshotCache } from "~/business/cms/site-snapshot-cache.server"
+import { OverlayProvider } from "~/components/pages/page/overlay/overlay-provider"
 import { metaCopy } from "~/copy/meta"
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { createMetaArray, createPageTitle } from "~/lib/helpers/meta"
@@ -207,9 +208,18 @@ export default function PageRoute({ loaderData }: Route.ComponentProps) {
   // time, so a live edit swaps the Page but not this data: adding or recounting
   // a nextEvents section only takes effect on reload. Accepted for preview —
   // recomputing live would need a per-edit server round-trip.
+  const content = (
+    <PageContent page={activePage} events={events} isLoggedIn={isLoggedIn} />
+  )
+
   return (
     <>
-      <PageContent page={activePage} events={events} isLoggedIn={isLoggedIn} />
+      <OverlayProvider
+        pageId={activePage._id}
+        studioUrl={loaderData.clientConfig.studioUrl}
+      >
+        {content}
+      </OverlayProvider>
       <Suspense fallback={null}>
         <DraftPageRoute
           initial={loaderData.initial}
