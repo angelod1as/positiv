@@ -13,7 +13,9 @@ import {
 } from "./payment-email-outbox.server"
 import { ACTIVE_PAYMENT_STATUSES } from "./payment-totals.server"
 
+// The floor keeps the provider from ever receiving a dueDate already past.
 const OFFER_VALID_DAYS = 7
+const MIN_OFFER_DAYS = 3
 
 /**
  * The delivery, with nothing left for it to throw at the admin.
@@ -126,7 +128,7 @@ export const createPaymentOffer = applySchema(createPaymentOfferSchema)(
     const participant = await kyselyDb
       .selectFrom("event_participants as ep")
       .innerJoin("events as e", "e.id", "ep.event_id")
-      .select(["ep.id", "ep.spot_type", "e.ticket_price"])
+      .select(["ep.id", "ep.spot_type", "e.ticket_price", "e.time_payment_end"])
       .where("ep.id", "=", values.eventParticipantId)
       .executeTakeFirst()
 
@@ -158,8 +160,15 @@ export const createPaymentOffer = applySchema(createPaymentOfferSchema)(
       throw new Error(paymentsCopy.errors.amountTooLow)
     }
 
+    const now = Date.now()
+    const dayMs = 24 * 60 * 60 * 1000
     const dueAt = new Date(
-      Date.now() + OFFER_VALID_DAYS * 24 * 60 * 60 * 1000,
+      participant.time_payment_end
+        ? Math.max(
+            new Date(participant.time_payment_end).getTime(),
+            now + MIN_OFFER_DAYS * dayMs,
+          )
+        : now + OFFER_VALID_DAYS * dayMs,
     ).toISOString()
 
     const { replaced, payment, emailId } = await kyselyDb
