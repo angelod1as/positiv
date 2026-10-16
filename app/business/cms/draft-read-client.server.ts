@@ -1,6 +1,6 @@
 import { createClient } from "@sanity/client"
 import { ENV } from "varlock/env"
-import { SANITY_API_VERSION } from "./sanity-client.server"
+import { SANITY_API_VERSION, sanityStudioUrl } from "./sanity-client.server"
 import { stegaFilter } from "./stega-filter"
 
 export function createDraftReadClient() {
@@ -13,7 +13,7 @@ export function createDraftReadClient() {
     token: ENV.SANITY_VIEWER_TOKEN,
     stega: {
       enabled: true,
-      studioUrl: ENV.SANITY_STUDIO_URL,
+      studioUrl: sanityStudioUrl(),
       filter: stegaFilter,
     },
     ...(ENV.SANITY_API_HOST && {

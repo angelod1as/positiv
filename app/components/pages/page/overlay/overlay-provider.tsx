@@ -29,7 +29,10 @@ export const OverlayProvider: FCC<OverlayProviderProps> = ({
         if (active) setCreate(() => module.createDataAttribute)
       })
       .catch((error) => {
-        console.error("Could not load the visual-editing overlay chunk", error)
+        console.error(
+          "Could not load the visual-editing overlay chunk; click-to-edit is unavailable in this preview",
+          error,
+        )
       })
     return () => {
       active = false
