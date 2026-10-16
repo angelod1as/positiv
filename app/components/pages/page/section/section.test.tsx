@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest"
-import { render, screen } from "~/test/test-utils"
+import { render, screen, waitFor } from "~/test/test-utils"
 import { OverlayProvider } from "../overlay/overlay-provider"
 import { Section } from "./section"
 
 describe("Section", () => {
-  it("is a whole-section edit target in draft mode", () => {
+  it("is a whole-section edit target in draft mode", async () => {
     render(
       <OverlayProvider pageId="page-1" studioUrl="https://positiv.sanity.studio">
         <Section>
@@ -13,8 +13,12 @@ describe("Section", () => {
       </OverlayProvider>,
     )
 
-    expect(screen.getByText("conteúdo").closest("section")).toHaveAttribute(
-      "data-sanity-edit-target",
+    // The overlay context fills in once the dynamically imported draft chunk
+    // resolves, so the edit target appears after the first paint.
+    await waitFor(() =>
+      expect(screen.getByText("conteúdo").closest("section")).toHaveAttribute(
+        "data-sanity-edit-target",
+      ),
     )
   })
 

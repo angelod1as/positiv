@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import * as authServer from "~/business/auth/auth.server"
 import { isDraftModeEnabled } from "~/business/cms/draft-mode.server"
@@ -18,6 +19,7 @@ const { captured } = vi.hoisted(() => ({
   captured: {
     onPage: undefined as ((page: unknown) => void) | undefined,
     onPages: [] as ((page: unknown) => void)[],
+    overlayPageId: undefined as string | undefined,
   },
 }))
 
@@ -26,6 +28,19 @@ vi.mock("./draft-page-route", () => ({
     captured.onPage = onPage
     captured.onPages.push(onPage)
     return null
+  },
+}))
+
+vi.mock("~/components/pages/page/overlay/overlay-provider", () => ({
+  OverlayProvider: ({
+    pageId,
+    children,
+  }: {
+    pageId: string
+    children: ReactNode
+  }) => {
+    captured.overlayPageId = pageId
+    return <div data-testid="overlay-provider">{children}</div>
   },
 }))
 
@@ -485,10 +500,38 @@ describe("Page route", () => {
       initial: { data: null },
       query: "the-snapshot-query",
       params: {},
-      clientConfig: { projectId: "p", dataset: "d", apiVersion: "v" },
+      clientConfig: {
+        projectId: "p",
+        dataset: "d",
+        apiVersion: "v",
+        studioUrl: "https://positiv.sanity.studio",
+      },
       address,
     }
   }
+
+  it("wraps the draft content in the overlay provider for the active Page", () => {
+    captured.overlayPageId = undefined
+    const home = pageAt("/")
+
+    renderWithRouter(
+      <PageRoute
+        {...({
+          loaderData: draftLoaderData("/", home),
+        } as unknown as Route.ComponentProps)}
+      />,
+    )
+
+    expect(screen.getByTestId("overlay-provider")).toBeInTheDocument()
+    expect(captured.overlayPageId).toBe(home._id)
+    expect(whatsAppLink()).toBeInTheDocument()
+  })
+
+  it("renders no overlay provider on a published Page", () => {
+    renderPage(pageAt("/"))
+
+    expect(screen.queryByTestId("overlay-provider")).toBeNull()
+  })
 
   it("shows the loader Page in draft mode and swaps it when a live edit arrives", async () => {
     renderWithRouter(

@@ -10,6 +10,7 @@ import {
   resolvePagesSnapshot,
 } from "~/business/cms/resolve-snapshot"
 import { siteSnapshotCache } from "~/business/cms/site-snapshot-cache.server"
+import { OverlayProvider } from "~/components/pages/page/overlay/overlay-provider"
 import { metaCopy } from "~/copy/meta"
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { createMetaArray, createPageTitle } from "~/lib/helpers/meta"
@@ -21,12 +22,6 @@ import type { Route } from "./+types/page"
 const DraftPageRoute = lazy(() =>
   import("./draft-page-route").then((module) => ({
     default: module.DraftPageRoute,
-  })),
-)
-
-const OverlayProvider = lazy(() =>
-  import("~/components/pages/page/overlay/overlay-provider").then((module) => ({
-    default: module.OverlayProvider,
   })),
 )
 
@@ -219,14 +214,12 @@ export default function PageRoute({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <Suspense fallback={content}>
-        <OverlayProvider
-          pageId={activePage._id}
-          studioUrl={loaderData.clientConfig.studioUrl}
-        >
-          {content}
-        </OverlayProvider>
-      </Suspense>
+      <OverlayProvider
+        pageId={activePage._id}
+        studioUrl={loaderData.clientConfig.studioUrl}
+      >
+        {content}
+      </OverlayProvider>
       <Suspense fallback={null}>
         <DraftPageRoute
           initial={loaderData.initial}
