@@ -3,6 +3,7 @@ import { createSupabaseAdminClient } from "./db-cleanup"
 import { createTestUser } from "./user-management"
 import { runEmail } from "./run-context"
 import { uniqueValidCpf } from "./unique-cpf"
+import type { ParticipantApplicationStatus } from "~types/database/entities.types"
 
 export interface TestParticipant {
   profileId: string
@@ -77,13 +78,7 @@ export async function createTestEventWithParticipants(
         ? "finalised"
         : i === 1
           ? "pending"
-          : "talking") as
-        | "pending"
-        | "talking"
-        | "sent_payment_data"
-        | "sent_rules"
-        | "think_better"
-        | "finalised",
+          : "talking") as ParticipantApplicationStatus,
       attendance_status: (i === 0 ? "attended" : "pending") as
         | "pending"
         | "attended"
