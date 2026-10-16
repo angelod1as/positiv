@@ -10,6 +10,7 @@ const isParticipantAcceptedInProcess = (
 ): boolean => {
   const allowedApplicationStatuses: ParticipantApplicationStatus[] = [
     "sent_payment_data",
+    "paid",
     "sent_rules",
     "talking",
     "finalised",

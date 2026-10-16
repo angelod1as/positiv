@@ -1,959 +1,958 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   public: {
     Tables: {
       app_settings: {
         Row: {
-          card_payments_enabled: boolean
-          id: boolean
-          online_payments_enabled: boolean
-          updated_at: string
-          updated_by: string | null
-        }
+          card_payments_enabled: boolean;
+          id: boolean;
+          online_payments_enabled: boolean;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        ComputedFields: never;
         Insert: {
-          card_payments_enabled?: boolean
-          id?: boolean
-          online_payments_enabled?: boolean
-          updated_at?: string
-          updated_by?: string | null
-        }
+          card_payments_enabled?: boolean;
+          id?: boolean;
+          online_payments_enabled?: boolean;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
         Update: {
-          card_payments_enabled?: boolean
-          id?: boolean
-          online_payments_enabled?: boolean
-          updated_at?: string
-          updated_by?: string | null
-        }
+          card_payments_enabled?: boolean;
+          id?: boolean;
+          online_payments_enabled?: boolean;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "app_settings_updated_by_fkey"
-            columns: ["updated_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "app_settings_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       blocked_signup_domains: {
         Row: {
-          created_at: string
-          domain: string
-        }
+          created_at: string;
+          domain: string;
+        };
+        ComputedFields: never;
         Insert: {
-          created_at?: string
-          domain: string
-        }
+          created_at?: string;
+          domain: string;
+        };
         Update: {
-          created_at?: string
-          domain?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          domain?: string;
+        };
+        Relationships: [];
+      };
       event_demographics_history: {
         Row: {
-          age_average: number | null
-          age_max: number | null
-          age_min: number | null
-          calculated_at: string
-          created_at: string
-          event_id: string
-          gender_cis: number
-          gender_other_percentage: number
-          gender_other_values: string[] | null
-          gender_trans: number
-          id: string
-          orientation_ace_demi: number
-          orientation_bi_pan: number
-          orientation_homo: number
-          orientation_other_percentage: number
-          orientation_other_values: string[] | null
-          orientation_straight: number
-          race_color_black: number
-          race_color_brown: number
-          race_color_indigenous: number
-          race_color_other_percentage: number
-          race_color_other_values: string[] | null
-          race_color_white: number
-          race_color_yellow: number
-          total: number
-          veteran_no: number
-          veteran_yes: number
-        }
+          age_average: number | null;
+          age_max: number | null;
+          age_min: number | null;
+          calculated_at: string;
+          created_at: string;
+          event_id: string;
+          gender_cis: number;
+          gender_other_percentage: number;
+          gender_other_values: string[] | null;
+          gender_trans: number;
+          id: string;
+          orientation_ace_demi: number;
+          orientation_bi_pan: number;
+          orientation_homo: number;
+          orientation_other_percentage: number;
+          orientation_other_values: string[] | null;
+          orientation_straight: number;
+          race_color_black: number;
+          race_color_brown: number;
+          race_color_indigenous: number;
+          race_color_other_percentage: number;
+          race_color_other_values: string[] | null;
+          race_color_white: number;
+          race_color_yellow: number;
+          total: number;
+          veteran_no: number;
+          veteran_yes: number;
+        };
+        ComputedFields: never;
         Insert: {
-          age_average?: number | null
-          age_max?: number | null
-          age_min?: number | null
-          calculated_at?: string
-          created_at?: string
-          event_id: string
-          gender_cis?: number
-          gender_other_percentage?: number
-          gender_other_values?: string[] | null
-          gender_trans?: number
-          id?: string
-          orientation_ace_demi?: number
-          orientation_bi_pan?: number
-          orientation_homo?: number
-          orientation_other_percentage?: number
-          orientation_other_values?: string[] | null
-          orientation_straight?: number
-          race_color_black?: number
-          race_color_brown?: number
-          race_color_indigenous?: number
-          race_color_other_percentage?: number
-          race_color_other_values?: string[] | null
-          race_color_white?: number
-          race_color_yellow?: number
-          total?: number
-          veteran_no?: number
-          veteran_yes?: number
-        }
+          age_average?: number | null;
+          age_max?: number | null;
+          age_min?: number | null;
+          calculated_at?: string;
+          created_at?: string;
+          event_id: string;
+          gender_cis?: number;
+          gender_other_percentage?: number;
+          gender_other_values?: string[] | null;
+          gender_trans?: number;
+          id?: string;
+          orientation_ace_demi?: number;
+          orientation_bi_pan?: number;
+          orientation_homo?: number;
+          orientation_other_percentage?: number;
+          orientation_other_values?: string[] | null;
+          orientation_straight?: number;
+          race_color_black?: number;
+          race_color_brown?: number;
+          race_color_indigenous?: number;
+          race_color_other_percentage?: number;
+          race_color_other_values?: string[] | null;
+          race_color_white?: number;
+          race_color_yellow?: number;
+          total?: number;
+          veteran_no?: number;
+          veteran_yes?: number;
+        };
         Update: {
-          age_average?: number | null
-          age_max?: number | null
-          age_min?: number | null
-          calculated_at?: string
-          created_at?: string
-          event_id?: string
-          gender_cis?: number
-          gender_other_percentage?: number
-          gender_other_values?: string[] | null
-          gender_trans?: number
-          id?: string
-          orientation_ace_demi?: number
-          orientation_bi_pan?: number
-          orientation_homo?: number
-          orientation_other_percentage?: number
-          orientation_other_values?: string[] | null
-          orientation_straight?: number
-          race_color_black?: number
-          race_color_brown?: number
-          race_color_indigenous?: number
-          race_color_other_percentage?: number
-          race_color_other_values?: string[] | null
-          race_color_white?: number
-          race_color_yellow?: number
-          total?: number
-          veteran_no?: number
-          veteran_yes?: number
-        }
+          age_average?: number | null;
+          age_max?: number | null;
+          age_min?: number | null;
+          calculated_at?: string;
+          created_at?: string;
+          event_id?: string;
+          gender_cis?: number;
+          gender_other_percentage?: number;
+          gender_other_values?: string[] | null;
+          gender_trans?: number;
+          id?: string;
+          orientation_ace_demi?: number;
+          orientation_bi_pan?: number;
+          orientation_homo?: number;
+          orientation_other_percentage?: number;
+          orientation_other_values?: string[] | null;
+          orientation_straight?: number;
+          race_color_black?: number;
+          race_color_brown?: number;
+          race_color_indigenous?: number;
+          race_color_other_percentage?: number;
+          race_color_other_values?: string[] | null;
+          race_color_white?: number;
+          race_color_yellow?: number;
+          total?: number;
+          veteran_no?: number;
+          veteran_yes?: number;
+        };
         Relationships: [
           {
-            foreignKeyName: "event_demographics_history_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: true
-            referencedRelation: "events"
-            referencedColumns: ["id"]
+            foreignKeyName: "event_demographics_history_event_id_fkey";
+            columns: ["event_id"];
+            isOneToOne: true;
+            referencedRelation: "events";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       event_invites: {
         Row: {
-          created_at: string
-          event_id: string
-          id: string
-          profile_id: string
-          revoked_at: string | null
-          token: string
-          used_at: string | null
-        }
+          created_at: string;
+          event_id: string;
+          id: string;
+          profile_id: string;
+          revoked_at: string | null;
+          token: string;
+          used_at: string | null;
+        };
+        ComputedFields: never;
         Insert: {
-          created_at?: string
-          event_id: string
-          id?: string
-          profile_id: string
-          revoked_at?: string | null
-          token: string
-          used_at?: string | null
-        }
+          created_at?: string;
+          event_id: string;
+          id?: string;
+          profile_id: string;
+          revoked_at?: string | null;
+          token: string;
+          used_at?: string | null;
+        };
         Update: {
-          created_at?: string
-          event_id?: string
-          id?: string
-          profile_id?: string
-          revoked_at?: string | null
-          token?: string
-          used_at?: string | null
-        }
+          created_at?: string;
+          event_id?: string;
+          id?: string;
+          profile_id?: string;
+          revoked_at?: string | null;
+          token?: string;
+          used_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "event_invites_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
+            foreignKeyName: "event_invites_event_id_fkey";
+            columns: ["event_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "event_invites_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "event_invites_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       event_newsletter_campaigns: {
         Row: {
-          campaign_creation_time: string | null
-          campaign_id: string | null
-          campaign_is_created: boolean
-          campaign_is_sent: boolean
-          campaign_sent_time: string | null
-          campaign_type: Database["public"]["Enums"]["campaign_type"]
-          created_at: string
-          event_id: string
-          id: string
-          last_attempt: string | null
-          last_error: Json | null
-          should_send_at: string | null
-          times_attempted: number
-          updated_at: string
-        }
+          campaign_creation_time: string | null;
+          campaign_id: string | null;
+          campaign_is_created: boolean;
+          campaign_is_sent: boolean;
+          campaign_sent_time: string | null;
+          campaign_type: Database["public"]["Enums"]["campaign_type"];
+          created_at: string;
+          event_id: string;
+          id: string;
+          last_attempt: string | null;
+          last_error: Json | null;
+          should_send_at: string | null;
+          times_attempted: number;
+          updated_at: string;
+        };
+        ComputedFields: never;
         Insert: {
-          campaign_creation_time?: string | null
-          campaign_id?: string | null
-          campaign_is_created?: boolean
-          campaign_is_sent?: boolean
-          campaign_sent_time?: string | null
-          campaign_type?: Database["public"]["Enums"]["campaign_type"]
-          created_at?: string
-          event_id: string
-          id?: string
-          last_attempt?: string | null
-          last_error?: Json | null
-          should_send_at?: string | null
-          times_attempted?: number
-          updated_at?: string
-        }
+          campaign_creation_time?: string | null;
+          campaign_id?: string | null;
+          campaign_is_created?: boolean;
+          campaign_is_sent?: boolean;
+          campaign_sent_time?: string | null;
+          campaign_type?: Database["public"]["Enums"]["campaign_type"];
+          created_at?: string;
+          event_id: string;
+          id?: string;
+          last_attempt?: string | null;
+          last_error?: Json | null;
+          should_send_at?: string | null;
+          times_attempted?: number;
+          updated_at?: string;
+        };
         Update: {
-          campaign_creation_time?: string | null
-          campaign_id?: string | null
-          campaign_is_created?: boolean
-          campaign_is_sent?: boolean
-          campaign_sent_time?: string | null
-          campaign_type?: Database["public"]["Enums"]["campaign_type"]
-          created_at?: string
-          event_id?: string
-          id?: string
-          last_attempt?: string | null
-          last_error?: Json | null
-          should_send_at?: string | null
-          times_attempted?: number
-          updated_at?: string
-        }
+          campaign_creation_time?: string | null;
+          campaign_id?: string | null;
+          campaign_is_created?: boolean;
+          campaign_is_sent?: boolean;
+          campaign_sent_time?: string | null;
+          campaign_type?: Database["public"]["Enums"]["campaign_type"];
+          created_at?: string;
+          event_id?: string;
+          id?: string;
+          last_attempt?: string | null;
+          last_error?: Json | null;
+          should_send_at?: string | null;
+          times_attempted?: number;
+          updated_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "event_newsletter_campaigns_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
+            foreignKeyName: "event_newsletter_campaigns_event_id_fkey";
+            columns: ["event_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       event_participants: {
         Row: {
-          admin_general_notes: string | null
-          application_date: string
-          application_status: Database["public"]["Enums"]["application_status_enum"]
-          attendance_status: Database["public"]["Enums"]["attendance_status_enum"]
-          bond: string | null
-          cancellation_date: string | null
-          companions: string | null
-          created_at: string
-          event_id: string
-          id: string
-          is_user_applied: boolean
-          notes: string | null
-          profile_id: string | null
-          referrals: string | null
-          referred: string
-          spot_type: Database["public"]["Enums"]["spot_type"]
-          updated_at: string
-          was_selected_for_rotation: boolean
-        }
+          admin_general_notes: string | null;
+          application_date: string;
+          application_status: Database["public"]["Enums"]["application_status_enum"];
+          attendance_status: Database["public"]["Enums"]["attendance_status_enum"];
+          bond: string | null;
+          cancellation_date: string | null;
+          companions: string | null;
+          created_at: string;
+          event_id: string;
+          id: string;
+          is_user_applied: boolean;
+          notes: string | null;
+          profile_id: string | null;
+          referrals: string | null;
+          referred: string;
+          spot_type: Database["public"]["Enums"]["spot_type"];
+          updated_at: string;
+          was_selected_for_rotation: boolean;
+        };
+        ComputedFields: never;
         Insert: {
-          admin_general_notes?: string | null
-          application_date?: string
-          application_status?: Database["public"]["Enums"]["application_status_enum"]
-          attendance_status?: Database["public"]["Enums"]["attendance_status_enum"]
-          bond?: string | null
-          cancellation_date?: string | null
-          companions?: string | null
-          created_at?: string
-          event_id: string
-          id?: string
-          is_user_applied?: boolean
-          notes?: string | null
-          profile_id?: string | null
-          referrals?: string | null
-          referred?: string
-          spot_type?: Database["public"]["Enums"]["spot_type"]
-          updated_at?: string
-          was_selected_for_rotation?: boolean
-        }
+          admin_general_notes?: string | null;
+          application_date?: string;
+          application_status?: Database["public"]["Enums"]["application_status_enum"];
+          attendance_status?: Database["public"]["Enums"]["attendance_status_enum"];
+          bond?: string | null;
+          cancellation_date?: string | null;
+          companions?: string | null;
+          created_at?: string;
+          event_id: string;
+          id?: string;
+          is_user_applied?: boolean;
+          notes?: string | null;
+          profile_id?: string | null;
+          referrals?: string | null;
+          referred?: string;
+          spot_type?: Database["public"]["Enums"]["spot_type"];
+          updated_at?: string;
+          was_selected_for_rotation?: boolean;
+        };
         Update: {
-          admin_general_notes?: string | null
-          application_date?: string
-          application_status?: Database["public"]["Enums"]["application_status_enum"]
-          attendance_status?: Database["public"]["Enums"]["attendance_status_enum"]
-          bond?: string | null
-          cancellation_date?: string | null
-          companions?: string | null
-          created_at?: string
-          event_id?: string
-          id?: string
-          is_user_applied?: boolean
-          notes?: string | null
-          profile_id?: string | null
-          referrals?: string | null
-          referred?: string
-          spot_type?: Database["public"]["Enums"]["spot_type"]
-          updated_at?: string
-          was_selected_for_rotation?: boolean
-        }
+          admin_general_notes?: string | null;
+          application_date?: string;
+          application_status?: Database["public"]["Enums"]["application_status_enum"];
+          attendance_status?: Database["public"]["Enums"]["attendance_status_enum"];
+          bond?: string | null;
+          cancellation_date?: string | null;
+          companions?: string | null;
+          created_at?: string;
+          event_id?: string;
+          id?: string;
+          is_user_applied?: boolean;
+          notes?: string | null;
+          profile_id?: string | null;
+          referrals?: string | null;
+          referred?: string;
+          spot_type?: Database["public"]["Enums"]["spot_type"];
+          updated_at?: string;
+          was_selected_for_rotation?: boolean;
+        };
         Relationships: [
           {
-            foreignKeyName: "event_participants_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
+            foreignKeyName: "event_participants_event_id_fkey";
+            columns: ["event_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "event_participants_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "event_participants_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       event_registration_limit_emails: {
         Row: {
-          admin_emails: string[]
-          created_at: string
-          event_id: string
-          id: string
-          sent_at: string
-        }
+          admin_emails: string[];
+          created_at: string;
+          event_id: string;
+          id: string;
+          sent_at: string;
+        };
+        ComputedFields: never;
         Insert: {
-          admin_emails: string[]
-          created_at?: string
-          event_id: string
-          id?: string
-          sent_at?: string
-        }
+          admin_emails: string[];
+          created_at?: string;
+          event_id: string;
+          id?: string;
+          sent_at?: string;
+        };
         Update: {
-          admin_emails?: string[]
-          created_at?: string
-          event_id?: string
-          id?: string
-          sent_at?: string
-        }
+          admin_emails?: string[];
+          created_at?: string;
+          event_id?: string;
+          id?: string;
+          sent_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "event_registration_limit_emails_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
+            foreignKeyName: "event_registration_limit_emails_event_id_fkey";
+            columns: ["event_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       events: {
         Row: {
-          auto_publish: boolean
-          created_at: string
-          description: string | null
-          emoji: string | null
-          event_status: Database["public"]["Enums"]["event_status"]
-          event_type: Database["public"]["Enums"]["event_type_enum"]
-          id: string
-          listmonk_list_id: number | null
-          listmonk_list_synced_at: string | null
-          location: string | null
-          ticket_price: number | null
-          time_application_start: string | null
-          time_event_end: string | null
-          time_event_start: string | null
-          time_group_end: string | null
-          time_group_start: string | null
-          time_payment_end: string | null
-          time_payment_start: string | null
-          title: string | null
-          total_spots: number | null
-        }
+          auto_publish: boolean;
+          created_at: string;
+          description: string | null;
+          emoji: string | null;
+          event_status: Database["public"]["Enums"]["event_status"];
+          event_type: Database["public"]["Enums"]["event_type_enum"];
+          id: string;
+          listmonk_list_id: number | null;
+          listmonk_list_synced_at: string | null;
+          location: string | null;
+          ticket_price: number | null;
+          time_application_start: string | null;
+          time_event_end: string | null;
+          time_event_start: string | null;
+          time_group_end: string | null;
+          time_group_start: string | null;
+          time_payment_end: string | null;
+          time_payment_start: string | null;
+          title: string | null;
+          total_spots: number | null;
+        };
+        ComputedFields: never;
         Insert: {
-          auto_publish?: boolean
-          created_at?: string
-          description?: string | null
-          emoji?: string | null
-          event_status?: Database["public"]["Enums"]["event_status"]
-          event_type?: Database["public"]["Enums"]["event_type_enum"]
-          id?: string
-          listmonk_list_id?: number | null
-          listmonk_list_synced_at?: string | null
-          location?: string | null
-          ticket_price?: number | null
-          time_application_start?: string | null
-          time_event_end?: string | null
-          time_event_start?: string | null
-          time_group_end?: string | null
-          time_group_start?: string | null
-          time_payment_end?: string | null
-          time_payment_start?: string | null
-          title?: string | null
-          total_spots?: number | null
-        }
+          auto_publish?: boolean;
+          created_at?: string;
+          description?: string | null;
+          emoji?: string | null;
+          event_status?: Database["public"]["Enums"]["event_status"];
+          event_type?: Database["public"]["Enums"]["event_type_enum"];
+          id?: string;
+          listmonk_list_id?: number | null;
+          listmonk_list_synced_at?: string | null;
+          location?: string | null;
+          ticket_price?: number | null;
+          time_application_start?: string | null;
+          time_event_end?: string | null;
+          time_event_start?: string | null;
+          time_group_end?: string | null;
+          time_group_start?: string | null;
+          time_payment_end?: string | null;
+          time_payment_start?: string | null;
+          title?: string | null;
+          total_spots?: number | null;
+        };
         Update: {
-          auto_publish?: boolean
-          created_at?: string
-          description?: string | null
-          emoji?: string | null
-          event_status?: Database["public"]["Enums"]["event_status"]
-          event_type?: Database["public"]["Enums"]["event_type_enum"]
-          id?: string
-          listmonk_list_id?: number | null
-          listmonk_list_synced_at?: string | null
-          location?: string | null
-          ticket_price?: number | null
-          time_application_start?: string | null
-          time_event_end?: string | null
-          time_event_start?: string | null
-          time_group_end?: string | null
-          time_group_start?: string | null
-          time_payment_end?: string | null
-          time_payment_start?: string | null
-          title?: string | null
-          total_spots?: number | null
-        }
-        Relationships: []
-      }
+          auto_publish?: boolean;
+          created_at?: string;
+          description?: string | null;
+          emoji?: string | null;
+          event_status?: Database["public"]["Enums"]["event_status"];
+          event_type?: Database["public"]["Enums"]["event_type_enum"];
+          id?: string;
+          listmonk_list_id?: number | null;
+          listmonk_list_synced_at?: string | null;
+          location?: string | null;
+          ticket_price?: number | null;
+          time_application_start?: string | null;
+          time_event_end?: string | null;
+          time_event_start?: string | null;
+          time_group_end?: string | null;
+          time_group_start?: string | null;
+          time_payment_end?: string | null;
+          time_payment_start?: string | null;
+          title?: string | null;
+          total_spots?: number | null;
+        };
+        Relationships: [];
+      };
       feedbacks: {
         Row: {
-          can_contact: boolean
-          created_at: string
-          email: string | null
-          feedback_text: string
-          has_participated: Database["public"]["Enums"]["feedback_participation_enum"]
-          id: string
-          ip_address: string
-          name: string | null
-          status: Database["public"]["Enums"]["feedback_status_enum"]
-          whatsapp: string | null
-        }
+          can_contact: boolean;
+          created_at: string;
+          email: string | null;
+          feedback_text: string;
+          has_participated: Database["public"]["Enums"]["feedback_participation_enum"];
+          id: string;
+          ip_address: string;
+          name: string | null;
+          status: Database["public"]["Enums"]["feedback_status_enum"];
+          whatsapp: string | null;
+        };
+        ComputedFields: never;
         Insert: {
-          can_contact?: boolean
-          created_at?: string
-          email?: string | null
-          feedback_text: string
-          has_participated?: Database["public"]["Enums"]["feedback_participation_enum"]
-          id?: string
-          ip_address: string
-          name?: string | null
-          status?: Database["public"]["Enums"]["feedback_status_enum"]
-          whatsapp?: string | null
-        }
+          can_contact?: boolean;
+          created_at?: string;
+          email?: string | null;
+          feedback_text: string;
+          has_participated?: Database["public"]["Enums"]["feedback_participation_enum"];
+          id?: string;
+          ip_address: string;
+          name?: string | null;
+          status?: Database["public"]["Enums"]["feedback_status_enum"];
+          whatsapp?: string | null;
+        };
         Update: {
-          can_contact?: boolean
-          created_at?: string
-          email?: string | null
-          feedback_text?: string
-          has_participated?: Database["public"]["Enums"]["feedback_participation_enum"]
-          id?: string
-          ip_address?: string
-          name?: string | null
-          status?: Database["public"]["Enums"]["feedback_status_enum"]
-          whatsapp?: string | null
-        }
-        Relationships: []
-      }
+          can_contact?: boolean;
+          created_at?: string;
+          email?: string | null;
+          feedback_text?: string;
+          has_participated?: Database["public"]["Enums"]["feedback_participation_enum"];
+          id?: string;
+          ip_address?: string;
+          name?: string | null;
+          status?: Database["public"]["Enums"]["feedback_status_enum"];
+          whatsapp?: string | null;
+        };
+        Relationships: [];
+      };
       newsletter_subscriptions: {
         Row: {
-          consent_given: boolean
-          created_at: string
-          first_consent_given_at: string | null
-          id: string
-          last_consent_given_at: string | null
-          last_sync_attempt_at: string | null
-          listmonk_subscriber_id: number | null
-          profile_id: string
-          retry_count: number
-          subscribed_at: string | null
-          subscription_source: string | null
-          sync_status: string | null
-          unsubscribed_at: string | null
-          updated_at: string
-        }
+          consent_given: boolean;
+          created_at: string;
+          first_consent_given_at: string | null;
+          id: string;
+          last_consent_given_at: string | null;
+          last_sync_attempt_at: string | null;
+          listmonk_subscriber_id: number | null;
+          profile_id: string;
+          retry_count: number;
+          subscribed_at: string | null;
+          subscription_source: string | null;
+          sync_status: string | null;
+          unsubscribed_at: string | null;
+          updated_at: string;
+        };
+        ComputedFields: never;
         Insert: {
-          consent_given?: boolean
-          created_at?: string
-          first_consent_given_at?: string | null
-          id?: string
-          last_consent_given_at?: string | null
-          last_sync_attempt_at?: string | null
-          listmonk_subscriber_id?: number | null
-          profile_id: string
-          retry_count?: number
-          subscribed_at?: string | null
-          subscription_source?: string | null
-          sync_status?: string | null
-          unsubscribed_at?: string | null
-          updated_at?: string
-        }
+          consent_given?: boolean;
+          created_at?: string;
+          first_consent_given_at?: string | null;
+          id?: string;
+          last_consent_given_at?: string | null;
+          last_sync_attempt_at?: string | null;
+          listmonk_subscriber_id?: number | null;
+          profile_id: string;
+          retry_count?: number;
+          subscribed_at?: string | null;
+          subscription_source?: string | null;
+          sync_status?: string | null;
+          unsubscribed_at?: string | null;
+          updated_at?: string;
+        };
         Update: {
-          consent_given?: boolean
-          created_at?: string
-          first_consent_given_at?: string | null
-          id?: string
-          last_consent_given_at?: string | null
-          last_sync_attempt_at?: string | null
-          listmonk_subscriber_id?: number | null
-          profile_id?: string
-          retry_count?: number
-          subscribed_at?: string | null
-          subscription_source?: string | null
-          sync_status?: string | null
-          unsubscribed_at?: string | null
-          updated_at?: string
-        }
+          consent_given?: boolean;
+          created_at?: string;
+          first_consent_given_at?: string | null;
+          id?: string;
+          last_consent_given_at?: string | null;
+          last_sync_attempt_at?: string | null;
+          listmonk_subscriber_id?: number | null;
+          profile_id?: string;
+          retry_count?: number;
+          subscribed_at?: string | null;
+          subscription_source?: string | null;
+          sync_status?: string | null;
+          unsubscribed_at?: string | null;
+          updated_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "newsletter_subscriptions_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "newsletter_subscriptions_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: true;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       payment_emails: {
         Row: {
-          attempts: number
-          claimed_at: string | null
-          created_at: string
-          given_up_at: string | null
-          id: string
-          kind: Database["public"]["Enums"]["payment_email_kind"]
-          last_error: string | null
-          next_attempt_at: string | null
-          payment_id: string
-          sent_at: string | null
-        }
+          attempts: number;
+          claimed_at: string | null;
+          created_at: string;
+          given_up_at: string | null;
+          id: string;
+          kind: Database["public"]["Enums"]["payment_email_kind"];
+          last_error: string | null;
+          next_attempt_at: string | null;
+          payment_id: string;
+          sent_at: string | null;
+        };
+        ComputedFields: never;
         Insert: {
-          attempts?: number
-          claimed_at?: string | null
-          created_at?: string
-          given_up_at?: string | null
-          id?: string
-          kind: Database["public"]["Enums"]["payment_email_kind"]
-          last_error?: string | null
-          next_attempt_at?: string | null
-          payment_id: string
-          sent_at?: string | null
-        }
+          attempts?: number;
+          claimed_at?: string | null;
+          created_at?: string;
+          given_up_at?: string | null;
+          id?: string;
+          kind: Database["public"]["Enums"]["payment_email_kind"];
+          last_error?: string | null;
+          next_attempt_at?: string | null;
+          payment_id: string;
+          sent_at?: string | null;
+        };
         Update: {
-          attempts?: number
-          claimed_at?: string | null
-          created_at?: string
-          given_up_at?: string | null
-          id?: string
-          kind?: Database["public"]["Enums"]["payment_email_kind"]
-          last_error?: string | null
-          next_attempt_at?: string | null
-          payment_id?: string
-          sent_at?: string | null
-        }
+          attempts?: number;
+          claimed_at?: string | null;
+          created_at?: string;
+          given_up_at?: string | null;
+          id?: string;
+          kind?: Database["public"]["Enums"]["payment_email_kind"];
+          last_error?: string | null;
+          next_attempt_at?: string | null;
+          payment_id?: string;
+          sent_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "payment_emails_payment_id_fkey"
-            columns: ["payment_id"]
-            isOneToOne: false
-            referencedRelation: "payments"
-            referencedColumns: ["id"]
+            foreignKeyName: "payment_emails_payment_id_fkey";
+            columns: ["payment_id"];
+            isOneToOne: false;
+            referencedRelation: "payments";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       payment_webhook_events: {
         Row: {
-          error: string | null
-          event: Json | null
-          event_type: string
-          id: string
-          payload: Json
-          processed_at: string | null
-          provider_charge_id: string | null
-          provider_event_id: string
-          provider_plan_id: string | null
-          received_at: string
-        }
+          error: string | null;
+          event: Json | null;
+          event_type: string;
+          id: string;
+          payload: NonNullable<Json>;
+          processed_at: string | null;
+          provider_charge_id: string | null;
+          provider_event_id: string;
+          provider_plan_id: string | null;
+          received_at: string;
+        };
+        ComputedFields: never;
         Insert: {
-          error?: string | null
-          event?: Json | null
-          event_type: string
-          id?: string
-          payload: Json
-          processed_at?: string | null
-          provider_charge_id?: string | null
-          provider_event_id: string
-          provider_plan_id?: string | null
-          received_at?: string
-        }
+          error?: string | null;
+          event?: Json | null;
+          event_type: string;
+          id?: string;
+          payload: NonNullable<Json>;
+          processed_at?: string | null;
+          provider_charge_id?: string | null;
+          provider_event_id: string;
+          provider_plan_id?: string | null;
+          received_at?: string;
+        };
         Update: {
-          error?: string | null
-          event?: Json | null
-          event_type?: string
-          id?: string
-          payload?: Json
-          processed_at?: string | null
-          provider_charge_id?: string | null
-          provider_event_id?: string
-          provider_plan_id?: string | null
-          received_at?: string
-        }
-        Relationships: []
-      }
+          error?: string | null;
+          event?: Json | null;
+          event_type?: string;
+          id?: string;
+          payload?: NonNullable<Json>;
+          processed_at?: string | null;
+          provider_charge_id?: string | null;
+          provider_event_id?: string;
+          provider_plan_id?: string | null;
+          received_at?: string;
+        };
+        Relationships: [];
+      };
       payments: {
         Row: {
-          amount: number | null
-          base_amount: number
-          created_at: string
-          created_by: string | null
-          due_at: string
-          event_participant_id: string
-          id: string
-          installment_count: number | null
-          kind: Database["public"]["Enums"]["payment_kind"]
-          method: Database["public"]["Enums"]["payment_method"] | null
-          note: string | null
-          paid_at: string | null
-          provider_charge_id: string | null
-          provider_checkout_url: string | null
-          provider_customer_id: string | null
-          provider_dashboard_ref: string | null
-          provider_plan_id: string | null
-          refund_amount: number | null
-          refund_cancelled_amount: number | null
-          refund_denial_reason: string | null
-          refund_denied_at: string | null
-          refund_pending_amount: number | null
-          refund_requested_amount: number | null
-          refund_requested_at: string | null
-          refunded_at: string | null
-          refunds_sync_attempted_at: string | null
-          refunds_synced_at: string | null
-          status: Database["public"]["Enums"]["payment_status"]
-          updated_at: string
-        }
+          amount: number | null;
+          base_amount: number;
+          created_at: string;
+          created_by: string | null;
+          due_at: string;
+          event_participant_id: string;
+          id: string;
+          installment_count: number | null;
+          kind: Database["public"]["Enums"]["payment_kind"];
+          method: Database["public"]["Enums"]["payment_method"] | null;
+          note: string | null;
+          paid_at: string | null;
+          provider_charge_id: string | null;
+          provider_checkout_url: string | null;
+          provider_customer_id: string | null;
+          provider_dashboard_ref: string | null;
+          provider_plan_id: string | null;
+          refund_amount: number | null;
+          refund_cancelled_amount: number | null;
+          refund_denial_reason: string | null;
+          refund_denied_at: string | null;
+          refund_pending_amount: number | null;
+          refund_requested_amount: number | null;
+          refund_requested_at: string | null;
+          refunded_at: string | null;
+          refunds_sync_attempted_at: string | null;
+          refunds_synced_at: string | null;
+          status: Database["public"]["Enums"]["payment_status"];
+          updated_at: string;
+        };
+        ComputedFields: never;
         Insert: {
-          amount?: number | null
-          base_amount: number
-          created_at?: string
-          created_by?: string | null
-          due_at: string
-          event_participant_id: string
-          id?: string
-          installment_count?: number | null
-          kind: Database["public"]["Enums"]["payment_kind"]
-          method?: Database["public"]["Enums"]["payment_method"] | null
-          note?: string | null
-          paid_at?: string | null
-          provider_charge_id?: string | null
-          provider_checkout_url?: string | null
-          provider_customer_id?: string | null
-          provider_dashboard_ref?: string | null
-          provider_plan_id?: string | null
-          refund_amount?: number | null
-          refund_cancelled_amount?: number | null
-          refund_denial_reason?: string | null
-          refund_denied_at?: string | null
-          refund_pending_amount?: number | null
-          refund_requested_amount?: number | null
-          refund_requested_at?: string | null
-          refunded_at?: string | null
-          refunds_sync_attempted_at?: string | null
-          refunds_synced_at?: string | null
-          status?: Database["public"]["Enums"]["payment_status"]
-          updated_at?: string
-        }
+          amount?: number | null;
+          base_amount: number;
+          created_at?: string;
+          created_by?: string | null;
+          due_at: string;
+          event_participant_id: string;
+          id?: string;
+          installment_count?: number | null;
+          kind: Database["public"]["Enums"]["payment_kind"];
+          method?: Database["public"]["Enums"]["payment_method"] | null;
+          note?: string | null;
+          paid_at?: string | null;
+          provider_charge_id?: string | null;
+          provider_checkout_url?: string | null;
+          provider_customer_id?: string | null;
+          provider_dashboard_ref?: string | null;
+          provider_plan_id?: string | null;
+          refund_amount?: number | null;
+          refund_cancelled_amount?: number | null;
+          refund_denial_reason?: string | null;
+          refund_denied_at?: string | null;
+          refund_pending_amount?: number | null;
+          refund_requested_amount?: number | null;
+          refund_requested_at?: string | null;
+          refunded_at?: string | null;
+          refunds_sync_attempted_at?: string | null;
+          refunds_synced_at?: string | null;
+          status?: Database["public"]["Enums"]["payment_status"];
+          updated_at?: string;
+        };
         Update: {
-          amount?: number | null
-          base_amount?: number
-          created_at?: string
-          created_by?: string | null
-          due_at?: string
-          event_participant_id?: string
-          id?: string
-          installment_count?: number | null
-          kind?: Database["public"]["Enums"]["payment_kind"]
-          method?: Database["public"]["Enums"]["payment_method"] | null
-          note?: string | null
-          paid_at?: string | null
-          provider_charge_id?: string | null
-          provider_checkout_url?: string | null
-          provider_customer_id?: string | null
-          provider_dashboard_ref?: string | null
-          provider_plan_id?: string | null
-          refund_amount?: number | null
-          refund_cancelled_amount?: number | null
-          refund_denial_reason?: string | null
-          refund_denied_at?: string | null
-          refund_pending_amount?: number | null
-          refund_requested_amount?: number | null
-          refund_requested_at?: string | null
-          refunded_at?: string | null
-          refunds_sync_attempted_at?: string | null
-          refunds_synced_at?: string | null
-          status?: Database["public"]["Enums"]["payment_status"]
-          updated_at?: string
-        }
+          amount?: number | null;
+          base_amount?: number;
+          created_at?: string;
+          created_by?: string | null;
+          due_at?: string;
+          event_participant_id?: string;
+          id?: string;
+          installment_count?: number | null;
+          kind?: Database["public"]["Enums"]["payment_kind"];
+          method?: Database["public"]["Enums"]["payment_method"] | null;
+          note?: string | null;
+          paid_at?: string | null;
+          provider_charge_id?: string | null;
+          provider_checkout_url?: string | null;
+          provider_customer_id?: string | null;
+          provider_dashboard_ref?: string | null;
+          provider_plan_id?: string | null;
+          refund_amount?: number | null;
+          refund_cancelled_amount?: number | null;
+          refund_denial_reason?: string | null;
+          refund_denied_at?: string | null;
+          refund_pending_amount?: number | null;
+          refund_requested_amount?: number | null;
+          refund_requested_at?: string | null;
+          refunded_at?: string | null;
+          refunds_sync_attempted_at?: string | null;
+          refunds_synced_at?: string | null;
+          status?: Database["public"]["Enums"]["payment_status"];
+          updated_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "payments_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "payments_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "payments_event_participant_id_fkey"
-            columns: ["event_participant_id"]
-            isOneToOne: false
-            referencedRelation: "event_participant_payments"
-            referencedColumns: ["event_participant_id"]
+            foreignKeyName: "payments_event_participant_id_fkey";
+            columns: ["event_participant_id"];
+            isOneToOne: false;
+            referencedRelation: "event_participant_payments";
+            referencedColumns: ["event_participant_id"];
           },
           {
-            foreignKeyName: "payments_event_participant_id_fkey"
-            columns: ["event_participant_id"]
-            isOneToOne: false
-            referencedRelation: "event_participants"
-            referencedColumns: ["id"]
+            foreignKeyName: "payments_event_participant_id_fkey";
+            columns: ["event_participant_id"];
+            isOneToOne: false;
+            referencedRelation: "event_participants";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       profiles: {
         Row: {
-          approved_to_attend: Database["public"]["Enums"]["approved_to_attend_enum"]
-          basic_data_filled: boolean
-          became_veteran_date: string | null
-          cpf: string | null
-          created_at: string
-          date_of_birth: string | null
-          email: string
-          flag: Database["public"]["Enums"]["profile_flag_enum"]
-          flag_notes: string | null
-          full_name: string | null
-          gender: string[] | null
-          general_notes: string | null
-          how_came_to_us: string | null
-          id: string
-          is_veteran: boolean | null
-          orientation: string[] | null
-          phone: number | null
-          phone_is_international: boolean
-          pronouns: string[] | null
-          provider_customer_id: string | null
-          race_color: string[] | null
-          rg: string | null
-          rg_issuer: string | null
-          social_name: string | null
-          user_id: string | null
-          where_lives: string | null
-        }
+          approved_to_attend: Database["public"]["Enums"]["approved_to_attend_enum"];
+          basic_data_filled: boolean;
+          became_veteran_date: string | null;
+          cpf: string | null;
+          created_at: string;
+          date_of_birth: string | null;
+          email: string;
+          flag: Database["public"]["Enums"]["profile_flag_enum"];
+          flag_notes: string | null;
+          full_name: string | null;
+          gender: string[] | null;
+          general_notes: string | null;
+          how_came_to_us: string | null;
+          id: string;
+          is_veteran: boolean | null;
+          orientation: string[] | null;
+          phone: number | null;
+          phone_is_international: boolean;
+          pronouns: string[] | null;
+          provider_customer_id: string | null;
+          race_color: string[] | null;
+          rg: string | null;
+          rg_issuer: string | null;
+          social_name: string | null;
+          user_id: string | null;
+          where_lives: string | null;
+        };
+        ComputedFields: never;
         Insert: {
-          approved_to_attend?: Database["public"]["Enums"]["approved_to_attend_enum"]
-          basic_data_filled?: boolean
-          became_veteran_date?: string | null
-          cpf?: string | null
-          created_at?: string
-          date_of_birth?: string | null
-          email: string
-          flag?: Database["public"]["Enums"]["profile_flag_enum"]
-          flag_notes?: string | null
-          full_name?: string | null
-          gender?: string[] | null
-          general_notes?: string | null
-          how_came_to_us?: string | null
-          id?: string
-          is_veteran?: boolean | null
-          orientation?: string[] | null
-          phone?: number | null
-          phone_is_international?: boolean
-          pronouns?: string[] | null
-          provider_customer_id?: string | null
-          race_color?: string[] | null
-          rg?: string | null
-          rg_issuer?: string | null
-          social_name?: string | null
-          user_id?: string | null
-          where_lives?: string | null
-        }
+          approved_to_attend?: Database["public"]["Enums"]["approved_to_attend_enum"];
+          basic_data_filled?: boolean;
+          became_veteran_date?: string | null;
+          cpf?: string | null;
+          created_at?: string;
+          date_of_birth?: string | null;
+          email: string;
+          flag?: Database["public"]["Enums"]["profile_flag_enum"];
+          flag_notes?: string | null;
+          full_name?: string | null;
+          gender?: string[] | null;
+          general_notes?: string | null;
+          how_came_to_us?: string | null;
+          id?: string;
+          is_veteran?: boolean | null;
+          orientation?: string[] | null;
+          phone?: number | null;
+          phone_is_international?: boolean;
+          pronouns?: string[] | null;
+          provider_customer_id?: string | null;
+          race_color?: string[] | null;
+          rg?: string | null;
+          rg_issuer?: string | null;
+          social_name?: string | null;
+          user_id?: string | null;
+          where_lives?: string | null;
+        };
         Update: {
-          approved_to_attend?: Database["public"]["Enums"]["approved_to_attend_enum"]
-          basic_data_filled?: boolean
-          became_veteran_date?: string | null
-          cpf?: string | null
-          created_at?: string
-          date_of_birth?: string | null
-          email?: string
-          flag?: Database["public"]["Enums"]["profile_flag_enum"]
-          flag_notes?: string | null
-          full_name?: string | null
-          gender?: string[] | null
-          general_notes?: string | null
-          how_came_to_us?: string | null
-          id?: string
-          is_veteran?: boolean | null
-          orientation?: string[] | null
-          phone?: number | null
-          phone_is_international?: boolean
-          pronouns?: string[] | null
-          provider_customer_id?: string | null
-          race_color?: string[] | null
-          rg?: string | null
-          rg_issuer?: string | null
-          social_name?: string | null
-          user_id?: string | null
-          where_lives?: string | null
-        }
-        Relationships: []
-      }
+          approved_to_attend?: Database["public"]["Enums"]["approved_to_attend_enum"];
+          basic_data_filled?: boolean;
+          became_veteran_date?: string | null;
+          cpf?: string | null;
+          created_at?: string;
+          date_of_birth?: string | null;
+          email?: string;
+          flag?: Database["public"]["Enums"]["profile_flag_enum"];
+          flag_notes?: string | null;
+          full_name?: string | null;
+          gender?: string[] | null;
+          general_notes?: string | null;
+          how_came_to_us?: string | null;
+          id?: string;
+          is_veteran?: boolean | null;
+          orientation?: string[] | null;
+          phone?: number | null;
+          phone_is_international?: boolean;
+          pronouns?: string[] | null;
+          provider_customer_id?: string | null;
+          race_color?: string[] | null;
+          rg?: string | null;
+          rg_issuer?: string | null;
+          social_name?: string | null;
+          user_id?: string | null;
+          where_lives?: string | null;
+        };
+        Relationships: [];
+      };
       signup_attempts: {
         Row: {
-          created_at: string
-          id: number
-          ip_hash: string
-        }
+          created_at: string;
+          id: number;
+          ip_hash: string;
+        };
+        ComputedFields: never;
         Insert: {
-          created_at?: string
-          id?: never
-          ip_hash: string
-        }
+          created_at?: string;
+          id?: never;
+          ip_hash: string;
+        };
         Update: {
-          created_at?: string
-          id?: never
-          ip_hash?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          id?: never;
+          ip_hash?: string;
+        };
+        Relationships: [];
+      };
       user_roles: {
         Row: {
-          created_at: string
-          role_name: string
-          user_id: string
-        }
+          created_at: string;
+          role_name: string;
+          user_id: string;
+        };
+        ComputedFields: never;
         Insert: {
-          created_at?: string
-          role_name: string
-          user_id: string
-        }
+          created_at?: string;
+          role_name: string;
+          user_id: string;
+        };
         Update: {
-          created_at?: string
-          role_name?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-    }
+          created_at?: string;
+          role_name?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+    };
     Views: {
       event_participant_payments: {
         Row: {
-          active_payment_id: string | null
-          current_status: Database["public"]["Enums"]["payment_status"] | null
-          event_participant_id: string | null
-          has_paid: boolean | null
-          net: number | null
-          paid_gross: number | null
-          refunded: number | null
-        }
-        Relationships: []
-      }
-    }
+          active_payment_id: string | null;
+          current_status: Database["public"]["Enums"]["payment_status"] | null;
+          event_participant_id: string | null;
+          has_paid: boolean | null;
+          net: number | null;
+          paid_gross: number | null;
+          refunded: number | null;
+        };
+        ComputedFields: never;
+        Relationships: [];
+      };
+    };
     Functions: {
-      add_user_role: {
-        Args: { p_role_name: string; p_user_id: string }
-        Returns: undefined
-      }
-      get_admin_user_ids: { Args: never; Returns: string[] }
-      get_applied_participants_count: {
-        Args: { event_id_input: string }
-        Returns: number
-      }
+      add_user_role: { Args: { p_role_name: string; p_user_id: string }; Returns: undefined };
+      get_admin_user_ids: { Args: Record<PropertyKey, never>; Returns: string[] };
+      get_applied_participants_count: { Args: { event_id_input: string }; Returns: number };
       get_profile_with_roles: {
-        Args: { user_id_input: string }
+        Args: { user_id_input: string };
         Returns: {
-          basic_data_filled: boolean
-          cpf: string
-          created_at: string
-          date_of_birth: string
-          email: string
-          full_name: string
-          gender: string[]
-          how_came_to_us: string
-          id: string
-          is_admin: boolean
-          orientation: string[]
-          phone: number
-          phone_is_international: boolean
-          pronouns: string[]
-          race_color: string[]
-          rg: string
-          rg_issuer: string
-          roles: string[]
-          social_name: string
-          where_lives: string
-        }[]
-      }
-      get_vault_secret: { Args: { secret_name: string }; Returns: string }
-      notify_registration_limit_reached: {
-        Args: { event_id_param: string }
-        Returns: undefined
-      }
-      update_event_statuses_automatically: { Args: never; Returns: Json }
-    }
+          basic_data_filled: boolean;
+          cpf: string;
+          created_at: string;
+          date_of_birth: string;
+          email: string;
+          full_name: string;
+          gender: string[];
+          how_came_to_us: string;
+          id: string;
+          is_admin: boolean;
+          orientation: string[];
+          phone: number;
+          phone_is_international: boolean;
+          pronouns: string[];
+          race_color: string[];
+          rg: string;
+          rg_issuer: string;
+          roles: string[];
+          social_name: string;
+          where_lives: string;
+        }[];
+      };
+      get_vault_secret: { Args: { secret_name: string }; Returns: string };
+      notify_registration_limit_reached: { Args: { event_id_param: string }; Returns: undefined };
+      update_event_statuses_automatically: { Args: Record<PropertyKey, never>; Returns: Json };
+    };
     Enums: {
       application_status_enum:
         | "pending"
         | "talking"
         | "sent_payment_data"
+        | "paid"
         | "sent_rules"
         | "think_better"
         | "finalised"
-        | "no_response"
-      approved_to_attend_enum:
-        | "pending"
-        | "approved"
-        | "approved_with_reservations"
-        | "rejected"
+        | "no_response";
+      approved_to_attend_enum: "pending" | "approved" | "approved_with_reservations" | "rejected";
       attendance_status_enum:
         | "pending"
         | "attended"
         | "not-attended"
         | "skipped"
         | "withdrew"
-        | "not-selected"
-      campaign_type: "opening" | "pre_opening"
+        | "not-selected";
+      campaign_type: "opening" | "pre_opening";
       event_status:
         | "Draft"
         | "Completed"
         | "Cancelled"
         | "Scheduled"
         | "Registration Closed"
-        | "Registration Open"
-      event_type_enum: "regular" | "bdsm"
-      feedback_participation_enum: "never" | "once" | "more_than_once"
-      feedback_status_enum: "new" | "in_progress" | "resolved"
-      payment_email_kind: "link" | "confirmation" | "refund"
-      payment_kind: "online" | "manual"
-      payment_method: "pix" | "credit_card" | "cash" | "transfer" | "other"
+        | "Registration Open";
+      event_type_enum: "regular" | "bdsm";
+      feedback_participation_enum: "never" | "once" | "more_than_once";
+      feedback_status_enum: "new" | "in_progress" | "resolved";
+      payment_email_kind: "link" | "confirmation" | "refund";
+      payment_kind: "online" | "manual";
+      payment_method: "pix" | "credit_card" | "cash" | "transfer" | "other";
       payment_status:
         | "pending"
         | "awaiting_payment"
@@ -961,132 +960,120 @@ export type Database = {
         | "expired"
         | "cancelled"
         | "refunded"
-        | "partially_refunded"
-      profile_flag_enum: "none" | "yellow" | "red" | "gray"
-      spot_type: "regular" | "social" | "staff"
-    }
+        | "partially_refunded";
+      profile_flag_enum: "none" | "yellow" | "red" | "gray";
+      spot_type: "regular" | "social" | "staff";
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
+      [_ in never]: never;
+    };
+  };
+};
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never) = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
+      Row: infer R;
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
       }
       ? R
       : never
-    : never
+    : never;
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never) = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
+      Insert: infer I;
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
+        Insert: infer I;
       }
       ? I
       : never
-    : never
+    : never;
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never) = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
+      Update: infer U;
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
+        Update: infer U;
       }
       ? U
       : never
-    : never
+    : never;
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends (DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never) = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+    : never;
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never) = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+    : never;
 
 export const Constants = {
   public: {
@@ -1095,17 +1082,13 @@ export const Constants = {
         "pending",
         "talking",
         "sent_payment_data",
+        "paid",
         "sent_rules",
         "think_better",
         "finalised",
         "no_response",
       ],
-      approved_to_attend_enum: [
-        "pending",
-        "approved",
-        "approved_with_reservations",
-        "rejected",
-      ],
+      approved_to_attend_enum: ["pending", "approved", "approved_with_reservations", "rejected"],
       attendance_status_enum: [
         "pending",
         "attended",
@@ -1142,5 +1125,4 @@ export const Constants = {
       spot_type: ["regular", "social", "staff"],
     },
   },
-} as const
-
+} as const;
