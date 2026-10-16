@@ -9,6 +9,7 @@ import {
 } from "./payment-email-outbox.server"
 import { applyRefundTally, type RefundablePayment } from "./refund-apply.server"
 import { tallyRefunds } from "./refund-state"
+import { POST_PAYMENT_STATUSES } from "./post-payment-statuses"
 
 /**
  * Writes the delivery to the inbox and says whether there is work to do. The
@@ -279,6 +280,18 @@ async function applyToPayment(
       // the same payment, or a later installment of a plan the first one
       // already settled. The email has been sent once already.
       if (!updated) return { applied: false, reason: "already_paid" }
+
+      // The money is in, so the application moves to "paid" with it. Guarded on
+      // the statuses that already sit past the payment, so an admin who walked
+      // the participant forward by hand is not dragged back by the webhook. The
+      // guard above means this runs once per charge, so a redelivery never
+      // reaches it.
+      await db
+        .updateTable("event_participants")
+        .set({ application_status: "paid" })
+        .where("id", "=", payment.event_participant_id)
+        .where("application_status", "not in", POST_PAYMENT_STATUSES)
+        .execute()
 
       // Queued inside the transaction, so the receipt is owed the moment the
       // row says paid. A send that never happens is then a row the sweep

@@ -44,6 +44,7 @@ const DEFAULT_APPLICATION_STATUSES: ParticipantApplicationStatus[] = [
   "pending",
   "talking",
   "sent_payment_data",
+  "paid",
   "sent_rules",
   "think_better",
   "finalised",

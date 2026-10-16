@@ -10,6 +10,9 @@ import {
   createTestPayment,
   createTestProfile,
 } from "~/test/db-test-utils"
+import type { ParticipantApplicationStatus } from "~types/database/entities.types"
+import { Constants } from "~types/database/database.types"
+import { POST_PAYMENT_STATUSES } from "./post-payment-statuses"
 
 const { sendPaymentConfirmedEmail, sendPaymentRefundEmail, logger } =
   vi.hoisted(() => ({
@@ -104,6 +107,23 @@ describe("applyWebhookEvent", () => {
       .executeTakeFirstOrThrow()
   }
 
+  async function applicationStatusOf(id: string) {
+    const row = await kysely
+      .selectFrom("event_participants")
+      .select("application_status")
+      .where("id", "=", id)
+      .executeTakeFirstOrThrow()
+    return row.application_status
+  }
+
+  async function setApplicationStatus(status: ParticipantApplicationStatus) {
+    await kysely
+      .updateTable("event_participants")
+      .set({ application_status: status })
+      .where("id", "=", participantId)
+      .execute()
+  }
+
   it("marks a charge paid on PAYMENT_RECEIVED", async () => {
     const payment = await awaitingCharge()
 
@@ -148,6 +168,46 @@ describe("applyWebhookEvent", () => {
     })
 
     expect((await statusOf(payment.id)).status).toBe("paid")
+  })
+
+  // Every application status: a confirmed payment flips it to "paid" unless it
+  // already sits at or past the payment, which it leaves alone. Looping the
+  // enum means a value added later cannot change this silently -- it lands
+  // here and has to be placed on one side of the guard or the other.
+  it.each(Constants.public.Enums.application_status_enum)(
+    "settles a participant at %s on a confirmed payment",
+    async (from) => {
+      await setApplicationStatus(from)
+      const payment = await awaitingCharge()
+
+      await deliver({
+        event: "PAYMENT_CONFIRMED",
+        payment: { id: `pay_${counter}`, value: 221.99, netValue: 220.0 },
+      })
+
+      expect((await statusOf(payment.id)).status).toBe("paid")
+      const expected = (POST_PAYMENT_STATUSES as readonly string[]).includes(
+        from,
+      )
+        ? from
+        : "paid"
+      expect(await applicationStatusOf(participantId)).toBe(expected)
+    },
+  )
+
+  it("keeps the participant paid when a paid event is redelivered", async () => {
+    await setApplicationStatus("sent_payment_data")
+    await awaitingCharge()
+
+    const payload = {
+      event: "PAYMENT_RECEIVED",
+      payment: { id: `pay_${counter}`, value: 221.99, netValue: 220.0 },
+    }
+    await deliver(payload)
+    const second = await deliver(payload)
+
+    expect(second.applied).toBe(false)
+    expect(await applicationStatusOf(participantId)).toBe("paid")
   })
 
   it("sends one email however many times the event is delivered", async () => {

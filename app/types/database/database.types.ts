@@ -924,6 +924,7 @@ export type Database = {
         | "pending"
         | "talking"
         | "sent_payment_data"
+        | "paid"
         | "sent_rules"
         | "think_better"
         | "finalised"
@@ -1095,6 +1096,7 @@ export const Constants = {
         "pending",
         "talking",
         "sent_payment_data",
+        "paid",
         "sent_rules",
         "think_better",
         "finalised",

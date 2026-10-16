@@ -91,6 +91,7 @@ export const adminPropMapsCopy = {
     pending: "Pendente",
     talking: "Conversando",
     sent_payment_data: "Dados de pagto enviados",
+    paid: "Pago",
     sent_rules: "Regras enviadas",
     think_better: "Pensar melhor",
     finalised: "Finalizado",
