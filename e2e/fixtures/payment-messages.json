@@ -1,0 +1,3 @@
+{
+  "whatsappMessage": "Oi, {{nome}}! Aqui está o link para o pagamento da {{evento}}:\n\n{{link}}\n\nFormas de pagamento:\n{{formas}}\n\nO link vale até {{data}}."
+}

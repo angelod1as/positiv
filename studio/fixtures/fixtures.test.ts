@@ -28,6 +28,14 @@ describe("e2e fixtures generated from the seed", () => {
 
     expect(committed("site-settings.json")).toBe(serializeFixture(siteSettings))
   })
+
+  it("keeps payment-messages.json current — run `pnpm --filter studio fixtures`", async () => {
+    const { paymentMessages } = await generateSiteSnapshotFixture()
+
+    expect(committed("payment-messages.json")).toBe(
+      serializeFixture(paymentMessages),
+    )
+  })
 })
 
 // The e2e specs assert these seed-owned strings. Guarding them here fails fast
