@@ -101,6 +101,21 @@ Desenvolvimento addresses use `hrefRule` from `rich-text.ts`, the same rule as
 the rich text link: https or a path starting with `/`. The news dialog is not
 here; it stays Platform code.
 
+### Payment messages
+
+Payment Messages hold the copy-paste WhatsApp message an admin sends with a
+participant's payment link, at the fixed id `paymentMessages`. Like Site
+Settings, the Studio keeps only publish, discard changes and restore, so it
+cannot be deleted, duplicated or unpublished from the desk.
+
+The message is a single plain-text field with Handlebars-style variables the
+app interpolates on the server before the admin copies it: `{{link}}` (the
+payment link), `{{data}}` (the due date), `{{nome}}` (the person), `{{evento}}`
+(the event) and `{{formas}}` (the payment options and amounts). A custom
+validation rule rejects any other `{{variable}}`. The app mirrors the field in
+`app/business/cms/payment-messages.schema.ts` and falls back to a built-in
+default (pinned to the seed) when the CMS is unavailable.
+
 ### Development mirrors production
 
 `development` is meant to look like production, so local development shows what
