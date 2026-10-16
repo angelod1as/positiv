@@ -283,7 +283,9 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
           }
           paymentsEnabled={paymentsEnabled}
           appOrigin={origin}
-          whatsappMessage={whatsappMessageByParticipant[managedParticipant.id]}
+          whatsappMessage={
+            whatsappMessageByParticipant[managedParticipant.id] ?? null
+          }
           providerName={providerName}
           spotType={managedParticipant.spot_type}
           ticketPrice={event.ticket_price}

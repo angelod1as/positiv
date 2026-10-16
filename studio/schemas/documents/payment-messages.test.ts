@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { PAYMENT_MESSAGE_VARIABLES as APP_PAYMENT_MESSAGE_VARIABLES } from "../../../app/business/payment/payment-message"
+import {
+  PAYMENT_MESSAGE_VARIABLES as APP_PAYMENT_MESSAGE_VARIABLES,
+  unknownVariables as appUnknownVariables,
+} from "../../../app/business/payment/payment-message"
 import { pathsOf } from "../../test/errors"
 import { validateDocumentOf } from "../../test/validate"
 import {
@@ -83,5 +86,23 @@ describe("unknownVariableProblem", () => {
   it("passes an empty or missing value", () => {
     expect(unknownVariableProblem("")).toBe(true)
     expect(unknownVariableProblem(undefined)).toBe(true)
+  })
+
+  // The regex, not only the variable list, is duplicated across the boundary.
+  // Assert both implementations agree on the same inputs so neither drifts.
+  it.each([
+    "{{link}}",
+    "{{ data }}",
+    "Oi {{nome}}, {{evento}} {{formas}}",
+    "{{boleto}}",
+    "{{ nome-completo }}",
+    "{{#if link}}",
+    "{{link.href}}",
+    "{{}}",
+    "sem variável",
+  ])("agrees with the app renderer on %s", (input) => {
+    const studioAccepts = unknownVariableProblem(input) === true
+    const appAccepts = appUnknownVariables(input).length === 0
+    expect(studioAccepts).toBe(appAccepts)
   })
 })

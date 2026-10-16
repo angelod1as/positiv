@@ -21,11 +21,11 @@ export function unknownVariableProblem(value: string | undefined) {
         !(PAYMENT_MESSAGE_VARIABLES as readonly string[]).includes(name),
     )
 
-  return unknown
-    ? `Variável desconhecida: {{${unknown}}}. Use apenas ${PAYMENT_MESSAGE_VARIABLES.map(
+  return unknown === undefined
+    ? true
+    : `Variável desconhecida: {{${unknown}}}. Use apenas ${PAYMENT_MESSAGE_VARIABLES.map(
         (name) => `{{${name}}}`,
       ).join(", ")}.`
-    : true
 }
 
 export const paymentMessages = defineType({
