@@ -80,16 +80,21 @@ describe("getSiteSnapshot", () => {
     expect(paymentMessages).toBeNull()
   })
 
-  it("fails the whole snapshot when the Payment Messages break the contract", async () => {
+  it("degrades to no Payment Messages, keeping the snapshot, when they break the contract", async () => {
     respondWith({
-      pages: [],
-      siteSettings: null,
+      pages: [page()],
+      siteSettings: siteSettingsDocument(),
       paymentMessages: paymentMessagesDocument({
         whatsappMessage: "Pague em {{boleto}}.",
       }),
     })
 
-    await expect(getSiteSnapshot(client)).rejects.toThrow(/Payment Messages/)
+    const { pages, siteSettings, paymentMessages } =
+      await getSiteSnapshot(client)
+
+    expect(paymentMessages).toBeNull()
+    expect(siteSettings).not.toBeNull()
+    expect(pages.size).toBe(1)
   })
 
   it("fails the whole snapshot when the Site Settings break the contract", async () => {

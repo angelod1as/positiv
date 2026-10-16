@@ -118,9 +118,14 @@ export function resolvePaymentMessages(
 
   const result = paymentMessagesSchema.safeParse(document)
   if (!result.success) {
-    throw new Error(
-      `Payment Messages failed validation, so the snapshot is not served:\n${zod.prettifyError(result.error)}`,
+    // Unlike Site Settings, a broken payment message must not take the public
+    // site down: it feeds one admin-only feature that already falls back to a
+    // default. Degrade to null and let that fallback carry it. pnpm
+    // test:contract still catches bad published content before a deploy.
+    console.warn(
+      `Payment Messages failed validation, using the default message:\n${zod.prettifyError(result.error)}`,
     )
+    return null
   }
   return result.data
 }
