@@ -227,7 +227,9 @@ describe("createPaymentOffer", () => {
   })
 
   it("floors a due date closer than the minimum window", async () => {
-    const paymentEnd = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString()
+    const paymentEnd = new Date(
+      Date.now() + 1 * 24 * 60 * 60 * 1000,
+    ).toISOString()
     const event = await createTestEvent(tracker, kysely, {
       title: "Close-due Event",
       ticket_price: 22000,

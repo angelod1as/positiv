@@ -13,8 +13,7 @@ import {
 } from "./payment-email-outbox.server"
 import { ACTIVE_PAYMENT_STATUSES } from "./payment-totals.server"
 
-// OFFER_VALID_DAYS is the fallback when the event has no deadline; MIN_OFFER_DAYS
-// floors a deadline already past or too close so the provider never gets a past dueDate.
+// The floor keeps the provider from ever receiving a dueDate already past.
 const OFFER_VALID_DAYS = 7
 const MIN_OFFER_DAYS = 3
 
