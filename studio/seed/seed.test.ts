@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { CODE_OF_CONDUCT_PAGE_ID } from "../migrations/code-of-conduct-to-page/transform"
 import { HOMEPAGE_PAGE_ID } from "../schemas/documents/page"
-import { SITE_SETTINGS_ID } from "../singletons"
+import { PAYMENT_MESSAGES_ID, SITE_SETTINGS_ID } from "../singletons"
 import { validateDocumentOf } from "../test/validate"
 import {
   E2E_TEST_PAGE_ADDRESS,
@@ -186,6 +186,21 @@ describe("seedDocuments", () => {
 
     it("seeds a Notice", () => {
       expect(siteSettings?.notice?.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe("Payment Messages", () => {
+    const paymentMessages = documents.find(
+      (document) => document._id === PAYMENT_MESSAGES_ID,
+    ) as { _type: string; whatsappMessage?: string } | undefined
+
+    it("seeds the singleton", () => {
+      expect(paymentMessages?._type).toBe("paymentMessages")
+    })
+
+    it("seeds a message using the link and the due date", () => {
+      expect(paymentMessages?.whatsappMessage).toContain("{{link}}")
+      expect(paymentMessages?.whatsappMessage).toContain("{{data}}")
     })
   })
 })
