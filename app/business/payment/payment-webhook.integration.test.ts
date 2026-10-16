@@ -10,6 +10,7 @@ import {
   createTestPayment,
   createTestProfile,
 } from "~/test/db-test-utils"
+import type { ParticipantApplicationStatus } from "~types/database/entities.types"
 
 const { sendPaymentConfirmedEmail, sendPaymentRefundEmail, logger } =
   vi.hoisted(() => ({
@@ -113,9 +114,7 @@ describe("applyWebhookEvent", () => {
     return row.application_status
   }
 
-  async function setApplicationStatus(
-    status: "sent_payment_data" | "finalised",
-  ) {
+  async function setApplicationStatus(status: ParticipantApplicationStatus) {
     await kysely
       .updateTable("event_participants")
       .set({ application_status: status })
@@ -169,30 +168,43 @@ describe("applyWebhookEvent", () => {
     expect((await statusOf(payment.id)).status).toBe("paid")
   })
 
-  it("flips the participant status to paid on a confirmed payment", async () => {
-    await setApplicationStatus("sent_payment_data")
-    await awaitingCharge()
+  it.each([
+    "pending",
+    "talking",
+    "think_better",
+    "sent_payment_data",
+  ] as const)(
+    "flips a participant at %s to paid on a confirmed payment",
+    async (from) => {
+      await setApplicationStatus(from)
+      await awaitingCharge()
 
-    await deliver({
-      event: "PAYMENT_CONFIRMED",
-      payment: { id: `pay_${counter}`, value: 221.99, netValue: 220.0 },
-    })
+      await deliver({
+        event: "PAYMENT_CONFIRMED",
+        payment: { id: `pay_${counter}`, value: 221.99, netValue: 220.0 },
+      })
 
-    expect(await applicationStatusOf(participantId)).toBe("paid")
-  })
+      expect(await applicationStatusOf(participantId)).toBe("paid")
+    },
+  )
 
-  it("does not walk a participant back from a post-payment status", async () => {
-    await setApplicationStatus("finalised")
-    const payment = await awaitingCharge()
+  // sent_rules and finalised already sit past the payment, so a paid event
+  // must not drag a participant an admin advanced by hand back to "paid".
+  it.each(["sent_rules", "finalised"] as const)(
+    "does not walk a participant back from %s",
+    async (from) => {
+      await setApplicationStatus(from)
+      const payment = await awaitingCharge()
 
-    await deliver({
-      event: "PAYMENT_RECEIVED",
-      payment: { id: `pay_${counter}`, value: 221.99, netValue: 220.0 },
-    })
+      await deliver({
+        event: "PAYMENT_RECEIVED",
+        payment: { id: `pay_${counter}`, value: 221.99, netValue: 220.0 },
+      })
 
-    expect((await statusOf(payment.id)).status).toBe("paid")
-    expect(await applicationStatusOf(participantId)).toBe("finalised")
-  })
+      expect((await statusOf(payment.id)).status).toBe("paid")
+      expect(await applicationStatusOf(participantId)).toBe(from)
+    },
+  )
 
   it("keeps the participant paid when a paid event is redelivered", async () => {
     await setApplicationStatus("sent_payment_data")

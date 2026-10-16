@@ -46,12 +46,12 @@ const SETTLED_PAYMENT_STATUSES = [
   "partially_refunded",
 ] as const
 
-// The two funnel steps that come after the money. A charge sent late is not a
+// The funnel steps at or past the money. A charge sent late is not a
 // reason to walk somebody back up the process, so those are left where they
 // are and everything else advances -- including the stalls, "Pensar melhor"
 // and "Nao Respondeu", which happen during the conversation and so before the
 // payment, whatever the order the enum happens to declare them in.
-const POST_PAYMENT_STATUSES = ["sent_rules", "finalised"] as const
+const POST_PAYMENT_STATUSES = ["paid", "sent_rules", "finalised"] as const
 
 export const createPaymentOfferSchema = zod.object({
   eventParticipantId: zod.string().uuid(),

@@ -28,6 +28,7 @@ export const acceptedInProcessTooltipContent = (
 
     {createTooltipSection(tooltipsCopy.applicationStatusSection, [
       participantApplicationStatusPropMap("sent_payment_data"),
+      participantApplicationStatusPropMap("paid"),
       participantApplicationStatusPropMap("sent_rules"),
       participantApplicationStatusPropMap("talking"),
       participantApplicationStatusPropMap("finalised"),

@@ -204,10 +204,10 @@ describe("createPaymentOffer", () => {
     },
   )
 
-  // sent_rules and finalised are the two steps that come after the money.
+  // paid, sent_rules and finalised are the statuses at or past the money.
   // Everything else -- including the stalls, "Pensar melhor" and "Nao
   // Respondeu" -- happens during the conversation, before it.
-  it.each(["sent_rules", "finalised"])(
+  it.each(["paid", "sent_rules", "finalised"])(
     "leaves %s alone, since it comes after the payment",
     async (from) => {
       const participant = await makeParticipant({ application_status: from })
