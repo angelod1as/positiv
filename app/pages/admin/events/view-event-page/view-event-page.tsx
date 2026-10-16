@@ -29,6 +29,10 @@ import { DemographicsData } from "~/components/pages/admin/events/demographics"
 import { EventStatusForm } from "~/components/pages/admin/events/event-status-form"
 import { GeneralData } from "~/components/pages/admin/events/general-data"
 import { RejectedParticipantsSection } from "~/components/pages/admin/events/rejected-participants-section"
+import {
+  buildWhatsappPaymentMessage,
+  loadWhatsappPaymentMessage,
+} from "~/business/payment/payment-messages.server"
 import { adminEventsCopy } from "~/copy/admin/events"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { appOrigin } from "~/lib/helpers/app-origin"
@@ -139,6 +143,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     paymentsByParticipant,
     cardPaymentsEnabled,
     invites,
+    whatsappMessageTemplate,
   ] =
     await Promise.all([
       loadParticipants(eventId),
@@ -149,18 +154,40 @@ export async function loader({ params }: Route.LoaderArgs) {
       getPaymentsForEvent(eventId),
       isCardPaymentsEnabled(),
       listInvitesForEvent(eventId),
+      loadWhatsappPaymentMessage(),
     ])
+
+  // The same origin the link email builds from, so the two channels cannot
+  // hand the participant different urls for one charge.
+  const origin = appOrigin(null)
+
+  // Interpolated here, on the server, so the modal only copies a ready string.
+  const whatsappMessageByParticipant = Object.fromEntries(
+    participants.map((participant) => [
+      participant.id,
+      buildWhatsappPaymentMessage({
+        template: whatsappMessageTemplate,
+        active:
+          (paymentsByParticipant[participant.id] ?? []).find(
+            (payment) => payment.id === participant.active_payment_id,
+          ) ?? null,
+        participantName:
+          participant.social_name || participant.full_name || "",
+        eventTitle: event.title ?? "",
+        appOrigin: origin,
+        cardPaymentsEnabled,
+      }),
+    ]),
+  )
 
   return {
     event,
     participants,
     rejectedParticipants,
     paymentsByParticipant,
-    cardPaymentsEnabled,
     paymentsEnabled: onlinePaymentsEnabled,
-    // The same origin the link email builds from, so the two channels cannot
-    // hand the participant different urls for one charge.
-    appOrigin: appOrigin(null),
+    appOrigin: origin,
+    whatsappMessageByParticipant,
     providerName: paymentProvider().name,
     invites,
     demographics: demographics?.success ? demographics.data : undefined,
@@ -189,9 +216,9 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
     participants,
     rejectedParticipants,
     paymentsByParticipant,
-    cardPaymentsEnabled,
     paymentsEnabled,
     appOrigin: origin,
+    whatsappMessageByParticipant,
     providerName,
     demographics,
     invites,
@@ -257,11 +284,10 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
           }
           paymentsEnabled={paymentsEnabled}
           appOrigin={origin}
+          whatsappMessage={whatsappMessageByParticipant[managedParticipant.id]}
           providerName={providerName}
           spotType={managedParticipant.spot_type}
           ticketPrice={event.ticket_price}
-          eventTitle={event.title ?? ""}
-          cardPaymentsEnabled={cardPaymentsEnabled}
         />
       )}
 

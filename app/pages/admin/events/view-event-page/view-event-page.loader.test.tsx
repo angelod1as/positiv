@@ -36,6 +36,13 @@ vi.mock("~/business/payment/payment-totals.server", () => ({
   getPaymentsForEvent: vi.fn(),
 }))
 
+vi.mock("~/business/payment/payment-messages.server", async (importActual) => ({
+  ...(await importActual<
+    typeof import("~/business/payment/payment-messages.server")
+  >()),
+  loadWhatsappPaymentMessage: vi.fn(async () => "Pague {{link}} até {{data}}."),
+}))
+
 const runLoader = () =>
   loader({
     request: new Request("http://localhost/admin/eventos/event-1"),
@@ -74,7 +81,7 @@ describe("view event page loader", () => {
   })
 
   it.each([true, false])(
-    "hands the payment modal the online and card payments switches (%s)",
+    "hands the payment modal the online payments switch (%s)",
     async (enabled) => {
       vi.mocked(isOnlinePaymentsEnabled).mockResolvedValue(enabled)
       vi.mocked(getRejectedEventParticipants).mockResolvedValue([])
@@ -83,7 +90,6 @@ describe("view event page loader", () => {
 
       expect(result).toMatchObject({
         paymentsEnabled: enabled,
-        cardPaymentsEnabled: true,
         providerName: "Asaas",
       })
     },

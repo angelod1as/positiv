@@ -33,6 +33,13 @@ vi.mock("~/business/payment/payment-totals.server", () => ({
   getPaymentsForParticipant: vi.fn(async () => []),
 }))
 
+vi.mock("~/business/payment/payment-messages.server", async (importActual) => ({
+  ...(await importActual<
+    typeof import("~/business/payment/payment-messages.server")
+  >()),
+  loadWhatsappPaymentMessage: vi.fn(async () => "Pague {{link}} até {{data}}."),
+}))
+
 type ProfileResult = Awaited<ReturnType<typeof getProfileById>>
 type ParticipantResult = Awaited<ReturnType<typeof getEventParticipantBasic>>
 
@@ -117,7 +124,7 @@ describe("view event participant loader", () => {
   })
 
   it.each([true, false])(
-    "hands the payment modal the online and card payments switches (%s)",
+    "hands the payment modal the online payments switch (%s)",
     async (enabled) => {
       vi.mocked(isOnlinePaymentsEnabled).mockResolvedValue(enabled)
       vi.mocked(getEventParticipantBasic).mockResolvedValue({
@@ -137,7 +144,6 @@ describe("view event participant loader", () => {
 
       expect(result).toMatchObject({
         paymentsEnabled: enabled,
-        cardPaymentsEnabled: true,
         providerName: "Asaas",
       })
     },

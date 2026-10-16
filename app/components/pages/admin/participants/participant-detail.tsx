@@ -28,9 +28,13 @@ type ParticipantDetailProps = {
     eventId: string
   }
   payments?: ParticipantPayments
-  cardPaymentsEnabled?: boolean
   paymentsEnabled?: boolean
   appOrigin?: string
+  /**
+   * The copy-paste WhatsApp message for the active charge, interpolated on the
+   * server from the CMS template, or null when there is none.
+   */
+  whatsappMessage?: string | null
   providerName?: string
 }
 
@@ -39,9 +43,9 @@ export const ParticipantDetail = ({
   fullHistory,
   currentEvent,
   payments,
-  cardPaymentsEnabled = false,
   paymentsEnabled = false,
   appOrigin = "",
+  whatsappMessage = null,
   providerName = "",
 }: ParticipantDetailProps) => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
@@ -142,11 +146,10 @@ export const ParticipantDetail = ({
           active={payments.active}
           paymentsEnabled={paymentsEnabled}
           appOrigin={appOrigin}
+          whatsappMessage={whatsappMessage}
           providerName={providerName}
           spotType={currentEvent.data.spot_type}
           ticketPrice={currentEvent.data.event_ticket_price}
-          eventTitle={currentEvent.data.event_title ?? ""}
-          cardPaymentsEnabled={cardPaymentsEnabled}
         />
       )}
     </>

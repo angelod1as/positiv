@@ -17,6 +17,10 @@ import {
   isCardPaymentsEnabled,
   isOnlinePaymentsEnabled,
 } from "~/business/settings/app-settings.server"
+import {
+  buildWhatsappPaymentMessage,
+  loadWhatsappPaymentMessage,
+} from "~/business/payment/payment-messages.server"
 import { adminEventsCopy } from "~/copy/admin/events"
 import { appOrigin } from "~/lib/helpers/app-origin"
 import { logger } from "~/lib/logger/logger.server"
@@ -141,10 +145,26 @@ export async function loader({ params }: Route.LoaderArgs) {
   }
 
   const onlinePaymentsEnabled = await isOnlinePaymentsEnabled()
-  const [participantPayments, cardPaymentsEnabled] = await Promise.all([
-    getPaymentsForParticipant(eventParticipant.id),
-    isCardPaymentsEnabled(),
-  ])
+  const [participantPayments, cardPaymentsEnabled, whatsappMessageTemplate] =
+    await Promise.all([
+      getPaymentsForParticipant(eventParticipant.id),
+      isCardPaymentsEnabled(),
+      loadWhatsappPaymentMessage(),
+    ])
+
+  // The same origin the link email builds from, so the two channels cannot
+  // hand the participant different urls for one charge.
+  const origin = appOrigin(null)
+
+  // Interpolated here, on the server, so the modal only copies a ready string.
+  const whatsappMessage = buildWhatsappPaymentMessage({
+    template: whatsappMessageTemplate,
+    active: participantPayments.active,
+    participantName: profile.social_name || profile.full_name || "",
+    eventTitle: eventParticipant.event_title ?? "",
+    appOrigin: origin,
+    cardPaymentsEnabled,
+  })
 
   return {
     profile,
@@ -152,11 +172,9 @@ export async function loader({ params }: Route.LoaderArgs) {
     fullHistory,
     eventId,
     participantPayments,
-    cardPaymentsEnabled,
     paymentsEnabled: onlinePaymentsEnabled,
-    // The same origin the link email builds from, so the two channels cannot
-    // hand the participant different urls for one charge.
-    appOrigin: appOrigin(null),
+    appOrigin: origin,
+    whatsappMessage,
     providerName: paymentProvider().name,
   }
 }
@@ -168,9 +186,9 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
     fullHistory,
     eventId,
     participantPayments,
-    cardPaymentsEnabled,
     paymentsEnabled,
     appOrigin: origin,
+    whatsappMessage,
     providerName,
   } = loaderData
 
@@ -185,9 +203,9 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
         eventId,
       }}
       payments={participantPayments}
-      cardPaymentsEnabled={cardPaymentsEnabled}
       paymentsEnabled={paymentsEnabled}
       appOrigin={origin}
+      whatsappMessage={whatsappMessage}
       providerName={providerName}
     />
   )

@@ -1,6 +1,5 @@
 import { useEffect, useState, type FC, type FormEvent } from "react"
 import { useFetcher } from "react-router"
-import { buildPaymentOptions } from "~/business/payment/pricing"
 import type { PaymentRow } from "~/business/payment/payment-totals.server"
 import type { ParticipantPaymentTotals } from "~types/database/entities.types"
 import { Button } from "~/components/atoms/button/button"
@@ -67,9 +66,12 @@ export type ManagePaymentModalProps = {
   paymentsEnabled: boolean
   spotType: string | null
   ticketPrice: number | null
-  eventTitle: string
-  cardPaymentsEnabled: boolean
   appOrigin: string
+  /**
+   * The copy-paste WhatsApp message for the active charge, interpolated on the
+   * server from the CMS template, or null when there is no active charge.
+   */
+  whatsappMessage: string | null
   /** The payment provider's name, as admins know it. */
   providerName: string
 }
@@ -337,11 +339,9 @@ const PaymentProgress: FC<{ payment: PaymentRow; providerName: string }> = ({
 
 type ChargeSectionProps = {
   active: PaymentRow | null
-  participantName: string
-  eventTitle: string
   ticketPrice: number | null
-  cardPaymentsEnabled: boolean
   appOrigin: string
+  whatsappMessage: string | null
   providerName: string
   isSubmitting: boolean
   justCreated: boolean
@@ -358,11 +358,9 @@ type ChargeSectionProps = {
  */
 const ChargeSection: FC<ChargeSectionProps> = ({
   active,
-  participantName,
-  eventTitle,
   ticketPrice,
-  cardPaymentsEnabled,
   appOrigin,
+  whatsappMessage,
   providerName,
   isSubmitting,
   justCreated,
@@ -407,22 +405,11 @@ const ChargeSection: FC<ChargeSectionProps> = ({
     : null
 
   const copyMessage = () => {
-    if (!active || !paymentUrl) return
-    // Built here rather than fetched: writeText has to run inside the click
-    // that asked for it, and a round trip first loses that permission.
-    const message = paymentsCopy.whatsappMessage({
-      displayName: participantName,
-      eventTitle,
-      // The origin the server would use, not the one this browser happens to
-      // be on: appOrigin deliberately ignores the request host, and the two
-      // channels must hand the participant the same link.
-      paymentUrl,
-      dueAt: active.due_at,
-      options: buildPaymentOptions(active.base_amount, {
-        cardEnabled: cardPaymentsEnabled,
-      }),
-    })
-    void navigator.clipboard.writeText(message)
+    // Interpolated on the server from the CMS template and handed down ready:
+    // writeText has to run inside the click that asked for it, so there is no
+    // room to build or fetch the message here.
+    if (!whatsappMessage) return
+    void navigator.clipboard.writeText(whatsappMessage)
     setCopied(true)
   }
 
@@ -540,9 +527,8 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
   paymentsEnabled,
   spotType,
   ticketPrice,
-  eventTitle,
-  cardPaymentsEnabled,
   appOrigin,
+  whatsappMessage,
   providerName,
 }) => {
   const fetcher = useFetcher<{
@@ -832,11 +818,9 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
             // a field that had gone back to offering the ticket price.
             key={active?.id ?? "none"}
             active={active}
-            participantName={participantName}
-            eventTitle={eventTitle}
             ticketPrice={ticketPrice}
-            cardPaymentsEnabled={cardPaymentsEnabled}
             appOrigin={appOrigin}
+            whatsappMessage={whatsappMessage}
             providerName={providerName}
             isSubmitting={isSubmitting}
             justCreated={
