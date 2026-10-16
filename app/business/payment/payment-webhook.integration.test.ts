@@ -11,6 +11,8 @@ import {
   createTestProfile,
 } from "~/test/db-test-utils"
 import type { ParticipantApplicationStatus } from "~types/database/entities.types"
+import { Constants } from "~types/database/database.types"
+import { POST_PAYMENT_STATUSES } from "./post-payment-statuses"
 
 const { sendPaymentConfirmedEmail, sendPaymentRefundEmail, logger } =
   vi.hoisted(() => ({
@@ -168,42 +170,28 @@ describe("applyWebhookEvent", () => {
     expect((await statusOf(payment.id)).status).toBe("paid")
   })
 
-  it.each([
-    "pending",
-    "talking",
-    "think_better",
-    "no_response",
-    "sent_payment_data",
-  ] as const)(
-    "flips a participant at %s to paid on a confirmed payment",
+  // Every application status: a confirmed payment flips it to "paid" unless it
+  // already sits at or past the payment, which it leaves alone. Looping the
+  // enum means a value added later cannot change this silently -- it lands
+  // here and has to be placed on one side of the guard or the other.
+  it.each(Constants.public.Enums.application_status_enum)(
+    "settles a participant at %s on a confirmed payment",
     async (from) => {
       await setApplicationStatus(from)
-      await awaitingCharge()
+      const payment = await awaitingCharge()
 
       await deliver({
         event: "PAYMENT_CONFIRMED",
         payment: { id: `pay_${counter}`, value: 221.99, netValue: 220.0 },
       })
 
-      expect(await applicationStatusOf(participantId)).toBe("paid")
-    },
-  )
-
-  // sent_rules and finalised already sit past the payment, so a paid event
-  // must not drag a participant an admin advanced by hand back to "paid".
-  it.each(["sent_rules", "finalised"] as const)(
-    "does not walk a participant back from %s",
-    async (from) => {
-      await setApplicationStatus(from)
-      const payment = await awaitingCharge()
-
-      await deliver({
-        event: "PAYMENT_RECEIVED",
-        payment: { id: `pay_${counter}`, value: 221.99, netValue: 220.0 },
-      })
-
       expect((await statusOf(payment.id)).status).toBe("paid")
-      expect(await applicationStatusOf(participantId)).toBe(from)
+      const expected = (POST_PAYMENT_STATUSES as readonly string[]).includes(
+        from,
+      )
+        ? from
+        : "paid"
+      expect(await applicationStatusOf(participantId)).toBe(expected)
     },
   )
 
