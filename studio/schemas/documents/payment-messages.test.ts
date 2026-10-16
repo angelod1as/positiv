@@ -41,6 +41,12 @@ describe("paymentMessages", () => {
     ).toContain("whatsappMessage")
   })
 
+  it("rejects a malformed token instead of accepting its braces", async () => {
+    expect(
+      pathsOf(await validate({ whatsappMessage: "Olá {{ nome-completo }}" })),
+    ).toContain("whatsappMessage")
+  })
+
   it("titles the preview Mensagens de pagamento", () => {
     expect(paymentMessagesType.preview?.prepare?.()).toEqual({
       title: "Mensagens de pagamento",

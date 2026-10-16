@@ -10,12 +10,15 @@ export type PaymentMessageVariable = (typeof PAYMENT_MESSAGE_VARIABLES)[number]
 
 export type PaymentMessageValues = Record<PaymentMessageVariable, string>
 
-const variablePattern = /\{\{\s*(\w+)\s*\}\}/g
+// Any {{...}} token, not just \w+ ones, so a malformed or Handlebars-ish token
+// like {{ nome-completo }}, {{#if x}} or {{}} is caught and rejected rather
+// than slipping through as literal braces the admin would copy.
+const variablePattern = /\{\{([^{}]*)\}\}/g
 
 export function unknownVariables(template: string): string[] {
   const unknown = new Set<string>()
   for (const match of template.matchAll(variablePattern)) {
-    const name = match[1]
+    const name = match[1].trim()
     if (!(PAYMENT_MESSAGE_VARIABLES as readonly string[]).includes(name)) {
       unknown.add(name)
     }
@@ -38,6 +41,6 @@ export function renderPaymentMessage(
 
   return template.replace(
     variablePattern,
-    (_match, name: string) => values[name as PaymentMessageVariable],
+    (_match, name: string) => values[name.trim() as PaymentMessageVariable],
   )
 }

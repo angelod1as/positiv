@@ -156,7 +156,6 @@ export async function loader({ params }: Route.LoaderArgs) {
   // hand the participant different urls for one charge.
   const origin = appOrigin(null)
 
-  // Interpolated here, on the server, so the modal only copies a ready string.
   const whatsappMessage = buildWhatsappPaymentMessage({
     template: whatsappMessageTemplate,
     active: participantPayments.active,

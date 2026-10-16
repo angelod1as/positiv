@@ -44,6 +44,21 @@ describe("renderPaymentMessage", () => {
       /\{\{boleto\}\}/,
     )
   })
+
+  it.each([
+    "{{ nome-completo }}",
+    "{{#if link}}",
+    "{{link.href}}",
+    "{{}}",
+  ])("rejects the malformed token %s instead of copying its braces", (token) => {
+    expect(() => renderPaymentMessage(`Olá ${token}`, values)).toThrow()
+  })
+
+  it("does not re-interpolate a value that itself looks like a variable", () => {
+    expect(
+      renderPaymentMessage("Oi {{nome}}", { ...values, nome: "{{link}}" }),
+    ).toBe("Oi {{link}}")
+  })
 })
 
 describe("unknownVariables", () => {

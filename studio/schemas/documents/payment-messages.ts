@@ -9,11 +9,13 @@ export const PAYMENT_MESSAGE_VARIABLES = [
   "formas",
 ] as const
 
-const variablePattern = /\{\{\s*(\w+)\s*\}\}/g
+// Any {{...}} token, mirroring the app renderer, so a malformed token is
+// rejected on publish rather than copied with its braces intact.
+const variablePattern = /\{\{([^{}]*)\}\}/g
 
 export function unknownVariableProblem(value: string | undefined) {
   const unknown = [...(value ?? "").matchAll(variablePattern)]
-    .map((match) => match[1])
+    .map((match) => match[1].trim())
     .find(
       (name) =>
         !(PAYMENT_MESSAGE_VARIABLES as readonly string[]).includes(name),
