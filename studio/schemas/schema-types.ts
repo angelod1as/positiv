@@ -1,6 +1,7 @@
 import type { SchemaTypeDefinition } from "sanity"
 
 import { page } from "./documents/page"
+import { paymentMessages } from "./documents/payment-messages"
 import { person } from "./documents/person"
 import { siteSettings } from "./documents/site-settings"
 import { longRichText } from "./objects/long-rich-text"
@@ -38,4 +39,5 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   pageTitle,
   page,
   siteSettings,
+  paymentMessages,
 ]
