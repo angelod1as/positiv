@@ -15,16 +15,23 @@ const NON_DISPLAY_FIELDS = new Set([
   "address", // a Page's routing key, matched by addressSchema's regex
 ])
 
-// Only the Page-level title is skipped: it feeds <head> through meta(), never a
-// rendered node, so it has no overlay to carry and leaks stega into the head.
-// Section and header titles stay encoded, so clicking them opens the field.
-function isPageTitle(sourcePath: FilterParams["sourcePath"]): boolean {
-  return sourcePath.length === 1 && sourcePath[0] === "title"
+// Paths that only feed <head> through meta(), never a rendered node: the
+// Page-level title and the SEO title/description. They carry no overlay, so
+// encoding them only leaks stega into the document title and the og tags. The
+// default filter happens to skip the seo fields today, but listing them makes
+// the guarantee ours instead of a quirk of the default filter's deny list.
+// Matched as whole top-level paths, so a Section or header `title` still
+// encodes and stays clickable.
+const HEAD_ONLY_PATHS = new Set(["title", "seo.title", "seo.description"])
+
+function isHeadOnlyPath(sourcePath: FilterParams["sourcePath"]): boolean {
+  if (!sourcePath.every((segment) => typeof segment === "string")) return false
+  return HEAD_ONLY_PATHS.has(sourcePath.join("."))
 }
 
 export const stegaFilter: FilterDefault = (props) => {
   const field = props.sourcePath.at(-1)
   if (typeof field === "string" && NON_DISPLAY_FIELDS.has(field)) return false
-  if (isPageTitle(props.sourcePath)) return false
+  if (isHeadOnlyPath(props.sourcePath)) return false
   return props.filterDefault(props)
 }

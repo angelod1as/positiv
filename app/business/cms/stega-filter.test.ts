@@ -37,6 +37,11 @@ describe("stegaFilter", () => {
     )
   })
 
+  it("skips the head-only seo fields that only feed meta()", () => {
+    expect(stegaFilter(props(["seo", "title"]))).toBe(false)
+    expect(stegaFilter(props(["seo", "description"]))).toBe(false)
+  })
+
   it("delegates every other field to filterDefault", () => {
     expect(stegaFilter(props(["name"]))).toBe(true)
     expect(stegaFilter(props(["label"]))).toBe(true)
@@ -55,6 +60,7 @@ const result = {
   instagram: "nana",
   videoTitle: "Vídeo de boas-vindas",
   network: "instagram",
+  seo: { title: "Positiv | Sobre", description: "Quem organiza a Positiv" },
   section: { title: "Nossa equipe", alt: "Foto da Nana" },
 }
 
@@ -65,6 +71,8 @@ const paths = [
   "$['instagram']",
   "$['videoTitle']",
   "$['network']",
+  "$['seo']['title']",
+  "$['seo']['description']",
   "$['section']['title']",
   "$['section']['alt']",
 ]
@@ -100,6 +108,8 @@ describe("stegaFilter end to end", () => {
     expect(isClean(encoded.instagram)).toBe(true)
     expect(isClean(encoded.videoTitle)).toBe(true)
     expect(isClean(encoded.network)).toBe(true)
+    expect(isClean(encoded.seo.title)).toBe(true)
+    expect(isClean(encoded.seo.description)).toBe(true)
     expect(isClean(encoded.section.alt)).toBe(true)
   })
 
