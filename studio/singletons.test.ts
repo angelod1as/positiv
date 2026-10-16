@@ -29,6 +29,12 @@ describe("singletonActions", () => {
     ).toEqual(["publish", "discardChanges", "restore"])
   })
 
+  it("keeps Payment Messages from being deleted, duplicated or unpublished", () => {
+    expect(
+      names(singletonActions(allActions, { schemaType: "paymentMessages" })),
+    ).toEqual(["publish", "discardChanges", "restore"])
+  })
+
   it("leaves every other document's actions alone", () => {
     expect(singletonActions(allActions, { schemaType: "person" })).toEqual(
       allActions,
@@ -37,7 +43,7 @@ describe("singletonActions", () => {
 })
 
 describe("withoutSingletons", () => {
-  it("offers every non-singleton template, including a homepage, now that only Site Settings is a singleton", () => {
+  it("offers every non-singleton template, including a homepage", () => {
     const templates: TemplateItem[] = [
       { templateId: "homepage" },
       { templateId: "person" },
@@ -46,9 +52,10 @@ describe("withoutSingletons", () => {
     expect(withoutSingletons(templates)).toEqual(templates)
   })
 
-  it("does not offer a second Site Settings when creating a document", () => {
+  it("does not offer a second copy of any singleton when creating a document", () => {
     const templates: TemplateItem[] = [
       { templateId: "siteSettings" },
+      { templateId: "paymentMessages" },
       { templateId: "page" },
     ]
 
