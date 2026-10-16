@@ -13,10 +13,8 @@ import {
 } from "./payment-email-outbox.server"
 import { ACTIVE_PAYMENT_STATUSES } from "./payment-totals.server"
 
-// The due date tracks the event's payment deadline. These two cover the edges:
-// OFFER_VALID_DAYS when the event has no deadline set, and MIN_OFFER_DAYS as the
-// floor so a deadline already past -- or too close -- still leaves a payable
-// window rather than a dueDate the provider rejects.
+// OFFER_VALID_DAYS is the fallback when the event has no deadline; MIN_OFFER_DAYS
+// floors a deadline already past or too close so the provider never gets a past dueDate.
 const OFFER_VALID_DAYS = 7
 const MIN_OFFER_DAYS = 3
 
@@ -163,11 +161,15 @@ export const createPaymentOffer = applySchema(createPaymentOfferSchema)(
       throw new Error(paymentsCopy.errors.amountTooLow)
     }
 
-    const minDueAt = Date.now() + MIN_OFFER_DAYS * 24 * 60 * 60 * 1000
+    const now = Date.now()
+    const dayMs = 24 * 60 * 60 * 1000
     const dueAt = new Date(
       participant.time_payment_end
-        ? Math.max(new Date(participant.time_payment_end).getTime(), minDueAt)
-        : Date.now() + OFFER_VALID_DAYS * 24 * 60 * 60 * 1000,
+        ? Math.max(
+            new Date(participant.time_payment_end).getTime(),
+            now + MIN_OFFER_DAYS * dayMs,
+          )
+        : now + OFFER_VALID_DAYS * dayMs,
     ).toISOString()
 
     const { replaced, payment, emailId } = await kyselyDb

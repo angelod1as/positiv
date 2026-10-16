@@ -226,6 +226,27 @@ describe("createPaymentOffer", () => {
     )
   })
 
+  it("floors a due date closer than the minimum window", async () => {
+    const paymentEnd = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString()
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Close-due Event",
+      ticket_price: 22000,
+      time_payment_end: paymentEnd,
+    })
+    const participant = await makeParticipant({ event_id: event.id })
+
+    await createPaymentOffer({ eventParticipantId: participant })
+
+    const [payment] = await paymentsFor(participant)
+    const threeDays = 3 * 24 * 60 * 60 * 1000
+    expect(new Date(payment.due_at).getTime()).toBeGreaterThan(
+      Date.now() + threeDays - 60_000,
+    )
+    expect(new Date(payment.due_at).getTime()).toBeLessThan(
+      Date.now() + threeDays + 60_000,
+    )
+  })
+
   it("uses a custom amount when the admin gives one", async () => {
     await createPaymentOffer({
       eventParticipantId: participantId,
