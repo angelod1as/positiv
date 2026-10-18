@@ -28,15 +28,19 @@ export const formatPaymentLinkMail = async (input: PaymentLinkMailInput) => {
     rendered = render(input, copy)
   } catch (error) {
     // A failure with the code copy already in use is a real error — a refused
-    // payment url, say — not a CMS-copy problem, so let it propagate. Otherwise
-    // CMS copy that slipped past validation must not fail the send: re-render
-    // with the code copy.
+    // payment url, say — so let it propagate. Otherwise re-render with the code
+    // copy: if that succeeds the CMS copy was at fault and we log it; if it
+    // fails too, the fault was never the copy, so surface the original error.
     if (copy === paymentLinkCopyFallback) throw error
+    try {
+      rendered = render(input, paymentLinkCopyFallback)
+    } catch {
+      throw error
+    }
     logger.error(
       "The payment link email copy failed to render, using the default",
       { error: error instanceof Error ? error.message : String(error) },
     )
-    rendered = render(input, paymentLinkCopyFallback)
   }
 
   return {

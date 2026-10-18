@@ -21,6 +21,7 @@ export const paymentLinkEmailSchema = zod.object({
   subject: zod
     .string()
     .min(1)
+    .max(150)
     .regex(/^[^\r\n]*$/, { error: "the subject cannot contain line breaks" })
     .refine(subject.check, { error: subject.error }),
   heading: zod.string().min(1).refine(heading.check, { error: heading.error }),

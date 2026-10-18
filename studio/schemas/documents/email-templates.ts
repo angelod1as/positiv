@@ -39,7 +39,7 @@ export const emailTemplates = defineType({
           )} (nome do evento).`,
           type: "string",
           validation: (rule) =>
-            rule.required().custom((value: string | undefined) => {
+            rule.required().max(150).custom((value: string | undefined) => {
               if (value && /[\r\n]/.test(value)) {
                 return "O assunto não pode ter quebras de linha."
               }

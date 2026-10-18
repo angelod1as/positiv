@@ -3,8 +3,11 @@ import { describe, expect, it, vi } from "vitest"
 import { run } from "./run"
 import { emailTemplatesDocument } from "./transform"
 
-function fakeStore() {
-  return { createIfNotExists: vi.fn(async () => undefined) }
+function fakeStore(exists = false) {
+  return {
+    exists: vi.fn(async () => exists),
+    createIfNotExists: vi.fn(async () => undefined),
+  }
 }
 
 describe("run", () => {
@@ -32,7 +35,11 @@ describe("run", () => {
 
     const result = await run(["--dataset", "development"], () => store)
 
-    expect(result).toEqual({ dryRun: true, document: emailTemplatesDocument() })
+    expect(result).toEqual({
+      dryRun: true,
+      document: emailTemplatesDocument(),
+      exists: false,
+    })
     expect(store.createIfNotExists).not.toHaveBeenCalled()
   })
 
@@ -47,5 +54,16 @@ describe("run", () => {
     expect(result.dryRun).toBe(false)
     expect(store.createIfNotExists).toHaveBeenCalledTimes(1)
     expect(store.createIfNotExists).toHaveBeenCalledWith(emailTemplatesDocument())
+  })
+
+  it("reports that the singleton already exists, without writing it", async () => {
+    const store = fakeStore(true)
+
+    const result = await run(
+      ["--dataset", "development", "--no-dry-run"],
+      () => store,
+    )
+
+    expect(result.exists).toBe(true)
   })
 })

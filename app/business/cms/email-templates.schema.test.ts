@@ -89,6 +89,14 @@ describe("emailTemplatesSchema", () => {
     ).toBe(false)
   })
 
+  it("rejects a subject over 150 characters", () => {
+    expect(
+      emailTemplatesSchema.safeParse({
+        paymentLink: { ...paymentLink, subject: "a".repeat(151) },
+      }).success,
+    ).toBe(false)
+  })
+
   it("rejects a body whose blocks render no text", () => {
     expect(
       emailTemplatesSchema.safeParse({
