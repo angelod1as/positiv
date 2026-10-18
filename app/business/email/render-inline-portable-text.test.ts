@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest"
-import { renderInlineBlocks } from "./render-inline-portable-text"
+import {
+  renderInlineBlocks,
+  unknownBlockVariables,
+} from "./render-inline-portable-text"
 
 const block = (...spans: { text: string; marks?: string[] }[]) => ({
   _type: "block",
@@ -53,5 +56,25 @@ describe("renderInlineBlocks", () => {
 
   it("returns an empty array for missing blocks", () => {
     expect(renderInlineBlocks(undefined)).toEqual([])
+  })
+})
+
+describe("unknownBlockVariables", () => {
+  it("accepts tokens inside the whitelist", () => {
+    expect(unknownBlockVariables([block({ text: "{{nome}}" })], ["nome"])).toEqual(
+      [],
+    )
+  })
+
+  it("flags a token split across spans with a mark, matching the rendered HTML", () => {
+    const split = block(
+      { text: "{{" },
+      { text: "nome", marks: ["strong"] },
+      { text: "}}" },
+    )
+
+    expect(unknownBlockVariables([split], ["nome"])).toContain(
+      "<strong>nome</strong>",
+    )
   })
 })

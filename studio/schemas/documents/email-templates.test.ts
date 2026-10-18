@@ -50,6 +50,21 @@ describe("emailTemplates", () => {
     ).toContain("paymentLink.body")
   })
 
+  it("rejects a token split across spans in the body", async () => {
+    expect(
+      pathsOf(
+        await validate({
+          ...valid.paymentLink,
+          body: body(
+            { text: "{{" },
+            { text: "nome", strong: true },
+            { text: "}}" },
+          ),
+        }),
+      ),
+    ).toContain("paymentLink.body")
+  })
+
   it("rejects a variable the subject does not allow", async () => {
     expect(
       pathsOf(await validate({ ...valid.paymentLink, subject: "Oi {{nome}}" })),

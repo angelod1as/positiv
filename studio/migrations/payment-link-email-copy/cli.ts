@@ -14,8 +14,8 @@ const { dryRun, document } = await run(
     })
 
     return {
-      createOrReplace: async (value) => {
-        await client.createOrReplace(value)
+      createIfNotExists: async (value) => {
+        await client.createIfNotExists(value)
       },
     }
   },

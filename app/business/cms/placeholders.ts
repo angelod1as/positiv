@@ -29,8 +29,14 @@ export function renderTemplate(
     )
   }
 
-  return template.replace(
-    variablePattern,
-    (_match, name: string) => values[name.trim()],
-  )
+  return template.replace(variablePattern, (_match, raw: string) => {
+    const name = raw.trim()
+    // The token is in the whitelist (checked above), so a missing value is a
+    // caller bug, not editor content. Fail loudly rather than substitute the
+    // string "undefined" — this renderer is shared across messages and emails.
+    if (!(name in values)) {
+      throw new Error(`The template has no value for {{${name}}}`)
+    }
+    return values[name]
+  })
 }

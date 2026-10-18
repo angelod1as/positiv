@@ -47,6 +47,10 @@ describe("renderTemplate", () => {
     },
   )
 
+  it("throws if a whitelisted variable has no value, rather than inserting undefined", () => {
+    expect(() => renderTemplate("Oi {{nome}}", {}, whitelist)).toThrow(/nome/)
+  })
+
   it("does not re-interpolate a value that itself looks like a variable", () => {
     expect(
       renderTemplate("Oi {{nome}}", { ...values, nome: "{{link}}" }, whitelist),

@@ -8,9 +8,8 @@ export type EmailTemplatesDocument = {
 }
 
 // The E-mails singleton seeded with the payment-link email's baseline copy, the
-// same copy the app falls back to. createOrReplace makes the write idempotent:
-// run it twice and the document is what one run left. It therefore runs once
-// per dataset — re-running after Editors have changed the copy erases it.
+// same copy the app falls back to. Written with createIfNotExists, so re-running
+// is a no-op once the singleton exists and never overwrites an Editor's changes.
 export function emailTemplatesDocument(): EmailTemplatesDocument {
   return {
     _id: EMAIL_TEMPLATES_ID,

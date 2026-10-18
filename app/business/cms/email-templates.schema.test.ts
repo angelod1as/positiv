@@ -53,4 +53,36 @@ describe("emailTemplatesSchema", () => {
       }).success,
     ).toBe(false)
   })
+
+  it("rejects a token split across spans in the body", () => {
+    const split = body(
+      { text: "{{" },
+      { text: "nome", marks: ["strong"] },
+      { text: "}}" },
+    )
+
+    expect(
+      emailTemplatesSchema.safeParse({
+        paymentLink: { ...paymentLink, body: split },
+      }).success,
+    ).toBe(false)
+  })
+
+  it("rejects a link in the body", () => {
+    const withLink = [
+      {
+        _type: "block",
+        _key: "p0",
+        style: "normal",
+        markDefs: [{ _type: "link", _key: "l", href: "https://example.com" }],
+        children: [{ _type: "span", _key: "s0", text: "oi", marks: ["l"] }],
+      },
+    ]
+
+    expect(
+      emailTemplatesSchema.safeParse({
+        paymentLink: { ...paymentLink, body: withLink },
+      }).success,
+    ).toBe(false)
+  })
 })

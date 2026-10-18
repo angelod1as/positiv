@@ -4,7 +4,7 @@ import { run } from "./run"
 import { emailTemplatesDocument } from "./transform"
 
 function fakeStore() {
-  return { createOrReplace: vi.fn(async () => undefined) }
+  return { createIfNotExists: vi.fn(async () => undefined) }
 }
 
 describe("run", () => {
@@ -33,7 +33,7 @@ describe("run", () => {
     const result = await run(["--dataset", "development"], () => store)
 
     expect(result).toEqual({ dryRun: true, document: emailTemplatesDocument() })
-    expect(store.createOrReplace).not.toHaveBeenCalled()
+    expect(store.createIfNotExists).not.toHaveBeenCalled()
   })
 
   it("writes the singleton, and only it, with --no-dry-run", async () => {
@@ -45,7 +45,7 @@ describe("run", () => {
     )
 
     expect(result.dryRun).toBe(false)
-    expect(store.createOrReplace).toHaveBeenCalledTimes(1)
-    expect(store.createOrReplace).toHaveBeenCalledWith(emailTemplatesDocument())
+    expect(store.createIfNotExists).toHaveBeenCalledTimes(1)
+    expect(store.createIfNotExists).toHaveBeenCalledWith(emailTemplatesDocument())
   })
 })

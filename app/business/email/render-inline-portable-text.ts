@@ -1,14 +1,18 @@
-import { escapeHtml } from "~/lib/helpers/escape-html"
+// Relative imports, not the ~ alias: the Studio package imports this module
+// across the package boundary to validate email copy, and its build cannot
+// resolve ~.
+import { unknownVariables } from "../cms/placeholders"
+import { escapeHtml } from "../../lib/helpers/escape-html"
 
-type InlineSpan = {
+type InlineChild = {
   readonly _type?: string
-  readonly text: string
+  readonly text?: string
   readonly marks?: readonly string[]
 }
 
 type InlineBlock = {
   readonly _type?: string
-  readonly children?: readonly InlineSpan[]
+  readonly children?: readonly InlineChild[]
 }
 
 // Only the decorators the email copy is allowed to use. A mark that is not one
@@ -16,9 +20,11 @@ type InlineBlock = {
 // emitting a tag the layout did not plan for.
 const MARK_TAGS: Record<string, string> = { strong: "strong", em: "em" }
 
-function renderSpan(span: InlineSpan): string {
-  let html = escapeHtml(span.text)
-  for (const mark of span.marks ?? []) {
+function renderSpan(child: InlineChild): string {
+  // Only text spans render; a non-span inline object (no text) contributes
+  // nothing, as the restricted email body never contains one.
+  let html = escapeHtml(child.text ?? "")
+  for (const mark of child.marks ?? []) {
     const tag = MARK_TAGS[mark]
     if (tag) html = `<${tag}>${html}</${tag}>`
   }
@@ -34,4 +40,22 @@ export function renderInlineBlocks(
   return (blocks ?? []).map((block) =>
     (block.children ?? []).map(renderSpan).join(""),
   )
+}
+
+// The placeholders left in the rendered HTML that the whitelist does not allow.
+// Validating the rendered text, not the raw spans, is what catches a token
+// split across spans with different marks — e.g. "{{" + bold "nome" + "}}",
+// which renders as "{{<strong>nome</strong>}}" and would otherwise throw at
+// send time after the Sanity read, past the point the fallback can cover.
+export function unknownBlockVariables(
+  blocks: readonly InlineBlock[] | undefined,
+  whitelist: readonly string[],
+): string[] {
+  const unknown = new Set<string>()
+  for (const paragraph of renderInlineBlocks(blocks)) {
+    for (const name of unknownVariables(paragraph, whitelist)) {
+      unknown.add(name)
+    }
+  }
+  return [...unknown]
 }

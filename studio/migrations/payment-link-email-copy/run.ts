@@ -3,7 +3,7 @@ import { parseArgs } from "node:util"
 import { emailTemplatesDocument, type EmailTemplatesDocument } from "./transform"
 
 export type Store = {
-  createOrReplace(document: EmailTemplatesDocument): Promise<void>
+  createIfNotExists(document: EmailTemplatesDocument): Promise<void>
 }
 
 const usage = "Usage: --dataset <name> [--no-dry-run]"
@@ -26,7 +26,7 @@ export async function run(args: string[], connect: (dataset: string) => Store) {
   const dryRun = !values["no-dry-run"]
 
   if (!dryRun) {
-    await store.createOrReplace(document)
+    await store.createIfNotExists(document)
   }
 
   return { dryRun, document }

@@ -1,14 +1,18 @@
-import { describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { buildPaymentOptions } from "~/business/payment/pricing"
 import { formatPaymentLinkMail } from "./format-payment-link-mail"
+import { loadPaymentLinkCopy } from "./payment-link-mail-copy.server"
 
+vi.mock("~/lib/logger/logger.server", () => ({ logger: { error: vi.fn() } }))
 vi.mock("./payment-link-mail-copy.server", () => ({
-  loadPaymentLinkCopy: vi.fn(async () => ({
-    subject: "Seu pagamento da {{evento}}",
-    heading: "Hora de garantir sua vaga",
-    bodyParagraphs: ["Oi {{nome}}!"],
-  })),
+  loadPaymentLinkCopy: vi.fn(),
 }))
+
+const copy = {
+  subject: "Seu pagamento da {{evento}}",
+  heading: "Hora de garantir sua vaga",
+  bodyParagraphs: ["Oi {{nome}}!"],
+}
 
 const input = {
   displayName: "Ana",
@@ -18,6 +22,10 @@ const input = {
   dueAt: "2026-09-01T12:00:00Z",
   options: buildPaymentOptions(22000, { cardEnabled: true }),
 }
+
+beforeEach(() => {
+  vi.mocked(loadPaymentLinkCopy).mockResolvedValue(copy)
+})
 
 describe("formatPaymentLinkMail", () => {
   it("builds the subject from the copy, with the event in it", async () => {
@@ -33,6 +41,8 @@ describe("formatPaymentLinkMail", () => {
     expect(text).toContain("Oi Ana!")
   })
 
+  // The trailing space is intentional: it matches the pre-move subject exactly
+  // for the case where a payment has neither an event title nor an emoji.
   it("leaves the event out of the subject when there is no title or emoji", async () => {
     const { subject } = await formatPaymentLinkMail({
       ...input,
@@ -41,5 +51,18 @@ describe("formatPaymentLinkMail", () => {
     })
 
     expect(subject).toBe("Seu pagamento da ")
+  })
+
+  it("falls back to the code copy when the CMS copy fails to render", async () => {
+    vi.mocked(loadPaymentLinkCopy).mockResolvedValueOnce({
+      subject: "Seu pagamento da {{evento}}",
+      heading: "Hora de garantir sua vaga",
+      bodyParagraphs: ["Oi {{boleto}}!"],
+    })
+
+    const { html } = await formatPaymentLinkMail(input)
+
+    expect(html).toContain("está reservada!")
+    expect(html).not.toContain("boleto")
   })
 })
