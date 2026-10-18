@@ -15,9 +15,6 @@ type InlineBlock = {
   readonly children?: readonly InlineChild[]
 }
 
-// Only the decorators the email copy is allowed to use. A mark that is not one
-// of these — a link annotation key, say — leaves the text unwrapped rather than
-// emitting a tag the layout did not plan for.
 const MARK_TAGS: Record<string, string> = { strong: "strong", em: "em" }
 
 function renderSpan(child: InlineChild): string {

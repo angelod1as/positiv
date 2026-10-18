@@ -65,6 +65,14 @@ describe("emailTemplates", () => {
     ).toContain("paymentLink.body")
   })
 
+  it("rejects a subject with a line break", async () => {
+    expect(
+      pathsOf(
+        await validate({ ...valid.paymentLink, subject: "Seu pagamento\nda" }),
+      ),
+    ).toContain("paymentLink.subject")
+  })
+
   it("rejects a body whose blocks render no text", async () => {
     expect(
       pathsOf(await validate({ ...valid.paymentLink, body: body({ text: "" }) })),

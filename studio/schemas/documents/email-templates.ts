@@ -39,11 +39,15 @@ export const emailTemplates = defineType({
           )} (nome do evento).`,
           type: "string",
           validation: (rule) =>
-            rule
-              .required()
-              .custom((value: string | undefined) =>
-                unknownVariableProblem(value, PAYMENT_LINK_MAIL_VARIABLES.subject),
-              ),
+            rule.required().custom((value: string | undefined) => {
+              if (value && /[\r\n]/.test(value)) {
+                return "O assunto não pode ter quebras de linha."
+              }
+              return unknownVariableProblem(
+                value,
+                PAYMENT_LINK_MAIL_VARIABLES.subject,
+              )
+            }),
         }),
         defineField({
           name: "heading",

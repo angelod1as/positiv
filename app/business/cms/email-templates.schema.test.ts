@@ -81,6 +81,14 @@ describe("emailTemplatesSchema", () => {
     ).toBe(false)
   })
 
+  it("rejects a subject with a line break", () => {
+    expect(
+      emailTemplatesSchema.safeParse({
+        paymentLink: { ...paymentLink, subject: "Seu pagamento\nda {{evento}}" },
+      }).success,
+    ).toBe(false)
+  })
+
   it("rejects a body whose blocks render no text", () => {
     expect(
       emailTemplatesSchema.safeParse({

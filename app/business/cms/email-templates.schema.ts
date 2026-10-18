@@ -18,7 +18,11 @@ const heading = within(PAYMENT_LINK_MAIL_VARIABLES.heading)
 const bodyVariables = PAYMENT_LINK_MAIL_VARIABLES.body
 
 export const paymentLinkEmailSchema = zod.object({
-  subject: zod.string().min(1).refine(subject.check, { error: subject.error }),
+  subject: zod
+    .string()
+    .min(1)
+    .regex(/^[^\r\n]*$/, { error: "the subject cannot contain line breaks" })
+    .refine(subject.check, { error: subject.error }),
   heading: zod.string().min(1).refine(heading.check, { error: heading.error }),
   body: portableTextSchema
     .refine(

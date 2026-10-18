@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { buildPaymentOptions } from "~/business/payment/pricing"
 import { formatPaymentLinkMail } from "./format-payment-link-mail"
+import { paymentLinkCopyFallback } from "./payment-link-mail-copy"
 import { loadPaymentLinkCopy } from "./payment-link-mail-copy.server"
 
 vi.mock("~/lib/logger/logger.server", () => ({ logger: { error: vi.fn() } }))
@@ -76,5 +77,13 @@ describe("formatPaymentLinkMail", () => {
 
     expect(html).toContain("está reservada!")
     expect(html).not.toContain("boleto")
+  })
+
+  it("propagates a real render error when the code copy is already in use", async () => {
+    vi.mocked(loadPaymentLinkCopy).mockResolvedValueOnce(paymentLinkCopyFallback)
+
+    await expect(
+      formatPaymentLinkMail({ ...input, paymentUrl: "javascript:alert(1)" }),
+    ).rejects.toThrow()
   })
 })
