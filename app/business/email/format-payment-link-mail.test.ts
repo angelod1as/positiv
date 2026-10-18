@@ -53,6 +53,18 @@ describe("formatPaymentLinkMail", () => {
     expect(subject).toBe("Seu pagamento da ")
   })
 
+  it("keeps the subject plain, with no HTML entities, for an event title with &", async () => {
+    const { subject } = await formatPaymentLinkMail({
+      ...input,
+      eventEmoji: null,
+      eventTitle: "Jazz & Blues",
+    })
+
+    expect(subject).toBe("Seu pagamento da Jazz & Blues")
+    expect(subject).not.toContain("&amp;")
+    expect(subject).not.toContain("&nbsp;")
+  })
+
   it("falls back to the code copy when the CMS copy fails to render", async () => {
     vi.mocked(loadPaymentLinkCopy).mockResolvedValueOnce({
       subject: "Seu pagamento da {{evento}}",

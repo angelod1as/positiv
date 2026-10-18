@@ -68,6 +68,27 @@ describe("emailTemplatesSchema", () => {
     ).toBe(false)
   })
 
+  it("rejects an empty subject or heading", () => {
+    expect(
+      emailTemplatesSchema.safeParse({
+        paymentLink: { ...paymentLink, subject: "" },
+      }).success,
+    ).toBe(false)
+    expect(
+      emailTemplatesSchema.safeParse({
+        paymentLink: { ...paymentLink, heading: "" },
+      }).success,
+    ).toBe(false)
+  })
+
+  it("rejects a body whose blocks render no text", () => {
+    expect(
+      emailTemplatesSchema.safeParse({
+        paymentLink: { ...paymentLink, body: body({ text: "" }) },
+      }).success,
+    ).toBe(false)
+  })
+
   it("rejects a link in the body", () => {
     const withLink = [
       {

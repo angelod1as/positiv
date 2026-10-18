@@ -65,6 +65,12 @@ describe("emailTemplates", () => {
     ).toContain("paymentLink.body")
   })
 
+  it("rejects a body whose blocks render no text", async () => {
+    expect(
+      pathsOf(await validate({ ...valid.paymentLink, body: body({ text: "" }) })),
+    ).toContain("paymentLink.body")
+  })
+
   it("rejects a variable the subject does not allow", async () => {
     expect(
       pathsOf(await validate({ ...valid.paymentLink, subject: "Oi {{nome}}" })),

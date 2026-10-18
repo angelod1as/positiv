@@ -7,7 +7,10 @@ import {
 } from "sanity"
 
 import { PAYMENT_LINK_MAIL_VARIABLES } from "../../../app/business/email/payment-link-mail.variables"
-import { unknownBlockVariables } from "../../../app/business/email/render-inline-portable-text"
+import {
+  renderInlineBlocks,
+  unknownBlockVariables,
+} from "../../../app/business/email/render-inline-portable-text"
 import { decorators } from "../objects/rich-text"
 import { unknownVariableProblem } from "../placeholder-validation"
 
@@ -71,6 +74,9 @@ export const emailTemplates = defineType({
           ],
           validation: (rule) =>
             rule.required().custom((value: PortableTextBlock[] | undefined) => {
+              if (renderInlineBlocks(value).length === 0) {
+                return "O corpo precisa de pelo menos um parágrafo com texto."
+              }
               // Validate the rendered text, the same bytes the email renderer
               // produces, so a token split across spans is rejected here.
               const unknown = unknownBlockVariables(

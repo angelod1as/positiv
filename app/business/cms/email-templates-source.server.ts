@@ -4,8 +4,6 @@ import { emailTemplatesQuery } from "./email-templates-query"
 import { type EmailTemplates, emailTemplatesSchema } from "./email-templates.schema"
 import { createSanityClient } from "./sanity-client.server"
 
-export { emailTemplatesQuery }
-
 type EmailTemplatesClient = { fetch(query: string): Promise<unknown> }
 
 export function resolveEmailTemplates(document: unknown): EmailTemplates | null {
@@ -13,10 +11,8 @@ export function resolveEmailTemplates(document: unknown): EmailTemplates | null 
 
   const result = emailTemplatesSchema.safeParse(document)
   if (!result.success) {
-    // A broken email template must never take a send down: every email that
-    // reads this already falls back to its code copy. Degrade to null and let
-    // that fallback carry it. pnpm test:contract still catches bad published
-    // content before a deploy.
+    // Degrade to null so the send falls back to code copy; test:contract is the
+    // guard that catches bad published content before a deploy.
     logger.error("Email templates failed validation, using the default copy", {
       error: zod.prettifyError(result.error),
     })

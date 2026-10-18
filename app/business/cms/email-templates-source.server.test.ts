@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
+import { emailTemplatesQuery } from "./email-templates-query"
 import {
-  emailTemplatesQuery,
   getEmailTemplates,
   resolveEmailTemplates,
 } from "./email-templates-source.server"
