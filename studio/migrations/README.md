@@ -127,3 +127,34 @@ Then `production`:
 pnpm --filter studio migrate:remove-footer-development --dataset production
 pnpm --filter studio migrate:remove-footer-development --dataset production --no-dry-run
 ```
+
+### `payment-link-email-copy` (POS-609)
+
+Seeds the `emailTemplates` singleton ("E-mails") with the payment-link email's
+baseline copy — the subject, the heading and the Portable Text body — taken from
+`app/copy/emails/payment-link.ts`, the same copy the app falls back to when
+Sanity is down. It `createOrReplace`s the singleton on its fixed id, so it is
+idempotent.
+
+Like the others, it runs through `sanity exec`, so `--dataset` is required and
+it dry-runs until you add `--no-dry-run`.
+
+From the repository root, `development` first:
+
+```sh
+pnpm --filter studio migrate:payment-link-email-copy --dataset development
+pnpm --filter studio migrate:payment-link-email-copy --dataset development --no-dry-run
+```
+
+Then `production`:
+
+```sh
+pnpm --filter studio migrate:payment-link-email-copy --dataset production
+pnpm --filter studio migrate:payment-link-email-copy --dataset production --no-dry-run
+```
+
+Run it once per dataset. `createOrReplace` overwrites the published singleton
+without reading it, so do not re-run `--no-dry-run` on `production` once an
+Editor has changed the copy — a re-run, including a retry after a half-failed
+deploy, silently discards their edits. On `development` the seed already writes
+this singleton, so a re-run only overwrites it with the same content.

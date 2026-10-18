@@ -16,7 +16,8 @@
     "refresh-dev": "sanity exec refresh-dev/cli.ts --with-user-token --",
     "migrate:homepage-to-page": "sanity exec migrations/homepage-to-page/cli.ts --with-user-token --",
     "migrate:code-of-conduct-to-page": "sanity exec migrations/code-of-conduct-to-page/cli.ts --with-user-token --",
-    "migrate:remove-footer-development": "sanity exec migrations/remove-footer-development/cli.ts --with-user-token --"
+    "migrate:remove-footer-development": "sanity exec migrations/remove-footer-development/cli.ts --with-user-token --",
+    "migrate:payment-link-email-copy": "sanity exec migrations/payment-link-email-copy/cli.ts --with-user-token --"
   },
   "dependencies": {
     "@sanity/icons": "^5.2.2",

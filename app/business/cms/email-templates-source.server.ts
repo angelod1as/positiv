@@ -1,11 +1,10 @@
 import { logger } from "~/lib/logger/logger.server"
 import { zod } from "~/lib/helpers/zod"
+import { emailTemplatesQuery } from "./email-templates-query"
 import { type EmailTemplates, emailTemplatesSchema } from "./email-templates.schema"
 import { createSanityClient } from "./sanity-client.server"
 
-export const emailTemplatesQuery = `*[_id == "emailTemplates"][0]{
-  paymentLink{ subject, heading, body }
-}`
+export { emailTemplatesQuery }
 
 type EmailTemplatesClient = { fetch(query: string): Promise<unknown> }
 
