@@ -1,6 +1,10 @@
 import { codeOfConductToPage } from "../migrations/code-of-conduct-to-page/transform"
 import { HOMEPAGE_PAGE_ID } from "../schemas/documents/page"
-import { PAYMENT_MESSAGES_ID, SITE_SETTINGS_ID } from "../singletons"
+import {
+  EMAIL_TEMPLATES_ID,
+  PAYMENT_MESSAGES_ID,
+  SITE_SETTINGS_ID,
+} from "../singletons"
 
 export const SEED_WHATSAPP_PAYMENT_MESSAGE = [
   "Oi, {{nome}}! Aqui está o link para o pagamento da {{evento}}:",
@@ -12,6 +16,48 @@ export const SEED_WHATSAPP_PAYMENT_MESSAGE = [
   "",
   "O link vale até {{data}}.",
 ].join("\n")
+
+export const SEED_PAYMENT_LINK_EMAIL = {
+  subject: "Seu pagamento da {{evento}}",
+  heading: "Hora de garantir sua vaga",
+  body: [
+    {
+      _type: "block",
+      _key: "intro",
+      style: "normal",
+      markDefs: [],
+      children: [
+        {
+          _type: "span",
+          _key: "intro-0",
+          text: "{{nome}}, sua vaga na ",
+          marks: [],
+        },
+        { _type: "span", _key: "intro-1", text: "{{evento}}", marks: ["strong"] },
+        {
+          _type: "span",
+          _key: "intro-2",
+          text: " está reservada!",
+          marks: [],
+        },
+      ],
+    },
+    {
+      _type: "block",
+      _key: "one-step",
+      style: "normal",
+      markDefs: [],
+      children: [
+        {
+          _type: "span",
+          _key: "one-step-0",
+          text: "Para garanti-la, só falta um passo: o pagamento.",
+          marks: [],
+        },
+      ],
+    },
+  ],
+}
 
 export const E2E_TEST_PAGE_ID = "page-e2e-test"
 export const E2E_TEST_PAGE_ADDRESS = "/pagina-de-teste"
@@ -460,6 +506,11 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
       _id: PAYMENT_MESSAGES_ID,
       _type: "paymentMessages",
       whatsappMessage: SEED_WHATSAPP_PAYMENT_MESSAGE,
+    },
+    {
+      _id: EMAIL_TEMPLATES_ID,
+      _type: "emailTemplates",
+      paymentLink: SEED_PAYMENT_LINK_EMAIL,
     },
   ]
 }

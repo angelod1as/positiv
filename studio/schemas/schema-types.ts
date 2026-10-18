@@ -1,5 +1,6 @@
 import type { SchemaTypeDefinition } from "sanity"
 
+import { emailTemplates } from "./documents/email-templates"
 import { page } from "./documents/page"
 import { paymentMessages } from "./documents/payment-messages"
 import { person } from "./documents/person"
@@ -40,4 +41,5 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   page,
   siteSettings,
   paymentMessages,
+  emailTemplates,
 ]
