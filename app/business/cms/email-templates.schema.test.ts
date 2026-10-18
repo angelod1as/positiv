@@ -97,6 +97,44 @@ describe("emailTemplatesSchema", () => {
     ).toBe(false)
   })
 
+  it("rejects a non-normal block style in the body", () => {
+    const heading = [
+      {
+        _type: "block",
+        _key: "p0",
+        style: "h2",
+        markDefs: [],
+        children: [{ _type: "span", _key: "s0", text: "Oi", marks: [] }],
+      },
+    ]
+
+    expect(
+      emailTemplatesSchema.safeParse({
+        paymentLink: { ...paymentLink, body: heading },
+      }).success,
+    ).toBe(false)
+  })
+
+  it("rejects a list item in the body", () => {
+    const bullet = [
+      {
+        _type: "block",
+        _key: "p0",
+        style: "normal",
+        listItem: "bullet",
+        level: 1,
+        markDefs: [],
+        children: [{ _type: "span", _key: "s0", text: "Oi", marks: [] }],
+      },
+    ]
+
+    expect(
+      emailTemplatesSchema.safeParse({
+        paymentLink: { ...paymentLink, body: bullet },
+      }).success,
+    ).toBe(false)
+  })
+
   it("rejects a link in the body", () => {
     const withLink = [
       {
