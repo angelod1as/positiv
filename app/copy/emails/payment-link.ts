@@ -48,11 +48,6 @@ export const paymentLinkMailContent = {
 export const paymentLinkMailCopy = {
   documentTitle: "Pagamento - Positiv",
   logoAlt: "Positiv",
-  heading: "Hora de garantir sua vaga",
-  subject: (eventName: string) => `Seu pagamento da ${eventName}`,
-  intro: (displayName: string, eventName: string) =>
-    `${displayName}, sua vaga na <strong>${eventName}</strong> está reservada!`,
-  oneStepLeft: "Para garanti-la, só falta um passo: o pagamento.",
   pix: (value: string, discountPercent: number | null) =>
     discountPercent
       ? `No Pix (${discountPercent}% de desconto): <strong>${value}</strong>`

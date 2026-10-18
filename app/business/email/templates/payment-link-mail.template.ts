@@ -1,4 +1,10 @@
 import { formatInTimeZone } from "date-fns-tz"
+import { renderTemplate } from "~/business/cms/placeholders"
+import {
+  type PaymentLinkCopy,
+  paymentLinkCopyFallback,
+} from "~/business/email/payment-link-mail-copy"
+import { PAYMENT_LINK_MAIL_VARIABLES } from "~/business/email/payment-link-mail.variables"
 import {
   PIX_DISCOUNT_PERCENT,
   type PaymentOption,
@@ -64,7 +70,10 @@ const summaryLines = (options: PaymentOption[]): string[] => {
  * Sent when an admin opens a charge for a participant
  * SECURITY: All user-controlled fields are sanitized to prevent XSS attacks
  */
-export const paymentLinkMailTemplate = (input: PaymentLinkMailInput): string => {
+export const paymentLinkMailTemplate = (
+  input: PaymentLinkMailInput,
+  copy: PaymentLinkCopy = paymentLinkCopyFallback,
+): string => {
   // The url is the one value here that becomes an attribute rather than text,
   // and sanitizeHtml only guards what it wraps in markup. The scheme check
   // catches a javascript: url; the escape catches a quote that would close the
@@ -84,6 +93,21 @@ export const paymentLinkMailTemplate = (input: PaymentLinkMailInput): string => 
     input.dueAt,
     "America/Sao_Paulo",
     "dd/MM/yyyy",
+  )
+
+  // The Editor owns the wording; the Platform fills the values. Both are
+  // computed exactly as before the copy moved, so the email renders identically.
+  const bodyValues = {
+    nome: displayName,
+    evento: `${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}`,
+  }
+  const heading = renderTemplate(
+    copy.heading,
+    {},
+    PAYMENT_LINK_MAIL_VARIABLES.heading,
+  )
+  const bodyParagraphs = copy.bodyParagraphs.map((paragraph) =>
+    renderTemplate(paragraph, bodyValues, PAYMENT_LINK_MAIL_VARIABLES.body),
   )
 
   return `<!DOCTYPE html>
@@ -115,17 +139,17 @@ export const paymentLinkMailTemplate = (input: PaymentLinkMailInput): string => 
 
               <!-- H1 -->
               <h1 style="font-family: 'DM Sans', Arial, sans-serif; font-size: 32px; font-weight: 800; color: #bf03c3; margin: 0 0 16px 0; line-height: 1.2; text-align: center;">
-                ${paymentLinkMailCopy.heading}
+                ${heading}
               </h1>
 
               <!-- Intro Paragraph -->
-              <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-                ${paymentLinkMailCopy.intro(displayName, `${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}`)}
-              </p>
-
-              <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-                ${paymentLinkMailCopy.oneStepLeft}
-              </p>
+              ${bodyParagraphs
+                .map(
+                  (paragraph) => `<p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
+                ${paragraph}
+              </p>`,
+                )
+                .join("\n\n              ")}
 
               <!-- Prices -->
               <div style="background-color: #f9f9f9; border-radius: 8px; padding: 16px; margin: 0 0 20px 0;">

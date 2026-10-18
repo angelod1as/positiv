@@ -1,25 +1,16 @@
 import { emailTemplatesCache } from "~/business/cms/email-templates-cache.server"
 import type { EmailTemplates } from "~/business/cms/email-templates.schema"
-import { paymentLinkMailContent } from "~/copy/emails/payment-link"
 import { logger } from "~/lib/logger/logger.server"
+import {
+  type PaymentLinkCopy,
+  paymentLinkCopyFallback,
+} from "./payment-link-mail-copy"
 import { renderInlineBlocks } from "./render-inline-portable-text"
 
 export const PAYMENT_LINK_COPY_TIMEOUT_MS = 2_000
 
-export type PaymentLinkCopy = {
-  subject: string
-  heading: string
-  bodyParagraphs: string[]
-}
-
-// The code copy, served when Sanity is unreachable, slow or publishing invalid
-// content, so a payment email never fails to send. The same renderer produces
-// the body here as on the Sanity path, so the two cannot diverge.
-export const paymentLinkCopyFallback: PaymentLinkCopy = {
-  subject: paymentLinkMailContent.subject,
-  heading: paymentLinkMailContent.heading,
-  bodyParagraphs: renderInlineBlocks(paymentLinkMailContent.body),
-}
+export { paymentLinkCopyFallback }
+export type { PaymentLinkCopy }
 
 type EmailTemplatesCache = { get(): Promise<EmailTemplates | null> }
 
