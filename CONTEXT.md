@@ -69,6 +69,13 @@ Platform. The Editor places and configures it; the Platform fills it. Next
 Events is the first one.
 _Avoid_: Dynamic section, widget
 
+**Email Template**:
+The wording of a transactional email that Editors own — the subject, the heading
+and the body — with the data filled in by the Platform, like an Embedded
+Section. The HTML layout, the footer and every value stay in code; Editors
+change only the text. The payment-link email is the first.
+_Avoid_: mail template (as the HTML), transactional template, email layout
+
 **Person**:
 Someone the Public Site presents in their own right — today the founders,
 later an author. Written once and shown wherever a Page refers to them, as a

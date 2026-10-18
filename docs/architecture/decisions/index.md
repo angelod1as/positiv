@@ -67,6 +67,8 @@ ADRs are immutable once accepted - only their status can change (deprecated or s
 | [2026-09-24](./20260924-sanity-schema-changes-follow-expand-contract.md) | Sanity schema changes follow expand/contract | Accepted |
 | [2026-09-24](./20260924-no-repository-fallback-for-public-site-content.md) | No repository fallback for Public Site content | Accepted |
 | [2026-09-30](./20260930-site-settings-fall-back-to-code-when-sanity-is-down.md) | Site Settings fall back to code when Sanity is down | Accepted |
+| [2026-10-18](./20261018-email-copy-lives-in-sanity.md) | Email copy lives in Sanity, rendered through the shared placeholder renderer | Accepted |
+| [2026-10-18](./20261018-transactional-email-copy-falls-back-to-code.md) | Transactional email copy falls back to code when Sanity is down | Accepted |
 
 ### Testing
 
