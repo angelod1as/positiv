@@ -9,9 +9,6 @@ import { renderInlineBlocks } from "./render-inline-portable-text"
 
 export const PAYMENT_LINK_COPY_TIMEOUT_MS = 2_000
 
-export { paymentLinkCopyFallback }
-export type { PaymentLinkCopy }
-
 type EmailTemplatesCache = { get(): Promise<EmailTemplates | null> }
 
 function toCopy(templates: EmailTemplates | null): PaymentLinkCopy {

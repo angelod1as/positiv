@@ -1,9 +1,7 @@
 import { describe, expect, it, vi } from "vitest"
 import type { EmailTemplates } from "~/business/cms/email-templates.schema"
-import {
-  loadPaymentLinkCopy,
-  paymentLinkCopyFallback,
-} from "./payment-link-mail-copy.server"
+import { paymentLinkCopyFallback } from "./payment-link-mail-copy"
+import { loadPaymentLinkCopy } from "./payment-link-mail-copy.server"
 
 vi.mock("~/lib/logger/logger.server", () => ({ logger: { error: vi.fn() } }))
 

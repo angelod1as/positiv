@@ -34,7 +34,7 @@ export function renderTemplate(
     // The token is in the whitelist (checked above), so a missing value is a
     // caller bug, not editor content. Fail loudly rather than substitute the
     // string "undefined" — this renderer is shared across messages and emails.
-    if (!(name in values)) {
+    if (!Object.hasOwn(values, name)) {
       throw new Error(`The template has no value for {{${name}}}`)
     }
     return values[name]

@@ -37,9 +37,11 @@ function renderSpan(child: InlineChild): string {
 export function renderInlineBlocks(
   blocks: readonly InlineBlock[] | undefined,
 ): string[] {
-  return (blocks ?? []).map((block) =>
-    (block.children ?? []).map(renderSpan).join(""),
-  )
+  return (blocks ?? [])
+    .map((block) => (block.children ?? []).map(renderSpan).join(""))
+    // Drop a block that renders to nothing — an Editor's stray Enter — so the
+    // layout does not wrap an empty paragraph in a styled <p>.
+    .filter((paragraph) => paragraph.trim() !== "")
 }
 
 // The placeholders left in the rendered HTML that the whitelist does not allow.

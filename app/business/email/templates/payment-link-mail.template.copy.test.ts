@@ -28,6 +28,16 @@ describe("paymentLinkMailTemplate with copy from the CMS", () => {
     )
   })
 
+  it("HTML-escapes the heading an Editor typed", () => {
+    const html = paymentLinkMailTemplate(input, {
+      ...copy,
+      heading: "Ofertas & novidades",
+    })
+
+    expect(html).toContain("Ofertas &amp; novidades")
+    expect(html).not.toContain("Ofertas & novidades")
+  })
+
   it("HTML-escapes a value so a participant cannot inject markup", () => {
     const html = paymentLinkMailTemplate(
       { ...input, displayName: '<img src=x onerror="steal()">' },

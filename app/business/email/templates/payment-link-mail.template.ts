@@ -101,10 +101,8 @@ export const paymentLinkMailTemplate = (
     nome: displayName,
     evento: `${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}`,
   }
-  const heading = renderTemplate(
-    copy.heading,
-    {},
-    PAYMENT_LINK_MAIL_VARIABLES.heading,
+  const heading = escapeHtml(
+    renderTemplate(copy.heading, {}, PAYMENT_LINK_MAIL_VARIABLES.heading),
   )
   const bodyParagraphs = copy.bodyParagraphs.map((paragraph) =>
     renderTemplate(paragraph, bodyValues, PAYMENT_LINK_MAIL_VARIABLES.body),

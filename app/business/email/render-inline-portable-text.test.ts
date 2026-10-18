@@ -57,6 +57,12 @@ describe("renderInlineBlocks", () => {
   it("returns an empty array for missing blocks", () => {
     expect(renderInlineBlocks(undefined)).toEqual([])
   })
+
+  it("drops a block that renders to nothing, so no empty paragraph is left", () => {
+    expect(
+      renderInlineBlocks([block({ text: "um" }), block({ text: "" }), block({ text: "dois" })]),
+    ).toEqual(["um", "dois"])
+  })
 })
 
 describe("unknownBlockVariables", () => {

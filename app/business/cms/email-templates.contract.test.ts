@@ -12,6 +12,8 @@ describe("the published E-mails singleton in production", () => {
     // The migration seeds this singleton on production before the move merges.
     // Until it has run the singleton may be absent, which is not a contract
     // breach; once present it must satisfy the contract the app reads it with.
+    // POS-611 removes this early return once the migration has run, so the test
+    // cannot pass vacuously forever.
     if (document === null || document === undefined) return
 
     expect(emailTemplatesSchema.parse(document)).toEqual(document)
