@@ -218,6 +218,22 @@ describe("TelegramTransport", () => {
     })
   })
 
+  it("does not throw on a circular metadata object", () => {
+    return new Promise<void>((resolve) => {
+      const circular: Record<string, unknown> = { name: "axios-ish" }
+      circular.self = circular
+      transport.log(
+        { level: "error", message: "boom", cause: circular },
+        () => {
+          expect(fetchSpy).toHaveBeenCalledTimes(1)
+          const body = JSON.parse(fetchSpy.mock.calls[0][1].body)
+          expect(body.text).toContain("[Circular]")
+          resolve()
+        },
+      )
+    })
+  })
+
   it("truncates message with metadata to 4096 characters", () => {
     return new Promise<void>((resolve) => {
       transport.log(

@@ -39,19 +39,24 @@ export const logger = winston.createLogger({
 // winston's production console format is format.json(), and
 // JSON.stringify(new Error()) is "{}" — flatten so the message, stack and
 // cause reach the container logs, not just the Telegram transport.
-export function serializeError(error: unknown): {
+export function serializeError(
+  error: unknown,
+  seen: WeakSet<Error> = new WeakSet(),
+): {
   message: string
   stack?: string
   cause?: unknown
 } {
   if (!(error instanceof Error)) return { message: String(error) }
+  if (seen.has(error)) return { message: error.message }
+  seen.add(error)
   return {
     message: error.message,
     stack: error.stack,
     ...(error.cause !== undefined && {
       cause:
         error.cause instanceof Error
-          ? serializeError(error.cause)
+          ? serializeError(error.cause, seen)
           : error.cause,
     }),
   }

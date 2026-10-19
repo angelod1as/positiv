@@ -32,6 +32,20 @@ describe("serializeError", () => {
     })
   })
 
+  it("does not overflow on a cyclic cause chain", () => {
+    const a = new Error("a")
+    const b = new Error("b")
+    a.cause = b
+    b.cause = a
+
+    const result = serializeError(a)
+
+    expect(result.message).toBe("a")
+    expect(result).toMatchObject({
+      cause: { message: "b", cause: { message: "a" } },
+    })
+  })
+
   it("stringifies a non-Error value", () => {
     expect(serializeError("plain string")).toEqual({ message: "plain string" })
     expect(serializeError(42)).toEqual({ message: "42" })
