@@ -385,6 +385,7 @@ const PaymentProgress: FC<{ payment: PaymentRow; providerName: string }> = ({
 type ChargeSectionProps = {
   active: PaymentRow | null
   ticketPrice: number | null
+  amountHint: string
   appOrigin: string
   whatsappMessage: string | null
   providerName: string
@@ -404,6 +405,7 @@ type ChargeSectionProps = {
 const ChargeSection: FC<ChargeSectionProps> = ({
   active,
   ticketPrice,
+  amountHint,
   appOrigin,
   whatsappMessage,
   providerName,
@@ -526,7 +528,7 @@ const ChargeSection: FC<ChargeSectionProps> = ({
           value={amount}
           onChange={(event) => setAmount(event.target.value)}
         />
-        <p className="text-muted-foreground text-sm">{charge.amountHint}</p>
+        <p className="text-muted-foreground text-sm">{amountHint}</p>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -871,6 +873,9 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
             active={active}
             // A social or staff spot pays what was agreed with that person.
             ticketPrice={spotType === "regular" ? ticketPrice : null}
+            amountHint={
+              spotType === "regular" ? charge.amountHint : charge.amountHintForSpot
+            }
             appOrigin={appOrigin}
             whatsappMessage={whatsappMessage}
             providerName={providerName}

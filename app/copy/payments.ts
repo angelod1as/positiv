@@ -134,6 +134,8 @@ export const paymentsCopy = {
     amount: "Valor a cobrar",
     amountHint:
       "O valor do evento: é o que a pessoa paga, sem nada a mais. As taxas ficam por conta da Positiv.",
+    amountHintForSpot:
+      "Vaga social ou staff: digite o valor combinado com a pessoa. As taxas ficam por conta da Positiv.",
     send: "Enviar cobrança",
     resendAmount: "Reenviar com outro valor",
     resendEmail: "Reenviar email",

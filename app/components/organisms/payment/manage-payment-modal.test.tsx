@@ -770,6 +770,18 @@ describe("ManagePaymentModal - the Cobrança section", () => {
     },
   )
 
+  it.each(["social", "staff"])(
+    "tells the admin to type the agreed amount for a %s spot",
+    (spotType) => {
+      render(<ManagePaymentModal {...baseProps} spotType={spotType} />)
+
+      expect(
+        screen.getByText(/digite o valor combinado com a pessoa/i),
+      ).toBeInTheDocument()
+      expect(screen.queryByText(/O valor do evento/)).not.toBeInTheDocument()
+    },
+  )
+
   it.each(["0", "0,00"])("refuses to send a charge of %s", async (zero) => {
     render(<ManagePaymentModal {...baseProps} />)
 
