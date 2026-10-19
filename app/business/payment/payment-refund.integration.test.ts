@@ -29,6 +29,7 @@ vi.mock("./payment-emails.server", async (importOriginal) => {
 
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
 
+import { AsaasError } from "./provider/asaas/asaas-client.server"
 import { cancelPayment } from "./payment-cancel.server"
 import { markManualRefunded } from "./payment-refund.server"
 
@@ -269,6 +270,8 @@ describe("markManualRefunded", () => {
 describe("cancelPayment", () => {
   const { tracker, kysely } = setupIntegrationTest()
   let participantId: string
+  let profileId: string
+  let eventId: string
 
   beforeEach(async () => {
     tracker.clear()
@@ -285,6 +288,8 @@ describe("cancelPayment", () => {
       email: `test${testId}-cancel@example.com`,
       full_name: "Cancel Tester",
     })
+    profileId = profile.id
+    eventId = event.id
     participantId = (
       await createTestEventParticipant(tracker, kysely, {
         event_id: event.id,
@@ -414,6 +419,38 @@ describe("cancelPayment", () => {
       .executeTakeFirstOrThrow()
     expect(after.status).toBe("cancelled")
     expect(logger.error).toHaveBeenCalled()
+  })
+
+  it("logs a refused delete once, with the payment's context", async () => {
+    const chargeId = `pay_cancel_fail_${Date.now()}`
+    deleteAsaasPayment.mockRejectedValue(
+      new AsaasError("DELETE", 404, [], `/payments/${chargeId}`),
+    )
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "online",
+      status: "awaiting_payment",
+      amount: 20000,
+      method: "pix",
+      paid_at: null,
+      provider_charge_id: chargeId,
+    })
+
+    await cancelPayment({ paymentId: payment.id })
+
+    expect(logger.error).toHaveBeenCalledTimes(1)
+    expect(logger.error).toHaveBeenCalledWith(
+      "Could not delete the cancelled charge at the payment provider",
+      expect.objectContaining({
+        profileId,
+        paymentId: payment.id,
+        eventId,
+        eventTitle: "Cancel Event",
+        chargeId,
+        provider: { method: "DELETE", path: `/payments/${chargeId}`, status: 404, errors: [] },
+      }),
+    )
+    expect(JSON.stringify(logger.error.mock.calls)).not.toContain("Cancel Tester")
   })
 
   it("does not reach Asaas for a charge it refused to cancel", async () => {

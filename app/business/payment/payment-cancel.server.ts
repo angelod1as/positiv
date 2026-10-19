@@ -3,6 +3,10 @@ import { paymentsCopy } from "~/copy/payments"
 import { kyselyDb } from "~/kysely-db"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
+import {
+  logPaymentProviderFailure,
+  readPaymentAlertContext,
+} from "./payment-alert.server"
 import { paymentProvider } from "./payment-provider.server"
 import { ACTIVE_PAYMENT_STATUSES } from "./payment-totals.server"
 
@@ -39,16 +43,19 @@ export const cancelPayment = applySchema(cancelPaymentSchema)(async (values) => 
       )
       if (!deleted) {
         logger.error("The payment provider refused to delete the cancelled charge", {
-          paymentId: cancelled.id,
+          ...(await readPaymentAlertContext(cancelled.id)),
           chargeId: cancelled.provider_charge_id,
         })
       }
     } catch (error) {
-      logger.error("Could not delete the cancelled charge at the payment provider", {
-        paymentId: cancelled.id,
-        chargeId: cancelled.provider_charge_id,
-        error: error instanceof Error ? error.message : String(error),
-      })
+      logPaymentProviderFailure(
+        "Could not delete the cancelled charge at the payment provider",
+        {
+          ...(await readPaymentAlertContext(cancelled.id)),
+          chargeId: cancelled.provider_charge_id,
+        },
+        error,
+      )
     }
   }
 
