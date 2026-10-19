@@ -39,6 +39,7 @@ import { formatInTimeZone } from "date-fns-tz"
 import {
   centsToReaisText,
   formatCurrency,
+  reaisToCents,
 } from "~/lib/helpers/format-currency"
 import { paymentStatusPropMap } from "~/lib/helpers/propMaps"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
@@ -422,6 +423,9 @@ const ChargeSection: FC<ChargeSectionProps> = ({
   }
 
   const sendLabel = active ? charge.resendAmount : charge.send
+  // A charge of nothing is not a charge. The server refuses it too; this keeps
+  // the admin from getting that far.
+  const isZero = reaisToCents(amount) === 0
 
   return (
     <section className="flex flex-col gap-4 border-b pb-4">
@@ -485,7 +489,7 @@ const ChargeSection: FC<ChargeSectionProps> = ({
         {confirmation ? (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button disabled={isSubmitting}>{sendLabel}</Button>
+              <Button disabled={isSubmitting || isZero}>{sendLabel}</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -506,7 +510,7 @@ const ChargeSection: FC<ChargeSectionProps> = ({
             </AlertDialogContent>
           </AlertDialog>
         ) : (
-          <Button disabled={isSubmitting} onClick={() => sendOffer()}>
+          <Button disabled={isSubmitting || isZero} onClick={() => sendOffer()}>
             {sendLabel}
           </Button>
         )}
@@ -805,20 +809,15 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
           </p>
         )}
 
-        {paymentsEnabled && (spotType === "social" || spotType === "staff") && (
-          <p className="text-muted-foreground text-sm">
-            {charge.noChargeForSpot}
-          </p>
-        )}
-
-        {paymentsEnabled && spotType === "regular" && (
+        {paymentsEnabled && (
           <ChargeSection
             // Remounts when the charge does, so the amount field re-seeds from
             // whatever is open now. Cancelling one used to leave its value in
             // a field that had gone back to offering the ticket price.
             key={active?.id ?? "none"}
             active={active}
-            ticketPrice={ticketPrice}
+            // A social or staff spot pays what was agreed with that person.
+            ticketPrice={spotType === "regular" ? ticketPrice : null}
             appOrigin={appOrigin}
             whatsappMessage={whatsappMessage}
             providerName={providerName}

@@ -142,7 +142,6 @@ export const paymentsCopy = {
     shareTitle: "Link de pagamento",
     created:
       "Cobrança criada e enviada por email. Copie a mensagem e mande também pelo WhatsApp.",
-    noChargeForSpot: "Vaga social ou staff não paga: não há cobrança.",
     emailFailed:
       "A cobrança foi criada, mas o email não saiu. Copie a mensagem e mande por outro caminho.",
     resendFailed:
@@ -219,7 +218,8 @@ export const paymentsCopy = {
   },
   errors: {
     participantNotFound: "Participante não encontrade.",
-    freeSpot: "Vagas sociais e de produção não têm cobrança.",
+    amountRequiredForSpot:
+      "Vaga social ou staff não usa o preço do evento: digite o valor a cobrar.",
     noAmount: "Defina um valor: este evento não tem preço cadastrado.",
     amountTooLow: "O valor da cobrança precisa ser maior que zero.",
     amountUnreadable:

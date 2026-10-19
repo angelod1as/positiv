@@ -694,33 +694,40 @@ describe("ManagePaymentModal - the Cobrança section", () => {
     ).not.toBeInTheDocument()
   })
 
-  it("offers no charge for a social or staff spot", () => {
-    render(<ManagePaymentModal {...baseProps} spotType="social" />)
-
-    expect(
-      screen.queryByRole("button", { name: "Enviar cobrança" }),
-    ).not.toBeInTheDocument()
-  })
-
   it.each(["social", "staff"])(
-    "says why a %s spot has no charge instead of hiding it silently",
-    (spotType) => {
+    "charges a %s spot the amount the admin types",
+    async (spotType) => {
       render(<ManagePaymentModal {...baseProps} spotType={spotType} />)
 
-      expect(
-        screen.getByText("Vaga social ou staff não paga: não há cobrança."),
-      ).toBeInTheDocument()
+      await userEvent.type(screen.getByLabelText("Valor a cobrar"), "80")
+      await userEvent.click(
+        screen.getByRole("button", { name: "Enviar cobrança" }),
+      )
+
+      expect(lastSubmission().get("intent")).toBe("payment-offer")
+      expect(lastSubmission().get("baseAmount")).toBe("80")
     },
   )
 
-  it("says nothing about the spot when payments are switched off", () => {
-    render(
-      <ManagePaymentModal {...baseProps} spotType="social" paymentsEnabled={false} />,
-    )
+  it.each(["social", "staff"])(
+    "does not suggest the ticket price for a %s spot",
+    (spotType) => {
+      render(<ManagePaymentModal {...baseProps} spotType={spotType} />)
+
+      expect(screen.getByLabelText("Valor a cobrar")).toHaveValue("")
+    },
+  )
+
+  it.each(["0", "0,00"])("refuses to send a charge of %s", async (zero) => {
+    render(<ManagePaymentModal {...baseProps} />)
+
+    const amount = screen.getByLabelText("Valor a cobrar")
+    await userEvent.clear(amount)
+    await userEvent.type(amount, zero)
 
     expect(
-      screen.queryByText("Vaga social ou staff não paga: não há cobrança."),
-    ).not.toBeInTheDocument()
+      screen.getByRole("button", { name: "Enviar cobrança" }),
+    ).toBeDisabled()
   })
 
   it("puts the link and the message to send first, while a charge is open", () => {

@@ -130,12 +130,6 @@ export const createPaymentOffer = applySchema(createPaymentOfferSchema)(
       throw new Error(paymentsCopy.errors.participantNotFound)
     }
 
-    // A social or staff spot owes nothing. The modal offers no charge for one,
-    // so arriving here means a hand-made request rather than a flow.
-    if (participant.spot_type !== "regular") {
-      throw new Error(paymentsCopy.errors.freeSpot)
-    }
-
     if (!(await isOnlinePaymentsEnabled())) {
       // No emailSent here on purpose: nothing was created, so there is no
       // charge for the modal to warn about not having announced.
@@ -145,6 +139,12 @@ export const createPaymentOffer = applySchema(createPaymentOfferSchema)(
     // Two different failures, and the admin gets to know which. Telling
     // someone who typed a zero that the event has no price is simply false,
     // and the modal shows this sentence verbatim.
+    // A social or staff spot pays what was agreed with that person, so the
+    // ticket price is never its default.
+    if (values.baseAmount === null && participant.spot_type !== "regular") {
+      throw new Error(paymentsCopy.errors.amountRequiredForSpot)
+    }
+
     if (values.baseAmount === null && !participant.ticket_price) {
       throw new Error(paymentsCopy.errors.noAmount)
     }
