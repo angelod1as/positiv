@@ -259,3 +259,28 @@ describe("the payment-confirmed email in emailTemplatesSchema", () => {
     expect(parse({ closing: body({ text: "" }) })).toBe(false)
   })
 })
+
+describe("the payment-refund email in emailTemplatesSchema", () => {
+  const parse = (paymentRefund: Record<string, unknown>) =>
+    emailTemplatesSchema.safeParse({
+      ...baselineEmailTemplates,
+      paymentRefund: { ...baselineEmailTemplates.paymentRefund, ...paymentRefund },
+    }).success
+
+  it("accepts the baseline copy", () => {
+    expect(parse({})).toBe(true)
+  })
+
+  it("rejects a variable the subject does not allow", () => {
+    expect(parse({ subject: "Oi {{nome}}" })).toBe(false)
+  })
+
+  it("rejects an unknown variable in the body", () => {
+    expect(parse({ body: body({ text: "{{boleto}}" }) })).toBe(false)
+  })
+
+  it("rejects a variable or a blank in the button", () => {
+    expect(parse({ cta: "{{nome}}" })).toBe(false)
+    expect(parse({ cta: "" })).toBe(false)
+  })
+})

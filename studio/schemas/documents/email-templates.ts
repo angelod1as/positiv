@@ -9,6 +9,7 @@ import {
 import { APPLICATION_MAIL_VARIABLES } from "../../../app/business/email/application-mail.variables"
 import { PAYMENT_CONFIRMED_MAIL_VARIABLES } from "../../../app/business/email/payment-confirmed-mail.variables"
 import { PAYMENT_LINK_MAIL_VARIABLES } from "../../../app/business/email/payment-link-mail.variables"
+import { PAYMENT_REFUND_MAIL_VARIABLES } from "../../../app/business/email/payment-refund-mail.variables"
 import {
   renderInlineBlocks,
   unknownBlockVariables,
@@ -218,6 +219,28 @@ export const emailTemplates = defineType({
           empty: "O corpo precisa de pelo menos um parágrafo com texto.",
           variables: PAYMENT_LINK_MAIL_VARIABLES.body,
         }),
+      ],
+    }),
+    defineField({
+      name: "paymentRefund",
+      title: "E-mail de reembolso",
+      type: "object",
+      description:
+        "O texto editável do e-mail enviado quando um reembolso é confirmado. O layout, o resumo do reembolso, o prazo de cada forma de pagamento e o rodapé ficam no código — aqui vai só a redação.",
+      options: { collapsible: true, collapsed: true },
+      fields: [
+        subjectField(PAYMENT_REFUND_MAIL_VARIABLES.subject, "nome do evento"),
+        headingField,
+        proseField({
+          name: "body",
+          title: "Corpo",
+          description: `Os parágrafos de abertura. Negrito e itálico; sem links. Variáveis: ${tokenList(
+            PAYMENT_REFUND_MAIL_VARIABLES.body,
+          )} (nome da pessoa, nome do evento).`,
+          empty: "O corpo precisa de pelo menos um parágrafo com texto.",
+          variables: PAYMENT_REFUND_MAIL_VARIABLES.body,
+        }),
+        ctaField,
       ],
     }),
   ],

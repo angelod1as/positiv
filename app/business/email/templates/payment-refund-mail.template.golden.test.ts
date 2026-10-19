@@ -1,6 +1,13 @@
-import { describe, expect, it } from "vitest"
-import { paymentRefundMailCopy } from "~/copy/emails/payment-refund"
+import { describe, expect, it, vi } from "vitest"
+import { formatPaymentRefundMail } from "~/business/email/format-payment-refund-mail"
 import { paymentRefundMailTemplate } from "./payment-refund-mail.template"
+
+vi.mock("~/business/email/payment-refund-mail-copy.server", async () => {
+  const { paymentRefundCopyFallback } = await import(
+    "~/business/email/payment-refund-mail-copy"
+  )
+  return { loadPaymentRefundCopy: vi.fn(async () => paymentRefundCopyFallback) }
+})
 
 const input = {
   displayName: "Ana Souza",
@@ -32,8 +39,8 @@ describe("payment-refund email byte-for-byte", () => {
     ).toMatchSnapshot()
   })
 
-  it("keeps the frozen subject", () => {
-    expect(paymentRefundMailCopy.subject("🌸 Festa de Primavera")).toBe(
+  it("keeps the frozen subject", async () => {
+    expect((await formatPaymentRefundMail(input)).subject).toBe(
       "Reembolso - 🌸 Festa de Primavera",
     )
   })

@@ -5,6 +5,7 @@ import { pathsOf } from "../../test/errors"
 import { validateDocumentOf } from "../../test/validate"
 import { applicationMailContent } from "../../../app/copy/emails/application-mail"
 import { paymentConfirmedMailContent } from "../../../app/copy/emails/payment-confirmed"
+import { paymentRefundMailContent } from "../../../app/copy/emails/payment-refund"
 import { emailTemplates as emailTemplatesType } from "./email-templates"
 
 const body = (...texts: { text: string; strong?: boolean }[]) =>
@@ -207,6 +208,40 @@ describe("the payment-confirmed email in emailTemplates", () => {
     )
     for (const field of ["subject", "heading", "body", "cta", "closing"]) {
       expect(paths).toContain(`paymentConfirmed.${field}`)
+    }
+  })
+})
+
+describe("the payment-refund email in emailTemplates", () => {
+  const validateRefund = (paymentRefund: Record<string, unknown>) =>
+    validateDocumentOf("emailTemplates", {
+      paymentLink: valid.paymentLink,
+      paymentRefund: { ...paymentRefundMailContent, ...paymentRefund },
+    })
+
+  it("accepts the baseline copy", async () => {
+    expect(await validateRefund({})).toEqual([])
+  })
+
+  it("rejects a variable the subject or button does not allow", async () => {
+    const paths = pathsOf(
+      await validateRefund({ subject: "Oi {{nome}}", cta: "{{evento}}" }),
+    )
+    expect(paths).toContain("paymentRefund.subject")
+    expect(paths).toContain("paymentRefund.cta")
+  })
+
+  it("requires every field", async () => {
+    const paths = pathsOf(
+      await validateRefund({
+        subject: undefined,
+        heading: undefined,
+        body: undefined,
+        cta: undefined,
+      }),
+    )
+    for (const field of ["subject", "heading", "body", "cta"]) {
+      expect(paths).toContain(`paymentRefund.${field}`)
     }
   })
 })
