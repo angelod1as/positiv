@@ -33,7 +33,7 @@ export const nextEvents = defineType({
       name: "comingSoon",
       title: "Aviso de novos eventos",
       description:
-        "Mostrado no lugar dos eventos quando não há nenhum aberto. Se vazio, usamos um texto padrão.",
+        "Mostrado no lugar dos eventos quando não há nenhum aberto. Se vazio, usamos um texto padrão. Aceita Markdown (ex.: **negrito**).",
       type: "string",
     }),
   ],

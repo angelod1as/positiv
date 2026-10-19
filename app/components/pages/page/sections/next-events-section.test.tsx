@@ -115,6 +115,13 @@ describe("NextEventsSection", () => {
     expect(screen.getByText(homepageCopy.nextEvents.empty)).toBeInTheDocument()
   })
 
+  it("should fall back to the default coming-soon notice when the Editor left it blank", () => {
+    const blank = { ...content, comingSoon: "   " }
+    renderWithRouter(<NextEventsSection content={blank} events={[]} />)
+
+    expect(screen.getByText(homepageCopy.nextEvents.empty)).toBeInTheDocument()
+  })
+
   it("should not show a coming-soon notice when there are events", () => {
     renderWithRouter(
       <NextEventsSection content={content} events={[baseEvent]} />,

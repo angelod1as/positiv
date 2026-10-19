@@ -99,6 +99,9 @@ describe("PageSections", () => {
       expect(screen.queryByTestId("homepage-next-events-skeleton")).toBeNull()
     })
     expect(screen.queryByText(homepageCopy.nextEvents.empty)).toBeNull()
+    expect(
+      screen.queryByRole("heading", { level: 2, name: "Próximos eventos" }),
+    ).toBeNull()
   })
 
   it("streams the Next Events into their Section", async () => {

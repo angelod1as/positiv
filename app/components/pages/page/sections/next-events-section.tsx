@@ -42,7 +42,9 @@ export const NextEventsSection: FC<NextEventsSectionProps> = ({
 
           {events.length === 0 ? (
             <p className="text-muted-foreground md:text-xl text-center">
-              <Copy inline>{content.comingSoon ?? nextEvents.empty}</Copy>
+              <Copy inline>
+                {content.comingSoon?.trim() || nextEvents.empty}
+              </Copy>
             </p>
           ) : (
             <>
