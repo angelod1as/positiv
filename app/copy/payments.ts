@@ -134,6 +134,8 @@ export const paymentsCopy = {
     amount: "Valor a cobrar",
     amountHint:
       "O valor do evento: é o que a pessoa paga, sem nada a mais. As taxas ficam por conta da Positiv.",
+    amountHintForSpot:
+      "Vaga social ou staff: digite o valor combinado com a pessoa. As taxas ficam por conta da Positiv.",
     send: "Enviar cobrança",
     resendAmount: "Reenviar com outro valor",
     resendEmail: "Reenviar email",
@@ -142,7 +144,6 @@ export const paymentsCopy = {
     shareTitle: "Link de pagamento",
     created:
       "Cobrança criada e enviada por email. Copie a mensagem e mande também pelo WhatsApp.",
-    noChargeForSpot: "Vaga social ou staff não paga: não há cobrança.",
     emailFailed:
       "A cobrança foi criada, mas o email não saiu. Copie a mensagem e mande por outro caminho.",
     resendFailed:
@@ -205,6 +206,14 @@ export const paymentsCopy = {
     submit: "Confirmar cancelamento",
     success: "Cobrança cancelada.",
   },
+  cancelManual: {
+    title: "Cancelar pagamento",
+    confirm: "Cancelar este pagamento manual?",
+    description:
+      "O registro fica como cancelado e deixa de contar nos totais da pessoa. Nenhum dinheiro é movimentado.",
+    keep: "Manter pagamento",
+    submit: "Confirmar cancelamento",
+  },
   // What a payment provider's refusal becomes before a person reads it. The
   // technical detail -- status, path, code -- stays in the log.
   providerErrors: {
@@ -219,7 +228,8 @@ export const paymentsCopy = {
   },
   errors: {
     participantNotFound: "Participante não encontrade.",
-    freeSpot: "Vagas sociais e de produção não têm cobrança.",
+    amountRequiredForSpot:
+      "Vaga social ou staff não usa o preço do evento: digite o valor a cobrar.",
     noAmount: "Defina um valor: este evento não tem preço cadastrado.",
     amountTooLow: "O valor da cobrança precisa ser maior que zero.",
     amountUnreadable:
@@ -237,6 +247,8 @@ export const paymentsCopy = {
     notRefundable: "Só é possível reembolsar um pagamento já confirmado.",
     notEditable: "Só é possível editar um pagamento manual confirmado.",
     notCancellable: "Só é possível cancelar uma cobrança em aberto.",
+    notManualCancellable:
+      "Só é possível cancelar um pagamento manual confirmado.",
     notSyncable: (provider: string) =>
       `Só um pagamento feito pelo ${provider} pode ser atualizado do ${provider}.`,
     invalidCpf: "Esse CPF não confere. Confira os números.",

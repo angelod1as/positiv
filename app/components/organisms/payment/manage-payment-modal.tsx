@@ -39,12 +39,22 @@ import { formatInTimeZone } from "date-fns-tz"
 import {
   centsToReaisText,
   formatCurrency,
+  reaisToCents,
 } from "~/lib/helpers/format-currency"
 import { paymentStatusPropMap } from "~/lib/helpers/propMaps"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import paths from "~/lib/paths"
 
-const { manage, manual, edit, refund, cancel, charge, errors } = paymentsCopy
+const {
+  manage,
+  manual,
+  edit,
+  refund,
+  cancel,
+  cancelManual,
+  charge,
+  errors,
+} = paymentsCopy
 
 /** Every payment recorded by hand arrived by PIX; nothing else is offered. */
 const MANUAL_METHOD = "pix"
@@ -293,6 +303,41 @@ const CancelDialog: FC<CancelDialogProps> = ({
   </AlertDialog>
 )
 
+type CancelManualDialogProps = {
+  payment: PaymentRow
+  isSubmitting: boolean
+  onConfirm: (paymentId: string) => void
+}
+
+const CancelManualDialog: FC<CancelManualDialogProps> = ({
+  payment,
+  isSubmitting,
+  onConfirm,
+}) => (
+  <AlertDialog>
+    <AlertDialogTrigger asChild>
+      <Button variant="outline" size="sm">
+        {cancelManual.title}
+      </Button>
+    </AlertDialogTrigger>
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>{cancelManual.confirm}</AlertDialogTitle>
+        <AlertDialogDescription>{cancelManual.description}</AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>{cancelManual.keep}</AlertDialogCancel>
+        <AlertDialogAction
+          disabled={isSubmitting}
+          onClick={() => onConfirm(payment.id)}
+        >
+          {cancelManual.submit}
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
+)
+
 /**
  * Where a payment's refund stands, as the provider last reported it -- under
  * its status, so the admin does not have to open the provider's dashboard to
@@ -340,6 +385,7 @@ const PaymentProgress: FC<{ payment: PaymentRow; providerName: string }> = ({
 type ChargeSectionProps = {
   active: PaymentRow | null
   ticketPrice: number | null
+  amountHint: string
   appOrigin: string
   whatsappMessage: string | null
   providerName: string
@@ -359,6 +405,7 @@ type ChargeSectionProps = {
 const ChargeSection: FC<ChargeSectionProps> = ({
   active,
   ticketPrice,
+  amountHint,
   appOrigin,
   whatsappMessage,
   providerName,
@@ -422,6 +469,9 @@ const ChargeSection: FC<ChargeSectionProps> = ({
   }
 
   const sendLabel = active ? charge.resendAmount : charge.send
+  // A charge of nothing is not a charge. The server refuses it too; this keeps
+  // the admin from getting that far.
+  const isZero = reaisToCents(amount) === 0
 
   return (
     <section className="flex flex-col gap-4 border-b pb-4">
@@ -478,14 +528,14 @@ const ChargeSection: FC<ChargeSectionProps> = ({
           value={amount}
           onChange={(event) => setAmount(event.target.value)}
         />
-        <p className="text-muted-foreground text-sm">{charge.amountHint}</p>
+        <p className="text-muted-foreground text-sm">{amountHint}</p>
       </div>
 
       <div className="flex flex-wrap gap-2">
         {confirmation ? (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button disabled={isSubmitting}>{sendLabel}</Button>
+              <Button disabled={isSubmitting || isZero}>{sendLabel}</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -506,7 +556,7 @@ const ChargeSection: FC<ChargeSectionProps> = ({
             </AlertDialogContent>
           </AlertDialog>
         ) : (
-          <Button disabled={isSubmitting} onClick={() => sendOffer()}>
+          <Button disabled={isSubmitting || isZero} onClick={() => sendOffer()}>
             {sendLabel}
           </Button>
         )}
@@ -705,6 +755,15 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                         }
                       />
                     )}
+                    {payment.kind === "manual" && payment.status === "paid" && (
+                      <CancelManualDialog
+                        payment={payment}
+                        isSubmitting={isSubmitting}
+                        onConfirm={(paymentId) =>
+                          post({ intent: "payment-manual-cancel", paymentId })
+                        }
+                      />
+                    )}
                     {payment.kind === "manual" &&
                       payment.status === "paid" &&
                       (payment.amount ?? 0) > 0 && (
@@ -805,20 +864,18 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
           </p>
         )}
 
-        {paymentsEnabled && (spotType === "social" || spotType === "staff") && (
-          <p className="text-muted-foreground text-sm">
-            {charge.noChargeForSpot}
-          </p>
-        )}
-
-        {paymentsEnabled && spotType === "regular" && (
+        {paymentsEnabled && (
           <ChargeSection
             // Remounts when the charge does, so the amount field re-seeds from
             // whatever is open now. Cancelling one used to leave its value in
             // a field that had gone back to offering the ticket price.
             key={active?.id ?? "none"}
             active={active}
-            ticketPrice={ticketPrice}
+            // A social or staff spot pays what was agreed with that person.
+            ticketPrice={spotType === "regular" ? ticketPrice : null}
+            amountHint={
+              spotType === "regular" ? charge.amountHint : charge.amountHintForSpot
+            }
             appOrigin={appOrigin}
             whatsappMessage={whatsappMessage}
             providerName={providerName}

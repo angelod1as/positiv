@@ -586,6 +586,58 @@ describe("ManagePaymentModal", () => {
     expect(formData.get("paymentId")).toBe("p1")
   })
 
+  it.each([22000, 0])(
+    "cancels a manual payment of %s recorded by mistake",
+    async (amount) => {
+      render(
+        <ManagePaymentModal
+          {...baseProps}
+          payments={[payment({ amount, base_amount: amount })]}
+        />,
+      )
+
+      await userEvent.click(
+        screen.getByRole("button", { name: "Cancelar pagamento" }),
+      )
+      await userEvent.click(
+        screen.getByRole("button", { name: "Confirmar cancelamento" }),
+      )
+
+      const [formData] = submit.mock.calls.at(-1) ?? []
+      expect(formData.get("intent")).toBe("payment-manual-cancel")
+      expect(formData.get("paymentId")).toBe("p1")
+    },
+  )
+
+  it("offers no manual cancel on a payment that went through the provider", () => {
+    render(
+      <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
+    )
+
+    expect(
+      screen.queryByRole("button", { name: "Cancelar pagamento" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("offers no manual cancel on a manual payment already refunded", () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[
+          payment({
+            status: "refunded",
+            refund_amount: 22000,
+            refunded_at: "2026-08-21T12:00:00Z",
+          }),
+        ]}
+      />,
+    )
+
+    expect(
+      screen.queryByRole("button", { name: "Cancelar pagamento" }),
+    ).not.toBeInTheDocument()
+  })
+
   it("hides the manual form while a charge is open", () => {
     render(
       <ManagePaymentModal
@@ -694,33 +746,52 @@ describe("ManagePaymentModal - the Cobrança section", () => {
     ).not.toBeInTheDocument()
   })
 
-  it("offers no charge for a social or staff spot", () => {
-    render(<ManagePaymentModal {...baseProps} spotType="social" />)
+  it.each(["social", "staff"])(
+    "charges a %s spot the amount the admin types",
+    async (spotType) => {
+      render(<ManagePaymentModal {...baseProps} spotType={spotType} />)
 
-    expect(
-      screen.queryByRole("button", { name: "Enviar cobrança" }),
-    ).not.toBeInTheDocument()
-  })
+      await userEvent.type(screen.getByLabelText("Valor a cobrar"), "80")
+      await userEvent.click(
+        screen.getByRole("button", { name: "Enviar cobrança" }),
+      )
+
+      expect(lastSubmission().get("intent")).toBe("payment-offer")
+      expect(lastSubmission().get("baseAmount")).toBe("80")
+    },
+  )
 
   it.each(["social", "staff"])(
-    "says why a %s spot has no charge instead of hiding it silently",
+    "does not suggest the ticket price for a %s spot",
+    (spotType) => {
+      render(<ManagePaymentModal {...baseProps} spotType={spotType} />)
+
+      expect(screen.getByLabelText("Valor a cobrar")).toHaveValue("")
+    },
+  )
+
+  it.each(["social", "staff"])(
+    "tells the admin to type the agreed amount for a %s spot",
     (spotType) => {
       render(<ManagePaymentModal {...baseProps} spotType={spotType} />)
 
       expect(
-        screen.getByText("Vaga social ou staff não paga: não há cobrança."),
+        screen.getByText(/digite o valor combinado com a pessoa/i),
       ).toBeInTheDocument()
+      expect(screen.queryByText(/O valor do evento/)).not.toBeInTheDocument()
     },
   )
 
-  it("says nothing about the spot when payments are switched off", () => {
-    render(
-      <ManagePaymentModal {...baseProps} spotType="social" paymentsEnabled={false} />,
-    )
+  it.each(["0", "0,00"])("refuses to send a charge of %s", async (zero) => {
+    render(<ManagePaymentModal {...baseProps} />)
+
+    const amount = screen.getByLabelText("Valor a cobrar")
+    await userEvent.clear(amount)
+    await userEvent.type(amount, zero)
 
     expect(
-      screen.queryByText("Vaga social ou staff não paga: não há cobrança."),
-    ).not.toBeInTheDocument()
+      screen.getByRole("button", { name: "Enviar cobrança" }),
+    ).toBeDisabled()
   })
 
   it("puts the link and the message to send first, while a charge is open", () => {

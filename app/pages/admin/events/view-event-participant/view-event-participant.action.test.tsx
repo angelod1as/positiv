@@ -13,6 +13,7 @@ import {
 } from "~/business/payment/payment-offer.server"
 import { markManualRefunded } from "~/business/payment/payment-refund.server"
 import {
+  cancelManualPayment,
   editManualPayment,
   registerManualPayment,
 } from "~/business/payment/manual-payment.server"
@@ -29,6 +30,7 @@ vi.mock("~/business/admin/admin.server", () => ({
 }))
 
 vi.mock("~/business/payment/manual-payment.server", () => ({
+  cancelManualPayment: vi.fn(),
   editManualPayment: vi.fn(),
   registerManualPayment: vi.fn(),
 }))
@@ -101,6 +103,11 @@ const INTENTS = [
     mutation: editManualPayment,
   },
   {
+    intent: "payment-manual-cancel",
+    fields: { paymentId: "payment-1" },
+    mutation: cancelManualPayment,
+  },
+  {
     intent: "payment-manual-refund",
     fields: { paymentId: "payment-1", amount: "50" },
     mutation: markManualRefunded,
@@ -146,6 +153,7 @@ describe("ViewEventParticipant action", () => {
       success: true,
     } as never)
     vi.mocked(editManualPayment).mockResolvedValue({ success: true } as never)
+    vi.mocked(cancelManualPayment).mockResolvedValue({ success: true } as never)
     vi.mocked(markManualRefunded).mockResolvedValue({ success: true } as never)
     vi.mocked(cancelPayment).mockResolvedValue({ success: true } as never)
     vi.mocked(syncPaymentFromProvider).mockResolvedValue({ success: true } as never)

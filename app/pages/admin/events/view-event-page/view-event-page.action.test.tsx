@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { getAdminContext } from "~/business/admin/admin.server"
 import {
+  cancelManualPayment,
   editManualPayment,
   registerManualPayment,
 } from "~/business/payment/manual-payment.server"
@@ -27,6 +28,7 @@ vi.mock("~/business/admin/event-listmonk-sync.server", () => ({
 }))
 
 vi.mock("~/business/payment/manual-payment.server", () => ({
+  cancelManualPayment: vi.fn(),
   editManualPayment: vi.fn(),
   registerManualPayment: vi.fn(),
 }))
@@ -82,6 +84,11 @@ const INTENTS = [
     mutation: editManualPayment,
   },
   {
+    intent: "payment-manual-cancel",
+    fields: { paymentId: "payment-1" },
+    mutation: cancelManualPayment,
+  },
+  {
     intent: "payment-manual-refund",
     fields: { paymentId: "payment-1", amount: "50" },
     mutation: markManualRefunded,
@@ -118,6 +125,7 @@ describe("AdminViewEventPage action", () => {
       success: true,
     } as never)
     vi.mocked(editManualPayment).mockResolvedValue({ success: true } as never)
+    vi.mocked(cancelManualPayment).mockResolvedValue({ success: true } as never)
     vi.mocked(markManualRefunded).mockResolvedValue({ success: true } as never)
     vi.mocked(cancelPayment).mockResolvedValue({ success: true } as never)
     vi.mocked(syncPaymentFromProvider).mockResolvedValue({ success: true } as never)

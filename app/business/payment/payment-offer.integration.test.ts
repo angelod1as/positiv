@@ -285,15 +285,62 @@ describe("createPaymentOffer", () => {
     },
   )
 
-  it("opens nothing for a social or staff spot", async () => {
-    const social = await makeParticipant({ spot_type: "social" })
+  it.each(["social", "staff"])(
+    "opens a charge for a %s spot at the amount the admin gives",
+    async (spotType) => {
+      const participant = await makeParticipant({ spot_type: spotType })
 
-    const result = await createPaymentOffer({ eventParticipantId: social })
+      const result = await createPaymentOffer({
+        eventParticipantId: participant,
+        baseAmount: "80",
+      })
 
-    expect(result.success).toBe(false)
-    expect(await paymentsFor(social)).toHaveLength(0)
-    expect(sendPaymentLinkEmail).not.toHaveBeenCalled()
-  })
+      expect(result.success).toBe(true)
+      const [payment] = await paymentsFor(participant)
+      expect(payment.base_amount).toBe(8000)
+      expect(sendPaymentLinkEmail).toHaveBeenCalled()
+    },
+  )
+
+  // A social or staff spot pays what was agreed with that person, never the
+  // ticket price by default.
+  it.each(["social", "staff"])(
+    "asks for an amount instead of charging a %s spot the ticket price",
+    async (spotType) => {
+      const participant = await makeParticipant({ spot_type: spotType })
+
+      const result = await createPaymentOffer({
+        eventParticipantId: participant,
+        baseAmount: "",
+      })
+
+      expect(result.success).toBe(false)
+      expect(await paymentsFor(participant)).toHaveLength(0)
+      if (!result.success) {
+        expect(result.errors[0]?.message).toBe(
+          paymentsCopy.errors.amountRequiredForSpot,
+        )
+      }
+    },
+  )
+
+  it.each(["social", "staff"])(
+    "refuses a charge of zero for a %s spot",
+    async (spotType) => {
+      const participant = await makeParticipant({ spot_type: spotType })
+
+      const result = await createPaymentOffer({
+        eventParticipantId: participant,
+        baseAmount: "0",
+      })
+
+      expect(result.success).toBe(false)
+      expect(await paymentsFor(participant)).toHaveLength(0)
+      if (!result.success) {
+        expect(result.errors[0]?.message).toBe(paymentsCopy.errors.amountTooLow)
+      }
+    },
+  )
 
   it("refuses when there is no price and no custom amount", async () => {
     const free = await createTestEvent(tracker, kysely, {
