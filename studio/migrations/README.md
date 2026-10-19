@@ -17,7 +17,8 @@ was applied to `production`.
 ## How to do a one-shot migration
 
 1. **Create it.** Either `pnpm --filter studio exec sanity migrations create
-   "<title>"`, or — as these migrations did — a `cli.ts` run through `sanity
+   "<title>"`, or — as the now-deleted ones did (see git history) — a `cli.ts`
+   run through `sanity
    exec migrations/<name>/cli.ts --with-user-token --`, which forces `--dataset`
    instead of letting it default to `development`.
 2. **Dry-run by default.** The script prints what it would write and changes

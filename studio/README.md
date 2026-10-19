@@ -25,7 +25,7 @@ pnpm workspace package, deployed to Sanity's hosting at
 | `seed/`                             | The development seed — see below                                                 |
 | `fixtures/`                         | Generates the e2e fixtures from the seed — see below                             |
 | `refresh-dev/`                      | Mirrors production into development — see below                                  |
-| `migrations/`                       | Content migrations — see below                                                   |
+| `migrations/`                       | One-shot content migrations, deleted after they run — usually just a README      |
 
 A field's `validation` replaces the validation of the type it uses. A field
 of type `richText` or `longRichText` that adds its own rule —
