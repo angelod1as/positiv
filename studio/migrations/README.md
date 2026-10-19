@@ -1,159 +1,41 @@
 # Content migrations
 
-Scripts that rewrite existing content after a schema change, run by hand
-against one dataset at a time — `development` first, then `production`.
+One-shot scripts that rewrite existing content after a schema change, run by
+hand once per dataset — `development` first, then `production` — and **deleted
+once they have run against `production`**. They read as live code but are dead
+after their single run, and re-running one can clobber Editors' content.
 
 A migration is step 2 of
 [Sanity schema changes follow expand/contract](../../docs/architecture/decisions/20260924-sanity-schema-changes-follow-expand-contract.md):
 the new field already exists in the deployed Studio, and the app does not read
 it yet.
 
-- Create one with `pnpm --filter studio exec sanity migrations create "<title>"`
-  and run it with
-  `pnpm --filter studio exec sanity migrations run <id> --dataset <name>`.
-  It dry-runs until you add `--no-dry-run`.
-- Always pass `--dataset`. Without it the CLI takes the dataset from
-  `sanity.cli.ts`, which is `development` unless `SANITY_STUDIO_DATASET` is
-  set.
-- Make every migration idempotent: running it twice must leave the content as
-  running it once does.
-- Keep the script after it runs. It is the record of how production's content
-  got its shape.
+The record of how `production`'s content got its shape is git history, not the
+tree: the commit that deletes a migration names the migration and the date it
+was applied to `production`.
 
-## Migrations
+## How to do a one-shot migration
 
-### `homepage-to-page` (POS-582)
+1. **Create it.** Either `pnpm --filter studio exec sanity migrations create
+   "<title>"`, or — as these migrations did — a `cli.ts` run through `sanity
+   exec migrations/<name>/cli.ts --with-user-token --`, which forces `--dataset`
+   instead of letting it default to `development`.
+2. **Dry-run by default.** The script prints what it would write and changes
+   nothing until you pass `--no-dry-run`.
+3. **Always pass `--dataset` explicitly.** Without it the CLI takes the dataset
+   from `sanity.cli.ts`, which is `development` unless `SANITY_STUDIO_DATASET`
+   is set.
+4. **Make it idempotent.** Running it twice must leave the content as running it
+   once does — `createOrReplace` or `createIfNotExists` on a fixed id, or a
+   patch that only touches documents that exist.
+5. **Run `development` first, then `production`.** Dry-run, apply with
+   `--no-dry-run`, check the Studio, then repeat against `production`.
+6. **Delete the script once it has run against `production`,** and say so in the
+   deletion commit message — the migration's name and the date it was applied.
+   Do not keep it around: a re-run (including a retry after a half-failed
+   deploy) can silently overwrite an Editor's changes.
 
-Copies the `homepage` document into the Page at `/` (`page-home`): title
-"Início", a Homepage Hero built from `homepage.hero`, today's six sections
-in today's order and the site's root description as the SEO description.
-It `createOrReplace`s `page-home` and never writes `homepage`, so it is
-idempotent: re-running it before POS-584 overwrites the Page with the current
-homepage. It runs once per dataset: do not re-run it after POS-584 serves `/` from `page-home`,
-because Editors then work on the Page and a re-run erases their changes.
-
-It runs through `sanity exec` rather than `sanity migrations run`, so that
-`--dataset` is required instead of defaulting to `development`. It dry-runs
-— printing the Page it would write — until you add `--no-dry-run`.
-
-From the repository root, `development` first:
-
-```sh
-pnpm --filter studio migrate:homepage-to-page --dataset development
-pnpm --filter studio migrate:homepage-to-page --dataset development --no-dry-run
-```
-
-Then `production`:
-
-```sh
-pnpm --filter studio migrate:homepage-to-page --dataset production
-pnpm --filter studio migrate:homepage-to-page --dataset production --no-dry-run
-```
-
-Check the Page in the Studio afterwards. If `page-home` has an unpublished
-draft, the script warns: the Studio shows the draft over the migrated Page,
-so discard it.
-
-On `development` the migration replaces the `page-home` the seed wrote, which
-showcases every Section type. Run `pnpm --filter studio seed` to restore it.
-
-### `code-of-conduct-to-page` (POS-588)
-
-Writes the code of conduct into the Page at `/codigo-de-conduta`
-(`page-codigo-de-conduta`): a Title header with the introduction, one Rich Text
-Section whose long rich text is the five numbered sections converted from
-Markdown — headings to `h2`, the lists, the bold text and the WhatsApp link
-preserved — and the code of conduct's SEO description. The content is inlined in
-`transform.ts`, so the migration no longer depends on the Platform copy it
-replaces, and `createOrReplace` on a fixed id makes it idempotent.
-
-The Markdown it converts is only the subset the code of conduct uses:
-paragraphs, `##` and `###` headings, blockquotes, bullet and numbered lists,
-bold, italic and `[text](href)` links. It is not a general Markdown parser, so
-do not point it at arbitrary content.
-
-Like `homepage-to-page`, it runs through `sanity exec`, so `--dataset` is
-required and it dry-runs until you add `--no-dry-run`.
-
-From the repository root, `development` first:
-
-```sh
-pnpm --filter studio migrate:code-of-conduct-to-page --dataset development
-pnpm --filter studio migrate:code-of-conduct-to-page --dataset development --no-dry-run
-```
-
-Then `production`:
-
-```sh
-pnpm --filter studio migrate:code-of-conduct-to-page --dataset production
-pnpm --filter studio migrate:code-of-conduct-to-page --dataset production --no-dry-run
-```
-
-Check the Page in the Studio afterwards. If `page-codigo-de-conduta` has an
-unpublished draft, the script warns: the Studio shows the draft over the
-migrated Page, so discard it.
-
-Run it once per dataset. `createOrReplace` overwrites the published Page without
-reading it, so do not re-run `--no-dry-run` on `production` once an Editor has
-changed the Page — a re-run, including a retry after a half-failed deploy,
-silently discards their edits. On `development` the seed already writes this
-Page, so a re-run only overwrites it with the same content.
-
-### `remove-footer-development` (POS-599)
-
-Contract step of POS-586: the app no longer reads `footer.development`
-(`developedBy`, `repositoryUrl`, `bugReportUrl`) and the group has left the
-Studio schema. This migration unsets `footer.development` on the `siteSettings`
-singleton, both the published document and its draft.
-
-It is idempotent: it patches only the documents that exist, and unsetting a
-field that is already gone is a no-op. On `production` the field is already
-absent, so the migration writes nothing there — it ships for `development` and
-as a safety net.
-
-Like the others, it runs through `sanity exec`, so `--dataset` is required and
-it dry-runs until you add `--no-dry-run`.
-
-From the repository root, `development` first:
-
-```sh
-pnpm --filter studio migrate:remove-footer-development --dataset development
-pnpm --filter studio migrate:remove-footer-development --dataset development --no-dry-run
-```
-
-Then `production`:
-
-```sh
-pnpm --filter studio migrate:remove-footer-development --dataset production
-pnpm --filter studio migrate:remove-footer-development --dataset production --no-dry-run
-```
-
-### `payment-link-email-copy` (POS-609)
-
-Seeds the `emailTemplates` singleton ("E-mails") with the payment-link email's
-baseline copy — the subject, the heading and the Portable Text body — taken from
-`app/copy/emails/payment-link.ts`, the same copy the app falls back to when
-Sanity is down. It uses `createIfNotExists` on the singleton's fixed id, so it
-writes only when the singleton is absent and a re-run is a safe no-op.
-
-Like the others, it runs through `sanity exec`, so `--dataset` is required and
-it dry-runs until you add `--no-dry-run`.
-
-From the repository root, `development` first:
-
-```sh
-pnpm --filter studio migrate:payment-link-email-copy --dataset development
-pnpm --filter studio migrate:payment-link-email-copy --dataset development --no-dry-run
-```
-
-Then `production`:
-
-```sh
-pnpm --filter studio migrate:payment-link-email-copy --dataset production
-pnpm --filter studio migrate:payment-link-email-copy --dataset production --no-dry-run
-```
-
-`createIfNotExists` makes this safe to re-run: once the singleton exists the
-migration writes nothing and never overwrites an Editor's changes, so a retry
-after a half-failed deploy is harmless. On `development` the seed already writes
-the singleton.
+If a migration leaves behind code that other parts of the Studio still use —
+the way `code-of-conduct-to-page` left the page content the seed writes — move
+that code out of `migrations/` into its real home before deleting the
+migration.
