@@ -10,11 +10,14 @@ it in the Studio; the repository keeps no copy of it (see
 and [`studio/README.md`](../../studio/README.md)). `homepage.ts` holds only the
 labels the Platform owns there: buttons, registration statuses, alt text.
 
-`emails/payment-link.ts` is a second, narrower case: `paymentLinkMailContent`
-holds the Sanity-editable email copy as the code fallback, with the body as
-Portable Text objects rather than a Markdown string. It is deliberately free of
-any `~`-aliased import so the Studio package can import it for its seed and
-migration (see
+The transactional emails under `emails/` are a second, narrower case: each
+`*MailContent` export (`paymentLinkMailContent`, `applicationMailContent`,
+`paymentConfirmedMailContent`, `paymentRefundMailContent`,
+`registrationLimitAdminMailContent`) holds that email's Sanity-editable copy as
+the code fallback, with prose as Portable Text objects rather than a Markdown
+string. The `*MailCopy` export beside it keeps the labels that stay in code.
+These files are deliberately free of any `~`-aliased import so the Studio
+package can import them for its seed and migrations (see
 [Email copy lives in Sanity](../../docs/architecture/decisions/20261018-email-copy-lives-in-sanity.md)).
 
 ## Editing an existing string
