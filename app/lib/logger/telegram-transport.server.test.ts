@@ -283,6 +283,73 @@ describe("TelegramTransport", () => {
     })
   })
 
+  it("truncates long metadata without breaking the anchors or the preformatted block", () => {
+    return new Promise<void>((resolve) => {
+      transport.log(
+        {
+          level: "error",
+          message: "Could not create the charge",
+          stack: "y".repeat(5000),
+          links: {
+            admin: "https://positiv.test/admin/eventos/e1/participantes/p1",
+            asaasCustomer: "https://www.asaas.com/customerAccount/show/cus_1",
+          },
+        },
+        () => {
+          const body = JSON.parse(fetchSpy.mock.calls[0][1].body)
+          const text: string = body.text
+          expect(text.length).toBeLessThanOrEqual(4096)
+          expect(text).toContain("Could not create the charge")
+          const [beforePre] = text.split("<pre>")
+          expect(beforePre).toContain(
+            '<a href="https://positiv.test/admin/eventos/e1/participantes/p1">admin</a>',
+          )
+          expect(beforePre).toContain(
+            '<a href="https://www.asaas.com/customerAccount/show/cus_1">asaasCustomer</a>',
+          )
+          expect(text.match(/<pre>/g)).toHaveLength(1)
+          expect(text.match(/<\/pre>/g)).toHaveLength(1)
+          expect(text.endsWith("...</pre>")).toBe(true)
+          resolve()
+        },
+      )
+    })
+  })
+
+  it("never cuts the metadata inside an HTML entity", () => {
+    return new Promise<void>((resolve) => {
+      transport.log(
+        { level: "error", message: "fail", payload: "&<>".repeat(2000) },
+        () => {
+          const body = JSON.parse(fetchSpy.mock.calls[0][1].body)
+          const text: string = body.text
+          expect(text.length).toBeLessThanOrEqual(4096)
+          expect(text.endsWith("...</pre>")).toBe(true)
+          const pre = text.slice(text.indexOf("<pre>") + 5, text.indexOf("</pre>"))
+          expect(pre.replace(/&(amp|lt|gt|quot);/g, "")).not.toMatch(/[&<>]/)
+          resolve()
+        },
+      )
+    })
+  })
+
+  it("truncates a long message without leaving a tag open", () => {
+    return new Promise<void>((resolve) => {
+      transport.log(
+        { level: "error", message: "x".repeat(5000), paymentId: "pay-1" },
+        () => {
+          const body = JSON.parse(fetchSpy.mock.calls[0][1].body)
+          const text: string = body.text
+          expect(text.length).toBeLessThanOrEqual(4096)
+          expect(text.startsWith("<b>[ERROR]</b>\n")).toBe(true)
+          expect(text.endsWith("...")).toBe(true)
+          expect(text).not.toContain("<pre>")
+          resolve()
+        },
+      )
+    })
+  })
+
   it("truncates message with metadata to 4096 characters", () => {
     return new Promise<void>((resolve) => {
       transport.log(
