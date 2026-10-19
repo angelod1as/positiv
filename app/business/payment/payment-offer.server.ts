@@ -136,15 +136,15 @@ export const createPaymentOffer = applySchema(createPaymentOfferSchema)(
       return { created: false as const, reason: "disabled" }
     }
 
-    // Two different failures, and the admin gets to know which. Telling
-    // someone who typed a zero that the event has no price is simply false,
-    // and the modal shows this sentence verbatim.
     // A social or staff spot pays what was agreed with that person, so the
     // ticket price is never its default.
     if (values.baseAmount === null && participant.spot_type !== "regular") {
       throw new Error(paymentsCopy.errors.amountRequiredForSpot)
     }
 
+    // Two different failures, and the admin gets to know which. Telling
+    // someone who typed a zero that the event has no price is simply false,
+    // and the modal shows this sentence verbatim.
     if (values.baseAmount === null && !participant.ticket_price) {
       throw new Error(paymentsCopy.errors.noAmount)
     }
