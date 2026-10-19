@@ -40,15 +40,23 @@ const mockIsVeteran = vi.mocked(isVeteran)
 const mockKysely = vi.mocked(kyselyDb)
 const mockRedirect = vi.mocked(redirect)
 
-const eventExists = () => {
-  mockKysely.selectFrom = vi.fn().mockReturnValue({
-    select: vi.fn().mockReturnValue({
-      where: vi.fn().mockReturnValue({
-        executeTakeFirst: vi.fn().mockResolvedValue({ id: "123" }),
-      }),
-    }),
-  })
+let selectMock: ReturnType<typeof vi.fn>
+let whereMock: ReturnType<typeof vi.fn>
+
+const eventLookupReturns = (event: { id: string } | null) => {
+  const chain: {
+    where: ReturnType<typeof vi.fn>
+    executeTakeFirst: ReturnType<typeof vi.fn>
+  } = {
+    where: vi.fn(() => chain),
+    executeTakeFirst: vi.fn().mockResolvedValue(event),
+  }
+  whereMock = chain.where
+  selectMock = vi.fn().mockReturnValue(chain)
+  mockKysely.selectFrom = vi.fn().mockReturnValue({ select: selectMock })
 }
+
+const eventExists = () => eventLookupReturns({ id: "123" })
 
 const signedInAs = (profileId: string | null) => {
   mockGetUserContext.mockResolvedValue({
@@ -76,15 +84,7 @@ describe("event-rules-page loader", () => {
   })
 
   it("should redirect to dashboard if event not found", async () => {
-    const mockSelectFrom = vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          executeTakeFirst: vi.fn().mockResolvedValue(null),
-        }),
-      }),
-    })
-
-    mockKysely.selectFrom = mockSelectFrom
+    eventLookupReturns(null)
 
     const mockRequest = new Request("http://localhost")
     const mockParams = { id: "123" }
@@ -98,15 +98,7 @@ describe("event-rules-page loader", () => {
   })
 
   it("should not redirect when the event exists", async () => {
-    const mockSelectFrom = vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          executeTakeFirst: vi.fn().mockResolvedValue({ id: "123" }),
-        }),
-      }),
-    })
-
-    mockKysely.selectFrom = mockSelectFrom
+    eventExists()
 
     const mockRequest = new Request("http://localhost")
     const mockParams = { id: "123" }
@@ -117,13 +109,20 @@ describe("event-rules-page loader", () => {
     } as Route.LoaderArgs)
 
     expect(mockRedirect).not.toHaveBeenCalled()
-    expect(mockSelectFrom).toHaveBeenCalledWith("events")
-    expect(mockSelectFrom().select).toHaveBeenCalledWith("id")
-    expect(mockSelectFrom().select().where).toHaveBeenCalledWith(
-      "id",
-      "=",
-      "123",
-    )
+    expect(mockKysely.selectFrom).toHaveBeenCalledWith("events")
+    expect(selectMock).toHaveBeenCalledWith("id")
+    expect(whereMock).toHaveBeenCalledWith("id", "=", "123")
+  })
+
+  it("excludes Draft events from the lookup", async () => {
+    eventExists()
+
+    await loader({
+      request: new Request("http://localhost"),
+      params: { id: "123" },
+    } as Route.LoaderArgs)
+
+    expect(whereMock).toHaveBeenCalledWith("event_status", "!=", "Draft")
   })
 
   it("asks the database itself whether the person has been before", async () => {

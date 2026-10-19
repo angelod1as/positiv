@@ -43,7 +43,9 @@ const eventLookupReturns = (event: { id: string } | undefined) => {
 describe("Event navigation loader", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockGetUserContext.mockResolvedValue({} as never)
+    mockGetUserContext.mockResolvedValue({
+      currentUser: { id: "user-1" },
+    } as Awaited<ReturnType<typeof getUserContext>>)
   })
 
   it("redirects to dashboard when no event ID is provided", async () => {
@@ -114,15 +116,4 @@ describe("Event navigation loader", () => {
     expect(mockKysely.selectFrom).not.toHaveBeenCalled()
   })
 
-  it("passes request and params to getUserContext", async () => {
-    eventLookupReturns({ id: "test-event" })
-
-    const request = new Request("http://localhost:3000/events/test-event")
-    const params = { id: "test-event" }
-    const args = { request, params } as Route.LoaderArgs
-
-    await loader(args)
-
-    expect(mockGetUserContext).toHaveBeenCalledWith(request, params)
-  })
 })

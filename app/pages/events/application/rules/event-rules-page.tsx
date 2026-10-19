@@ -57,6 +57,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     .selectFrom("events")
     .select("id")
     .where("id", "=", params.id)
+    .where("event_status", "!=", "Draft")
     .executeTakeFirst()
 
   if (!event) return redirect(DASHBOARD)
