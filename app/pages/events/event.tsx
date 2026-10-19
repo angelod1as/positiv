@@ -1,5 +1,6 @@
 import { redirect } from "react-router"
-import { getContext } from "~/business/auth/auth.server"
+import { getUserContext } from "~/business/auth/auth.server"
+import { findVisibleEvent } from "~/business/event/find-visible-event.server"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/event"
 
@@ -12,16 +13,12 @@ const {
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   if (!params.id) return redirect(DASHBOARD)
-  
-  const { supabase } = await getContext(request, params)
-  
-  const { data: event } = await supabase
-    .from("events")
-    .select("id")
-    .eq("id", params.id)
-    .single()
-  
+
+  await getUserContext(request, params)
+
+  const event = await findVisibleEvent(params.id)
+
   if (!event) return redirect(DASHBOARD)
-  
+
   return redirect(EVENT_RULES(params.id))
 }

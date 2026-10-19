@@ -8,10 +8,8 @@ vi.mock("~/business/auth/auth.server", () => ({
   getUserContext: vi.fn(),
 }))
 
-vi.mock("~/kysely-db", () => ({
-  kyselyDb: {
-    selectFrom: vi.fn(),
-  },
+vi.mock("~/business/event/find-visible-event.server", () => ({
+  findVisibleEvent: vi.fn(),
 }))
 
 vi.mock("~/business/participant/is-veteran.server", () => ({
@@ -32,23 +30,23 @@ vi.mock("react-router", async (importOriginal) => {
 })
 
 import { getUserContext } from "~/business/auth/auth.server"
+import { findVisibleEvent } from "~/business/event/find-visible-event.server"
 import { isVeteran } from "~/business/participant/is-veteran.server"
-import { kyselyDb } from "~/kysely-db"
+import type { EventStatus } from "~types/database/entities.types"
 
 const mockGetUserContext = vi.mocked(getUserContext)
+const mockFindVisibleEvent = vi.mocked(findVisibleEvent)
 const mockIsVeteran = vi.mocked(isVeteran)
-const mockKysely = vi.mocked(kyselyDb)
 const mockRedirect = vi.mocked(redirect)
 
-const eventExists = () => {
-  mockKysely.selectFrom = vi.fn().mockReturnValue({
-    select: vi.fn().mockReturnValue({
-      where: vi.fn().mockReturnValue({
-        executeTakeFirst: vi.fn().mockResolvedValue({ id: "123" }),
-      }),
-    }),
-  })
+const eventLookupReturns = (
+  event: { id: string; event_status: EventStatus } | undefined,
+) => {
+  mockFindVisibleEvent.mockResolvedValue(event)
 }
+
+const eventExists = () =>
+  eventLookupReturns({ id: "123", event_status: "Registration Open" })
 
 const signedInAs = (profileId: string | null) => {
   mockGetUserContext.mockResolvedValue({
@@ -76,15 +74,7 @@ describe("event-rules-page loader", () => {
   })
 
   it("should redirect to dashboard if event not found", async () => {
-    const mockSelectFrom = vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          executeTakeFirst: vi.fn().mockResolvedValue(null),
-        }),
-      }),
-    })
-
-    mockKysely.selectFrom = mockSelectFrom
+    eventLookupReturns(undefined)
 
     const mockRequest = new Request("http://localhost")
     const mockParams = { id: "123" }
@@ -97,16 +87,8 @@ describe("event-rules-page loader", () => {
     expect(mockRedirect).toHaveBeenCalledWith("/dashboard")
   })
 
-  it("should not redirect when the event exists", async () => {
-    const mockSelectFrom = vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          executeTakeFirst: vi.fn().mockResolvedValue({ id: "123" }),
-        }),
-      }),
-    })
-
-    mockKysely.selectFrom = mockSelectFrom
+  it("should not redirect when the event is visible", async () => {
+    eventExists()
 
     const mockRequest = new Request("http://localhost")
     const mockParams = { id: "123" }
@@ -117,13 +99,7 @@ describe("event-rules-page loader", () => {
     } as Route.LoaderArgs)
 
     expect(mockRedirect).not.toHaveBeenCalled()
-    expect(mockSelectFrom).toHaveBeenCalledWith("events")
-    expect(mockSelectFrom().select).toHaveBeenCalledWith("id")
-    expect(mockSelectFrom().select().where).toHaveBeenCalledWith(
-      "id",
-      "=",
-      "123",
-    )
+    expect(mockFindVisibleEvent).toHaveBeenCalledWith("123")
   })
 
   it("asks the database itself whether the person has been before", async () => {
@@ -136,7 +112,11 @@ describe("event-rules-page loader", () => {
     } as Route.LoaderArgs)
 
     expect(mockIsVeteran).toHaveBeenCalledWith("profile-1", "123")
-    expect(data).toEqual({ isVeteran: true, profileId: "profile-1" })
+    expect(data).toEqual({
+      eventStatus: "Registration Open",
+      isVeteran: true,
+      profileId: "profile-1",
+    })
   })
 
   it("treats a request without a profile as someone who has never been", async () => {
@@ -149,7 +129,11 @@ describe("event-rules-page loader", () => {
     } as Route.LoaderArgs)
 
     expect(mockIsVeteran).not.toHaveBeenCalled()
-    expect(data).toEqual({ isVeteran: false, profileId: "" })
+    expect(data).toEqual({
+      eventStatus: "Registration Open",
+      isVeteran: false,
+      profileId: "",
+    })
   })
 })
 
@@ -161,20 +145,25 @@ import { buildRulesQuestions } from "~/components/forms/custom/rules/build-rules
 import { getRulesFormQuestions } from "~/components/forms/custom/rules/rules-questions"
 import EventRulesPage from "./event-rules-page"
 import { render, screen, waitFor } from "~/test/test-utils"
-import { rulesQuizCopy } from "~/copy/events"
+import { rulesQuizCopy, rulesStatusNoticeCopy } from "~/copy/events"
 
 const quiz = getRulesFormQuestions()
 
 const renderPage = ({
   isVeteran = false,
   profileId = "profile-1",
-}: { isVeteran?: boolean; profileId?: string } = {}) =>
+  eventStatus = "Registration Open",
+}: {
+  isVeteran?: boolean
+  profileId?: string
+  eventStatus?: EventStatus
+} = {}) =>
   render(
     <MemoryRouter initialEntries={["/dashboard/123/regras"]}>
       <EventRulesPage
         {...({} as Route.ComponentProps)}
         params={{ id: "123" }}
-        loaderData={{ isVeteran, profileId }}
+        loaderData={{ eventStatus, isVeteran, profileId }}
       />
     </MemoryRouter>,
   )
@@ -221,6 +210,44 @@ const firstSingleAnswerQuestion = async () => {
 
   return shown
 }
+
+describe("event-rules-page for an event that no longer takes applications", () => {
+  beforeEach(() => {
+    sessionStorage.clear()
+  })
+
+  it("shows the cancelled notice and no quiz for a cancelled event", () => {
+    renderPage({ eventStatus: "Cancelled" })
+
+    expect(
+      screen.getByText(rulesStatusNoticeCopy.Cancelled),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Continuar" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("shows the completed notice and no quiz for a completed event", () => {
+    renderPage({ eventStatus: "Completed" })
+
+    expect(
+      screen.getByText(rulesStatusNoticeCopy.Completed),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Continuar" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("runs the quiz for an open event", async () => {
+    renderPage({ eventStatus: "Registration Open" })
+
+    await shownQuestion()
+
+    expect(
+      screen.queryByText(rulesStatusNoticeCopy.Cancelled),
+    ).not.toBeInTheDocument()
+  })
+})
 
 describe("event-rules-page quiz", () => {
   beforeEach(() => {
@@ -344,7 +371,7 @@ const renderPageAt = (entry: string) =>
       <EventRulesPage
         {...({} as Route.ComponentProps)}
         params={{ id: "123" }}
-        loaderData={{ isVeteran: false, profileId: "profile-1" }}
+        loaderData={{ eventStatus: "Registration Open", isVeteran: false, profileId: "profile-1" }}
       />
       <Location />
     </MemoryRouter>,
@@ -463,7 +490,7 @@ const renderPageWithPathname = () =>
       <EventRulesPage
         {...({} as Route.ComponentProps)}
         params={{ id: "123" }}
-        loaderData={{ isVeteran: false, profileId: "profile-1" }}
+        loaderData={{ eventStatus: "Registration Open", isVeteran: false, profileId: "profile-1" }}
       />
       <Pathname />
     </MemoryRouter>,
@@ -618,7 +645,7 @@ describe("event-rules-page for two people in one browser session", () => {
         <EventRulesPage
           {...({} as Route.ComponentProps)}
           params={{ id: "123" }}
-          loaderData={{ isVeteran: true, profileId: "profile-2" }}
+          loaderData={{ eventStatus: "Registration Open", isVeteran: true, profileId: "profile-2" }}
         />
       </MemoryRouter>,
     )
@@ -723,7 +750,7 @@ describe("what the quiz tells a veteran it is about to ask", () => {
         <EventRulesPage
           {...({} as Route.ComponentProps)}
           params={{ id: "123" }}
-          loaderData={{ isVeteran: true, profileId: "profile-2" }}
+          loaderData={{ eventStatus: "Registration Open", isVeteran: true, profileId: "profile-2" }}
         />
       </MemoryRouter>,
     )

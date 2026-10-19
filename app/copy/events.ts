@@ -217,6 +217,12 @@ export const rulesQuizCopy = {
   },
 } as const
 
+export const rulesStatusNoticeCopy = {
+  title: "Inscrições indisponíveis",
+  Cancelled: "Este evento foi cancelado.",
+  Completed: "Este evento já aconteceu.",
+} as const
+
 export const eventListCopy = {
   appliedHeading: "Eventos em que você se candidatou",
   availableHeading: "Eventos da Positiv",
