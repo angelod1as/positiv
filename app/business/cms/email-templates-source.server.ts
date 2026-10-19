@@ -1,28 +1,67 @@
 import { logger } from "~/lib/logger/logger.server"
+import type { z } from "zod"
 import { zod } from "~/lib/helpers/zod"
 import { emailTemplatesQuery } from "./email-templates-query"
-import { type EmailTemplates, emailTemplatesSchema } from "./email-templates.schema"
+import {
+  applicationEmailSchema,
+  type EmailTemplates,
+  paymentConfirmedEmailSchema,
+  paymentLinkEmailSchema,
+  paymentRefundEmailSchema,
+  registrationLimitEmailSchema,
+} from "./email-templates.schema"
 import { createSanityClient } from "./sanity-client.server"
 
 type EmailTemplatesClient = { fetch(query: string): Promise<unknown> }
 
-export function resolveEmailTemplates(document: unknown): EmailTemplates | null {
-  if (document === null || document === undefined) return null
+// Each email is parsed on its own, so one invalid or missing email falls back
+// to its code copy without taking the other emails' copy down with it.
+function parseEmail<Schema extends z.ZodType>(
+  name: keyof EmailTemplates,
+  schema: Schema,
+  content: unknown,
+): z.output<Schema> | undefined {
+  const result = schema.safeParse(content)
+  if (result.success) return result.data
+  logger.error(`The ${name} email copy failed validation, using the default`, {
+    error: zod.prettifyError(result.error),
+  })
+  return undefined
+}
 
-  const result = emailTemplatesSchema.safeParse(document)
-  if (!result.success) {
-    // Degrade to null so the send falls back to code copy; test:contract is the
-    // guard that catches bad published content before a deploy.
+export type ResolvedEmailTemplates = Partial<EmailTemplates>
+
+export function resolveEmailTemplates(
+  document: unknown,
+): ResolvedEmailTemplates | null {
+  if (document === null || document === undefined) return null
+  if (typeof document !== "object") {
     logger.error("Email templates failed validation, using the default copy", {
-      error: zod.prettifyError(result.error),
+      error: `Expected an object, got ${typeof document}`,
     })
     return null
   }
-  return result.data
+
+  const emails = document as Record<string, unknown>
+  return {
+    application: parseEmail("application", applicationEmailSchema, emails.application),
+    paymentConfirmed: parseEmail(
+      "paymentConfirmed",
+      paymentConfirmedEmailSchema,
+      emails.paymentConfirmed,
+    ),
+    paymentLink: parseEmail("paymentLink", paymentLinkEmailSchema, emails.paymentLink),
+    paymentRefund: parseEmail("paymentRefund", paymentRefundEmailSchema, emails.paymentRefund),
+    registrationLimit: parseEmail(
+      "registrationLimit",
+      registrationLimitEmailSchema,
+      emails.registrationLimit,
+    ),
+  }
 }
 
 export async function getEmailTemplates(
   client: EmailTemplatesClient = createSanityClient(),
-): Promise<EmailTemplates | null> {
+): Promise<ResolvedEmailTemplates | null> {
   return resolveEmailTemplates(await client.fetch(emailTemplatesQuery))
 }

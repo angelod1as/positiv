@@ -1,8 +1,15 @@
 import { formatInTimeZone } from "date-fns-tz"
+import { renderTemplate } from "~/business/cms/placeholders"
+import {
+  type PaymentConfirmedCopy,
+  paymentConfirmedCopyFallback,
+} from "~/business/email/payment-confirmed-mail-copy"
+import { PAYMENT_CONFIRMED_MAIL_VARIABLES } from "~/business/email/payment-confirmed-mail.variables"
 import { paymentConfirmedMailCopy } from "~/copy/emails/payment-confirmed"
 import { paymentsCopy } from "~/copy/payments"
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
+import { escapeHtml } from "~/lib/helpers/escape-html"
 import { formatCurrency } from "~/lib/helpers/format-currency"
 
 export type PaymentConfirmedMailInput = {
@@ -25,6 +32,7 @@ const methodNames: Record<string, string> = paymentsCopy.manage.methods
  */
 export const paymentConfirmedMailTemplate = (
   input: PaymentConfirmedMailInput,
+  copy: PaymentConfirmedCopy = paymentConfirmedCopyFallback,
 ): string => {
   const displayName = sanitizeHtml(input.displayName)
   const sanitizedEmoji = sanitizeHtml(input.eventEmoji ?? "")
@@ -42,6 +50,25 @@ export const paymentConfirmedMailTemplate = (
           formatCurrency(Math.ceil(input.amount / input.installmentCount)),
         )
       : ""
+
+  // The Editor owns the wording; the Platform fills the values. Both are
+  // computed exactly as before the copy moved, so the email renders identically.
+  const bodyValues = {
+    nome: displayName,
+    evento: `${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}`,
+  }
+  const heading = escapeHtml(
+    renderTemplate(copy.heading, {}, PAYMENT_CONFIRMED_MAIL_VARIABLES.heading),
+  )
+  const cta = escapeHtml(
+    renderTemplate(copy.cta, {}, PAYMENT_CONFIRMED_MAIL_VARIABLES.cta),
+  )
+  const bodyParagraphs = copy.bodyParagraphs.map((paragraph) =>
+    renderTemplate(paragraph, bodyValues, PAYMENT_CONFIRMED_MAIL_VARIABLES.body),
+  )
+  const closingParagraphs = copy.closingParagraphs.map((paragraph) =>
+    renderTemplate(paragraph, {}, PAYMENT_CONFIRMED_MAIL_VARIABLES.closing),
+  )
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -72,13 +99,17 @@ export const paymentConfirmedMailTemplate = (
 
               <!-- H1 -->
               <h1 style="font-family: 'DM Sans', Arial, sans-serif; font-size: 32px; font-weight: 800; color: #bf03c3; margin: 0 0 16px 0; line-height: 1.2; text-align: center;">
-                ${paymentConfirmedMailCopy.heading}
+                ${heading}
               </h1>
 
               <!-- Intro Paragraph -->
-              <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-                ${paymentConfirmedMailCopy.intro(displayName, `${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}`)}
-              </p>
+              ${bodyParagraphs
+                .map(
+                  (paragraph) => `<p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
+                ${paragraph}
+              </p>`,
+                )
+                .join("\n\n              ")}
 
               <!-- Receipt -->
               <h3 style="font-family: 'DM Sans', Arial, sans-serif; font-size: 20px; font-weight: 700; color: #333; margin: 0 0 12px 0;">
@@ -111,13 +142,17 @@ export const paymentConfirmedMailTemplate = (
               <!-- CTA -->
               <div style="text-align: center; margin: 0 0 20px 0;">
                 <a href="${POSITIV_URL}dashboard" style="display: inline-block; background-color: #bf03c3; color: #ffffff; font-family: 'DM Sans', Arial, sans-serif; font-size: 16px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
-                  ${paymentConfirmedMailCopy.cta}
+                  ${cta}
                 </a>
               </div>
 
-              <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; line-height: 1.6; margin: 0; color: #666;">
-                ${paymentConfirmedMailCopy.nextSteps}
-              </p>
+              ${closingParagraphs
+                .map(
+                  (paragraph) => `<p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; line-height: 1.6; margin: 0; color: #666;">
+                ${paragraph}
+              </p>`,
+                )
+                .join("\n\n              ")}
 
             </div>
 

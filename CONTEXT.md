@@ -70,10 +70,12 @@ Events is the first one.
 _Avoid_: Dynamic section, widget
 
 **Email Template**:
-The wording of a transactional email that Editors own — the subject, the heading
-and the body — with the data filled in by the Platform, like an Embedded
-Section. The HTML layout, the footer and every value stay in code; Editors
-change only the text. The payment-link email is the first.
+The wording of a transactional email that Editors own — the subject, the
+heading, the body and, where the email has them, the button label and closing —
+with the data filled in by the Platform, like an Embedded Section. The HTML
+layout, the footer and every value stay in code; Editors change only the text.
+The payment-link, application, payment-confirmed, payment-refund and
+registration-limit emails all have one.
 _Avoid_: mail template (as the HTML), transactional template, email layout
 
 **Person**:

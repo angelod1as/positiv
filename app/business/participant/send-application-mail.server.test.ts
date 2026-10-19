@@ -67,6 +67,7 @@ describe("sendApplicationMail", () => {
     vi.mocked(formatApplicationMail).mockResolvedValue({
       html: "<p>Test email</p>",
       text: "Test email",
+      subject: "Recebemos sua candidatura ao evento 🎉 Test Event",
     })
   })
 

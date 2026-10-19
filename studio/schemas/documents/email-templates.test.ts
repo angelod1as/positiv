@@ -3,6 +3,10 @@ import { describe, expect, it } from "vitest"
 
 import { pathsOf } from "../../test/errors"
 import { validateDocumentOf } from "../../test/validate"
+import { applicationMailContent } from "../../../app/copy/emails/application-mail"
+import { paymentConfirmedMailContent } from "../../../app/copy/emails/payment-confirmed"
+import { paymentRefundMailContent } from "../../../app/copy/emails/payment-refund"
+import { registrationLimitAdminMailContent } from "../../../app/copy/emails/registration-limit-admin"
 import { emailTemplates as emailTemplatesType } from "./email-templates"
 
 const body = (...texts: { text: string; strong?: boolean }[]) =>
@@ -102,5 +106,184 @@ describe("emailTemplates", () => {
 
   it("titles the preview E-mails", () => {
     expect(emailTemplatesType.preview?.prepare?.()).toEqual({ title: "E-mails" })
+  })
+})
+
+describe("the application email in emailTemplates", () => {
+  const validateApplication = (application: Record<string, unknown>) =>
+    validateDocumentOf("emailTemplates", {
+      paymentLink: valid.paymentLink,
+      application: { ...applicationMailContent, ...application },
+    })
+
+  it("accepts the baseline copy", async () => {
+    expect(await validateApplication({})).toEqual([])
+  })
+
+  it("rejects a variable the subject does not allow", async () => {
+    expect(
+      pathsOf(await validateApplication({ subject: "Oi {{nome}}" })),
+    ).toContain("application.subject")
+  })
+
+  it("rejects an unknown variable in the body", async () => {
+    expect(
+      pathsOf(await validateApplication({ body: body({ text: "{{boleto}}" }) })),
+    ).toContain("application.body")
+  })
+
+  it("rejects any variable in the important heading, lead or notes", async () => {
+    const paths = pathsOf(
+      await validateApplication({
+        importantHeading: "{{nome}}",
+        importantLead: "{{nome}}",
+        notes: body({ text: "{{evento}}" }),
+      }),
+    )
+    expect(paths).toContain("application.importantHeading")
+    expect(paths).toContain("application.importantLead")
+    expect(paths).toContain("application.notes")
+  })
+
+  it("requires every field", async () => {
+    const paths = pathsOf(
+      await validateApplication({
+        subject: undefined,
+        heading: undefined,
+        body: undefined,
+        importantHeading: undefined,
+        importantLead: undefined,
+        notes: undefined,
+      }),
+    )
+    for (const field of [
+      "subject",
+      "heading",
+      "body",
+      "importantHeading",
+      "importantLead",
+      "notes",
+    ]) {
+      expect(paths).toContain(`application.${field}`)
+    }
+  })
+})
+
+describe("the payment-confirmed email in emailTemplates", () => {
+  const validateConfirmed = (paymentConfirmed: Record<string, unknown>) =>
+    validateDocumentOf("emailTemplates", {
+      paymentLink: valid.paymentLink,
+      paymentConfirmed: { ...paymentConfirmedMailContent, ...paymentConfirmed },
+    })
+
+  it("accepts the baseline copy", async () => {
+    expect(await validateConfirmed({})).toEqual([])
+  })
+
+  it("rejects a variable the subject does not allow", async () => {
+    expect(
+      pathsOf(await validateConfirmed({ subject: "Oi {{nome}}" })),
+    ).toContain("paymentConfirmed.subject")
+  })
+
+  it("rejects any variable in the button or closing", async () => {
+    const paths = pathsOf(
+      await validateConfirmed({
+        cta: "{{nome}}",
+        closing: body({ text: "{{evento}}" }),
+      }),
+    )
+    expect(paths).toContain("paymentConfirmed.cta")
+    expect(paths).toContain("paymentConfirmed.closing")
+  })
+
+  it("requires every field", async () => {
+    const paths = pathsOf(
+      await validateConfirmed({
+        subject: undefined,
+        heading: undefined,
+        body: undefined,
+        cta: undefined,
+        closing: undefined,
+      }),
+    )
+    for (const field of ["subject", "heading", "body", "cta", "closing"]) {
+      expect(paths).toContain(`paymentConfirmed.${field}`)
+    }
+  })
+})
+
+describe("the payment-refund email in emailTemplates", () => {
+  const validateRefund = (paymentRefund: Record<string, unknown>) =>
+    validateDocumentOf("emailTemplates", {
+      paymentLink: valid.paymentLink,
+      paymentRefund: { ...paymentRefundMailContent, ...paymentRefund },
+    })
+
+  it("accepts the baseline copy", async () => {
+    expect(await validateRefund({})).toEqual([])
+  })
+
+  it("rejects a variable the subject or button does not allow", async () => {
+    const paths = pathsOf(
+      await validateRefund({ subject: "Oi {{nome}}", cta: "{{evento}}" }),
+    )
+    expect(paths).toContain("paymentRefund.subject")
+    expect(paths).toContain("paymentRefund.cta")
+  })
+
+  it("requires every field", async () => {
+    const paths = pathsOf(
+      await validateRefund({
+        subject: undefined,
+        heading: undefined,
+        body: undefined,
+        cta: undefined,
+      }),
+    )
+    for (const field of ["subject", "heading", "body", "cta"]) {
+      expect(paths).toContain(`paymentRefund.${field}`)
+    }
+  })
+})
+
+describe("the registration-limit email in emailTemplates", () => {
+  const validateLimit = (registrationLimit: Record<string, unknown>) =>
+    validateDocumentOf("emailTemplates", {
+      paymentLink: valid.paymentLink,
+      registrationLimit: {
+        ...registrationLimitAdminMailContent,
+        ...registrationLimit,
+      },
+    })
+
+  it("accepts the baseline copy", async () => {
+    expect(await validateLimit({})).toEqual([])
+  })
+
+  it("rejects a variable the subject or body does not allow", async () => {
+    const paths = pathsOf(
+      await validateLimit({
+        subject: "{{participantes}}",
+        body: body({ text: "{{nome}}" }),
+      }),
+    )
+    expect(paths).toContain("registrationLimit.subject")
+    expect(paths).toContain("registrationLimit.body")
+  })
+
+  it("requires every field", async () => {
+    const paths = pathsOf(
+      await validateLimit({
+        subject: undefined,
+        heading: undefined,
+        body: undefined,
+        cta: undefined,
+        closing: undefined,
+      }),
+    )
+    for (const field of ["subject", "heading", "body", "cta", "closing"]) {
+      expect(paths).toContain(`registrationLimit.${field}`)
+    }
   })
 })

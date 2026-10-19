@@ -1,6 +1,13 @@
+import { renderTemplate } from "~/business/cms/placeholders"
+import {
+  type ApplicationCopy,
+  applicationCopyFallback,
+} from "~/business/email/application-mail-copy"
+import { APPLICATION_MAIL_VARIABLES } from "~/business/email/application-mail.variables"
 import { applicationMailCopy } from "~/copy/emails/application-mail"
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
+import { escapeHtml } from "~/lib/helpers/escape-html"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import type {
   Event,
@@ -16,6 +23,7 @@ import type {
 export const applicationMailTemplate = (
   profile: NonNullable<ProfileWithRoles>,
   event: Event,
+  copy: ApplicationCopy = applicationCopyFallback,
 ): string => {
   const { date, time } = formatDateTime(event.time_event_start)
   const displayName = sanitizeHtml(
@@ -33,6 +41,30 @@ export const applicationMailTemplate = (
     [applicationMailCopy.details.date, date],
     [applicationMailCopy.details.startTime, time],
   ]
+
+  // The Editor owns the wording; the Platform fills the values. Both are
+  // computed exactly as before the copy moved, so the email renders identically.
+  const bodyValues = {
+    nome: displayName,
+    evento: `${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}`,
+  }
+  const line = (text: string, whitelist: readonly string[]) =>
+    escapeHtml(renderTemplate(text, {}, whitelist))
+  const heading = line(copy.heading, APPLICATION_MAIL_VARIABLES.heading)
+  const importantHeading = line(
+    copy.importantHeading,
+    APPLICATION_MAIL_VARIABLES.importantHeading,
+  )
+  const importantLead = line(
+    copy.importantLead,
+    APPLICATION_MAIL_VARIABLES.importantLead,
+  )
+  const bodyParagraphs = copy.bodyParagraphs.map((paragraph) =>
+    renderTemplate(paragraph, bodyValues, APPLICATION_MAIL_VARIABLES.body),
+  )
+  const notes = copy.notes.map((note) =>
+    renderTemplate(note, {}, APPLICATION_MAIL_VARIABLES.notes),
+  )
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -63,13 +95,17 @@ export const applicationMailTemplate = (
 
               <!-- H1 -->
               <h1 style="font-family: 'DM Sans', Arial, sans-serif; font-size: 32px; font-weight: 800; color: #bf03c3; margin: 0 0 16px 0; line-height: 1.2; text-align: center;">
-                ${applicationMailCopy.heading}
+                ${heading}
               </h1>
 
               <!-- Intro Paragraph -->
-              <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-                ${applicationMailCopy.intro(displayName, `${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}`)}
-              </p>
+              ${bodyParagraphs
+                .map(
+                  (paragraph) => `<p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
+                ${paragraph}
+              </p>`,
+                )
+                .join("\n\n              ")}
 
               <!-- Event Details Section -->
               <div style="background-color: #f9f9f9; border-radius: 8px; padding: 16px; margin: 0 0 20px 0;">
@@ -90,29 +126,21 @@ export const applicationMailTemplate = (
 
               <!-- Important Section -->
               <h3 style="font-family: 'DM Sans', Arial, sans-serif; font-size: 20px; font-weight: 700; color: #333; margin: 0 0 12px 0;">
-                ${applicationMailCopy.important.heading}
+                ${importantHeading}
               </h3>
 
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 12px 0; color: #333;">
-                ${applicationMailCopy.important.lead}
+                ${importantLead}
               </p>
 
               <ul style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0; padding-left: 20px; color: #333;">
-                <li style="margin-bottom: 8px;">
-                  ${applicationMailCopy.important.notes.handcrafted}
-                </li>
-                <li style="margin-bottom: 8px;">
-                  ${applicationMailCopy.important.notes.previousEditions}
-                </li>
-                <li style="margin-bottom: 8px;">
-                  ${applicationMailCopy.important.notes.companions}
-                </li>
-                <li style="margin-bottom: 8px;">
-                  ${applicationMailCopy.important.notes.notSelected}
-                </li>
-                <li style="margin-bottom: 8px;">
-                  ${applicationMailCopy.important.notes.socialTickets}
-                </li>
+                ${notes
+                  .map(
+                    (note) => `<li style="margin-bottom: 8px;">
+                  ${note}
+                </li>`,
+                  )
+                  .join("\n                ")}
               </ul>
 
             </div>

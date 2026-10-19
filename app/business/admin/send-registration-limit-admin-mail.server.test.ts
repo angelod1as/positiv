@@ -6,6 +6,16 @@ import { logger } from "~/lib/logger/logger.server"
 import type { Event } from "~types/database/entities.types"
 
 vi.mock("./get-admin-emails.server")
+vi.mock("~/business/email/registration-limit-admin-mail-copy.server", async () => {
+  const { registrationLimitAdminCopyFallback } = await import(
+    "~/business/email/registration-limit-admin-mail-copy"
+  )
+  return {
+    loadRegistrationLimitAdminCopy: vi.fn(
+      async () => registrationLimitAdminCopyFallback,
+    ),
+  }
+})
 vi.mock("~/business/email/send-email")
 vi.mock("~/lib/logger/logger.server", () => ({
   logger: { error: vi.fn(), warn: vi.fn() },

@@ -1,6 +1,5 @@
 import { formatRegistrationLimitAdminMail } from "~/business/email/format-registration-limit-admin-mail"
 import { type MailOptions, sendEmail } from "~/business/email/send-email"
-import { registrationLimitAdminCopy } from "~/copy/emails/registration-limit-admin"
 import { logger } from "~/lib/logger/logger.server"
 import { getAdminEmails } from "./get-admin-emails.server"
 import type { Event } from "~types/database/entities.types"
@@ -25,7 +24,7 @@ export const sendRegistrationLimitAdminMail = async ({
     return { emailSent: false }
   }
 
-  const { html, text } = await formatRegistrationLimitAdminMail(
+  const { html, text, subject } = await formatRegistrationLimitAdminMail(
     event,
     participantCount,
     timestamp,
@@ -33,7 +32,7 @@ export const sendRegistrationLimitAdminMail = async ({
 
   const options: MailOptions = {
     to: adminEmails,
-    subject: registrationLimitAdminCopy.subject(event.emoji, event.title),
+    subject,
     text: text,
     html: html,
   }
