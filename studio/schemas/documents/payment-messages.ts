@@ -1,5 +1,6 @@
 import { BillIcon } from "@sanity/icons/Bill"
 import { defineField, defineType } from "sanity"
+import { unknownVariableProblem as unknownVariableProblemIn } from "../placeholder-validation"
 
 export const PAYMENT_MESSAGE_VARIABLES = [
   "link",
@@ -9,23 +10,8 @@ export const PAYMENT_MESSAGE_VARIABLES = [
   "formas",
 ] as const
 
-// Any {{...}} token, mirroring the app renderer, so a malformed token is
-// rejected on publish rather than copied with its braces intact.
-const variablePattern = /\{\{([^{}]*)\}\}/g
-
 export function unknownVariableProblem(value: string | undefined) {
-  const unknown = [...(value ?? "").matchAll(variablePattern)]
-    .map((match) => match[1].trim())
-    .find(
-      (name) =>
-        !(PAYMENT_MESSAGE_VARIABLES as readonly string[]).includes(name),
-    )
-
-  return unknown === undefined
-    ? true
-    : `Variável desconhecida: {{${unknown}}}. Use apenas ${PAYMENT_MESSAGE_VARIABLES.map(
-        (name) => `{{${name}}}`,
-      ).join(", ")}.`
+  return unknownVariableProblemIn(value, PAYMENT_MESSAGE_VARIABLES)
 }
 
 export const paymentMessages = defineType({

@@ -3,7 +3,6 @@ import { formatPaymentLinkMail } from "~/business/email/format-payment-link-mail
 import { formatPaymentRefundMail } from "~/business/email/format-payment-refund-mail"
 import { type MailOptions, sendEmail } from "~/business/email/send-email"
 import { paymentConfirmedMailCopy } from "~/copy/emails/payment-confirmed"
-import { paymentLinkMailCopy } from "~/copy/emails/payment-link"
 import { paymentRefundMailCopy } from "~/copy/emails/payment-refund"
 import { kyselyDb } from "~/kysely-db"
 import { appOrigin } from "~/lib/helpers/app-origin"
@@ -90,7 +89,7 @@ export async function sendPaymentLinkEmail({
   // The template refuses a url it cannot vouch for, and APP_URL is not a
   // required variable -- without one appOrigin answers nothing and the url
   // arrives schemeless. And reading the card switch can fail with the database.
-  let mail: { html: string; text: string }
+  let mail: { html: string; text: string; subject: string }
   try {
     // Once the participant has picked, the price is settled and the provider's
     // charge exists at that figure -- re-pricing the seven options here would
@@ -120,13 +119,11 @@ export async function sendPaymentLinkEmail({
     return { success: false }
   }
 
-  const { html, text } = mail
+  const { html, text, subject } = mail
 
   const mailOptions: MailOptions = {
     to: payment.email,
-    subject: paymentLinkMailCopy.subject(
-      [payment.event_emoji, payment.event_title].filter(Boolean).join(" "),
-    ),
+    subject,
     html,
     text,
   }

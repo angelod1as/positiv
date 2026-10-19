@@ -4,7 +4,9 @@ export const SITE_SETTINGS_ID = "siteSettings"
 
 export const PAYMENT_MESSAGES_ID = "paymentMessages"
 
-const singletonTypes = ["siteSettings", "paymentMessages"]
+export const EMAIL_TEMPLATES_ID = "emailTemplates"
+
+const singletonTypes = ["siteSettings", "paymentMessages", "emailTemplates"]
 
 const actionsSingletonsKeep = ["publish", "discardChanges", "restore"]
 

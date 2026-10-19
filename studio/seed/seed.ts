@@ -1,6 +1,11 @@
+import { paymentLinkMailContent } from "../../app/copy/emails/payment-link"
 import { codeOfConductToPage } from "../migrations/code-of-conduct-to-page/transform"
 import { HOMEPAGE_PAGE_ID } from "../schemas/documents/page"
-import { PAYMENT_MESSAGES_ID, SITE_SETTINGS_ID } from "../singletons"
+import {
+  EMAIL_TEMPLATES_ID,
+  PAYMENT_MESSAGES_ID,
+  SITE_SETTINGS_ID,
+} from "../singletons"
 
 export const SEED_WHATSAPP_PAYMENT_MESSAGE = [
   "Oi, {{nome}}! Aqui está o link para o pagamento da {{evento}}:",
@@ -460,6 +465,11 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
       _id: PAYMENT_MESSAGES_ID,
       _type: "paymentMessages",
       whatsappMessage: SEED_WHATSAPP_PAYMENT_MESSAGE,
+    },
+    {
+      _id: EMAIL_TEMPLATES_ID,
+      _type: "emailTemplates",
+      paymentLink: paymentLinkMailContent,
     },
   ]
 }
