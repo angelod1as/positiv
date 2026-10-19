@@ -232,7 +232,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       { headers },
     )
   } catch (error) {
-    console.error("Root loader error", error)
+    logger.error("Root loader error", { error })
     const draft = await draftQuery
     return {
       currentUser: null,
@@ -476,7 +476,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  console.error("ERROR BOUNDARY", error)
+  if (typeof document !== "undefined") console.error("ERROR BOUNDARY", error)
   let message: string = errorsCopy.boundary.title
   let details = <Copy>{errorsCopy.boundary.details(POSITIV_EMAIL)}</Copy>
   let stack: string | undefined
