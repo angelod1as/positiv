@@ -1,6 +1,7 @@
 import { ENV } from "varlock/env"
 import type { PaymentProvider } from "../../payment-provider"
 import {
+  AsaasError,
   asaasDashboardOrigin,
   createAsaasCustomer,
   createAsaasPayment,
@@ -71,7 +72,20 @@ export const asaasConnector: PaymentProvider = {
       ? `${asaasDashboardOrigin()}/payment/show/${dashboardRef}`
       : `${asaasDashboardOrigin()}/payment/list`,
 
+  customerDashboardUrl: (customerId) =>
+    `${asaasDashboardOrigin()}/customerAccount/show/${customerId}`,
+
   errorMessage: asaasErrorMessage,
+
+  errorDetails: (error) =>
+    error instanceof AsaasError
+      ? {
+          method: error.method,
+          path: error.path,
+          status: error.status,
+          errors: error.errors,
+        }
+      : { error: error instanceof Error ? error.message : String(error) },
 
   readWebhook: readAsaasWebhook,
 }

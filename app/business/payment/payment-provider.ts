@@ -27,12 +27,19 @@ export type PaymentProvider = {
   }): Promise<ProviderRefund[]>
   /** Where an admin sees this charge in the provider's own dashboard. */
   chargeDashboardUrl(dashboardRef: string | null): string
+  /** Where an admin sees this customer in the provider's own dashboard. */
+  customerDashboardUrl(customerId: string): string
   /**
    * What a person reads when a call to the provider fails. The technical
    * detail stays in the log; anything that is not the provider's is the app's
    * own sentence and passes through as it is.
    */
   errorMessage(error: unknown, context: ProviderErrorContext): string
+  /**
+   * What the log needs about a failed call: where it went and what the
+   * provider answered. Never the request body, which carries the person's data.
+   */
+  errorDetails(error: unknown): Record<string, unknown>
   /**
    * Authenticates a webhook delivery and translates it into our own event.
    * Refusals carry the HTTP status to answer with.
