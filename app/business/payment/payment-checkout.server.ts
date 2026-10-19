@@ -17,6 +17,11 @@ import { ACTIVE_PAYMENT_STATUSES } from "./payment-totals.server"
 import { isValidCpf } from "~/lib/helpers/cpf"
 import { isUniqueViolation } from "~/lib/helpers/is-unique-violation"
 import { buildPaymentOptions, findPaymentOption } from "./pricing"
+import {
+  logPaymentProviderFailure,
+  paymentAlertContext,
+  type PaymentAlertContext,
+} from "./payment-alert.server"
 
 export const pickOptionSchema = zod.object({
   paymentId: zod.string().uuid(),
@@ -28,28 +33,40 @@ export const pickOptionSchema = zod.object({
  * One provider customer per person, reused across events, so a charge never
  * leaves another customer behind for the same person.
  */
-async function ensureProviderCustomer(profile: {
-  id: string
-  provider_customer_id: string | null
-  full_name: string | null
-  social_name: string | null
-  email: string | null
-  cpf: string | null
-  phone: number | null
-  phone_is_international: boolean
-}): Promise<string> {
+async function ensureProviderCustomer(
+  profile: {
+    id: string
+    provider_customer_id: string | null
+    full_name: string | null
+    social_name: string | null
+    email: string | null
+    cpf: string | null
+    phone: number | null
+    phone_is_international: boolean
+  },
+  alert: PaymentAlertContext,
+): Promise<string> {
   if (profile.provider_customer_id) return profile.provider_customer_id
 
-  const customerId = await paymentProvider().findOrCreateCustomer({
-    profileId: profile.id,
-    name: profile.full_name || profile.social_name || profile.email || "",
-    cpf: profile.cpf ?? "",
-    email: profile.email ?? "",
-    phone:
-      profile.phone && !profile.phone_is_international
-        ? String(profile.phone)
-        : undefined,
-  })
+  const customerId = await paymentProvider()
+    .findOrCreateCustomer({
+      profileId: profile.id,
+      name: profile.full_name || profile.social_name || profile.email || "",
+      cpf: profile.cpf ?? "",
+      email: profile.email ?? "",
+      phone:
+        profile.phone && !profile.phone_is_international
+          ? String(profile.phone)
+          : undefined,
+    })
+    .catch((error: unknown) => {
+      logPaymentProviderFailure(
+        "Could not find or create the customer at the payment provider",
+        alert,
+        error,
+      )
+      throw error
+    })
 
   // Written only while the column is still empty, for the same reason the
   // charge below is: two picks racing both find nothing and both create a
@@ -111,6 +128,8 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
       "p.installment_count",
       "p.provider_charge_id",
       "p.provider_checkout_url",
+      "p.amount",
+      "e.id as event_id",
       "e.title as event_title",
       "pr.id as profile_id",
       "pr.provider_customer_id",
@@ -158,16 +177,39 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
     return { invoiceUrl: payment.provider_checkout_url }
   }
 
-  const customerId = await ensureProviderCustomer({
-    id: payment.profile_id,
-    provider_customer_id: payment.provider_customer_id,
-    full_name: payment.full_name,
-    social_name: payment.social_name,
-    email: payment.email,
-    cpf: payment.cpf,
-    phone: payment.phone,
-    phone_is_international: payment.phone_is_international,
-  })
+  const alertRow = {
+    paymentId: payment.id,
+    profileId: payment.profile_id,
+    eventId: payment.event_id,
+    eventTitle: payment.event_title,
+    status: payment.status,
+    method: payment.method,
+    installmentCount: payment.installment_count,
+    amount: payment.amount,
+    dueAt: payment.due_at,
+    providerChargeId: payment.provider_charge_id,
+    providerCustomerId: payment.provider_customer_id,
+  }
+  const attempt = {
+    method: option.method,
+    installmentCount: option.installmentCount,
+    amount: option.total,
+  }
+
+  const customerId = await ensureProviderCustomer(
+    {
+      id: payment.profile_id,
+      provider_customer_id: payment.provider_customer_id,
+      full_name: payment.full_name,
+      social_name: payment.social_name,
+      email: payment.email,
+      cpf: payment.cpf,
+      phone: payment.phone,
+      phone_is_international: payment.phone_is_international,
+    },
+    paymentAlertContext(alertRow, attempt),
+  )
+  const alert = paymentAlertContext(alertRow, { ...attempt, customerId })
 
   // The provider refuses a callback whose domain does not match the commercial
   // data on the account, and fails the whole charge rather than just dropping
@@ -179,22 +221,31 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
     ? `${origin}${paths.payment.PAYMENT_THANKS(payment.id)}`
     : null
 
-  const charge = await paymentProvider().createCharge({
-    customerId,
-    method: option.method,
-    amount: option.total,
-    installmentCount: option.installmentCount,
-    dueDate: new Date(payment.due_at),
-    description: paymentsCopy.chargeDescription(payment.event_title ?? ""),
-    reference: payment.id,
-    successUrl,
-  })
+  const charge = await paymentProvider()
+    .createCharge({
+      customerId,
+      method: option.method,
+      amount: option.total,
+      installmentCount: option.installmentCount,
+      dueDate: new Date(payment.due_at),
+      description: paymentsCopy.chargeDescription(payment.event_title ?? ""),
+      reference: payment.id,
+      successUrl,
+    })
+    .catch((error: unknown) => {
+      logPaymentProviderFailure(
+        "Could not create the charge at the payment provider",
+        alert,
+        error,
+      )
+      throw error
+    })
 
   // Before the row is touched: a charge with no invoice is one the participant
   // cannot reach, and recording it would leave money able to arrive against a
   // link nobody has. Deleted here rather than left for the next pick to tidy.
   if (!charge.checkoutUrl) {
-    await deleteOrphanCharge(payment.id, charge.chargeId)
+    await deleteOrphanCharge(alert, charge.chargeId)
     throw new Error(paymentsCopy.errors.noInvoiceUrl(paymentProvider().name))
   }
 
@@ -229,7 +280,7 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
     // it — or another pick got there first. Either way the charge just created
     // is one nobody can reach through the app and nothing would ever mark paid,
     // so it must not survive.
-    await deleteOrphanCharge(payment.id, charge.chargeId)
+    await deleteOrphanCharge(alert, charge.chargeId)
 
     const winner = await readChargeAfterRace(payment.id)
     // Losing to the same option is a double click, not a decision. The invoice
@@ -249,7 +300,7 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
   // Only now the replaced one, if the participant changed their mind. Deleting
   // it earlier would leave them with nothing to pay had the new charge failed.
   if (payment.provider_charge_id && payment.provider_charge_id !== charge.chargeId) {
-    await deleteOrphanCharge(payment.id, payment.provider_charge_id)
+    await deleteOrphanCharge(alert, payment.provider_charge_id)
   }
 
   return { invoiceUrl: charge.checkoutUrl }
@@ -257,7 +308,7 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
 
 // Everything above can fail at the provider, and what reaches the participant
 // is a sentence, not an HTTP status or "fetch failed". The detail is in the log
-// already.
+// already, written where the payment's context was at hand.
 export const pickOption = applySchema(pickOptionSchema)(async (values) => {
   try {
     return await pick(values)
@@ -283,20 +334,20 @@ function readChargeAfterRace(paymentId: string) {
  * A charge the row no longer points at. A refusal is not always an error, so
  * the return value is the only place it shows.
  */
-async function deleteOrphanCharge(paymentId: string, chargeId: string) {
+async function deleteOrphanCharge(alert: PaymentAlertContext, chargeId: string) {
   try {
     const deleted = await paymentProvider().cancelCharge(chargeId)
     if (!deleted) {
       logger.error("The payment provider refused to delete the charge", {
-        paymentId,
+        ...alert,
         chargeId,
       })
     }
   } catch (error) {
-    logger.error("Could not delete the charge at the payment provider", {
-      paymentId,
-      chargeId,
-      error: error instanceof Error ? error.message : String(error),
-    })
+    logPaymentProviderFailure(
+      "Could not delete the charge at the payment provider",
+      { ...alert, chargeId },
+      error,
+    )
   }
 }

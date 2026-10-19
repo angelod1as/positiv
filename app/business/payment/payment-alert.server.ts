@@ -72,7 +72,7 @@ export function paymentAlertContext(
  */
 export function logPaymentProviderFailure(
   message: string,
-  context: PaymentAlertContext | { paymentId: string },
+  context: { paymentId: string } & Record<string, unknown>,
   error: unknown,
 ) {
   logger.error(message, {
