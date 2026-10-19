@@ -18,7 +18,8 @@ export type PaymentAlertRow = {
   method: string | null
   installmentCount: number | null
   amount: number | null
-  dueAt: string
+  // Typed as a string, but pg hands a timestamptz back as a Date.
+  dueAt: string | Date
   providerChargeId: string | null
   providerCustomerId: string | null
 }
@@ -59,7 +60,7 @@ export function paymentAlertContext(
         : row.installmentCount,
     amount: attempt.amount !== undefined ? attempt.amount : row.amount,
     customerId,
-    dueDate: row.dueAt,
+    dueDate: new Date(row.dueAt).toISOString(),
     statusBefore: row.status,
     previousChargeId: row.providerChargeId,
     links,

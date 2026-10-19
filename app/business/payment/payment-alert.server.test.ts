@@ -77,7 +77,7 @@ describe("paymentAlertContext", () => {
       installmentCount: null,
       amount: 45000,
       customerId: "cus_000123",
-      dueDate: "2026-10-26T03:00:00+00:00",
+      dueDate: "2026-10-26T03:00:00.000Z",
       statusBefore: "pending",
       previousChargeId: "pay_old",
       links: {
@@ -101,6 +101,15 @@ describe("paymentAlertContext", () => {
       installmentCount: 3,
       amount: 50000,
     })
+  })
+
+  it("writes the due date the same way when the driver hands back a Date", () => {
+    const context = paymentAlertContext({
+      ...row,
+      dueAt: new Date("2026-10-26T03:00:00Z"),
+    })
+
+    expect(context.dueDate).toBe("2026-10-26T03:00:00.000Z")
   })
 
   it("prefers the customer just found over the row's empty one", () => {
