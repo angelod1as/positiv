@@ -203,4 +203,42 @@ describe("Database Indexes - Integration Tests", () => {
       }
     })
   })
+
+  describe("foreign key covering indexes (POS-596)", () => {
+    it.each([
+      ["event_invites_profile_id_idx", "event_invites", "profile_id"],
+      ["payments_created_by_idx", "payments", "created_by"],
+      ["app_settings_updated_by_idx", "app_settings", "updated_by"]
+    ])("%s covers %s.%s", async (indexname, tablename, column) => {
+      const result = await sql<{
+        indexname: string
+        tablename: string
+        indexdef: string
+      }>`
+        SELECT indexname, tablename, indexdef
+        FROM pg_indexes
+        WHERE indexname = ${indexname}
+        AND tablename = ${tablename}
+      `.execute(kysely)
+
+      const index = result.rows[0]
+      expect(index).toBeDefined()
+      expect(index?.indexdef).toMatch(new RegExp(`\\(${column}\\)`))
+    })
+  })
+
+  describe("indexes dropped as dead (POS-596)", () => {
+    it.each(["idx_event_participants_application_date"])(
+      "%s no longer exists",
+      async (indexname) => {
+        const result = await sql<{ indexname: string }>`
+          SELECT indexname
+          FROM pg_indexes
+          WHERE schemaname = 'public' AND indexname = ${indexname}
+        `.execute(kysely)
+
+        expect(result.rows).toHaveLength(0)
+      },
+    )
+  })
 })
