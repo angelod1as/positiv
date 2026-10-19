@@ -120,6 +120,7 @@ export const sectionsFields = {
     title: zod.string(),
     subtitle: zod.string(),
     count: zod.number().int(),
+    comingSoon: zod.string().nullish(),
   }),
   about: zod.object({
     title: zod.string(),

@@ -29,5 +29,12 @@ export const nextEvents = defineType({
       initialValue: 3,
       validation: (rule) => rule.required().integer().min(1).max(6),
     }),
+    defineField({
+      name: "comingSoon",
+      title: "Aviso de novos eventos",
+      description:
+        "Mostrado no lugar dos eventos quando não há nenhum aberto. Se vazio, usamos um texto padrão.",
+      type: "string",
+    }),
   ],
 })
