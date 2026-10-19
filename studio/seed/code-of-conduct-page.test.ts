@@ -1,8 +1,8 @@
 import { SanityClient } from "@sanity/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { validateDocumentOf, validateValueOf } from "../../test/validate"
-import { CODE_OF_CONDUCT_PAGE_ID, codeOfConductToPage } from "./transform"
+import { validateDocumentOf, validateValueOf } from "../test/validate"
+import { CODE_OF_CONDUCT_PAGE_ID, codeOfConductToPage } from "./code-of-conduct-page"
 
 describe("codeOfConductToPage", () => {
   beforeEach(() => {

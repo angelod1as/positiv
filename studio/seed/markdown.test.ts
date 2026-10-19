@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { validateValueOf } from "../../test/validate"
+import { validateValueOf } from "../test/validate"
 import { markdownToLongPortableText } from "./markdown"
 
 describe("markdownToLongPortableText", () => {

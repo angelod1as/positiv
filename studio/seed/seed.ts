@@ -1,5 +1,5 @@
 import { paymentLinkMailContent } from "../../app/copy/emails/payment-link"
-import { codeOfConductToPage } from "../migrations/code-of-conduct-to-page/transform"
+import { codeOfConductToPage } from "./code-of-conduct-page"
 import { HOMEPAGE_PAGE_ID } from "../schemas/documents/page"
 import {
   EMAIL_TEMPLATES_ID,
