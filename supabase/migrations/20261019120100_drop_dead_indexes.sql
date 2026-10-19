@@ -1,0 +1,21 @@
+-- POS-596: drop one index the production performance advisor flagged as
+-- unused, confirmed dead against live production data (the statistics counters
+-- have never been reset, so a zero scan count is cumulative since the database
+-- was created).
+--
+--   idx_event_participants_application_date -- a plain index on a hot,
+--     1758-row table, never scanned. No query filters or orders by
+--     application_date -- the column is only written and displayed, and no SQL
+--     function or view references it. The composite
+--     (profile_id, attendance_status, application_date) index is left in place.
+--
+-- The other advisor-listed indexes are kept on purpose: they are partial
+-- indexes guarding cron, dedup, backlog and card-installment paths whose
+-- filtered set is empty or tiny today, so the planner seq-scans at current
+-- volume and they report zero scans by design. In particular
+-- payments_provider_plan_id and payment_webhook_events_provider_plan_id back
+-- the live card-installment path (provider_plan_id is the Asaas installment id,
+-- written and filtered by equality in payment-webhook.server.ts); they are
+-- empty only because no installment payment has happened yet.
+
+DROP INDEX IF EXISTS public.idx_event_participants_application_date;
