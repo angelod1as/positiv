@@ -1,7 +1,7 @@
 import { SanityClient } from "@sanity/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { CODE_OF_CONDUCT_PAGE_ID } from "../migrations/code-of-conduct-to-page/transform"
+import { CODE_OF_CONDUCT_PAGE_ID } from "./code-of-conduct-page"
 import { HOMEPAGE_PAGE_ID } from "../schemas/documents/page"
 import { PAYMENT_MESSAGES_ID, SITE_SETTINGS_ID } from "../singletons"
 import { validateDocumentOf } from "../test/validate"

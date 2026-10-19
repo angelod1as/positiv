@@ -25,7 +25,7 @@ pnpm workspace package, deployed to Sanity's hosting at
 | `seed/`                             | The development seed — see below                                                 |
 | `fixtures/`                         | Generates the e2e fixtures from the seed — see below                             |
 | `refresh-dev/`                      | Mirrors production into development — see below                                  |
-| `migrations/`                       | Content migrations — see below                                                   |
+| `migrations/`                       | One-shot content migrations, deleted after they run — usually just a README      |
 
 A field's `validation` replaces the validation of the type it uses. A field
 of type `richText` or `longRichText` that adds its own rule —
@@ -221,7 +221,9 @@ a field is not: it follows
 
 1. Add the new field beside the old one; deploy the Studio.
 2. Migrate existing content with a script in [`migrations/`](./migrations/),
-   on `development` first, then on `production`.
+   on `development` first, then on `production`. Delete the script once it has
+   run on `production` — git history, not the tree, is the record. See
+   [`migrations/README.md`](./migrations/README.md).
 3. Deploy the app reading the new field.
 4. Remove the old field in a later pull request.
 
