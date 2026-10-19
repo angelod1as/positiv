@@ -4,6 +4,7 @@ import {
   getEmailTemplates,
   resolveEmailTemplates,
 } from "./email-templates-source.server"
+import { baselineEmailTemplates } from "./email-templates.fixture"
 
 vi.mock("~/lib/logger/logger.server", () => ({ logger: { error: vi.fn() } }))
 
@@ -23,7 +24,7 @@ const paymentLink = {
 
 describe("resolveEmailTemplates", () => {
   it("returns the parsed templates for valid content", () => {
-    expect(resolveEmailTemplates({ paymentLink })?.paymentLink.subject).toBe(
+    expect(resolveEmailTemplates({ ...baselineEmailTemplates, paymentLink })?.paymentLink.subject).toBe(
       "Seu pagamento da {{evento}}",
     )
   })
@@ -36,6 +37,7 @@ describe("resolveEmailTemplates", () => {
   it("degrades to null, never throwing, on invalid content", () => {
     expect(
       resolveEmailTemplates({
+        ...baselineEmailTemplates,
         paymentLink: { ...paymentLink, subject: "Oi {{nome}}" },
       }),
     ).toBeNull()
@@ -44,7 +46,7 @@ describe("resolveEmailTemplates", () => {
 
 describe("getEmailTemplates", () => {
   it("queries the singleton and resolves the response", async () => {
-    const fetch = vi.fn(async () => ({ paymentLink }))
+    const fetch = vi.fn(async () => ({ ...baselineEmailTemplates, paymentLink }))
 
     expect((await getEmailTemplates({ fetch }))?.paymentLink.heading).toBe(
       "Hora de garantir sua vaga",

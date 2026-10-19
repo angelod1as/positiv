@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 
 import { pathsOf } from "../../test/errors"
 import { validateDocumentOf } from "../../test/validate"
+import { applicationMailContent } from "../../../app/copy/emails/application-mail"
 import { emailTemplates as emailTemplatesType } from "./email-templates"
 
 const body = (...texts: { text: string; strong?: boolean }[]) =>
@@ -102,5 +103,65 @@ describe("emailTemplates", () => {
 
   it("titles the preview E-mails", () => {
     expect(emailTemplatesType.preview?.prepare?.()).toEqual({ title: "E-mails" })
+  })
+})
+
+describe("the application email in emailTemplates", () => {
+  const validateApplication = (application: Record<string, unknown>) =>
+    validateDocumentOf("emailTemplates", {
+      paymentLink: valid.paymentLink,
+      application: { ...applicationMailContent, ...application },
+    })
+
+  it("accepts the baseline copy", async () => {
+    expect(await validateApplication({})).toEqual([])
+  })
+
+  it("rejects a variable the subject does not allow", async () => {
+    expect(
+      pathsOf(await validateApplication({ subject: "Oi {{nome}}" })),
+    ).toContain("application.subject")
+  })
+
+  it("rejects an unknown variable in the body", async () => {
+    expect(
+      pathsOf(await validateApplication({ body: body({ text: "{{boleto}}" }) })),
+    ).toContain("application.body")
+  })
+
+  it("rejects any variable in the important heading, lead or notes", async () => {
+    const paths = pathsOf(
+      await validateApplication({
+        importantHeading: "{{nome}}",
+        importantLead: "{{nome}}",
+        notes: body({ text: "{{evento}}" }),
+      }),
+    )
+    expect(paths).toContain("application.importantHeading")
+    expect(paths).toContain("application.importantLead")
+    expect(paths).toContain("application.notes")
+  })
+
+  it("requires every field", async () => {
+    const paths = pathsOf(
+      await validateApplication({
+        subject: undefined,
+        heading: undefined,
+        body: undefined,
+        importantHeading: undefined,
+        importantLead: undefined,
+        notes: undefined,
+      }),
+    )
+    for (const field of [
+      "subject",
+      "heading",
+      "body",
+      "importantHeading",
+      "importantLead",
+      "notes",
+    ]) {
+      expect(paths).toContain(`application.${field}`)
+    }
   })
 })

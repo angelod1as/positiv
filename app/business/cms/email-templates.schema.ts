@@ -3,6 +3,7 @@ import {
   renderInlineBlocks,
   unknownBlockVariables,
 } from "~/business/email/render-inline-portable-text"
+import { APPLICATION_MAIL_VARIABLES } from "~/business/email/application-mail.variables"
 import { PAYMENT_LINK_MAIL_VARIABLES } from "~/business/email/payment-link-mail.variables"
 import { zod } from "~/lib/helpers/zod"
 import { portableTextSchema } from "./content.schema"
@@ -60,7 +61,17 @@ export const paymentLinkEmailSchema = zod.object({
   body: proseSchema("body", PAYMENT_LINK_MAIL_VARIABLES.body),
 })
 
+export const applicationEmailSchema = zod.object({
+  subject: subjectSchema(APPLICATION_MAIL_VARIABLES.subject),
+  heading: lineSchema(APPLICATION_MAIL_VARIABLES.heading),
+  body: proseSchema("body", APPLICATION_MAIL_VARIABLES.body),
+  importantHeading: lineSchema(APPLICATION_MAIL_VARIABLES.importantHeading),
+  importantLead: lineSchema(APPLICATION_MAIL_VARIABLES.importantLead),
+  notes: proseSchema("notes", APPLICATION_MAIL_VARIABLES.notes),
+})
+
 export const emailTemplatesSchema = zod.object({
+  application: applicationEmailSchema,
   paymentLink: paymentLinkEmailSchema,
 })
 

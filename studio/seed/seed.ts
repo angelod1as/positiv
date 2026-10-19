@@ -1,3 +1,4 @@
+import { applicationMailContent } from "../../app/copy/emails/application-mail"
 import { paymentLinkMailContent } from "../../app/copy/emails/payment-link"
 import { codeOfConductToPage } from "./code-of-conduct-page"
 import { HOMEPAGE_PAGE_ID } from "../schemas/documents/page"
@@ -469,6 +470,7 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
     {
       _id: EMAIL_TEMPLATES_ID,
       _type: "emailTemplates",
+      application: applicationMailContent,
       paymentLink: paymentLinkMailContent,
     },
   ]

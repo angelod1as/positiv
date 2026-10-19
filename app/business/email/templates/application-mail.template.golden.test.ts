@@ -7,6 +7,12 @@ import { applicationMailTemplate } from "./application-mail.template"
 vi.mock("~/business/email/send-email", () => ({
   sendEmail: vi.fn(async () => ({ success: true })),
 }))
+vi.mock("~/business/email/application-mail-copy.server", async () => {
+  const { applicationCopyFallback } = await import(
+    "~/business/email/application-mail-copy"
+  )
+  return { loadApplicationCopy: vi.fn(async () => applicationCopyFallback) }
+})
 
 const profile: NonNullable<ProfileWithRoles> = {
   id: "profile-1",

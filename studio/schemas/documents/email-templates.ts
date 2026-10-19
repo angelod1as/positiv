@@ -6,6 +6,7 @@ import {
   type PortableTextBlock,
 } from "sanity"
 
+import { APPLICATION_MAIL_VARIABLES } from "../../../app/business/email/application-mail.variables"
 import { PAYMENT_LINK_MAIL_VARIABLES } from "../../../app/business/email/payment-link-mail.variables"
 import {
   renderInlineBlocks,
@@ -119,6 +120,47 @@ export const emailTemplates = defineType({
   type: "document",
   icon: EnvelopeIcon,
   fields: [
+    defineField({
+      name: "application",
+      title: "E-mail de candidatura recebida",
+      type: "object",
+      description:
+        "O texto editável do e-mail enviado quando a pessoa se candidata a um evento. O layout, os detalhes do evento e o rodapé ficam no código — aqui vai só a redação.",
+      options: { collapsible: true, collapsed: true },
+      fields: [
+        subjectField(APPLICATION_MAIL_VARIABLES.subject, "nome do evento"),
+        headingField,
+        proseField({
+          name: "body",
+          title: "Corpo",
+          description: `Os parágrafos de abertura. Negrito e itálico; sem links. Variáveis: ${tokenList(
+            APPLICATION_MAIL_VARIABLES.body,
+          )} (nome da pessoa, nome do evento).`,
+          empty: "O corpo precisa de pelo menos um parágrafo com texto.",
+          variables: APPLICATION_MAIL_VARIABLES.body,
+        }),
+        lineField({
+          name: "importantHeading",
+          title: "Título dos avisos",
+          description: "O subtítulo da seção de avisos. Sem variáveis.",
+          blank: "O título dos avisos não pode ficar em branco.",
+        }),
+        lineField({
+          name: "importantLead",
+          title: "Introdução dos avisos",
+          description: "A frase antes da lista de avisos. Sem variáveis.",
+          blank: "A introdução dos avisos não pode ficar em branco.",
+        }),
+        proseField({
+          name: "notes",
+          title: "Avisos",
+          description:
+            "A lista de avisos: cada parágrafo vira um item. Negrito e itálico; sem links. Sem variáveis.",
+          empty: "Os avisos precisam de pelo menos um item com texto.",
+          variables: APPLICATION_MAIL_VARIABLES.notes,
+        }),
+      ],
+    }),
     defineField({
       name: "paymentLink",
       title: "E-mail de pagamento",

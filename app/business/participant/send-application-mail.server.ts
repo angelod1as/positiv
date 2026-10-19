@@ -14,11 +14,11 @@ export const sendApplicationMail = async ({
 }: sendApplicationMailProps): Promise<{ emailSent: boolean }> => {
   if (!profile.email) return { emailSent: false }
 
-  const { html, text } = await formatApplicationMail(profile, event)
+  const { html, text, subject } = await formatApplicationMail(profile, event)
 
   const options: MailOptions = {
     to: profile.email,
-    subject: `Recebemos sua candidatura ao evento ${event.emoji} ${event.title}`,
+    subject,
     text: text,
     html: html,
   }

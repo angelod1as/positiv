@@ -5,7 +5,7 @@ import { loadPaymentLinkCopy } from "./payment-link-mail-copy.server"
 
 vi.mock("~/lib/logger/logger.server", () => ({ logger: { error: vi.fn() } }))
 
-const templates: EmailTemplates = {
+const templates: Pick<EmailTemplates, "paymentLink"> = {
   paymentLink: {
     subject: "Assunto {{evento}}",
     heading: "Título",
@@ -26,7 +26,7 @@ const templates: EmailTemplates = {
 
 describe("loadPaymentLinkCopy", () => {
   it("returns the copy the Editor set, serialised to inline HTML", async () => {
-    const copy = await loadPaymentLinkCopy({ get: vi.fn(async () => templates) })
+    const copy = await loadPaymentLinkCopy({ get: vi.fn(async () => templates as EmailTemplates) })
 
     expect(copy.subject).toBe("Assunto {{evento}}")
     expect(copy.heading).toBe("Título")
