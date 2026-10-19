@@ -6,12 +6,9 @@ const applyDraftCacheControl = vi.hoisted(() => vi.fn())
 
 vi.mock("./business/cms/draft-mode.server", () => ({ applyDraftCacheControl }))
 
-vi.mock("~/lib/logger/logger.server", () => ({
+vi.mock("~/lib/logger/logger.server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("~/lib/logger/logger.server")>()),
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
-  serializeError: (error: unknown) =>
-    error instanceof Error
-      ? { message: error.message, stack: error.stack }
-      : { message: String(error) },
 }))
 
 vi.mock("react-dom/server", () => ({
@@ -60,6 +57,9 @@ describe("handleError", () => {
 
   it("ignores an aborted request", () => {
     const error = new Error("client went away")
+    // A real Request rejects a signal from this realm's AbortController
+    // ("Expected signal to be an instance of AbortSignal") under undici here,
+    // and handleError only reads request.signal.aborted, so stub it.
     const request = { signal: { aborted: true } }
 
     handleError(error, { request, params: {}, context: {} } as never)

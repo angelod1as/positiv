@@ -36,12 +36,23 @@ export const logger = winston.createLogger({
   transports,
 })
 
-// A raw Error in winston metadata survives the Telegram transport (it unwraps
-// Errors) but the production console format is winston.format.json(), and
-// JSON.stringify(new Error()) is "{}" — so the stack never reaches the
-// container logs. Flatten to a plain object both transports can serialise.
-export function serializeError(error: unknown) {
-  return error instanceof Error
-    ? { message: error.message, stack: error.stack }
-    : { message: String(error) }
+// winston's production console format is format.json(), and
+// JSON.stringify(new Error()) is "{}" — flatten so the message, stack and
+// cause reach the container logs, not just the Telegram transport.
+export function serializeError(error: unknown): {
+  message: string
+  stack?: string
+  cause?: unknown
+} {
+  if (!(error instanceof Error)) return { message: String(error) }
+  return {
+    message: error.message,
+    stack: error.stack,
+    ...(error.cause !== undefined && {
+      cause:
+        error.cause instanceof Error
+          ? serializeError(error.cause)
+          : error.cause,
+    }),
+  }
 }

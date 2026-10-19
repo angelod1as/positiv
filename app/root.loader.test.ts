@@ -5,12 +5,9 @@ import { siteSettingsSchema } from "./business/cms/site-settings.schema"
 import { siteSettingsDocument } from "./test/site-settings-documents"
 import { loader } from "./root"
 
-vi.mock("~/lib/logger/logger.server", () => ({
+vi.mock("~/lib/logger/logger.server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("~/lib/logger/logger.server")>()),
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
-  serializeError: (error: unknown) =>
-    error instanceof Error
-      ? { message: error.message, stack: error.stack }
-      : { message: String(error) },
 }))
 
 vi.mock("./business/cms/site-snapshot-cache.server", () => ({
