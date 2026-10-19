@@ -40,74 +40,91 @@ export const NextEventsSection: FC<NextEventsSectionProps> = ({
             {content.title}
           </SectionTitle>
 
-          <div className="flex lg:flex-row flex-col gap-8 items-stretch justify-center">
-            {events.map(
-              ({
-                id,
-                time_application_start,
-                event_status,
-                description,
-                emoji,
-                time_event_start,
-                time_event_end,
-                title,
-                is_applied,
-              }) => {
-                const { date, time: startingTime } =
-                  formatDateTime(time_event_start)
-                const { time: endingTime } = formatDateTime(time_event_end)
-                const { date: openDate } = formatDateTime(
-                  time_application_start,
-                )
+          {events.length === 0 ? (
+            <p className="text-muted-foreground md:text-xl text-center">
+              <Copy inline>
+                {content.comingSoon?.trim() || nextEvents.empty}
+              </Copy>
+            </p>
+          ) : (
+            <>
+              <div className="flex lg:flex-row flex-col gap-8 items-stretch justify-center">
+                {events.map(
+                  ({
+                    id,
+                    time_application_start,
+                    event_status,
+                    description,
+                    emoji,
+                    time_event_start,
+                    time_event_end,
+                    title,
+                    is_applied,
+                  }) => {
+                    const { date, time: startingTime } =
+                      formatDateTime(time_event_start)
+                    const { time: endingTime } = formatDateTime(time_event_end)
+                    const { date: openDate } = formatDateTime(
+                      time_application_start,
+                    )
 
-                const isOpen = event_status === "Registration Open"
+                    const isOpen = event_status === "Registration Open"
 
-                return (
-                  <Card
-                    className="flex flex-col text-center flex-1 max-w-md"
-                    key={id}
-                  >
-                    <CardHeader>
-                      <div className="text-6xl mb-4">{emoji}</div>
-                      <CardTitle>{title}</CardTitle>
-                      <CardDescription>
-                        {nextEvents.schedule(
-                          date ?? "",
-                          startingTime ?? "",
-                          endingTime ?? "",
-                        )}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="text-muted-foreground grow gap-4 flex flex-col items-center">
-                      <p>{description}</p>
-                    </CardContent>
-                    <CardFooter className="flex flex-col gap-2">
-                      {isOpen ? (
-                        <p className="text-sm">
-                          <Copy inline>{nextEvents.registrationOpen}</Copy>
-                        </p>
-                      ) : (
-                        <p className="text-sm">
-                          <Copy inline>{nextEvents.registrationOpensOn}</Copy>
-                          <br /> {openDate}
-                        </p>
-                      )}
-                      {is_applied ? (
-                        <Button variant="outline" to={LOGIN}>
-                          {nextEvents.alreadyApplied}
-                        </Button>
-                      ) : (
-                        <Button to={LOGIN}>{nextEvents.apply}</Button>
-                      )}
-                    </CardFooter>
-                  </Card>
-                )
-              },
-            )}
-          </div>
-          <Button to={LOGIN} variant="outline" className="flex items-center">
-            {nextEvents.learnMore} <ArrowRightIcon className="ml-2 h-4 w-4" />
-          </Button>
+                    return (
+                      <Card
+                        className="flex flex-col text-center flex-1 max-w-md"
+                        key={id}
+                      >
+                        <CardHeader>
+                          <div className="text-6xl mb-4">{emoji}</div>
+                          <CardTitle>{title}</CardTitle>
+                          <CardDescription>
+                            {nextEvents.schedule(
+                              date ?? "",
+                              startingTime ?? "",
+                              endingTime ?? "",
+                            )}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="text-muted-foreground grow gap-4 flex flex-col items-center">
+                          <p>{description}</p>
+                        </CardContent>
+                        <CardFooter className="flex flex-col gap-2">
+                          {isOpen ? (
+                            <p className="text-sm">
+                              <Copy inline>{nextEvents.registrationOpen}</Copy>
+                            </p>
+                          ) : (
+                            <p className="text-sm">
+                              <Copy inline>
+                                {nextEvents.registrationOpensOn}
+                              </Copy>
+                              <br /> {openDate}
+                            </p>
+                          )}
+                          {is_applied ? (
+                            <Button variant="outline" to={LOGIN}>
+                              {nextEvents.alreadyApplied}
+                            </Button>
+                          ) : (
+                            <Button to={LOGIN}>{nextEvents.apply}</Button>
+                          )}
+                        </CardFooter>
+                      </Card>
+                    )
+                  },
+                )}
+              </div>
+              <Button
+                to={LOGIN}
+                variant="outline"
+                className="flex items-center"
+              >
+                {nextEvents.learnMore}{" "}
+                <ArrowRightIcon className="ml-2 h-4 w-4" />
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </Section>

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import { homepageCopy } from "~/copy/homepage"
 import { pageFixture } from "~/test/pages-snapshot-fixture"
 import { renderWithRouter, screen, waitFor } from "~/test/test-utils"
 import type { Event } from "~types/database/entities.types"
@@ -57,7 +58,7 @@ describe("PageSections", () => {
     )
 
     await waitFor(() => {
-      expect(screen.queryByText("Próximos eventos")).toBeNull()
+      expect(screen.queryByTestId("homepage-next-events-skeleton")).toBeNull()
     })
     expect(renderedSectionTitles(page)).toEqual(sectionTitles(page))
     expect(
@@ -65,6 +66,42 @@ describe("PageSections", () => {
         name: "Imagem de exemplo do ambiente de desenvolvimento",
       }),
     ).toBeInTheDocument()
+  })
+
+  it("shows the coming-soon notice when no events are open", async () => {
+    const page = await pageFixture("/")
+
+    renderWithRouter(
+      <PageSections
+        sections={page.sections}
+        events={Promise.resolve([])}
+        isLoggedIn={false}
+      />,
+    )
+
+    expect(
+      await screen.findByText(homepageCopy.nextEvents.empty),
+    ).toBeInTheDocument()
+  })
+
+  it("hides the Next Events Section when the events fail to load", async () => {
+    const page = await pageFixture("/")
+
+    renderWithRouter(
+      <PageSections
+        sections={page.sections}
+        events={Promise.resolve(undefined)}
+        isLoggedIn={false}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("homepage-next-events-skeleton")).toBeNull()
+    })
+    expect(screen.queryByText(homepageCopy.nextEvents.empty)).toBeNull()
+    expect(
+      screen.queryByRole("heading", { level: 2, name: "Próximos eventos" }),
+    ).toBeNull()
   })
 
   it("streams the Next Events into their Section", async () => {

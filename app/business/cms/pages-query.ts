@@ -12,7 +12,7 @@ export const pagesQuery = `*[_type == "page"]{
   sections[]{
     _type,
     _key,
-    _type == "nextEvents" => { title, subtitle, count },
+    _type == "nextEvents" => { title, subtitle, count, comingSoon },
     _type == "about" => { title, cards[]{ _key, title, body } },
     _type == "testimonials" => {
       title,

@@ -29,6 +29,7 @@
       {
         "_key": "next-events",
         "_type": "nextEvents",
+        "comingSoon": null,
         "count": 3,
         "subtitle": "Confira nossos próximos encontros.",
         "title": "Próximos eventos"
@@ -1056,6 +1057,7 @@
       {
         "_key": "next-events",
         "_type": "nextEvents",
+        "comingSoon": null,
         "count": 3,
         "subtitle": "Confira nossos próximos encontros.",
         "title": "Próximos eventos"

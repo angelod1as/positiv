@@ -8,6 +8,7 @@ const fieldLabels = {
   people: "as pessoas",
   image: "a imagem",
   count: "a quantidade",
+  comingSoon: "o aviso de novos eventos",
   videoUrl: "o link do vídeo",
   videoTitle: "o título do vídeo",
   ctaLabel: "o texto do botão",

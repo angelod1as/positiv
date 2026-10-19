@@ -34,7 +34,7 @@ export const PageSections = ({
           >
             <Await resolve={events}>
               {(resolvedEvents) =>
-                resolvedEvents && resolvedEvents.length > 0 ? (
+                resolvedEvents ? (
                   <NextEventsSection
                     content={section}
                     events={resolvedEvents}

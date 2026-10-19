@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
   longPortableTextSchema,
   portableTextSchema,
+  sectionsFields,
 } from "./content.schema"
 
 type Span = { text: string; marks?: string[] }
@@ -137,6 +138,24 @@ describe("portableTextSchema", () => {
     ])
 
     expect(result.success).toBe(false)
+  })
+})
+
+describe("the nextEvents section contract", () => {
+  const base = {
+    title: "Próximos eventos",
+    subtitle: "Confira nossos próximos encontros.",
+    count: 3,
+  }
+
+  it("keeps the coming-soon notice the Editor wrote", () => {
+    const value = { ...base, comingSoon: "Novos eventos em breve." }
+
+    expect(sectionsFields.nextEvents.parse(value)).toEqual(value)
+  })
+
+  it("accepts a section without a coming-soon notice", () => {
+    expect(sectionsFields.nextEvents.parse(base)).toEqual(base)
   })
 })
 
