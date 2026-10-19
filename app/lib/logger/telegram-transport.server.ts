@@ -12,6 +12,24 @@ function escapeHtml(text: string): string {
     .replace(/>/g, "&gt;")
 }
 
+const MAX_MESSAGE_LENGTH = 4096
+const ELLIPSIS = "..."
+
+// Cut between whole characters, never inside an entity, so the result is
+// always valid inside the HTML around it.
+function escapeHtmlWithin(text: string, max: number): string {
+  const escaped = escapeHtml(text)
+  if (escaped.length <= max) return escaped
+  if (max < ELLIPSIS.length) return ""
+  let result = ""
+  for (const char of text) {
+    const piece = escapeHtml(char)
+    if (result.length + piece.length > max - ELLIPSIS.length) break
+    result += piece
+  }
+  return result + ELLIPSIS
+}
+
 // Log metadata can hold a circular object (an axios error, say), and this runs
 // on the error path, which must not throw — so drop circular references.
 function safeStringify(value: unknown): string {
@@ -72,8 +90,8 @@ export class TelegramTransport extends TransportStream {
     this.tokens--
 
     const level = escapeHtml(info.level).toUpperCase()
-    const message = escapeHtml(String(info.message))
-    let text = `<b>[${level}]</b>\n${message}`
+    const head = `<b>[${level}]</b>\n`
+    let anchors = ""
 
     // Telegram does not link a URL inside <pre>, so links go above it as
     // anchors: an alert is read on a phone, and copying a URL out of a code
@@ -83,7 +101,7 @@ export class TelegramTransport extends TransportStream {
       for (const [label, href] of Object.entries(links)) {
         if (typeof href !== "string") continue
         const attribute = escapeHtml(href).replace(/"/g, "&quot;")
-        text += `\n<a href="${attribute}">${escapeHtml(label)}</a>`
+        anchors += `\n<a href="${attribute}">${escapeHtml(label)}</a>`
       }
     }
 
@@ -99,14 +117,28 @@ export class TelegramTransport extends TransportStream {
       }
     }
 
+    // Telegram rejects the whole message when its HTML does not parse, so the
+    // content is cut before the tags go around it: metadata first, then the
+    // message, and never the anchors.
+    const rawMessage = String(info.message)
+    const preTags = "\n<pre></pre>"
+    let pre = ""
     if (Object.keys(metadata).length > 0) {
-      const serialized = escapeHtml(safeStringify(metadata))
-      text += `\n<pre>${serialized}</pre>`
+      const budget =
+        MAX_MESSAGE_LENGTH -
+        head.length -
+        anchors.length -
+        preTags.length -
+        escapeHtml(rawMessage).length
+      const serialized = escapeHtmlWithin(safeStringify(metadata), budget)
+      if (serialized.length > 0) pre = `\n<pre>${serialized}</pre>`
     }
 
-    if (text.length > 4096) {
-      text = text.slice(0, 4093) + "..."
-    }
+    const message = escapeHtmlWithin(
+      rawMessage,
+      MAX_MESSAGE_LENGTH - head.length - anchors.length - pre.length,
+    )
+    const text = `${head}${message}${anchors}${pre}`
 
     const url = `https://api.telegram.org/bot${this.botToken}/sendMessage`
     const body = JSON.stringify({
