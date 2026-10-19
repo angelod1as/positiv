@@ -10,6 +10,7 @@ import { APPLICATION_MAIL_VARIABLES } from "../../../app/business/email/applicat
 import { PAYMENT_CONFIRMED_MAIL_VARIABLES } from "../../../app/business/email/payment-confirmed-mail.variables"
 import { PAYMENT_LINK_MAIL_VARIABLES } from "../../../app/business/email/payment-link-mail.variables"
 import { PAYMENT_REFUND_MAIL_VARIABLES } from "../../../app/business/email/payment-refund-mail.variables"
+import { REGISTRATION_LIMIT_ADMIN_MAIL_VARIABLES } from "../../../app/business/email/registration-limit-admin-mail.variables"
 import {
   renderInlineBlocks,
   unknownBlockVariables,
@@ -241,6 +242,39 @@ export const emailTemplates = defineType({
           variables: PAYMENT_REFUND_MAIL_VARIABLES.body,
         }),
         ctaField,
+      ],
+    }),
+    defineField({
+      name: "registrationLimit",
+      title: "E-mail de limite de candidaturas (para admins)",
+      type: "object",
+      description:
+        "O texto editável do e-mail enviado aos admins quando um evento atinge o limite de candidaturas. O layout, os detalhes do evento e o rodapé ficam no código — aqui vai só a redação.",
+      options: { collapsible: true, collapsed: true },
+      fields: [
+        subjectField(
+          REGISTRATION_LIMIT_ADMIN_MAIL_VARIABLES.subject,
+          "nome do evento",
+        ),
+        headingField,
+        proseField({
+          name: "body",
+          title: "Corpo",
+          description: `Os parágrafos de abertura. Negrito e itálico; sem links. Variáveis: ${tokenList(
+            REGISTRATION_LIMIT_ADMIN_MAIL_VARIABLES.body,
+          )} (nome do evento, número de participantes).`,
+          empty: "O corpo precisa de pelo menos um parágrafo com texto.",
+          variables: REGISTRATION_LIMIT_ADMIN_MAIL_VARIABLES.body,
+        }),
+        ctaField,
+        proseField({
+          name: "closing",
+          title: "Encerramento",
+          description:
+            "Os parágrafos depois do botão. Negrito e itálico; sem links. Sem variáveis.",
+          empty: "O encerramento precisa de pelo menos um parágrafo com texto.",
+          variables: REGISTRATION_LIMIT_ADMIN_MAIL_VARIABLES.closing,
+        }),
       ],
     }),
   ],

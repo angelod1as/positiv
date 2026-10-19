@@ -1,7 +1,21 @@
-import { describe, expect, it } from "vitest"
-import { registrationLimitAdminCopy } from "~/copy/emails/registration-limit-admin"
+import { describe, expect, it, vi } from "vitest"
+import { formatRegistrationLimitAdminMail } from "~/business/email/format-registration-limit-admin-mail"
 import type { Event } from "~types/database/entities.types"
 import { registrationLimitReachedAdminTemplate } from "./registration-limit-reached-admin.template"
+
+vi.mock("~/business/email/registration-limit-admin-mail-copy.server", async () => {
+  const { registrationLimitAdminCopyFallback } = await import(
+    "~/business/email/registration-limit-admin-mail-copy"
+  )
+  return {
+    loadRegistrationLimitAdminCopy: vi.fn(
+      async () => registrationLimitAdminCopyFallback,
+    ),
+  }
+})
+
+const subjectFor = async (event: Event) =>
+  (await formatRegistrationLimitAdminMail(event, 90, timestamp)).subject
 
 const event: Event = {
   id: "123e4567-e89b-12d3-a456-426614174000",
@@ -38,14 +52,14 @@ describe("registration-limit email byte-for-byte", () => {
     ).toMatchSnapshot()
   })
 
-  it("keeps the frozen subject", () => {
-    expect(registrationLimitAdminCopy.subject(event.emoji, event.title)).toBe(
+  it("keeps the frozen subject", async () => {
+    expect(await subjectFor(event)).toBe(
       "📊 Evento atingiu limite de candidaturas - 🌸 Festa de Primavera",
     )
   })
 
-  it("keeps the frozen subject for an event without an emoji", () => {
-    expect(registrationLimitAdminCopy.subject(null, event.title)).toBe(
+  it("keeps the frozen subject for an event without an emoji", async () => {
+    expect(await subjectFor({ ...event, emoji: null })).toBe(
       "📊 Evento atingiu limite de candidaturas - null Festa de Primavera",
     )
   })

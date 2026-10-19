@@ -2,6 +2,7 @@ import { applicationMailContent } from "../../app/copy/emails/application-mail"
 import { paymentConfirmedMailContent } from "../../app/copy/emails/payment-confirmed"
 import { paymentLinkMailContent } from "../../app/copy/emails/payment-link"
 import { paymentRefundMailContent } from "../../app/copy/emails/payment-refund"
+import { registrationLimitAdminMailContent } from "../../app/copy/emails/registration-limit-admin"
 import { codeOfConductToPage } from "./code-of-conduct-page"
 import { HOMEPAGE_PAGE_ID } from "../schemas/documents/page"
 import {
@@ -476,6 +477,7 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
       paymentConfirmed: paymentConfirmedMailContent,
       paymentLink: paymentLinkMailContent,
       paymentRefund: paymentRefundMailContent,
+      registrationLimit: registrationLimitAdminMailContent,
     },
   ]
 }

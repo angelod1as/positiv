@@ -1,6 +1,13 @@
+import { renderTemplate } from "~/business/cms/placeholders"
+import {
+  type RegistrationLimitAdminCopy,
+  registrationLimitAdminCopyFallback,
+} from "~/business/email/registration-limit-admin-mail-copy"
+import { REGISTRATION_LIMIT_ADMIN_MAIL_VARIABLES } from "~/business/email/registration-limit-admin-mail.variables"
 import { registrationLimitAdminCopy } from "~/copy/emails/registration-limit-admin"
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
+import { escapeHtml } from "~/lib/helpers/escape-html"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import type { Event } from "~types/database/entities.types"
 
@@ -14,6 +21,7 @@ export const registrationLimitReachedAdminTemplate = (
   event: Event,
   participantCount: number,
   timestamp: Date,
+  copy: RegistrationLimitAdminCopy = registrationLimitAdminCopyFallback,
 ): string => {
   const { date, time } = formatDateTime(timestamp.toISOString())
   const sanitizedEmoji = sanitizeHtml(event.emoji || "")
@@ -23,6 +31,29 @@ export const registrationLimitReachedAdminTemplate = (
     .join(" ")
 
   const eventParticipantsUrl = `${POSITIV_URL}admin/events/${event.id}/participants`
+
+  // The Editor owns the wording; the Platform fills the values. Both are
+  // computed exactly as before the copy moved, so the email renders identically.
+  const bodyValues = {
+    evento: `${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}`,
+    participantes: String(participantCount),
+  }
+  const heading = escapeHtml(
+    renderTemplate(copy.heading, {}, REGISTRATION_LIMIT_ADMIN_MAIL_VARIABLES.heading),
+  )
+  const cta = escapeHtml(
+    renderTemplate(copy.cta, {}, REGISTRATION_LIMIT_ADMIN_MAIL_VARIABLES.cta),
+  )
+  const bodyParagraphs = copy.bodyParagraphs.map((paragraph) =>
+    renderTemplate(
+      paragraph,
+      bodyValues,
+      REGISTRATION_LIMIT_ADMIN_MAIL_VARIABLES.body,
+    ),
+  )
+  const closingParagraphs = copy.closingParagraphs.map((paragraph) =>
+    renderTemplate(paragraph, {}, REGISTRATION_LIMIT_ADMIN_MAIL_VARIABLES.closing),
+  )
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -53,13 +84,17 @@ export const registrationLimitReachedAdminTemplate = (
 
               <!-- H1 -->
               <h1 style="font-family: 'DM Sans', Arial, sans-serif; font-size: 32px; font-weight: 800; color: #bf03c3; margin: 0 0 16px 0; line-height: 1.2; text-align: center;">
-                ${registrationLimitAdminCopy.heading}
+                ${heading}
               </h1>
 
               <!-- Intro Paragraph -->
-              <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-                ${registrationLimitAdminCopy.intro(`${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}`, participantCount)}
-              </p>
+              ${bodyParagraphs
+                .map(
+                  (paragraph) => `<p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
+                ${paragraph}
+              </p>`,
+                )
+                .join("\n\n              ")}
 
               <!-- Event Details Section -->
               <div style="background-color: #f9f9f9; border-radius: 8px; padding: 16px; margin: 0 0 20px 0;">
@@ -84,14 +119,18 @@ export const registrationLimitReachedAdminTemplate = (
               <!-- CTA Button -->
               <div style="text-align: center; margin: 30px 0;">
                 <a href="${eventParticipantsUrl}" style="display: inline-block; background-color: #853cca; background-image: linear-gradient(135deg, #4a75d2 0%, #bf03c3 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-family: 'DM Sans', Arial, sans-serif; font-size: 16px; font-weight: 700; box-shadow: 0 4px 12px rgba(191, 3, 195, 0.3);">
-                  ${registrationLimitAdminCopy.cta}
+                  ${cta}
                 </a>
               </div>
 
               <!-- Info Section -->
-              <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0; color: #666; text-align: center;">
-                ${registrationLimitAdminCopy.automaticNotice}
-              </p>
+              ${closingParagraphs
+                .map(
+                  (paragraph) => `<p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0; color: #666; text-align: center;">
+                ${paragraph}
+              </p>`,
+                )
+                .join("\n\n              ")}
 
             </div>
 

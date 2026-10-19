@@ -1,6 +1,19 @@
-import { describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { formatRegistrationLimitAdminMail } from "./format-registration-limit-admin-mail"
+import { registrationLimitAdminCopyFallback } from "./registration-limit-admin-mail-copy"
+import { loadRegistrationLimitAdminCopy } from "./registration-limit-admin-mail-copy.server"
 import type { Event } from "~types/database/entities.types"
+
+vi.mock("~/lib/logger/logger.server", () => ({ logger: { error: vi.fn() } }))
+vi.mock("./registration-limit-admin-mail-copy.server", () => ({
+  loadRegistrationLimitAdminCopy: vi.fn(),
+}))
+
+beforeEach(() => {
+  vi.mocked(loadRegistrationLimitAdminCopy).mockResolvedValue(
+    registrationLimitAdminCopyFallback,
+  )
+})
 
 describe("formatRegistrationLimitAdminMail", () => {
     const mockEvent: Event = {
@@ -75,5 +88,54 @@ describe("formatRegistrationLimitAdminMail", () => {
     )
 
     expect(result.text).toContain(mockEvent.id)
+  })
+
+  describe("with copy from the CMS", () => {
+    beforeEach(() => {
+      vi.mocked(loadRegistrationLimitAdminCopy).mockResolvedValue({
+        ...registrationLimitAdminCopyFallback,
+        subject: "Lotou: {{evento}}",
+        bodyParagraphs: ["{{participantes}} pessoas na {{evento}}."],
+      })
+    })
+
+    it("builds a plain subject from the copy, keeping the raw emoji and title", async () => {
+      const { subject } = await formatRegistrationLimitAdminMail(
+        { ...mockEvent, title: "Jazz & Blues" },
+        participantCount,
+        timestamp,
+      )
+
+      expect(subject).toBe("Lotou: 🎉 Jazz & Blues")
+    })
+
+    it("renders the html body from the copy", async () => {
+      const { html } = await formatRegistrationLimitAdminMail(
+        mockEvent,
+        participantCount,
+        timestamp,
+      )
+
+      expect(html).toContain("90 pessoas na 🎉&nbsp;Test Event.")
+    })
+
+    it("falls back to the code copy when the CMS copy fails to render", async () => {
+      vi.mocked(loadRegistrationLimitAdminCopy).mockResolvedValueOnce({
+        ...registrationLimitAdminCopyFallback,
+        bodyParagraphs: ["{{boleto}}"],
+      })
+
+      const { html, subject } = await formatRegistrationLimitAdminMail(
+        mockEvent,
+        participantCount,
+        timestamp,
+      )
+
+      expect(html).toContain("as candidaturas foram fechadas automaticamente")
+      expect(html).not.toContain("boleto")
+      expect(subject).toBe(
+        "📊 Evento atingiu limite de candidaturas - 🎉 Test Event",
+      )
+    })
   })
 })

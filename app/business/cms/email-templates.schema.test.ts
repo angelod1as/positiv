@@ -284,3 +284,31 @@ describe("the payment-refund email in emailTemplatesSchema", () => {
     expect(parse({ cta: "" })).toBe(false)
   })
 })
+
+describe("the registration-limit email in emailTemplatesSchema", () => {
+  const parse = (registrationLimit: Record<string, unknown>) =>
+    emailTemplatesSchema.safeParse({
+      ...baselineEmailTemplates,
+      registrationLimit: {
+        ...baselineEmailTemplates.registrationLimit,
+        ...registrationLimit,
+      },
+    }).success
+
+  it("accepts the baseline copy", () => {
+    expect(parse({})).toBe(true)
+  })
+
+  it("rejects a variable the subject does not allow", () => {
+    expect(parse({ subject: "{{participantes}}" })).toBe(false)
+  })
+
+  it("rejects a variable the body does not allow", () => {
+    expect(parse({ body: body({ text: "{{nome}}" }) })).toBe(false)
+  })
+
+  it("rejects any variable in the button or closing", () => {
+    expect(parse({ cta: "{{evento}}" })).toBe(false)
+    expect(parse({ closing: body({ text: "{{evento}}" }) })).toBe(false)
+  })
+})
