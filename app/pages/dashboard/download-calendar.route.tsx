@@ -31,7 +31,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     logger.warn("Event is missing the fields a calendar needs", {
       eventId: params.eventId,
     })
-    return
+    throw await redirectWithError(DASHBOARD, dashboardCopy.calendarFailed)
   }
 
   return new Response(calendar.toString(), {

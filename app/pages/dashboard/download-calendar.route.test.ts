@@ -1,6 +1,9 @@
+import { redirectWithError } from "remix-toast"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { getContext } from "~/business/auth/auth.server"
 import { formatCalendarEvent } from "~/business/participant/format-calendar-event.server"
+import { dashboardCopy } from "~/copy/dashboard"
+import paths from "~/lib/paths"
 import { loader } from "./download-calendar.route"
 
 const { logger } = vi.hoisted(() => ({
@@ -8,6 +11,13 @@ const { logger } = vi.hoisted(() => ({
 }))
 
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
+
+vi.mock("remix-toast", () => ({
+  redirectWithError: vi.fn(
+    (path: string) =>
+      new Response(null, { status: 302, headers: { Location: path } }),
+  ),
+}))
 
 vi.mock("~/business/auth/auth.server", () => ({
   getContext: vi.fn(),
@@ -39,11 +49,24 @@ describe("download calendar loader", () => {
   it("logs which event could not be turned into a calendar", async () => {
     vi.mocked(formatCalendarEvent).mockResolvedValue(undefined)
 
-    await runLoader()
+    await expect(runLoader()).rejects.toBeInstanceOf(Response)
 
     expect(logger.warn).toHaveBeenCalledWith(
       "Event is missing the fields a calendar needs",
       { eventId: "event-1" },
+    )
+  })
+
+  it("redirects to the dashboard with a toast when the calendar cannot be built", async () => {
+    vi.mocked(formatCalendarEvent).mockResolvedValue(undefined)
+
+    await expect(runLoader()).rejects.toSatisfy(
+      (response: Response) =>
+        response.headers.get("Location") === paths.dash.DASHBOARD,
+    )
+    expect(redirectWithError).toHaveBeenCalledWith(
+      paths.dash.DASHBOARD,
+      dashboardCopy.calendarFailed,
     )
   })
 })
