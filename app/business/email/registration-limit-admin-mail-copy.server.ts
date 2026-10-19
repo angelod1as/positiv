@@ -1,15 +1,13 @@
 import type { EmailTemplates } from "~/business/cms/email-templates.schema"
-import { loadEmailCopy } from "./email-copy.server"
+import { type EmailTemplatesCache, loadEmailCopy } from "./email-copy.server"
 import {
   type RegistrationLimitAdminCopy,
   registrationLimitAdminCopyFallback,
 } from "./registration-limit-admin-mail-copy"
 import { renderInlineBlocks } from "./render-inline-portable-text"
 
-type EmailTemplatesCache = { get(): Promise<EmailTemplates | null> }
-
-function toCopy(templates: EmailTemplates): RegistrationLimitAdminCopy {
-  const { subject, heading, body, cta, closing } = templates.registrationLimit
+function toCopy(content: EmailTemplates["registrationLimit"]): RegistrationLimitAdminCopy {
+  const { subject, heading, body, cta, closing } = content
   return {
     subject,
     heading,
@@ -24,6 +22,7 @@ export function loadRegistrationLimitAdminCopy(
 ): Promise<RegistrationLimitAdminCopy> {
   return loadEmailCopy(
     "registration limit",
+    "registrationLimit",
     toCopy,
     registrationLimitAdminCopyFallback,
     cache,

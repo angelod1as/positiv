@@ -1,15 +1,13 @@
 import type { EmailTemplates } from "~/business/cms/email-templates.schema"
-import { loadEmailCopy } from "./email-copy.server"
+import { type EmailTemplatesCache, loadEmailCopy } from "./email-copy.server"
 import {
   type PaymentConfirmedCopy,
   paymentConfirmedCopyFallback,
 } from "./payment-confirmed-mail-copy"
 import { renderInlineBlocks } from "./render-inline-portable-text"
 
-type EmailTemplatesCache = { get(): Promise<EmailTemplates | null> }
-
-function toCopy(templates: EmailTemplates): PaymentConfirmedCopy {
-  const { subject, heading, body, cta, closing } = templates.paymentConfirmed
+function toCopy(content: EmailTemplates["paymentConfirmed"]): PaymentConfirmedCopy {
+  const { subject, heading, body, cta, closing } = content
   return {
     subject,
     heading,
@@ -24,6 +22,7 @@ export function loadPaymentConfirmedCopy(
 ): Promise<PaymentConfirmedCopy> {
   return loadEmailCopy(
     "payment confirmed",
+    "paymentConfirmed",
     toCopy,
     paymentConfirmedCopyFallback,
     cache,

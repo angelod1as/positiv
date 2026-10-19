@@ -1,16 +1,21 @@
 import { emailTemplatesCache } from "~/business/cms/email-templates-cache.server"
 import type { EmailTemplates } from "~/business/cms/email-templates.schema"
+import type { ResolvedEmailTemplates } from "~/business/cms/email-templates-source.server"
 import { logger } from "~/lib/logger/logger.server"
 
 export const EMAIL_COPY_TIMEOUT_MS = 2_000
 
-type EmailTemplatesCache = { get(): Promise<EmailTemplates | null> }
+export type EmailTemplatesCache = {
+  get(): Promise<ResolvedEmailTemplates | null>
+}
 
 // An email's copy from the E-mails singleton, or its code fallback when the
-// singleton is missing, Sanity fails, or it answers too slowly to hold a send.
-export async function loadEmailCopy<Copy>(
+// email is missing or invalid, Sanity fails, or it answers too slowly to hold
+// a send.
+export async function loadEmailCopy<Key extends keyof EmailTemplates, Copy>(
   name: string,
-  pick: (templates: EmailTemplates) => Copy,
+  key: Key,
+  toCopy: (content: EmailTemplates[Key]) => Copy,
   fallback: Copy,
   cache: EmailTemplatesCache = emailTemplatesCache,
 ): Promise<Copy> {
@@ -24,7 +29,8 @@ export async function loadEmailCopy<Copy>(
 
   try {
     const templates = await Promise.race([cache.get(), timeout])
-    return templates ? pick(templates) : fallback
+    const content: EmailTemplates[Key] | undefined = templates?.[key]
+    return content ? toCopy(content) : fallback
   } catch (error) {
     logger.error(`Could not load the ${name} email copy, using the default`, {
       error: error instanceof Error ? error.message : String(error),

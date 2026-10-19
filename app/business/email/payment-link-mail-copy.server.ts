@@ -1,20 +1,18 @@
 import type { EmailTemplates } from "~/business/cms/email-templates.schema"
-import { loadEmailCopy } from "./email-copy.server"
+import { type EmailTemplatesCache, loadEmailCopy } from "./email-copy.server"
 import {
   type PaymentLinkCopy,
   paymentLinkCopyFallback,
 } from "./payment-link-mail-copy"
 import { renderInlineBlocks } from "./render-inline-portable-text"
 
-type EmailTemplatesCache = { get(): Promise<EmailTemplates | null> }
-
-function toCopy(templates: EmailTemplates): PaymentLinkCopy {
-  const { subject, heading, body } = templates.paymentLink
+function toCopy(content: EmailTemplates["paymentLink"]): PaymentLinkCopy {
+  const { subject, heading, body } = content
   return { subject, heading, bodyParagraphs: renderInlineBlocks(body) }
 }
 
 export function loadPaymentLinkCopy(
   cache?: EmailTemplatesCache,
 ): Promise<PaymentLinkCopy> {
-  return loadEmailCopy("payment link", toCopy, paymentLinkCopyFallback, cache)
+  return loadEmailCopy("payment link", "paymentLink", toCopy, paymentLinkCopyFallback, cache)
 }
