@@ -256,7 +256,7 @@ testable once the code is there.
 
 ## Mandatory Workflow
 
-Two of these steps are gates: work does not continue past them without an
+One of these steps is a gate: work does not continue past it without an
 explicit yes.
 
 1. Fetch and fast-forward `wt/main`
@@ -266,7 +266,10 @@ explicit yes.
 5. **Wait for approval.** Do not start implementing without it.
 6. Implement following TDD (red-green-refactor)
 7. Run all tests and lint
-8. **Ask before opening the PR.** Never open one unprompted.
+8. **Open the PR as soon as the work is done** — not a gate, a duty. Once the
+   code is written and local tests and lint are green, open it without asking.
+   The PR runs an idempotent E2E suite in CI, more reliable than the local run,
+   so opening the PR is how the work gets its trustworthy check.
 
 ## Definition of Done
 

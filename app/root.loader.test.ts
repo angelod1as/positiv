@@ -1,8 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
+import { logger } from "~/lib/logger/logger.server"
 import { siteSettingsSchema } from "./business/cms/site-settings.schema"
 import { siteSettingsDocument } from "./test/site-settings-documents"
 import { loader } from "./root"
+
+vi.mock("~/lib/logger/logger.server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("~/lib/logger/logger.server")>()),
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+}))
 
 vi.mock("./business/cms/site-snapshot-cache.server", () => ({
   siteSnapshotCache: { get: vi.fn() },
@@ -160,6 +166,26 @@ describe("root loader", () => {
     expect(setCookies).toContain(
       "sb-access-token=new-token; Path=/; HttpOnly",
     )
+  })
+
+  it("routes a loader failure through the logger", async () => {
+    const { siteSnapshotCache } = await import(
+      "./business/cms/site-snapshot-cache.server"
+    )
+    vi.mocked(siteSnapshotCache.get).mockResolvedValue({
+      pages: new Map(),
+      siteSettings: null,
+      paymentMessages: null,
+    })
+    const error = new Error("Supabase is down")
+    mockGetContext.mockRejectedValue(error)
+
+    const request = new Request("http://localhost:5173/")
+    await loader({ request, params: {} } as never)
+
+    expect(logger.error).toHaveBeenCalledWith("Root loader error", {
+      error: { message: "Supabase is down", stack: expect.any(String) },
+    })
   })
 
   describe("draft mode", () => {

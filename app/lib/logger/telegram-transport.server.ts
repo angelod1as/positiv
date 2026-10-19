@@ -12,6 +12,23 @@ function escapeHtml(text: string): string {
     .replace(/>/g, "&gt;")
 }
 
+// Log metadata can hold a circular object (an axios error, say), and this runs
+// on the error path, which must not throw — so drop circular references.
+function safeStringify(value: unknown): string {
+  const seen = new WeakSet<object>()
+  return JSON.stringify(
+    value,
+    (_key, val) => {
+      if (typeof val === "object" && val !== null) {
+        if (seen.has(val)) return "[Circular]"
+        seen.add(val)
+      }
+      return val
+    },
+    2,
+  )
+}
+
 export class TelegramTransport extends TransportStream {
   private botToken: string
   private chatId: string
@@ -71,7 +88,7 @@ export class TelegramTransport extends TransportStream {
     }
 
     if (Object.keys(metadata).length > 0) {
-      const serialized = escapeHtml(JSON.stringify(metadata, null, 2))
+      const serialized = escapeHtml(safeStringify(metadata))
       text += `\n<pre>${serialized}</pre>`
     }
 

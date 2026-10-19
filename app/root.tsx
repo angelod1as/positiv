@@ -17,7 +17,7 @@ import { ENV } from "varlock/env"
 import { isValidCpf } from "~/lib/helpers/cpf"
 import { isValidPhone } from "~/lib/helpers/phone"
 import { useMarkHydrated } from "~/lib/hooks/use-mark-hydrated"
-import { logger } from "~/lib/logger/logger.server"
+import { logger, serializeError } from "~/lib/logger/logger.server"
 import { Copy } from "~/components/atoms/copy/copy"
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import { TooltipProvider } from "~/components/ui/tooltip"
@@ -232,7 +232,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       { headers },
     )
   } catch (error) {
-    console.error("Root loader error", error)
+    logger.error("Root loader error", { error: serializeError(error) })
     const draft = await draftQuery
     return {
       currentUser: null,
@@ -476,7 +476,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  console.error("ERROR BOUNDARY", error)
+  if (typeof document !== "undefined") console.error("ERROR BOUNDARY", error)
   let message: string = errorsCopy.boundary.title
   let details = <Copy>{errorsCopy.boundary.details(POSITIV_EMAIL)}</Copy>
   let stack: string | undefined
