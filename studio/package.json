@@ -13,6 +13,7 @@
     "test": "vitest --run",
     "seed": "sanity exec seed/cli.ts --with-user-token",
     "fixtures": "tsx fixtures/cli.ts",
+    "migrate:remaining-email-copy": "sanity exec migrations/remaining-email-copy/cli.ts --with-user-token --",
     "refresh-dev": "sanity exec refresh-dev/cli.ts --with-user-token --"
   },
   "dependencies": {
