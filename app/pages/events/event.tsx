@@ -1,6 +1,6 @@
 import { redirect } from "react-router"
 import { getUserContext } from "~/business/auth/auth.server"
-import { kyselyDb } from "~/kysely-db"
+import { findVisibleEvent } from "~/business/event/find-visible-event.server"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/event"
 
@@ -16,12 +16,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   await getUserContext(request, params)
 
-  const event = await kyselyDb
-    .selectFrom("events")
-    .select("id")
-    .where("id", "=", params.id)
-    .where("event_status", "!=", "Draft")
-    .executeTakeFirst()
+  const event = await findVisibleEvent(params.id)
 
   if (!event) return redirect(DASHBOARD)
 

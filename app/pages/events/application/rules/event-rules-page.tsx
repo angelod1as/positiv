@@ -35,7 +35,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card"
-import { kyselyDb } from "~/kysely-db"
+import { findVisibleEvent } from "~/business/event/find-visible-event.server"
 import paths from "~/lib/paths"
 import type { FCC } from "~types/utils/utils.types"
 import type { Route } from "./+types/event-rules-page"
@@ -53,12 +53,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   const { currentProfile } = await getUserContext(request, params)
 
-  const event = await kyselyDb
-    .selectFrom("events")
-    .select("id")
-    .where("id", "=", params.id)
-    .where("event_status", "!=", "Draft")
-    .executeTakeFirst()
+  const event = await findVisibleEvent(params.id)
 
   if (!event) return redirect(DASHBOARD)
 

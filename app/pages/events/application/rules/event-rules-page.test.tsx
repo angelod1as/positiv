@@ -8,10 +8,8 @@ vi.mock("~/business/auth/auth.server", () => ({
   getUserContext: vi.fn(),
 }))
 
-vi.mock("~/kysely-db", () => ({
-  kyselyDb: {
-    selectFrom: vi.fn(),
-  },
+vi.mock("~/business/event/find-visible-event.server", () => ({
+  findVisibleEvent: vi.fn(),
 }))
 
 vi.mock("~/business/participant/is-veteran.server", () => ({
@@ -32,28 +30,16 @@ vi.mock("react-router", async (importOriginal) => {
 })
 
 import { getUserContext } from "~/business/auth/auth.server"
+import { findVisibleEvent } from "~/business/event/find-visible-event.server"
 import { isVeteran } from "~/business/participant/is-veteran.server"
-import { kyselyDb } from "~/kysely-db"
 
 const mockGetUserContext = vi.mocked(getUserContext)
+const mockFindVisibleEvent = vi.mocked(findVisibleEvent)
 const mockIsVeteran = vi.mocked(isVeteran)
-const mockKysely = vi.mocked(kyselyDb)
 const mockRedirect = vi.mocked(redirect)
 
-let selectMock: ReturnType<typeof vi.fn>
-let whereMock: ReturnType<typeof vi.fn>
-
-const eventLookupReturns = (event: { id: string } | null) => {
-  const chain: {
-    where: ReturnType<typeof vi.fn>
-    executeTakeFirst: ReturnType<typeof vi.fn>
-  } = {
-    where: vi.fn(() => chain),
-    executeTakeFirst: vi.fn().mockResolvedValue(event),
-  }
-  whereMock = chain.where
-  selectMock = vi.fn().mockReturnValue(chain)
-  mockKysely.selectFrom = vi.fn().mockReturnValue({ select: selectMock })
+const eventLookupReturns = (event: { id: string } | undefined) => {
+  mockFindVisibleEvent.mockResolvedValue(event)
 }
 
 const eventExists = () => eventLookupReturns({ id: "123" })
@@ -84,7 +70,7 @@ describe("event-rules-page loader", () => {
   })
 
   it("should redirect to dashboard if event not found", async () => {
-    eventLookupReturns(null)
+    eventLookupReturns(undefined)
 
     const mockRequest = new Request("http://localhost")
     const mockParams = { id: "123" }
@@ -97,7 +83,7 @@ describe("event-rules-page loader", () => {
     expect(mockRedirect).toHaveBeenCalledWith("/dashboard")
   })
 
-  it("should not redirect when the event exists", async () => {
+  it("should not redirect when the event is visible", async () => {
     eventExists()
 
     const mockRequest = new Request("http://localhost")
@@ -109,20 +95,7 @@ describe("event-rules-page loader", () => {
     } as Route.LoaderArgs)
 
     expect(mockRedirect).not.toHaveBeenCalled()
-    expect(mockKysely.selectFrom).toHaveBeenCalledWith("events")
-    expect(selectMock).toHaveBeenCalledWith("id")
-    expect(whereMock).toHaveBeenCalledWith("id", "=", "123")
-  })
-
-  it("excludes Draft events from the lookup", async () => {
-    eventExists()
-
-    await loader({
-      request: new Request("http://localhost"),
-      params: { id: "123" },
-    } as Route.LoaderArgs)
-
-    expect(whereMock).toHaveBeenCalledWith("event_status", "!=", "Draft")
+    expect(mockFindVisibleEvent).toHaveBeenCalledWith("123")
   })
 
   it("asks the database itself whether the person has been before", async () => {

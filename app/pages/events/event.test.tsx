@@ -7,10 +7,8 @@ vi.mock("~/business/auth/auth.server", () => ({
   getUserContext: vi.fn(),
 }))
 
-vi.mock("~/kysely-db", () => ({
-  kyselyDb: {
-    selectFrom: vi.fn(),
-  },
+vi.mock("~/business/event/find-visible-event.server", () => ({
+  findVisibleEvent: vi.fn(),
 }))
 
 vi.mock("react-router", () => ({
@@ -18,27 +16,11 @@ vi.mock("react-router", () => ({
 }))
 
 import { getUserContext } from "~/business/auth/auth.server"
-import { kyselyDb } from "~/kysely-db"
+import { findVisibleEvent } from "~/business/event/find-visible-event.server"
 
 const mockGetUserContext = vi.mocked(getUserContext)
-const mockKysely = vi.mocked(kyselyDb)
+const mockFindVisibleEvent = vi.mocked(findVisibleEvent)
 const mockRedirect = vi.mocked(redirect)
-
-let whereMock: ReturnType<typeof vi.fn>
-
-const eventLookupReturns = (event: { id: string } | undefined) => {
-  const chain: {
-    where: ReturnType<typeof vi.fn>
-    executeTakeFirst: ReturnType<typeof vi.fn>
-  } = {
-    where: vi.fn(() => chain),
-    executeTakeFirst: vi.fn().mockResolvedValue(event),
-  }
-  whereMock = chain.where
-  mockKysely.selectFrom = vi.fn().mockReturnValue({
-    select: vi.fn().mockReturnValue(chain),
-  })
-}
 
 describe("Event navigation loader", () => {
   beforeEach(() => {
@@ -50,7 +32,7 @@ describe("Event navigation loader", () => {
 
   it("redirects to dashboard when no event ID is provided", async () => {
     const args = {
-      request: new Request("http://localhost:3000/events/"),
+      request: new Request("http://localhost/dashboard/"),
       params: {},
     } as Route.LoaderArgs
 
@@ -58,28 +40,28 @@ describe("Event navigation loader", () => {
 
     expect(mockRedirect).toHaveBeenCalledWith("/dashboard")
     expect(mockGetUserContext).not.toHaveBeenCalled()
-    expect(mockKysely.selectFrom).not.toHaveBeenCalled()
+    expect(mockFindVisibleEvent).not.toHaveBeenCalled()
   })
 
-  it("redirects to dashboard when the event does not exist", async () => {
-    eventLookupReturns(undefined)
+  it("redirects to dashboard when the event is not visible", async () => {
+    mockFindVisibleEvent.mockResolvedValue(undefined)
 
     const args = {
-      request: new Request("http://localhost:3000/events/non-existent-id"),
+      request: new Request("http://localhost/dashboard/non-existent-id"),
       params: { id: "non-existent-id" },
     } as Route.LoaderArgs
 
     await loader(args)
 
-    expect(mockKysely.selectFrom).toHaveBeenCalledWith("events")
+    expect(mockFindVisibleEvent).toHaveBeenCalledWith("non-existent-id")
     expect(mockRedirect).toHaveBeenCalledWith("/dashboard")
   })
 
-  it("reaches the rules page for a closed event, which the RLS client used to hide", async () => {
-    eventLookupReturns({ id: "closed-event-id" })
+  it("reaches the rules page for a visible event, which the RLS client used to hide when closed", async () => {
+    mockFindVisibleEvent.mockResolvedValue({ id: "closed-event-id" })
 
     const args = {
-      request: new Request("http://localhost:3000/events/closed-event-id"),
+      request: new Request("http://localhost/dashboard/closed-event-id"),
       params: { id: "closed-event-id" },
     } as Route.LoaderArgs
 
@@ -88,32 +70,16 @@ describe("Event navigation loader", () => {
     expect(mockRedirect).toHaveBeenCalledWith("/dashboard/closed-event-id/regras")
   })
 
-  it("looks the event up by id, excluding Draft events", async () => {
-    eventLookupReturns({ id: "an-event" })
-
-    const args = {
-      request: new Request("http://localhost:3000/events/an-event"),
-      params: { id: "an-event" },
-    } as Route.LoaderArgs
-
-    await loader(args)
-
-    expect(whereMock).toHaveBeenCalledWith("id", "=", "an-event")
-    expect(whereMock).toHaveBeenCalledWith("event_status", "!=", "Draft")
-  })
-
   it("requires an authenticated user before looking the event up", async () => {
     const loginRedirect = new Response(null, { status: 302 })
     mockGetUserContext.mockRejectedValue(loginRedirect)
-    eventLookupReturns({ id: "any-event" })
 
     const args = {
-      request: new Request("http://localhost:3000/events/any-event"),
+      request: new Request("http://localhost/dashboard/any-event"),
       params: { id: "any-event" },
     } as Route.LoaderArgs
 
     await expect(loader(args)).rejects.toBe(loginRedirect)
-    expect(mockKysely.selectFrom).not.toHaveBeenCalled()
+    expect(mockFindVisibleEvent).not.toHaveBeenCalled()
   })
-
 })
