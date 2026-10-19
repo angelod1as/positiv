@@ -7,6 +7,10 @@ import { loader } from "./root"
 
 vi.mock("~/lib/logger/logger.server", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  serializeError: (error: unknown) =>
+    error instanceof Error
+      ? { message: error.message, stack: error.stack }
+      : { message: String(error) },
 }))
 
 vi.mock("./business/cms/site-snapshot-cache.server", () => ({
@@ -182,7 +186,9 @@ describe("root loader", () => {
     const request = new Request("http://localhost:5173/")
     await loader({ request, params: {} } as never)
 
-    expect(logger.error).toHaveBeenCalledWith("Root loader error", { error })
+    expect(logger.error).toHaveBeenCalledWith("Root loader error", {
+      error: { message: "Supabase is down", stack: expect.any(String) },
+    })
   })
 
   describe("draft mode", () => {

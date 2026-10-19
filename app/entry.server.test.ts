@@ -8,6 +8,10 @@ vi.mock("./business/cms/draft-mode.server", () => ({ applyDraftCacheControl }))
 
 vi.mock("~/lib/logger/logger.server", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  serializeError: (error: unknown) =>
+    error instanceof Error
+      ? { message: error.message, stack: error.stack }
+      : { message: String(error) },
 }))
 
 vi.mock("react-dom/server", () => ({
@@ -49,7 +53,9 @@ describe("handleError", () => {
 
     handleError(error, { request, params: {}, context: {} } as never)
 
-    expect(logger.error).toHaveBeenCalledWith("Server render error", { error })
+    expect(logger.error).toHaveBeenCalledWith("Unhandled server error", {
+      error: { message: "render blew up", stack: expect.any(String) },
+    })
   })
 
   it("ignores an aborted request", () => {
