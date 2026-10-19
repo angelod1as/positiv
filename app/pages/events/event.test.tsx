@@ -57,8 +57,11 @@ describe("Event navigation loader", () => {
     expect(mockRedirect).toHaveBeenCalledWith("/dashboard")
   })
 
-  it("reaches the rules page for a visible event, which the RLS client used to hide when closed", async () => {
-    mockFindVisibleEvent.mockResolvedValue({ id: "closed-event-id" })
+  it("redirects to the rules page for a visible event", async () => {
+    mockFindVisibleEvent.mockResolvedValue({
+      id: "closed-event-id",
+      event_status: "Registration Closed",
+    })
 
     const args = {
       request: new Request("http://localhost/dashboard/closed-event-id"),

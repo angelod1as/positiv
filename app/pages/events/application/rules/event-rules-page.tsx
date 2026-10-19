@@ -7,6 +7,7 @@ import {
 } from "react-router"
 import { ENV } from "varlock/env"
 import { getUserContext } from "~/business/auth/auth.server"
+import { findVisibleEvent } from "~/business/event/find-visible-event.server"
 import { isVeteran } from "~/business/participant/is-veteran.server"
 import { buildCorrectRulesAnswers } from "~/components/forms/custom/rules/build-correct-rules-answers"
 import {
@@ -27,7 +28,9 @@ import { FormRunner } from "~/components/forms/runtime/form-runner"
 import { OneAtATime } from "~/components/forms/runtime/presentations/one-at-a-time"
 import type { Answers } from "~/components/forms/runtime/question.types"
 import { RulesText } from "~/components/pages/events/rules/rules-text"
+import { Copy } from "~/components/atoms/copy/copy"
 import { Button } from "~/components/atoms/button/button"
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
 import {
   Card,
   CardContent,
@@ -35,11 +38,10 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card"
-import { findVisibleEvent } from "~/business/event/find-visible-event.server"
 import paths from "~/lib/paths"
 import type { FCC } from "~types/utils/utils.types"
 import type { Route } from "./+types/event-rules-page"
-import { rulesQuizCopy } from "~/copy/events"
+import { rulesQuizCopy, rulesStatusNoticeCopy } from "~/copy/events"
 
 const {
   dash: {
@@ -60,6 +62,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   // Asked here rather than taken from the browser: the quiz is a gate, and the
   // shorter run behind it has to be earned against the database.
   return {
+    eventStatus: event.event_status,
     isVeteran: currentProfile
       ? await isVeteran(currentProfile.id, params.id)
       : false,
@@ -197,6 +200,26 @@ const EventRulesPage = ({ params, loaderData }: Route.ComponentProps) => {
     : screensAhead !== null && screensAhead > SHORT_RUN_LENGTH
       ? rulesQuizCopy.veteranLostWager
       : rulesQuizCopy.veteranWager
+
+  const statusNotice =
+    loaderData.eventStatus === "Cancelled"
+      ? rulesStatusNoticeCopy.Cancelled
+      : loaderData.eventStatus === "Completed"
+        ? rulesStatusNoticeCopy.Completed
+        : null
+
+  if (statusNotice) {
+    return (
+      <Alert>
+        <AlertTitle>
+          <h2 className="mt-4">{rulesStatusNoticeCopy.title}</h2>
+        </AlertTitle>
+        <AlertDescription>
+          <Copy>{statusNotice}</Copy>
+        </AlertDescription>
+      </Alert>
+    )
+  }
 
   return (
     <Wrapper notice={notice}>
