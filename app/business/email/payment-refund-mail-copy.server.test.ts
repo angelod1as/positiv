@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from "vitest"
-import type { EmailTemplates } from "~/business/cms/email-templates.schema"
+import { baselineEmailTemplates } from "~/business/cms/email-templates.fixture"
+import { emailTemplatesSchema } from "~/business/cms/email-templates.schema"
 import { paymentRefundCopyFallback } from "./payment-refund-mail-copy"
 import { loadPaymentRefundCopy } from "./payment-refund-mail-copy.server"
 
 vi.mock("~/lib/logger/logger.server", () => ({ logger: { error: vi.fn() } }))
 
-const templates = {
+const templates = emailTemplatesSchema.parse({
+  ...baselineEmailTemplates,
   paymentRefund: {
     subject: "Assunto {{evento}}",
     heading: "Título",
@@ -22,7 +24,7 @@ const templates = {
     ],
     cta: "Botão",
   },
-} as unknown as EmailTemplates
+})
 
 describe("loadPaymentRefundCopy", () => {
   it("returns the copy the Editor set, serialised to inline HTML", async () => {

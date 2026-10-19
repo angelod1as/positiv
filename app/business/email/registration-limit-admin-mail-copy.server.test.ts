@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
-import type { EmailTemplates } from "~/business/cms/email-templates.schema"
+import { baselineEmailTemplates } from "~/business/cms/email-templates.fixture"
+import { emailTemplatesSchema } from "~/business/cms/email-templates.schema"
 import { registrationLimitAdminCopyFallback } from "./registration-limit-admin-mail-copy"
 import { loadRegistrationLimitAdminCopy } from "./registration-limit-admin-mail-copy.server"
 
@@ -13,7 +14,8 @@ const block = (text: string, marks: string[] = []) => ({
   children: [{ _type: "span", _key: `${text}-0`, text, marks }],
 })
 
-const templates = {
+const templates = emailTemplatesSchema.parse({
+  ...baselineEmailTemplates,
   registrationLimit: {
     subject: "Assunto {{evento}}",
     heading: "Título",
@@ -21,7 +23,7 @@ const templates = {
     cta: "Botão",
     closing: [block("Aviso", ["em"])],
   },
-} as unknown as EmailTemplates
+})
 
 describe("loadRegistrationLimitAdminCopy", () => {
   it("returns the copy the Editor set, serialised to inline HTML", async () => {

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
-import type { EmailTemplates } from "~/business/cms/email-templates.schema"
+import { baselineEmailTemplates } from "~/business/cms/email-templates.fixture"
+import { emailTemplatesSchema } from "~/business/cms/email-templates.schema"
 import { applicationCopyFallback } from "./application-mail-copy"
 import { loadApplicationCopy } from "./application-mail-copy.server"
 
@@ -13,7 +14,8 @@ const block = (text: string, marks: string[] = []) => ({
   children: [{ _type: "span", _key: `${text}-0`, text, marks }],
 })
 
-const templates = {
+const templates = emailTemplatesSchema.parse({
+  ...baselineEmailTemplates,
   application: {
     subject: "Assunto {{evento}}",
     heading: "Título",
@@ -22,7 +24,7 @@ const templates = {
     importantLead: "Lembre:",
     notes: [block("Um"), block("Dois", ["em"])],
   },
-} as unknown as EmailTemplates
+})
 
 describe("loadApplicationCopy", () => {
   it("returns the copy the Editor set, serialised to inline HTML", async () => {

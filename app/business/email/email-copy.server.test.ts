@@ -1,11 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
-import type { EmailTemplates } from "~/business/cms/email-templates.schema"
+import { baselineEmailTemplates } from "~/business/cms/email-templates.fixture"
+import {
+  type EmailTemplates,
+  emailTemplatesSchema,
+} from "~/business/cms/email-templates.schema"
 import { logger } from "~/lib/logger/logger.server"
 import { EMAIL_COPY_TIMEOUT_MS, loadEmailCopy } from "./email-copy.server"
 
 vi.mock("~/lib/logger/logger.server", () => ({ logger: { error: vi.fn() } }))
 
-const templates = { paymentLink: { subject: "Do Sanity" } } as EmailTemplates
+const templates = emailTemplatesSchema.parse({
+  ...baselineEmailTemplates,
+  paymentLink: { ...baselineEmailTemplates.paymentLink, subject: "Do Sanity" },
+})
 const pick = (loaded: EmailTemplates) => loaded.paymentLink.subject
 const fallback = "Do código"
 

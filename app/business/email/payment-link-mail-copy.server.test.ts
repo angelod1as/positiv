@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from "vitest"
-import type { EmailTemplates } from "~/business/cms/email-templates.schema"
+import { baselineEmailTemplates } from "~/business/cms/email-templates.fixture"
+import { emailTemplatesSchema } from "~/business/cms/email-templates.schema"
 import { paymentLinkCopyFallback } from "./payment-link-mail-copy"
 import { loadPaymentLinkCopy } from "./payment-link-mail-copy.server"
 
 vi.mock("~/lib/logger/logger.server", () => ({ logger: { error: vi.fn() } }))
 
-const templates: Pick<EmailTemplates, "paymentLink"> = {
+const templates = emailTemplatesSchema.parse({
+  ...baselineEmailTemplates,
   paymentLink: {
     subject: "Assunto {{evento}}",
     heading: "Título",
@@ -22,11 +24,11 @@ const templates: Pick<EmailTemplates, "paymentLink"> = {
       },
     ],
   },
-}
+})
 
 describe("loadPaymentLinkCopy", () => {
   it("returns the copy the Editor set, serialised to inline HTML", async () => {
-    const copy = await loadPaymentLinkCopy({ get: vi.fn(async () => templates as EmailTemplates) })
+    const copy = await loadPaymentLinkCopy({ get: vi.fn(async () => templates) })
 
     expect(copy.subject).toBe("Assunto {{evento}}")
     expect(copy.heading).toBe("Título")
