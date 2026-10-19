@@ -1,25 +1,43 @@
 import { redirect } from "react-router"
-import { describe, expect, it, vi, beforeEach } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { loader } from "./event"
 import type { Route } from "./+types/event"
 
-// Mock dependencies
 vi.mock("~/business/auth/auth.server", () => ({
-  getContext: vi.fn(),
+  getUserContext: vi.fn(),
+}))
+
+vi.mock("~/kysely-db", () => ({
+  kyselyDb: {
+    selectFrom: vi.fn(),
+  },
 }))
 
 vi.mock("react-router", () => ({
   redirect: vi.fn(),
 }))
 
-import { getContext } from "~/business/auth/auth.server"
+import { getUserContext } from "~/business/auth/auth.server"
+import { kyselyDb } from "~/kysely-db"
 
-const mockGetContext = getContext as ReturnType<typeof vi.fn>
-const mockRedirect = redirect as ReturnType<typeof vi.fn>
+const mockGetUserContext = vi.mocked(getUserContext)
+const mockKysely = vi.mocked(kyselyDb)
+const mockRedirect = vi.mocked(redirect)
+
+const eventLookupReturns = (event: { id: string } | undefined) => {
+  mockKysely.selectFrom = vi.fn().mockReturnValue({
+    select: vi.fn().mockReturnValue({
+      where: vi.fn().mockReturnValue({
+        executeTakeFirst: vi.fn().mockResolvedValue(event),
+      }),
+    }),
+  })
+}
 
 describe("Event navigation loader", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockGetUserContext.mockResolvedValue({} as never)
   })
 
   it("redirects to dashboard when no event ID is provided", async () => {
@@ -31,18 +49,12 @@ describe("Event navigation loader", () => {
     await loader(args)
 
     expect(mockRedirect).toHaveBeenCalledWith("/dashboard")
-    expect(mockGetContext).not.toHaveBeenCalled()
+    expect(mockGetUserContext).not.toHaveBeenCalled()
+    expect(mockKysely.selectFrom).not.toHaveBeenCalled()
   })
 
-  it("redirects to dashboard when event is not found", async () => {
-    const mockSupabase = {
-      from: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: null }),
-    }
-
-    mockGetContext.mockResolvedValue({ supabase: mockSupabase })
+  it("redirects to dashboard when the event does not exist", async () => {
+    eventLookupReturns(undefined)
 
     const args = {
       request: new Request("http://localhost:3000/events/non-existent-id"),
@@ -51,72 +63,42 @@ describe("Event navigation loader", () => {
 
     await loader(args)
 
-    expect(mockSupabase.from).toHaveBeenCalledWith("events")
-    expect(mockSupabase.select).toHaveBeenCalledWith("id")
-    expect(mockSupabase.eq).toHaveBeenCalledWith("id", "non-existent-id")
-    expect(mockSupabase.single).toHaveBeenCalled()
+    expect(mockKysely.selectFrom).toHaveBeenCalledWith("events")
     expect(mockRedirect).toHaveBeenCalledWith("/dashboard")
   })
 
-  it("redirects legacy BDSM events to the rules page", async () => {
-    const mockSupabase = {
-      from: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ 
-        data: { id: "bdsm-event-id" } 
-      }),
-    }
-
-    mockGetContext.mockResolvedValue({ supabase: mockSupabase })
+  it("reaches the rules page for an event that is not open, via the service-role lookup", async () => {
+    // The RLS client hid every non-open event, which silently bounced the
+    // person back to the dashboard. kyselyDb resolves it regardless of status,
+    // so the entry route now opens the event like the rest of the flow.
+    eventLookupReturns({ id: "closed-event-id" })
 
     const args = {
-      request: new Request("http://localhost:3000/events/bdsm-event-id"),
-      params: { id: "bdsm-event-id" },
+      request: new Request("http://localhost:3000/events/closed-event-id"),
+      params: { id: "closed-event-id" },
     } as Route.LoaderArgs
 
     await loader(args)
 
-    expect(mockRedirect).toHaveBeenCalledWith("/dashboard/bdsm-event-id/regras")
+    expect(mockRedirect).toHaveBeenCalledWith("/dashboard/closed-event-id/regras")
   })
 
-  it("redirects to rules page for regular events", async () => {
-    const mockSupabase = {
-      from: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ 
-        data: { id: "regular-event-id" } 
-      }),
-    }
-
-    mockGetContext.mockResolvedValue({ supabase: mockSupabase })
+  it("requires an authenticated user before looking the event up", async () => {
+    const loginRedirect = new Response(null, { status: 302 })
+    mockGetUserContext.mockRejectedValue(loginRedirect)
+    eventLookupReturns({ id: "any-event" })
 
     const args = {
-      request: new Request("http://localhost:3000/events/regular-event-id"),
-      params: { id: "regular-event-id" },
+      request: new Request("http://localhost:3000/events/any-event"),
+      params: { id: "any-event" },
     } as Route.LoaderArgs
 
-    await loader(args)
-
-    expect(mockSupabase.from).toHaveBeenCalledWith("events")
-    expect(mockSupabase.select).toHaveBeenCalledWith("id")
-    expect(mockSupabase.eq).toHaveBeenCalledWith("id", "regular-event-id")
-    expect(mockSupabase.single).toHaveBeenCalled()
-    expect(mockRedirect).toHaveBeenCalledWith("/dashboard/regular-event-id/regras")
+    await expect(loader(args)).rejects.toBe(loginRedirect)
+    expect(mockKysely.selectFrom).not.toHaveBeenCalled()
   })
 
-  it("passes request and params to getContext correctly", async () => {
-    const mockSupabase = {
-      from: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ 
-        data: { id: "test-event" } 
-      }),
-    }
-
-    mockGetContext.mockResolvedValue({ supabase: mockSupabase })
+  it("passes request and params to getUserContext", async () => {
+    eventLookupReturns({ id: "test-event" })
 
     const request = new Request("http://localhost:3000/events/test-event")
     const params = { id: "test-event" }
@@ -124,30 +106,6 @@ describe("Event navigation loader", () => {
 
     await loader(args)
 
-    expect(mockGetContext).toHaveBeenCalledWith(request, params)
-  })
-
-  it("handles database errors gracefully", async () => {
-    const mockSupabase = {
-      from: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ 
-        data: null,
-        error: { message: "Database error" }
-      }),
-    }
-
-    mockGetContext.mockResolvedValue({ supabase: mockSupabase })
-
-    const args = {
-      request: new Request("http://localhost:3000/events/error-event"),
-      params: { id: "error-event" },
-    } as Route.LoaderArgs
-
-    await loader(args)
-
-    // Should still redirect to dashboard on error
-    expect(mockRedirect).toHaveBeenCalledWith("/dashboard")
+    expect(mockGetUserContext).toHaveBeenCalledWith(request, params)
   })
 })
