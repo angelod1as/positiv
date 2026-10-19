@@ -17,7 +17,11 @@ const { logger } = vi.hoisted(() => ({
 
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
 
-import { editManualPayment, registerManualPayment } from "./manual-payment.server"
+import {
+  cancelManualPayment,
+  editManualPayment,
+  registerManualPayment,
+} from "./manual-payment.server"
 
 describe("registerManualPayment", () => {
   const { tracker, kysely } = setupIntegrationTest()
@@ -513,5 +517,132 @@ describe("editManualPayment", () => {
 
     expect(result.success).toBe(false)
     expect((await readPayment(payment.id)).amount).toBe(22000)
+  })
+})
+
+describe("cancelManualPayment", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+  let participantId: string
+
+  beforeEach(async () => {
+    tracker.clear()
+    const testId = Date.now()
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Cancel Manual Payment Event",
+      ticket_price: 22000,
+    })
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: `test${testId}-cancel-manual@example.com`,
+      full_name: "Cancel Manual Tester",
+    })
+    participantId = (
+      await createTestEventParticipant(tracker, kysely, {
+        event_id: event.id,
+        profile_id: profile.id,
+      })
+    ).id
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  const readPayment = (id: string) =>
+    kysely
+      .selectFrom("payments")
+      .selectAll()
+      .where("id", "=", id)
+      .executeTakeFirstOrThrow()
+
+  const totalsFor = () =>
+    kysely
+      .selectFrom("event_participant_payments")
+      .selectAll()
+      .where("event_participant_id", "=", participantId)
+      .executeTakeFirstOrThrow()
+
+  it.each([22000, 0])(
+    "cancels a manual payment of %s and takes it out of the totals",
+    async (amount) => {
+      const payment = await createTestPayment(tracker, kysely, {
+        event_participant_id: participantId,
+        base_amount: amount,
+        amount,
+      })
+
+      const result = await cancelManualPayment({ paymentId: payment.id })
+
+      expect(result.success).toBe(true)
+      const row = await readPayment(payment.id)
+      expect(row.status).toBe("cancelled")
+      expect(row.paid_at).toBeNull()
+
+      const totals = await totalsFor()
+      expect(totals.paid_gross).toBe(0)
+      expect(totals.net).toBe(0)
+    },
+  )
+
+  it("lets a new manual payment be recorded after the cancel", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+    })
+    await cancelManualPayment({ paymentId: payment.id })
+
+    const result = await registerManualPayment({
+      eventParticipantId: participantId,
+      amount: "150",
+      method: "pix",
+      paidAt: "2026-09-10",
+    })
+
+    expect(result.success).toBe(true)
+    const rows = await kysely
+      .selectFrom("payments")
+      .select("id")
+      .where("event_participant_id", "=", participantId)
+      .execute()
+    rows.forEach((row) => tracker.track("payments", row.id))
+    expect((await totalsFor()).paid_gross).toBe(15000)
+  })
+
+  it("refuses to cancel a payment that went through Asaas", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "online",
+    })
+
+    const result = await cancelManualPayment({ paymentId: payment.id })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.errors[0].message).toBe(
+        "Só é possível cancelar um pagamento manual confirmado.",
+      )
+    }
+    expect((await readPayment(payment.id)).status).toBe("paid")
+  })
+
+  it("refuses to cancel a manual payment already refunded", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      status: "refunded",
+      refund_amount: 22000,
+      refunded_at: new Date().toISOString(),
+    })
+
+    const result = await cancelManualPayment({ paymentId: payment.id })
+
+    expect(result.success).toBe(false)
+    expect((await readPayment(payment.id)).status).toBe("refunded")
+  })
+
+  it("refuses a payment that does not exist", async () => {
+    const result = await cancelManualPayment({
+      paymentId: "00000000-0000-0000-0000-000000000000",
+    })
+
+    expect(result.success).toBe(false)
   })
 })

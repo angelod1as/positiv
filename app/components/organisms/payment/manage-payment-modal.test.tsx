@@ -586,6 +586,58 @@ describe("ManagePaymentModal", () => {
     expect(formData.get("paymentId")).toBe("p1")
   })
 
+  it.each([22000, 0])(
+    "cancels a manual payment of %s recorded by mistake",
+    async (amount) => {
+      render(
+        <ManagePaymentModal
+          {...baseProps}
+          payments={[payment({ amount, base_amount: amount })]}
+        />,
+      )
+
+      await userEvent.click(
+        screen.getByRole("button", { name: "Cancelar pagamento" }),
+      )
+      await userEvent.click(
+        screen.getByRole("button", { name: "Confirmar cancelamento" }),
+      )
+
+      const [formData] = submit.mock.calls.at(-1) ?? []
+      expect(formData.get("intent")).toBe("payment-manual-cancel")
+      expect(formData.get("paymentId")).toBe("p1")
+    },
+  )
+
+  it("offers no manual cancel on a payment that went through the provider", () => {
+    render(
+      <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
+    )
+
+    expect(
+      screen.queryByRole("button", { name: "Cancelar pagamento" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("offers no manual cancel on a manual payment already refunded", () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[
+          payment({
+            status: "refunded",
+            refund_amount: 22000,
+            refunded_at: "2026-08-21T12:00:00Z",
+          }),
+        ]}
+      />,
+    )
+
+    expect(
+      screen.queryByRole("button", { name: "Cancelar pagamento" }),
+    ).not.toBeInTheDocument()
+  })
+
   it("hides the manual form while a charge is open", () => {
     render(
       <ManagePaymentModal

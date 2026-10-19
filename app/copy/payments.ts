@@ -204,6 +204,14 @@ export const paymentsCopy = {
     submit: "Confirmar cancelamento",
     success: "Cobrança cancelada.",
   },
+  cancelManual: {
+    title: "Cancelar pagamento",
+    confirm: "Cancelar este pagamento manual?",
+    description:
+      "O registro fica como cancelado e deixa de contar nos totais da pessoa. Nenhum dinheiro é movimentado.",
+    keep: "Manter pagamento",
+    submit: "Confirmar cancelamento",
+  },
   // What a payment provider's refusal becomes before a person reads it. The
   // technical detail -- status, path, code -- stays in the log.
   providerErrors: {
@@ -237,6 +245,8 @@ export const paymentsCopy = {
     notRefundable: "Só é possível reembolsar um pagamento já confirmado.",
     notEditable: "Só é possível editar um pagamento manual confirmado.",
     notCancellable: "Só é possível cancelar uma cobrança em aberto.",
+    notManualCancellable:
+      "Só é possível cancelar um pagamento manual confirmado.",
     notSyncable: (provider: string) =>
       `Só um pagamento feito pelo ${provider} pode ser atualizado do ${provider}.`,
     invalidCpf: "Esse CPF não confere. Confira os números.",

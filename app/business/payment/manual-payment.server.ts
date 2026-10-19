@@ -138,3 +138,37 @@ export const editManualPayment = applySchema(editManualPaymentSchema)(
     return { ok: true as const }
   },
 )
+
+export const cancelManualPaymentSchema = zod.object({
+  paymentId: zod.string().uuid(),
+})
+
+/**
+ * Voids a manual payment the admin should never have recorded. Nothing moves
+ * anywhere -- the money, if any, was handled by hand -- the row just stops
+ * counting. `paid_at` goes with the status, since only settled rows carry one.
+ *
+ * Guarded like the edit, so a refund landing first writes nothing.
+ */
+export const cancelManualPayment = applySchema(cancelManualPaymentSchema)(
+  async (values) => {
+    const cancelled = await kyselyDb
+      .updateTable("payments")
+      .set({ status: "cancelled", paid_at: null })
+      .where("id", "=", values.paymentId)
+      .where("status", "=", "paid")
+      .where("kind", "=", "manual")
+      .returning("id")
+      .executeTakeFirst()
+      .catch((error) => {
+        logger.error("Failed to cancel a manual payment", { error })
+        throw new Error(paymentsCopy.errors.generic)
+      })
+
+    if (!cancelled) {
+      throw new Error(paymentsCopy.errors.notManualCancellable)
+    }
+
+    return { ok: true as const }
+  },
+)

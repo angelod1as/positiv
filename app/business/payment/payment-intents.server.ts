@@ -1,4 +1,8 @@
-import { editManualPayment, registerManualPayment } from "./manual-payment.server"
+import {
+  cancelManualPayment,
+  editManualPayment,
+  registerManualPayment,
+} from "./manual-payment.server"
 import { createPaymentOffer, resendPaymentOffer } from "./payment-offer.server"
 import { cancelPayment } from "./payment-cancel.server"
 import { syncPaymentFromProvider } from "./payment-sync.server"
@@ -83,6 +87,10 @@ export async function handlePaymentIntent(
 
   if (intent === "payment-manual-edit") {
     return toIntentResult(intent, await editManualPayment(values))
+  }
+
+  if (intent === "payment-manual-cancel") {
+    return toIntentResult(intent, await cancelManualPayment(values))
   }
 
   if (intent === "payment-manual-refund") {

@@ -45,7 +45,16 @@ import { paymentStatusPropMap } from "~/lib/helpers/propMaps"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import paths from "~/lib/paths"
 
-const { manage, manual, edit, refund, cancel, charge, errors } = paymentsCopy
+const {
+  manage,
+  manual,
+  edit,
+  refund,
+  cancel,
+  cancelManual,
+  charge,
+  errors,
+} = paymentsCopy
 
 /** Every payment recorded by hand arrived by PIX; nothing else is offered. */
 const MANUAL_METHOD = "pix"
@@ -288,6 +297,41 @@ const CancelDialog: FC<CancelDialogProps> = ({
           onClick={() => onConfirm(payment.id)}
         >
           {cancel.submit}
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
+)
+
+type CancelManualDialogProps = {
+  payment: PaymentRow
+  isSubmitting: boolean
+  onConfirm: (paymentId: string) => void
+}
+
+const CancelManualDialog: FC<CancelManualDialogProps> = ({
+  payment,
+  isSubmitting,
+  onConfirm,
+}) => (
+  <AlertDialog>
+    <AlertDialogTrigger asChild>
+      <Button variant="outline" size="sm">
+        {cancelManual.title}
+      </Button>
+    </AlertDialogTrigger>
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>{cancelManual.confirm}</AlertDialogTitle>
+        <AlertDialogDescription>{cancelManual.description}</AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>{cancelManual.keep}</AlertDialogCancel>
+        <AlertDialogAction
+          disabled={isSubmitting}
+          onClick={() => onConfirm(payment.id)}
+        >
+          {cancelManual.submit}
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
@@ -706,6 +750,15 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                             paymentId,
                             ...values,
                           })
+                        }
+                      />
+                    )}
+                    {payment.kind === "manual" && payment.status === "paid" && (
+                      <CancelManualDialog
+                        payment={payment}
+                        isSubmitting={isSubmitting}
+                        onConfirm={(paymentId) =>
+                          post({ intent: "payment-manual-cancel", paymentId })
                         }
                       />
                     )}
