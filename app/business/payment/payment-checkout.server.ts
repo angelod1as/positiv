@@ -20,8 +20,9 @@ import { buildPaymentOptions, findPaymentOption } from "./pricing"
 import {
   logPaymentProviderFailure,
   paymentAlertContext,
-  type PaymentAlertContext,
 } from "./payment-alert.server"
+
+type PaymentAlert = () => { paymentId: string } & Record<string, unknown>
 
 export const pickOptionSchema = zod.object({
   paymentId: zod.string().uuid(),
@@ -44,7 +45,7 @@ async function ensureProviderCustomer(
     phone: number | null
     phone_is_international: boolean
   },
-  alert: () => PaymentAlertContext,
+  alert: PaymentAlert,
 ): Promise<string> {
   if (profile.provider_customer_id) return profile.provider_customer_id
 
@@ -190,15 +191,21 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
     providerChargeId: payment.provider_charge_id,
     providerCustomerId: payment.provider_customer_id,
   }
-  // Built only once something has failed: a diagnostic must never be what
-  // stops a checkout.
-  const alertFor = (customerId?: string) =>
-    paymentAlertContext(alertRow, {
-      method: option.method,
-      installmentCount: option.installmentCount,
-      amount: option.total,
-      customerId,
-    })
+  // Built only once something has failed, and never allowed to throw: a
+  // diagnostic must never be what stops a checkout, nor what replaces the
+  // provider's error on its way to the participant.
+  const alertFor = (customerId?: string) => {
+    try {
+      return paymentAlertContext(alertRow, {
+        method: option.method,
+        installmentCount: option.installmentCount,
+        amount: option.total,
+        customerId,
+      })
+    } catch {
+      return { paymentId: payment.id }
+    }
+  }
 
   const customerId = await ensureProviderCustomer(
     {
@@ -338,10 +345,7 @@ function readChargeAfterRace(paymentId: string) {
  * A charge the row no longer points at. A refusal is not always an error, so
  * the return value is the only place it shows.
  */
-async function deleteOrphanCharge(
-  alert: () => PaymentAlertContext,
-  chargeId: string,
-) {
+async function deleteOrphanCharge(alert: PaymentAlert, chargeId: string) {
   try {
     const deleted = await paymentProvider().cancelCharge(chargeId)
     if (!deleted) {

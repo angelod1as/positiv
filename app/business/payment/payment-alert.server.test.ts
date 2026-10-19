@@ -173,7 +173,7 @@ describe("logPaymentProviderFailure", () => {
     const logged = JSON.stringify(logger.error.mock.calls)
     for (const value of [
       "Maria da Silva",
-      "Mari\"",
+      "Mari",
       "maria@example.com",
       "52998224725",
       "11987654321",

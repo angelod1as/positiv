@@ -20,6 +20,7 @@ const {
   paymentsEnabled,
   cardEnabled,
   prod,
+  alertBreaks,
 } = vi.hoisted(() => ({
   createAsaasCustomer: vi.fn(),
   findAsaasCustomerByCpf: vi.fn(),
@@ -29,7 +30,19 @@ const {
   paymentsEnabled: { value: true },
   cardEnabled: { value: true },
   prod: { value: false },
+  alertBreaks: { value: false },
 }))
+
+vi.mock("./payment-alert.server", async (importOriginal) => {
+  const original = await importOriginal<typeof import("./payment-alert.server")>()
+  return {
+    ...original,
+    paymentAlertContext: (...args: Parameters<typeof original.paymentAlertContext>) => {
+      if (alertBreaks.value) throw new RangeError("Invalid time value")
+      return original.paymentAlertContext(...args)
+    },
+  }
+})
 
 vi.mock("~/lib/helpers/is-prod.server", () => ({
   isProd: () => prod.value,
@@ -75,6 +88,7 @@ describe("pickOption", () => {
     paymentsEnabled.value = true
     cardEnabled.value = true
     prod.value = false
+    alertBreaks.value = false
     createAsaasCustomer.mockResolvedValue("cus_new")
     findAsaasCustomerByCpf.mockResolvedValue(null)
     createAsaasPayment.mockResolvedValue({
@@ -709,6 +723,26 @@ describe("pickOption", () => {
         }),
       )
       expectNoPersonalData()
+    })
+
+    it("still tells the participant what the provider said when the alert cannot be built", async () => {
+      alertBreaks.value = true
+      createAsaasPayment.mockRejectedValueOnce(pixRefusal())
+      const payment = await openCharge()
+
+      const result = await pickOption({ paymentId: payment.id, profileId, optionId: "pix" })
+
+      expect(result.success === false && result.errors[0]?.message).toBe(
+        paymentsCopy.providerErrors.checkoutRefused(pixRefusal().errors[0].description),
+      )
+      expect(logger.error).toHaveBeenCalledTimes(1)
+      expect(logger.error).toHaveBeenCalledWith(
+        "Could not create the charge at the payment provider",
+        expect.objectContaining({
+          paymentId: payment.id,
+          provider: expect.objectContaining({ status: 400, path: "/payments" }),
+        }),
+      )
     })
 
     it("logs the charge it replaces as the one before the attempt", async () => {
