@@ -44,7 +44,7 @@ async function ensureProviderCustomer(
     phone: number | null
     phone_is_international: boolean
   },
-  alert: PaymentAlertContext,
+  alert: () => PaymentAlertContext,
 ): Promise<string> {
   if (profile.provider_customer_id) return profile.provider_customer_id
 
@@ -62,7 +62,7 @@ async function ensureProviderCustomer(
     .catch((error: unknown) => {
       logPaymentProviderFailure(
         "Could not find or create the customer at the payment provider",
-        alert,
+        alert(),
         error,
       )
       throw error
@@ -190,11 +190,15 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
     providerChargeId: payment.provider_charge_id,
     providerCustomerId: payment.provider_customer_id,
   }
-  const attempt = {
-    method: option.method,
-    installmentCount: option.installmentCount,
-    amount: option.total,
-  }
+  // Built only once something has failed: a diagnostic must never be what
+  // stops a checkout.
+  const alertFor = (customerId?: string) =>
+    paymentAlertContext(alertRow, {
+      method: option.method,
+      installmentCount: option.installmentCount,
+      amount: option.total,
+      customerId,
+    })
 
   const customerId = await ensureProviderCustomer(
     {
@@ -207,9 +211,9 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
       phone: payment.phone,
       phone_is_international: payment.phone_is_international,
     },
-    paymentAlertContext(alertRow, attempt),
+    () => alertFor(),
   )
-  const alert = paymentAlertContext(alertRow, { ...attempt, customerId })
+  const alert = () => alertFor(customerId)
 
   // The provider refuses a callback whose domain does not match the commercial
   // data on the account, and fails the whole charge rather than just dropping
@@ -235,7 +239,7 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
     .catch((error: unknown) => {
       logPaymentProviderFailure(
         "Could not create the charge at the payment provider",
-        alert,
+        alert(),
         error,
       )
       throw error
@@ -334,19 +338,22 @@ function readChargeAfterRace(paymentId: string) {
  * A charge the row no longer points at. A refusal is not always an error, so
  * the return value is the only place it shows.
  */
-async function deleteOrphanCharge(alert: PaymentAlertContext, chargeId: string) {
+async function deleteOrphanCharge(
+  alert: () => PaymentAlertContext,
+  chargeId: string,
+) {
   try {
     const deleted = await paymentProvider().cancelCharge(chargeId)
     if (!deleted) {
       logger.error("The payment provider refused to delete the charge", {
-        ...alert,
+        ...alert(),
         chargeId,
       })
     }
   } catch (error) {
     logPaymentProviderFailure(
       "Could not delete the charge at the payment provider",
-      { ...alert, chargeId },
+      { ...alert(), chargeId },
       error,
     )
   }

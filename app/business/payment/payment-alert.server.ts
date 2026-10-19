@@ -83,11 +83,13 @@ export function logPaymentProviderFailure(
 
 /**
  * The payment as an alert describes it, read only once something has failed.
- * A failure to read it must not cost the alert, so it answers with just the id.
+ * By then the row may have changed -- a cancelled charge reads cancelled -- so
+ * its status is `status`, not `statusBefore`. A failure to read it must not
+ * cost the alert, so it answers with just the id.
  */
 export async function readPaymentAlertContext(
   paymentId: string,
-): Promise<PaymentAlertContext | { paymentId: string }> {
+): Promise<{ paymentId: string } & Record<string, unknown>> {
   try {
     const row = await kyselyDb
       .selectFrom("payments as p")
@@ -110,8 +112,14 @@ export async function readPaymentAlertContext(
       .where("p.id", "=", paymentId)
       .executeTakeFirst()
 
-    return row ? paymentAlertContext(row) : { paymentId }
-  } catch {
+    if (!row) return { paymentId }
+    const { statusBefore, ...context } = paymentAlertContext(row)
+    return { ...context, status: statusBefore }
+  } catch (error) {
+    logger.warn("Could not read the payment for an alert", {
+      paymentId,
+      error: error instanceof Error ? error.message : String(error),
+    })
     return { paymentId }
   }
 }

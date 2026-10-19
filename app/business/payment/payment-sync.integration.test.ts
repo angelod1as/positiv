@@ -198,6 +198,7 @@ describe("syncPaymentFromProvider", () => {
         paymentId: payment.id,
         eventId,
         eventTitle: "Sync Event",
+        status: "paid",
         method: "credit_card",
         installmentCount: 2,
         provider: {

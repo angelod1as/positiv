@@ -446,10 +446,12 @@ describe("cancelPayment", () => {
         paymentId: payment.id,
         eventId,
         eventTitle: "Cancel Event",
+        status: "cancelled",
         chargeId,
         provider: { method: "DELETE", path: `/payments/${chargeId}`, status: 404, errors: [] },
       }),
     )
+    expect(logger.error.mock.calls[0][1]).not.toHaveProperty("statusBefore")
     expect(JSON.stringify(logger.error.mock.calls)).not.toContain("Cancel Tester")
   })
 

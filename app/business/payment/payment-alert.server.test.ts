@@ -3,16 +3,19 @@ import { AsaasError } from "./provider/asaas/asaas-client.server"
 import {
   logPaymentProviderFailure,
   paymentAlertContext,
+  readPaymentAlertContext,
   type PaymentAlertRow,
 } from "./payment-alert.server"
 
-const { env, logger } = vi.hoisted(() => ({
+const { env, logger, selectFrom } = vi.hoisted(() => ({
   env: {} as Record<string, unknown>,
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  selectFrom: vi.fn(),
 }))
 
 vi.mock("varlock/env", () => ({ ENV: env }))
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
+vi.mock("~/kysely-db", () => ({ kyselyDb: { selectFrom } }))
 
 const row: PaymentAlertRow = {
   paymentId: "48e85b01-0000-4000-8000-000000000001",
@@ -183,6 +186,22 @@ describe("logPaymentProviderFailure", () => {
     expect(logger.error).toHaveBeenCalledWith(
       "Could not create the charge at the payment provider",
       expect.objectContaining({ provider: { error: "fetch failed" } }),
+    )
+  })
+})
+
+describe("readPaymentAlertContext", () => {
+  it("falls back to the bare id, and says why, when the row cannot be read", async () => {
+    selectFrom.mockImplementation(() => {
+      throw new Error("connection refused")
+    })
+
+    await expect(readPaymentAlertContext(row.paymentId)).resolves.toEqual({
+      paymentId: row.paymentId,
+    })
+    expect(logger.warn).toHaveBeenCalledWith(
+      "Could not read the payment for an alert",
+      { paymentId: row.paymentId, error: "connection refused" },
     )
   })
 })

@@ -460,6 +460,7 @@ describe("createPaymentOffer", () => {
         paymentId: old.id,
         eventId,
         eventTitle: "Offer Event",
+        status: "cancelled",
         method: "pix",
         amount: 23000,
         chargeId,
