@@ -51,6 +51,55 @@ describe("TelegramTransport", () => {
     })
   })
 
+  it("renders links as clickable anchors outside the preformatted block", () => {
+    return new Promise<void>((resolve) => {
+      transport.log(
+        {
+          level: "error",
+          message: "Could not create the charge",
+          paymentId: "pay-1",
+          links: {
+            admin: "https://positiv.test/admin/eventos/e1/participantes/p1",
+            asaasCustomer: "https://www.asaas.com/customerAccount/show/cus_1",
+          },
+        },
+        () => {
+          const body = JSON.parse(fetchSpy.mock.calls[0][1].body)
+          const [beforePre, pre] = body.text.split("<pre>")
+          expect(beforePre).toContain(
+            '<a href="https://positiv.test/admin/eventos/e1/participantes/p1">admin</a>',
+          )
+          expect(beforePre).toContain(
+            '<a href="https://www.asaas.com/customerAccount/show/cus_1">asaasCustomer</a>',
+          )
+          expect(pre).toContain("pay-1")
+          expect(pre).not.toContain("links")
+          resolve()
+        },
+      )
+    })
+  })
+
+  it("escapes a link so it cannot break out of the anchor", () => {
+    return new Promise<void>((resolve) => {
+      transport.log(
+        {
+          level: "error",
+          message: "Boom",
+          links: { admin: 'https://x.test/"><b>owned</b>' },
+        },
+        () => {
+          const body = JSON.parse(fetchSpy.mock.calls[0][1].body)
+          expect(body.text).not.toContain("<b>owned</b>")
+          expect(body.text).toContain(
+            '<a href="https://x.test/&quot;&gt;&lt;b&gt;owned&lt;/b&gt;">admin</a>',
+          )
+          resolve()
+        },
+      )
+    })
+  })
+
   it("truncates messages longer than 4096 characters", () => {
     return new Promise<void>((resolve) => {
       const longMessage = "x".repeat(5000)

@@ -157,9 +157,63 @@ describe("asaasConnector", () => {
     })
   })
 
+  describe("customerDashboardUrl", () => {
+    it("links to the customer in the sandbox dashboard from the sandbox api", () => {
+      expect(asaasConnector.customerDashboardUrl("cus_000123")).toBe(
+        "https://sandbox.asaas.com/customerAccount/show/cus_000123",
+      )
+    })
+
+    it("links to the customer in the production dashboard from the production api", () => {
+      env.ASAAS_API_URL = "https://api.asaas.com/v3"
+      expect(asaasConnector.customerDashboardUrl("cus_000123")).toBe(
+        "https://www.asaas.com/customerAccount/show/cus_000123",
+      )
+    })
+  })
+
+  describe("errorDetails", () => {
+    it("carries what Asaas said and where, for the log", () => {
+      const error = new AsaasError(
+        "POST",
+        400,
+        [
+          {
+            code: "invalid_billingType",
+            description: "Não há nenhuma chave Pix disponível.",
+          },
+        ],
+        "/payments",
+      )
+
+      expect(asaasConnector.errorDetails(error)).toEqual({
+        method: "POST",
+        path: "/payments",
+        status: 400,
+        errors: [
+          {
+            code: "invalid_billingType",
+            description: "Não há nenhuma chave Pix disponível.",
+          },
+        ],
+      })
+    })
+
+    it("carries the message of a failure that never reached Asaas", () => {
+      expect(
+        asaasConnector.errorDetails(new TypeError("fetch failed")),
+      ).toEqual({ error: "fetch failed" })
+    })
+
+    it("carries anything thrown that is not an Error as text", () => {
+      expect(asaasConnector.errorDetails("boom")).toEqual({ error: "boom" })
+    })
+  })
+
   describe("errorMessage", () => {
     it("turns an Asaas refusal into a sentence a person can read", () => {
       const error = new AsaasError(
+        "POST",
         400,
         [
           {
@@ -177,6 +231,7 @@ describe("asaasConnector", () => {
 
     it("names Asaas when it refuses to be read", () => {
       const error = new AsaasError(
+        "GET",
         404,
         [{ code: "invalid_action", description: "Cobrança não encontrada." }],
         "/payments/pay_1",

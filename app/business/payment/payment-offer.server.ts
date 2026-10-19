@@ -5,6 +5,10 @@ import { kyselyDb } from "~/kysely-db"
 import { reaisToCents } from "~/lib/helpers/format-currency"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
+import {
+  logPaymentProviderFailure,
+  readPaymentAlertContext,
+} from "./payment-alert.server"
 import { paymentProvider } from "./payment-provider.server"
 import { cancelPayment } from "./payment-cancel.server"
 import {
@@ -91,16 +95,16 @@ async function deleteReplacedCharges(
       const deleted = await paymentProvider().cancelCharge(old.provider_charge_id)
       if (!deleted) {
         logger.error("The payment provider refused to delete the replaced charge", {
-          paymentId: old.id,
+          ...(await readPaymentAlertContext(old.id)),
           chargeId: old.provider_charge_id,
         })
       }
     } catch (error) {
-      logger.error("Could not delete the replaced charge at the payment provider", {
-        paymentId: old.id,
-        chargeId: old.provider_charge_id,
-        error: error instanceof Error ? error.message : String(error),
-      })
+      logPaymentProviderFailure(
+        "Could not delete the replaced charge at the payment provider",
+        { ...(await readPaymentAlertContext(old.id)), chargeId: old.provider_charge_id },
+        error,
+      )
     }
   }
 }

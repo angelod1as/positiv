@@ -62,6 +62,7 @@ vi.mock("~/business/settings/app-settings.server", async (importOriginal) => ({
 }))
 
 import { paymentsCopy } from "~/copy/payments"
+import { AsaasError } from "./provider/asaas/asaas-client.server"
 import { registerManualPayment } from "./manual-payment.server"
 import { createPaymentOffer, resendPaymentOffer } from "./payment-offer.server"
 
@@ -480,6 +481,39 @@ describe("createPaymentOffer", () => {
     expect(rows[0].status).toBe("cancelled")
     expect(rows[1].status).toBe("pending")
     expect(logger.error).toHaveBeenCalled()
+  })
+
+  it("logs a refused delete once, with the replaced payment's context", async () => {
+    const chargeId = `pay_old_${Date.now()}`
+    deleteAsaasPayment.mockRejectedValue(
+      new AsaasError("DELETE", 404, [], `/payments/${chargeId}`),
+    )
+    const old = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "online",
+      status: "awaiting_payment",
+      amount: 23000,
+      method: "pix",
+      paid_at: null,
+      provider_charge_id: chargeId,
+    })
+
+    await createPaymentOffer({ eventParticipantId: participantId })
+
+    expect(logger.error).toHaveBeenCalledTimes(1)
+    expect(logger.error).toHaveBeenCalledWith(
+      "Could not delete the replaced charge at the payment provider",
+      expect.objectContaining({
+        paymentId: old.id,
+        eventId,
+        eventTitle: "Offer Event",
+        status: "cancelled",
+        method: "pix",
+        amount: 23000,
+        chargeId,
+        provider: { method: "DELETE", path: `/payments/${chargeId}`, status: 404, errors: [] },
+      }),
+    )
   })
 
   it("leaves a paid charge alone and refuses", async () => {

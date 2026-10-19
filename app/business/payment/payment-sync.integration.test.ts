@@ -36,11 +36,14 @@ vi.mock("./payment-emails.server", async (importOriginal) => ({
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
 
 import { paymentsCopy } from "~/copy/payments"
+import { AsaasError } from "./provider/asaas/asaas-client.server"
 import { syncOpenPayments, syncPaymentFromProvider } from "./payment-sync.server"
 
 describe("syncPaymentFromProvider", () => {
   const { tracker, kysely } = setupIntegrationTest()
   let participantId: string
+  let profileId: string
+  let eventId: string
   let counter = 0
 
   beforeEach(async () => {
@@ -61,6 +64,8 @@ describe("syncPaymentFromProvider", () => {
       email: `test${testId}-sync@example.com`,
       full_name: "Sync Tester",
     })
+    profileId = profile.id
+    eventId = event.id
     participantId = (
       await createTestEventParticipant(tracker, kysely, {
         event_id: event.id,
@@ -175,6 +180,36 @@ describe("syncPaymentFromProvider", () => {
       paymentsCopy.providerErrors.unavailable,
     )
     expect((await reload(payment.id)).refunds_synced_at).toBeNull()
+  })
+
+  it("logs a refused read once, with the payment's context", async () => {
+    getAsaasInstallmentRefunds.mockRejectedValue(
+      new AsaasError("GET", 404, [], `/installments/inst_${counter}`),
+    )
+    const payment = await cardPlan()
+
+    await syncPaymentFromProvider({ paymentId: payment.id })
+
+    expect(logger.error).toHaveBeenCalledTimes(1)
+    expect(logger.error).toHaveBeenCalledWith(
+      "Could not read the payment from the payment provider",
+      expect.objectContaining({
+        profileId,
+        paymentId: payment.id,
+        eventId,
+        eventTitle: "Sync Event",
+        status: "paid",
+        method: "credit_card",
+        installmentCount: 2,
+        provider: {
+          method: "GET",
+          path: `/installments/inst_${counter}`,
+          status: 404,
+          errors: [],
+        },
+      }),
+    )
+    expect(JSON.stringify(logger.error.mock.calls)).not.toContain("Sync Tester")
   })
 
   describe("syncOpenPayments", () => {

@@ -20,6 +20,7 @@ const {
   paymentsEnabled,
   cardEnabled,
   prod,
+  alertBreaks,
 } = vi.hoisted(() => ({
   createAsaasCustomer: vi.fn(),
   findAsaasCustomerByCpf: vi.fn(),
@@ -29,7 +30,19 @@ const {
   paymentsEnabled: { value: true },
   cardEnabled: { value: true },
   prod: { value: false },
+  alertBreaks: { value: false },
 }))
+
+vi.mock("./payment-alert.server", async (importOriginal) => {
+  const original = await importOriginal<typeof import("./payment-alert.server")>()
+  return {
+    ...original,
+    paymentAlertContext: (...args: Parameters<typeof original.paymentAlertContext>) => {
+      if (alertBreaks.value) throw new RangeError("Invalid time value")
+      return original.paymentAlertContext(...args)
+    },
+  }
+})
 
 vi.mock("~/lib/helpers/is-prod.server", () => ({
   isProd: () => prod.value,
@@ -68,12 +81,14 @@ describe("pickOption", () => {
   let otherProfileId: string
   let participantId: string
   let otherParticipantId: string
+  let eventId: string
 
   beforeEach(async () => {
     vi.clearAllMocks()
     paymentsEnabled.value = true
     cardEnabled.value = true
     prod.value = false
+    alertBreaks.value = false
     createAsaasCustomer.mockResolvedValue("cus_new")
     findAsaasCustomerByCpf.mockResolvedValue(null)
     createAsaasPayment.mockResolvedValue({
@@ -105,6 +120,7 @@ describe("pickOption", () => {
     })
     profileId = profile.id
     otherProfileId = other.id
+    eventId = event.id
     participantId = (
       await createTestEventParticipant(tracker, kysely, {
         event_id: event.id,
@@ -224,6 +240,7 @@ describe("pickOption", () => {
   it("explains a CPF Asaas refuses in words the participant can act on", async () => {
     createAsaasCustomer.mockRejectedValueOnce(
       new AsaasError(
+        "POST",
         400,
         [{ code: "invalid_cpfCnpj", description: "O CPF/CNPJ informado é inválido." }],
         "/customers",
@@ -642,5 +659,167 @@ describe("pickOption", () => {
     expect(result.success).toBe(false)
     expect(createAsaasPayment).not.toHaveBeenCalled()
     expect(createAsaasCustomer).not.toHaveBeenCalled()
+  })
+
+  describe("alerts", () => {
+    const pixRefusal = () =>
+      new AsaasError(
+        "POST",
+        400,
+        [
+          {
+            code: "invalid_billingType",
+            description: "Não há nenhuma chave Pix disponível para receber cobranças.",
+          },
+        ],
+        "/payments",
+      )
+
+    // logger.error reaches a Telegram group in production.
+    const expectNoPersonalData = () => {
+      const logged = JSON.stringify(logger.error.mock.calls)
+      for (const value of ["Ana Souza", "payer@example.com", "529.982.247-25", "52998224725"]) {
+        expect(logged).not.toContain(value)
+      }
+      for (const key of ["full_name", "social_name", "email", "cpf", "phone"]) {
+        expect(logged).not.toContain(`"${key}"`)
+      }
+    }
+
+    it("logs a refused charge once, with who was paying for what", async () => {
+      createAsaasPayment.mockRejectedValueOnce(pixRefusal())
+      const payment = await openCharge()
+
+      const result = await pickOption({ paymentId: payment.id, profileId, optionId: "pix" })
+
+      expect(result.success).toBe(false)
+      expect(logger.error).toHaveBeenCalledTimes(1)
+      expect(logger.error).toHaveBeenCalledWith(
+        "Could not create the charge at the payment provider",
+        expect.objectContaining({
+          profileId,
+          paymentId: payment.id,
+          eventId,
+          eventTitle: "Checkout Event",
+          method: "pix",
+          installmentCount: null,
+          amount: 19800,
+          customerId: "cus_new",
+          dueDate: expect.any(String),
+          statusBefore: "pending",
+          previousChargeId: null,
+          links: {
+            "Payment in the admin": expect.stringContaining(
+              `/admin/eventos/${eventId}/participantes/${profileId}`,
+            ),
+            "Customer in Asaas": expect.stringContaining("/customerAccount/show/cus_new"),
+          },
+          provider: {
+            method: "POST",
+            path: "/payments",
+            status: 400,
+            errors: pixRefusal().errors,
+          },
+        }),
+      )
+      expectNoPersonalData()
+    })
+
+    it("still tells the participant what the provider said when the alert cannot be built", async () => {
+      alertBreaks.value = true
+      createAsaasPayment.mockRejectedValueOnce(pixRefusal())
+      const payment = await openCharge()
+
+      const result = await pickOption({ paymentId: payment.id, profileId, optionId: "pix" })
+
+      expect(result.success === false && result.errors[0]?.message).toBe(
+        paymentsCopy.providerErrors.checkoutRefused(pixRefusal().errors[0].description),
+      )
+      expect(logger.error).toHaveBeenCalledTimes(1)
+      expect(logger.error).toHaveBeenCalledWith(
+        "Could not create the charge at the payment provider",
+        expect.objectContaining({
+          paymentId: payment.id,
+          provider: expect.objectContaining({ status: 400, path: "/payments" }),
+        }),
+      )
+    })
+
+    it("logs the charge it replaces as the one before the attempt", async () => {
+      const payment = await openCharge()
+      await pickOption({ paymentId: payment.id, profileId, optionId: "pix" })
+      logger.error.mockClear()
+      createAsaasPayment.mockRejectedValueOnce(pixRefusal())
+
+      await pickOption({ paymentId: payment.id, profileId, optionId: "card_1" })
+
+      expect(logger.error).toHaveBeenCalledTimes(1)
+      expect(logger.error).toHaveBeenCalledWith(
+        "Could not create the charge at the payment provider",
+        expect.objectContaining({
+          method: "credit_card",
+          statusBefore: "awaiting_payment",
+          previousChargeId: "pay_1",
+        }),
+      )
+    })
+
+    it("logs a refused customer once, before any customer exists", async () => {
+      createAsaasCustomer.mockRejectedValueOnce(
+        new AsaasError(
+          "POST",
+          400,
+          [{ code: "invalid_cpfCnpj", description: "O CPF/CNPJ informado é inválido." }],
+          "/customers",
+        ),
+      )
+      const payment = await openCharge()
+
+      await pickOption({ paymentId: payment.id, profileId, optionId: "pix" })
+
+      expect(logger.error).toHaveBeenCalledTimes(1)
+      const [message, meta] = logger.error.mock.calls[0]
+      expect(message).toBe("Could not find or create the customer at the payment provider")
+      expect(meta).toMatchObject({
+        profileId,
+        paymentId: payment.id,
+        eventId,
+        method: "pix",
+        customerId: null,
+        provider: { method: "POST", path: "/customers", status: 400 },
+      })
+      expect(meta.links).not.toHaveProperty("Customer in Asaas")
+      expectNoPersonalData()
+    })
+
+    it("logs a failed delete of an orphan charge once, with the payment's context", async () => {
+      createAsaasPayment.mockResolvedValueOnce({
+        id: "pay_orphan",
+        status: "PENDING",
+        invoiceUrl: null,
+        invoiceNumber: null,
+        installmentId: null,
+      })
+      deleteAsaasPayment.mockRejectedValueOnce(
+        new AsaasError("DELETE", 404, [], "/payments/pay_orphan"),
+      )
+      const payment = await openCharge()
+
+      await pickOption({ paymentId: payment.id, profileId, optionId: "pix" })
+
+      expect(logger.error).toHaveBeenCalledTimes(1)
+      expect(logger.error).toHaveBeenCalledWith(
+        "Could not delete the charge at the payment provider",
+        expect.objectContaining({
+          profileId,
+          paymentId: payment.id,
+          eventId,
+          chargeId: "pay_orphan",
+          customerId: "cus_new",
+          provider: { method: "DELETE", path: "/payments/pay_orphan", status: 404, errors: [] },
+        }),
+      )
+      expectNoPersonalData()
+    })
   })
 })

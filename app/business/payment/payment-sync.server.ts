@@ -5,6 +5,10 @@ import { kyselyDb } from "~/kysely-db"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
 import type { ProviderRefund } from "./payment-provider"
+import {
+  logPaymentProviderFailure,
+  readPaymentAlertContext,
+} from "./payment-alert.server"
 import { paymentProvider } from "./payment-provider.server"
 import { deliverPaymentEmail } from "./payment-email-outbox.server"
 import { applyRefundTally } from "./refund-apply.server"
@@ -49,10 +53,11 @@ export const syncPaymentFromProvider = applySchema(syncPaymentSchema)(
         planId: payment.provider_plan_id,
       })
     } catch (error) {
-      logger.error("Could not read the payment from the payment provider", {
-        paymentId: values.paymentId,
-        error: error instanceof Error ? error.message : String(error),
-      })
+      logPaymentProviderFailure(
+        "Could not read the payment from the payment provider",
+        await readPaymentAlertContext(values.paymentId),
+        error,
+      )
       throw new Error(paymentProvider().errorMessage(error, "sync"))
     }
 

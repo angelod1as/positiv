@@ -75,7 +75,19 @@ export class TelegramTransport extends TransportStream {
     const message = escapeHtml(String(info.message))
     let text = `<b>[${level}]</b>\n${message}`
 
-    const skipKeys = new Set(["level", "message"])
+    // Telegram does not link a URL inside <pre>, so links go above it as
+    // anchors: an alert is read on a phone, and copying a URL out of a code
+    // block there is the step nobody takes.
+    const links = info.links
+    if (typeof links === "object" && links !== null) {
+      for (const [label, href] of Object.entries(links)) {
+        if (typeof href !== "string") continue
+        const attribute = escapeHtml(href).replace(/"/g, "&quot;")
+        text += `\n<a href="${attribute}">${escapeHtml(label)}</a>`
+      }
+    }
+
+    const skipKeys = new Set(["level", "message", "links"])
     const metadata: Record<string, unknown> = {}
     for (const key of Object.keys(info)) {
       if (skipKeys.has(key)) continue
