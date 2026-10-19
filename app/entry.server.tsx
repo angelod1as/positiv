@@ -4,16 +4,27 @@ import { createReadableStreamFromReadable } from "@react-router/node"
 import { isbot } from "isbot"
 import type { RenderToPipeableStreamOptions } from "react-dom/server"
 import { renderToPipeableStream } from "react-dom/server"
-import type { AppLoadContext, EntryContext } from "react-router"
+import type {
+  AppLoadContext,
+  EntryContext,
+  HandleErrorFunction,
+} from "react-router"
 import { ServerRouter } from "react-router"
+import { logger } from "~/lib/logger/logger.server"
 import { applyDraftCacheControl } from "./business/cms/draft-mode.server"
 
-// The react-router 7.6.3 framework default (npx react-router reveal), with one
-// addition: applyDraftCacheControl on both the document response
+// The react-router 7.6.3 framework default (npx react-router reveal), with two
+// additions: applyDraftCacheControl on both the document response
 // (handleRequest) and the client-navigation data responses
 // (handleDataRequest), so a draft render is never cached and served to a
-// visitor. Re-reveal and re-diff when upgrading react-router.
+// visitor; and handleError, so server render errors reach the logger (and
+// Telegram). Re-reveal and re-diff when upgrading react-router.
 export const streamTimeout = 5_000
+
+export const handleError: HandleErrorFunction = (error, { request }) => {
+  if (request.signal.aborted) return
+  logger.error("Server render error", { error })
+}
 
 export async function handleDataRequest(
   response: Response,

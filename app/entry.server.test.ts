@@ -1,8 +1,14 @@
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
+
+import { logger } from "~/lib/logger/logger.server"
 
 const applyDraftCacheControl = vi.hoisted(() => vi.fn())
 
 vi.mock("./business/cms/draft-mode.server", () => ({ applyDraftCacheControl }))
+
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+}))
 
 vi.mock("react-dom/server", () => ({
   renderToPipeableStream: vi.fn((_node, options: Record<string, () => void>) => {
@@ -15,7 +21,7 @@ vi.mock("@react-router/node", () => ({
   createReadableStreamFromReadable: () => null,
 }))
 
-import handleRequest, { handleDataRequest } from "./entry.server"
+import handleRequest, { handleDataRequest, handleError } from "./entry.server"
 
 describe("handleDataRequest", () => {
   it("applies the draft cache-control rule to data responses", async () => {
@@ -29,6 +35,30 @@ describe("handleDataRequest", () => {
       response.headers,
     )
     expect(result).toBe(response)
+  })
+})
+
+describe("handleError", () => {
+  afterEach(() => {
+    vi.mocked(logger.error).mockClear()
+  })
+
+  it("reports a render error through the logger", () => {
+    const error = new Error("render blew up")
+    const request = new Request("http://localhost/")
+
+    handleError(error, { request, params: {}, context: {} } as never)
+
+    expect(logger.error).toHaveBeenCalledWith("Server render error", { error })
+  })
+
+  it("ignores an aborted request", () => {
+    const error = new Error("client went away")
+    const request = { signal: { aborted: true } }
+
+    handleError(error, { request, params: {}, context: {} } as never)
+
+    expect(logger.error).not.toHaveBeenCalled()
   })
 })
 
