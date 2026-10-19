@@ -95,27 +95,38 @@ describe("asaasRequest", () => {
     await expect(failure).rejects.toBeInstanceOf(AsaasError)
     await expect(failure).rejects.toMatchObject({
       name: "AsaasError",
+      method: "POST",
       status: 400,
       errors: [{ code: "invalid_cpfCnpj", description: "CPF inválido" }],
     })
   })
 
-  it("keeps the query string's values out of the log and out of the error", async () => {
+  it("keeps the query string's values out of the error", async () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse({ errors: [{ code: "invalid_cpfCnpj", description: "CPF inválido" }] }, 400),
     )
 
-    await expect(findAsaasCustomerByCpf("529.982.247-25")).rejects.toMatchObject({
-      path: "/customers?cpfCnpj=***&limit=***",
-    })
+    const failure = findAsaasCustomerByCpf("529.982.247-25").catch((error) => error)
 
-    expect(logger.error).toHaveBeenCalledWith(
-      "Asaas request failed",
-      expect.objectContaining({ path: "/customers?cpfCnpj=***&limit=***" }),
+    // The caller logs the error, and logger.error reaches a Telegram group in
+    // production, so the document must be nowhere in it.
+    const error = await failure
+    expect(error).toMatchObject({ path: "/customers?cpfCnpj=***&limit=***" })
+    expect(JSON.stringify({ ...error, message: error.message })).not.toContain(
+      "52998224725",
     )
-    // logger.error reaches a Telegram group in production, so the assertion
-    // that matters is that the document itself is nowhere in what was logged.
-    expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("52998224725")
+  })
+
+  it("leaves the logging to the caller, who knows which payment failed", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ errors: [{ code: "invalid_billingType", description: "Sem chave Pix" }] }, 400),
+    )
+
+    await expect(
+      asaasRequest("POST", "/payments", zod.object({ id: zod.string() }), {}),
+    ).rejects.toBeInstanceOf(AsaasError)
+
+    expect(logger.error).not.toHaveBeenCalled()
   })
 
   it("leaves a path without a query string alone", async () => {

@@ -160,6 +160,7 @@ describe("asaasConnector", () => {
   describe("errorMessage", () => {
     it("turns an Asaas refusal into a sentence a person can read", () => {
       const error = new AsaasError(
+        "POST",
         400,
         [
           {
@@ -177,6 +178,7 @@ describe("asaasConnector", () => {
 
     it("names Asaas when it refuses to be read", () => {
       const error = new AsaasError(
+        "GET",
         404,
         [{ code: "invalid_action", description: "Cobrança não encontrada." }],
         "/payments/pay_1",

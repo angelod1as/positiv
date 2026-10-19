@@ -7,7 +7,7 @@ import { AsaasError } from "./asaas-client.server"
 import { asaasErrorMessage } from "./asaas-error-message"
 
 const refused = (code: string, description: string, status = 400) =>
-  new AsaasError(status, [{ code, description }], "/installments/inst_1/refund")
+  new AsaasError("POST", status, [{ code, description }], "/installments/inst_1/refund")
 
 const { providerErrors } = paymentsCopy
 
@@ -36,7 +36,7 @@ describe("asaasErrorMessage", () => {
   })
 
   it("does not blame the person when Asaas fails on its side", () => {
-    const error = new AsaasError(503, [], "/payments")
+    const error = new AsaasError("POST", 503, [], "/payments")
 
     expect(asaasErrorMessage(error, "checkout")).toBe(providerErrors.unavailable)
   })

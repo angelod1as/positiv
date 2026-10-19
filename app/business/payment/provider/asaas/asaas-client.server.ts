@@ -2,7 +2,6 @@ import { formatInTimeZone } from "date-fns-tz"
 import { ENV } from "varlock/env"
 import type { ZodType } from "zod"
 import { zod } from "~/lib/helpers/zod"
-import { logger } from "~/lib/logger/logger.server"
 import { normalizeCpf } from "~/lib/helpers/cpf"
 import { isBrazilianMobile } from "~/lib/helpers/phone"
 
@@ -28,12 +27,22 @@ function centsToReais(cents: number): number {
 
 export type AsaasApiError = { code: string; description: string }
 
+type AsaasMethod = "GET" | "POST" | "PUT" | "DELETE"
+
+// Thrown, never logged here: the caller knows which payment it was handling,
+// and one alert with that context beats two with half of it each.
 export class AsaasError extends Error {
+  readonly method: AsaasMethod
   readonly status: number
   readonly errors: AsaasApiError[]
   readonly path: string
 
-  constructor(status: number, errors: AsaasApiError[], path: string) {
+  constructor(
+    method: AsaasMethod,
+    status: number,
+    errors: AsaasApiError[],
+    path: string,
+  ) {
     const [first] = errors
     super(
       first
@@ -41,6 +50,7 @@ export class AsaasError extends Error {
         : `Asaas ${status} on ${path}`,
     )
     this.name = "AsaasError"
+    this.method = method
     this.status = status
     this.errors = errors
     this.path = path
@@ -55,8 +65,8 @@ function config() {
   return { baseUrl: url.replace(/\/+$/, ""), key }
 }
 
-// A search path carries the participant's CPF in its query string, and
-// logger.error reaches a Telegram group in production. The parameter names say
+// A search path carries the participant's CPF in its query string, and the
+// error is logged to a Telegram group in production. The parameter names say
 // which call failed and are worth keeping; the values are the participant's.
 function redactQuery(path: string): string {
   const [route, query] = path.split("?")
@@ -79,7 +89,7 @@ function safeJson(text: string): unknown {
 }
 
 export async function asaasRequest<T>(
-  method: "GET" | "POST" | "PUT" | "DELETE",
+  method: AsaasMethod,
   path: string,
   schema: ZodType<T>,
   body?: unknown,
@@ -111,14 +121,7 @@ export async function asaasRequest<T>(
     if (!response.ok) {
       const parsed = errorEnvelope.safeParse(json)
       const errors = parsed.success ? parsed.data.errors : []
-      const safePath = redactQuery(path)
-      logger.error("Asaas request failed", {
-        method,
-        path: safePath,
-        status: response.status,
-        errors,
-      })
-      throw new AsaasError(response.status, errors, safePath)
+      throw new AsaasError(method, response.status, errors, redactQuery(path))
     }
 
     return schema.parse(json)

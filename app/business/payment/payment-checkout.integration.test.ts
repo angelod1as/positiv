@@ -224,6 +224,7 @@ describe("pickOption", () => {
   it("explains a CPF Asaas refuses in words the participant can act on", async () => {
     createAsaasCustomer.mockRejectedValueOnce(
       new AsaasError(
+        "POST",
         400,
         [{ code: "invalid_cpfCnpj", description: "O CPF/CNPJ informado é inválido." }],
         "/customers",
