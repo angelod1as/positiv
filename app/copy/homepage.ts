@@ -11,6 +11,7 @@ export const homepageCopy = {
     alreadyApplied: "Já candidate!",
     apply: "Participar",
     learnMore: "Entre para saber mais",
+    empty: "Novos eventos em breve. Fique de olho!",
   },
   founders: {
     pronounsLabel: (pronouns: string) => `(${pronouns})`,

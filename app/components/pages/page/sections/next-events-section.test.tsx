@@ -48,14 +48,18 @@ describe("NextEventsSection", () => {
   })
 
   it("should render event title and description", () => {
-    renderWithRouter(<NextEventsSection content={content} events={[baseEvent]} />)
+    renderWithRouter(
+      <NextEventsSection content={content} events={[baseEvent]} />,
+    )
 
     expect(screen.getByText("Test Event")).toBeInTheDocument()
     expect(screen.getByText("A cool event")).toBeInTheDocument()
   })
 
   it("should show open registration message when event is open", () => {
-    renderWithRouter(<NextEventsSection content={content} events={[baseEvent]} />)
+    renderWithRouter(
+      <NextEventsSection content={content} events={[baseEvent]} />,
+    )
 
     expect(
       screen.getByText(asRendered(homepageCopy.nextEvents.registrationOpen))
@@ -65,7 +69,9 @@ describe("NextEventsSection", () => {
 
   it("should show scheduled message when event is not open", () => {
     const scheduledEvent = { ...baseEvent, event_status: "Scheduled" as const }
-    renderWithRouter(<NextEventsSection content={content} events={[scheduledEvent]} />)
+    renderWithRouter(
+      <NextEventsSection content={content} events={[scheduledEvent]} />,
+    )
 
     expect(
       screen.getByText(asRendered(homepageCopy.nextEvents.registrationOpensOn))
@@ -75,7 +81,9 @@ describe("NextEventsSection", () => {
 
   it("should not badge a legacy BDSM event", () => {
     const bdsmEvent = { ...baseEvent, event_type: "bdsm" as const }
-    renderWithRouter(<NextEventsSection content={content} events={[bdsmEvent]} />)
+    renderWithRouter(
+      <NextEventsSection content={content} events={[bdsmEvent]} />,
+    )
 
     expect(screen.queryByText("Edição BDSM")).not.toBeInTheDocument()
   })
@@ -89,5 +97,31 @@ describe("NextEventsSection", () => {
 
     expect(screen.getByText("Test Event")).toBeInTheDocument()
     expect(screen.getByText("Second Event")).toBeInTheDocument()
+  })
+
+  it("should show the Editor's coming-soon notice when there are no events", () => {
+    const withNotice = { ...content, comingSoon: "Agenda chegando logo." }
+    renderWithRouter(<NextEventsSection content={withNotice} events={[]} />)
+
+    expect(screen.getByText("Agenda chegando logo.")).toBeInTheDocument()
+    expect(
+      screen.queryByText(homepageCopy.nextEvents.empty),
+    ).not.toBeInTheDocument()
+  })
+
+  it("should fall back to the default coming-soon notice when the Editor wrote none", () => {
+    renderWithRouter(<NextEventsSection content={content} events={[]} />)
+
+    expect(screen.getByText(homepageCopy.nextEvents.empty)).toBeInTheDocument()
+  })
+
+  it("should not show a coming-soon notice when there are events", () => {
+    renderWithRouter(
+      <NextEventsSection content={content} events={[baseEvent]} />,
+    )
+
+    expect(
+      screen.queryByText(homepageCopy.nextEvents.empty),
+    ).not.toBeInTheDocument()
   })
 })
