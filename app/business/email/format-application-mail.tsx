@@ -15,7 +15,7 @@ function render(
   const html = applicationMailTemplate(profile, event, copy)
   const subject = renderTemplate(
     copy.subject,
-    { evento: `${event.emoji} ${event.title}` },
+    { evento: [event.emoji, event.title].filter(Boolean).join(" ") },
     APPLICATION_MAIL_VARIABLES.subject,
   )
   return { html, subject }

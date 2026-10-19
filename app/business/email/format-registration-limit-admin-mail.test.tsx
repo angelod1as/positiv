@@ -109,6 +109,33 @@ describe("formatRegistrationLimitAdminMail", () => {
       expect(subject).toBe("Lotou: 🎉 Jazz & Blues")
     })
 
+    it("leaves the emoji out of the subject when the event has none", async () => {
+      const { subject } = await formatRegistrationLimitAdminMail(
+        { ...mockEvent, emoji: null, title: "Jazz & Blues" },
+        participantCount,
+        timestamp,
+      )
+
+      expect(subject).toBe("Lotou: Jazz & Blues")
+    })
+
+    it("falls back to the code subject when the CMS subject fails to render", async () => {
+      vi.mocked(loadRegistrationLimitAdminCopy).mockResolvedValueOnce({
+        ...registrationLimitAdminCopyFallback,
+        subject: "Lotou: {{boleto}}",
+      })
+
+      const { subject } = await formatRegistrationLimitAdminMail(
+        mockEvent,
+        participantCount,
+        timestamp,
+      )
+
+      expect(subject).toBe(
+        "📊 Evento atingiu limite de candidaturas - 🎉 Test Event",
+      )
+    })
+
     it("renders the html body from the copy", async () => {
       const { html } = await formatRegistrationLimitAdminMail(
         mockEvent,

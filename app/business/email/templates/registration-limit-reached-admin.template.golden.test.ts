@@ -57,10 +57,4 @@ describe("registration-limit email byte-for-byte", () => {
       "📊 Evento atingiu limite de candidaturas - 🌸 Festa de Primavera",
     )
   })
-
-  it("keeps the frozen subject for an event without an emoji", async () => {
-    expect(await subjectFor({ ...event, emoji: null })).toBe(
-      "📊 Evento atingiu limite de candidaturas - null Festa de Primavera",
-    )
-  })
 })

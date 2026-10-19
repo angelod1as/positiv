@@ -65,10 +65,4 @@ describe("application email byte-for-byte", () => {
       "Recebemos sua candidatura ao evento 🌸 Festa de Primavera",
     )
   })
-
-  it("keeps the frozen subject for an event without an emoji", async () => {
-    expect(await subjectFor({ ...event, emoji: null })).toBe(
-      "Recebemos sua candidatura ao evento null Festa de Primavera",
-    )
-  })
 })

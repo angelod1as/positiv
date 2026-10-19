@@ -24,7 +24,7 @@ function render(
   )
   const subject = renderTemplate(
     copy.subject,
-    { evento: `${event.emoji} ${event.title}` },
+    { evento: [event.emoji, event.title].filter(Boolean).join(" ") },
     REGISTRATION_LIMIT_ADMIN_MAIL_VARIABLES.subject,
   )
   return { html, subject }

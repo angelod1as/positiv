@@ -42,6 +42,26 @@ describe("formatApplicationMail", () => {
     expect(subject).toBe("Sua candidatura à 🎷 Jazz & Blues")
   })
 
+  it("leaves the emoji out of the subject when the event has none", async () => {
+    const { subject } = await formatApplicationMail(profile, {
+      ...event,
+      emoji: null,
+    })
+
+    expect(subject).toBe("Sua candidatura à Jazz & Blues")
+  })
+
+  it("falls back to the code subject when the CMS subject fails to render", async () => {
+    vi.mocked(loadApplicationCopy).mockResolvedValueOnce({
+      ...applicationCopyFallback,
+      subject: "Sua candidatura à {{boleto}}",
+    })
+
+    const { subject } = await formatApplicationMail(profile, event)
+
+    expect(subject).toBe("Recebemos sua candidatura ao evento 🎷 Jazz & Blues")
+  })
+
   it("renders the html body from the copy and a plain-text part", async () => {
     const { html, text } = await formatApplicationMail(profile, event)
 
