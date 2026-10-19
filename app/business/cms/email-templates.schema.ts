@@ -4,6 +4,7 @@ import {
   unknownBlockVariables,
 } from "~/business/email/render-inline-portable-text"
 import { APPLICATION_MAIL_VARIABLES } from "~/business/email/application-mail.variables"
+import { PAYMENT_CONFIRMED_MAIL_VARIABLES } from "~/business/email/payment-confirmed-mail.variables"
 import { PAYMENT_LINK_MAIL_VARIABLES } from "~/business/email/payment-link-mail.variables"
 import { zod } from "~/lib/helpers/zod"
 import { portableTextSchema } from "./content.schema"
@@ -70,8 +71,17 @@ export const applicationEmailSchema = zod.object({
   notes: proseSchema("notes", APPLICATION_MAIL_VARIABLES.notes),
 })
 
+export const paymentConfirmedEmailSchema = zod.object({
+  subject: subjectSchema(PAYMENT_CONFIRMED_MAIL_VARIABLES.subject),
+  heading: lineSchema(PAYMENT_CONFIRMED_MAIL_VARIABLES.heading),
+  body: proseSchema("body", PAYMENT_CONFIRMED_MAIL_VARIABLES.body),
+  cta: lineSchema(PAYMENT_CONFIRMED_MAIL_VARIABLES.cta),
+  closing: proseSchema("closing", PAYMENT_CONFIRMED_MAIL_VARIABLES.closing),
+})
+
 export const emailTemplatesSchema = zod.object({
   application: applicationEmailSchema,
+  paymentConfirmed: paymentConfirmedEmailSchema,
   paymentLink: paymentLinkEmailSchema,
 })
 

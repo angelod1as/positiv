@@ -7,6 +7,7 @@ import {
 } from "sanity"
 
 import { APPLICATION_MAIL_VARIABLES } from "../../../app/business/email/application-mail.variables"
+import { PAYMENT_CONFIRMED_MAIL_VARIABLES } from "../../../app/business/email/payment-confirmed-mail.variables"
 import { PAYMENT_LINK_MAIL_VARIABLES } from "../../../app/business/email/payment-link-mail.variables"
 import {
   renderInlineBlocks,
@@ -107,6 +108,13 @@ const proseField = ({
       }),
   })
 
+const ctaField = lineField({
+  name: "cta",
+  title: "Botão",
+  description: "O texto do botão. O link fica no código. Sem variáveis.",
+  blank: "O botão não pode ficar em branco.",
+})
+
 const headingField = lineField({
   name: "heading",
   title: "Título",
@@ -158,6 +166,36 @@ export const emailTemplates = defineType({
             "A lista de avisos: cada parágrafo vira um item. Negrito e itálico; sem links. Sem variáveis.",
           empty: "Os avisos precisam de pelo menos um item com texto.",
           variables: APPLICATION_MAIL_VARIABLES.notes,
+        }),
+      ],
+    }),
+    defineField({
+      name: "paymentConfirmed",
+      title: "E-mail de pagamento confirmado",
+      type: "object",
+      description:
+        "O texto editável do e-mail enviado quando o pagamento é confirmado. O layout, o resumo do pagamento e o rodapé ficam no código — aqui vai só a redação.",
+      options: { collapsible: true, collapsed: true },
+      fields: [
+        subjectField(PAYMENT_CONFIRMED_MAIL_VARIABLES.subject, "nome do evento"),
+        headingField,
+        proseField({
+          name: "body",
+          title: "Corpo",
+          description: `Os parágrafos de abertura. Negrito e itálico; sem links. Variáveis: ${tokenList(
+            PAYMENT_CONFIRMED_MAIL_VARIABLES.body,
+          )} (nome da pessoa, nome do evento).`,
+          empty: "O corpo precisa de pelo menos um parágrafo com texto.",
+          variables: PAYMENT_CONFIRMED_MAIL_VARIABLES.body,
+        }),
+        ctaField,
+        proseField({
+          name: "closing",
+          title: "Encerramento",
+          description:
+            "Os parágrafos depois do botão. Negrito e itálico; sem links. Sem variáveis.",
+          empty: "O encerramento precisa de pelo menos um parágrafo com texto.",
+          variables: PAYMENT_CONFIRMED_MAIL_VARIABLES.closing,
         }),
       ],
     }),

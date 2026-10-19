@@ -2,7 +2,6 @@ import { formatPaymentConfirmedMail } from "~/business/email/format-payment-conf
 import { formatPaymentLinkMail } from "~/business/email/format-payment-link-mail"
 import { formatPaymentRefundMail } from "~/business/email/format-payment-refund-mail"
 import { type MailOptions, sendEmail } from "~/business/email/send-email"
-import { paymentConfirmedMailCopy } from "~/copy/emails/payment-confirmed"
 import { paymentRefundMailCopy } from "~/copy/emails/payment-refund"
 import { kyselyDb } from "~/kysely-db"
 import { appOrigin } from "~/lib/helpers/app-origin"
@@ -180,7 +179,7 @@ export async function sendPaymentConfirmedEmail({
     return { success: false }
   }
 
-  const { html, text } = await formatPaymentConfirmedMail({
+  const { html, text, subject } = await formatPaymentConfirmedMail({
     displayName: payment.social_name || payment.full_name || "",
     eventTitle: payment.event_title ?? "",
     eventEmoji: payment.event_emoji,
@@ -192,9 +191,7 @@ export async function sendPaymentConfirmedEmail({
 
   const mailOptions: MailOptions = {
     to: payment.email,
-    subject: paymentConfirmedMailCopy.subject(
-      [payment.event_emoji, payment.event_title].filter(Boolean).join(" "),
-    ),
+    subject,
     html,
     text,
   }

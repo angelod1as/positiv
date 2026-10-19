@@ -1,6 +1,15 @@
-import { describe, expect, it } from "vitest"
-import { paymentConfirmedMailCopy } from "~/copy/emails/payment-confirmed"
+import { describe, expect, it, vi } from "vitest"
+import { formatPaymentConfirmedMail } from "~/business/email/format-payment-confirmed-mail"
 import { paymentConfirmedMailTemplate } from "./payment-confirmed-mail.template"
+
+vi.mock("~/business/email/payment-confirmed-mail-copy.server", async () => {
+  const { paymentConfirmedCopyFallback } = await import(
+    "~/business/email/payment-confirmed-mail-copy"
+  )
+  return {
+    loadPaymentConfirmedCopy: vi.fn(async () => paymentConfirmedCopyFallback),
+  }
+})
 
 const input = {
   displayName: "Ana Souza",
@@ -31,8 +40,8 @@ describe("payment-confirmed email byte-for-byte", () => {
     ).toMatchSnapshot()
   })
 
-  it("keeps the frozen subject", () => {
-    expect(paymentConfirmedMailCopy.subject("🌸 Festa de Primavera")).toBe(
+  it("keeps the frozen subject", async () => {
+    expect((await formatPaymentConfirmedMail(input)).subject).toBe(
       "Pagamento confirmado - 🌸 Festa de Primavera",
     )
   })

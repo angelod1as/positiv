@@ -226,3 +226,36 @@ describe("the application email in emailTemplatesSchema", () => {
     expect(emailTemplatesSchema.safeParse(rest).success).toBe(false)
   })
 })
+
+describe("the payment-confirmed email in emailTemplatesSchema", () => {
+  const parse = (paymentConfirmed: Record<string, unknown>) =>
+    emailTemplatesSchema.safeParse({
+      ...baselineEmailTemplates,
+      paymentConfirmed: {
+        ...baselineEmailTemplates.paymentConfirmed,
+        ...paymentConfirmed,
+      },
+    }).success
+
+  it("accepts the baseline copy", () => {
+    expect(parse({})).toBe(true)
+  })
+
+  it("rejects a variable the subject does not allow", () => {
+    expect(parse({ subject: "Oi {{nome}}" })).toBe(false)
+  })
+
+  it("rejects an unknown variable in the body", () => {
+    expect(parse({ body: body({ text: "{{boleto}}" }) })).toBe(false)
+  })
+
+  it("rejects any variable in the button or closing", () => {
+    expect(parse({ cta: "{{nome}}" })).toBe(false)
+    expect(parse({ closing: body({ text: "{{evento}}" }) })).toBe(false)
+  })
+
+  it("rejects a blank button and an empty closing", () => {
+    expect(parse({ cta: " " })).toBe(false)
+    expect(parse({ closing: body({ text: "" }) })).toBe(false)
+  })
+})
