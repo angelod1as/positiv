@@ -43,6 +43,9 @@ export const emailTemplates = defineType({
               if (value && /[\r\n]/.test(value)) {
                 return "O assunto não pode ter quebras de linha."
               }
+              if (value !== undefined && value.trim().length === 0) {
+                return "O assunto não pode ficar em branco."
+              }
               return unknownVariableProblem(
                 value,
                 PAYMENT_LINK_MAIL_VARIABLES.subject,
@@ -55,11 +58,15 @@ export const emailTemplates = defineType({
           description: "O título grande no topo do e-mail. Sem variáveis.",
           type: "string",
           validation: (rule) =>
-            rule
-              .required()
-              .custom((value: string | undefined) =>
-                unknownVariableProblem(value, PAYMENT_LINK_MAIL_VARIABLES.heading),
-              ),
+            rule.required().custom((value: string | undefined) => {
+              if (value !== undefined && value.trim().length === 0) {
+                return "O título não pode ficar em branco."
+              }
+              return unknownVariableProblem(
+                value,
+                PAYMENT_LINK_MAIL_VARIABLES.heading,
+              )
+            }),
         }),
         defineField({
           name: "body",

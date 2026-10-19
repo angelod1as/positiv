@@ -17,14 +17,24 @@ const subject = within(PAYMENT_LINK_MAIL_VARIABLES.subject)
 const heading = within(PAYMENT_LINK_MAIL_VARIABLES.heading)
 const bodyVariables = PAYMENT_LINK_MAIL_VARIABLES.body
 
+const nonBlank = {
+  error: "cannot be blank",
+  check: (text: string) => text.trim().length > 0,
+}
+
 export const paymentLinkEmailSchema = zod.object({
   subject: zod
     .string()
     .min(1)
     .max(150)
     .regex(/^[^\r\n]*$/, { error: "the subject cannot contain line breaks" })
+    .refine(nonBlank.check, { error: nonBlank.error })
     .refine(subject.check, { error: subject.error }),
-  heading: zod.string().min(1).refine(heading.check, { error: heading.error }),
+  heading: zod
+    .string()
+    .min(1)
+    .refine(nonBlank.check, { error: nonBlank.error })
+    .refine(heading.check, { error: heading.error }),
   body: portableTextSchema
     .refine(
       (blocks) => blocks.every((block) => (block.markDefs ?? []).length === 0),
