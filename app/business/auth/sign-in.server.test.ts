@@ -79,6 +79,7 @@ describe("signIn", () => {
     vi.clearAllMocks()
     vi.mocked(recordAuthAttempt).mockResolvedValue(true)
     vi.mocked(reserveAuthAttempt).mockResolvedValue(RESERVATION_ID)
+    vi.mocked(releaseAuthAttempt).mockResolvedValue(undefined)
   })
 
   it("signs in with the answers given", async () => {
@@ -310,6 +311,20 @@ describe("signIn", () => {
         expect(releaseAuthAttempt).toHaveBeenCalledWith(RESERVATION_ID)
       },
     )
+
+    it("still signs in when the turn cannot be handed back", async () => {
+      vi.mocked(releaseAuthAttempt).mockRejectedValueOnce(new Error("db down"))
+      const { supabase } = supabaseThat()
+
+      const result = await signIn({
+        answers,
+        context: contextWith(supabase),
+        ip: CLIENT_IP,
+      })
+
+      expect(result).toEqual({ ok: true, redirectTo: DASHBOARD })
+      expect(logger.error).toHaveBeenCalled()
+    })
 
     it("leaves the address limit out when no address is known", async () => {
       const { supabase } = supabaseThat()
