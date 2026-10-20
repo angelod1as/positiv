@@ -283,6 +283,122 @@ describe("TelegramTransport", () => {
     })
   })
 
+  it("truncates long metadata without breaking the anchors or the preformatted block", () => {
+    return new Promise<void>((resolve) => {
+      transport.log(
+        {
+          level: "error",
+          message: "Could not create the charge",
+          stack: "y".repeat(5000),
+          links: {
+            admin: "https://positiv.test/admin/eventos/e1/participantes/p1",
+            asaasCustomer: "https://www.asaas.com/customerAccount/show/cus_1",
+          },
+        },
+        () => {
+          const body = JSON.parse(fetchSpy.mock.calls[0][1].body)
+          const text: string = body.text
+          expect(text.length).toBeLessThanOrEqual(4096)
+          expect(text).toContain("Could not create the charge")
+          const [beforePre] = text.split("<pre>")
+          expect(beforePre).toContain(
+            '<a href="https://positiv.test/admin/eventos/e1/participantes/p1">admin</a>',
+          )
+          expect(beforePre).toContain(
+            '<a href="https://www.asaas.com/customerAccount/show/cus_1">asaasCustomer</a>',
+          )
+          expect(text.match(/<pre>/g)).toHaveLength(1)
+          expect(text.match(/<\/pre>/g)).toHaveLength(1)
+          expect(text.endsWith("...</pre>")).toBe(true)
+          resolve()
+        },
+      )
+    })
+  })
+
+  it("never cuts the metadata inside an HTML entity", () => {
+    return new Promise<void>((resolve) => {
+      transport.log(
+        { level: "error", message: "fail", payload: "&<>".repeat(2000) },
+        () => {
+          const body = JSON.parse(fetchSpy.mock.calls[0][1].body)
+          const text: string = body.text
+          expect(text.length).toBeLessThanOrEqual(4096)
+          expect(text.endsWith("...</pre>")).toBe(true)
+          const pre = text.slice(text.indexOf("<pre>") + 5, text.indexOf("</pre>"))
+          expect(pre.replace(/&(amp|lt|gt);/g, "")).not.toMatch(/[&<>]/)
+          resolve()
+        },
+      )
+    })
+  })
+
+  it("truncates a long message without losing the metadata", () => {
+    return new Promise<void>((resolve) => {
+      transport.log(
+        { level: "error", message: "x".repeat(5000), paymentId: "pay-1" },
+        () => {
+          const body = JSON.parse(fetchSpy.mock.calls[0][1].body)
+          const text: string = body.text
+          expect(text.length).toBeLessThanOrEqual(4096)
+          expect(text.startsWith("<b>[ERROR]</b>\nxxx")).toBe(true)
+          expect(text).toContain("x...\n<pre>")
+          expect(text).toContain("pay-1")
+          expect(text.endsWith("</pre>")).toBe(true)
+          resolve()
+        },
+      )
+    })
+  })
+
+  it("drops the preformatted block when too little room is left to say anything", () => {
+    return new Promise<void>((resolve) => {
+      transport.log(
+        {
+          level: "error",
+          message: "Boom",
+          paymentId: "pay-1",
+          links: { admin: `https://x.test/${"a".repeat(4024)}` },
+        },
+        () => {
+          const body = JSON.parse(fetchSpy.mock.calls[0][1].body)
+          const text: string = body.text
+          expect(text.length).toBeLessThanOrEqual(4096)
+          expect(text).toContain("Boom")
+          expect(text).toContain(">admin</a>")
+          expect(text).not.toContain("<pre>")
+          resolve()
+        },
+      )
+    })
+  })
+
+  it("drops the anchors that do not fit instead of going over the limit", () => {
+    return new Promise<void>((resolve) => {
+      transport.log(
+        {
+          level: "error",
+          message: "Boom",
+          links: {
+            admin: `https://x.test/${"a".repeat(5000)}`,
+            asaasCustomer: "https://www.asaas.com/customerAccount/show/cus_1",
+          },
+        },
+        () => {
+          const body = JSON.parse(fetchSpy.mock.calls[0][1].body)
+          const text: string = body.text
+          expect(text.length).toBeLessThanOrEqual(4096)
+          expect(text).not.toContain(">admin</a>")
+          expect(text).toContain(
+            '<a href="https://www.asaas.com/customerAccount/show/cus_1">asaasCustomer</a>',
+          )
+          expect(text).toContain("Boom")
+          resolve()
+        },
+      )
+    })
+  })
+
   it("truncates message with metadata to 4096 characters", () => {
     return new Promise<void>((resolve) => {
       transport.log(
