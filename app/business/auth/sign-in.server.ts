@@ -1,11 +1,18 @@
+import { ENV } from "varlock/env"
 import type { z } from "zod"
 import { errorsCopy } from "~/copy/errors"
 import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { safeRedirect } from "~/lib/helpers/safe-redirect"
 import { toCommitErrors } from "~/lib/helpers/to-commit-errors"
+import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import type { CommitError } from "~types/forms/commit.types"
 import { contextSchema, loginSchema } from "../common"
+import {
+  isAuthAttemptAllowed,
+  recordAuthAttempt,
+  recordAuthFailure,
+} from "./auth-attempt-guard.server"
 
 const {
   dash: { DASHBOARD },
@@ -19,16 +26,30 @@ const {
  */
 export type SignInResult =
   | { ok: true; redirectTo: string }
-  | { ok: false; errors: CommitError[]; message?: string }
+  | {
+      ok: false
+      errors: CommitError[]
+      message?: string
+      rateLimited?: true
+    }
 
 type SignInProps = {
   answers: Record<string, unknown>
   context: z.infer<typeof contextSchema>
+  ip?: string | null
+}
+
+const rateLimited: SignInResult = {
+  ok: false,
+  errors: [],
+  message: errorsCopy.auth.loginRateLimited,
+  rateLimited: true,
 }
 
 export async function signIn({
   answers,
   context,
+  ip = null,
 }: SignInProps): Promise<SignInResult> {
   const parsed = loginSchema.safeParse(answers)
 
@@ -36,11 +57,32 @@ export async function signIn({
     return { ok: false, errors: toCommitErrors(parsed.error) }
   }
 
+  const { email } = parsed.data
+
+  // Supabase sees every sign-in coming from this server, so its own per-IP
+  // limits cannot tell one visitor from another; the limits are ours to keep.
+  // Both are checked before supabase is asked anything, so a refusal says
+  // nothing about whether the e-mail has an account.
+  if (!ip) {
+    if (ENV.APP_ENV === "production") {
+      logger.error("Sign-in without a client IP; the address limit was skipped")
+    }
+  } else if (!(await recordAuthAttempt("login_ip", ip))) {
+    logger.warn("[ADMIN] Refused sign-in: too many attempts from one address")
+    return rateLimited
+  }
+
+  if (!(await isAuthAttemptAllowed("login_email", email))) {
+    logger.warn("[ADMIN] Refused sign-in: too many failures for one e-mail")
+    return rateLimited
+  }
+
   const { supabase } = context
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data)
 
   if (error) {
     if (error.code === "invalid_credentials") {
+      await recordAuthFailure("login_email", email)
       return {
         ok: false,
         errors: [],
