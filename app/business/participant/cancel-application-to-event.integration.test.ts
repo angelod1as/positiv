@@ -153,8 +153,6 @@ describe("cancelApplicationToEvent", () => {
     expect(deleteAsaasPayment).not.toHaveBeenCalled()
   })
 
-  // The card keeps "Cancelar candidatura" for whoever applied once
-  // registrations close, so the server must honour it.
   describe("once registrations have closed", () => {
     beforeEach(async () => {
       await kysely

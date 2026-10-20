@@ -321,9 +321,6 @@ describe("EventCardFooter", () => {
     })
   })
 
-  // Whoever applied keeps the way out after registrations close, paid or not:
-  // the participant limit closes an event on its own, and a paid charge is
-  // left for an admin to refund.
   describe("card state matrix", () => {
     const { apply, closed, scheduled, comingSoon, cancel, payment } =
       eventCardCopy
