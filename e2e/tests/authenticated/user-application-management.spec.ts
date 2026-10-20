@@ -253,10 +253,7 @@ test.describe('POS-191: Application Management Tests', () => {
     await expect(invitedApply).toBeVisible({ timeout: 30000 })
 
     await expect(
-      page
-        .locator('[data-testid^="event-card"]')
-        .filter({ hasText: invitedEvent.title })
-        .getByRole('button', { name: 'Candidaturas encerradas' }),
+      invitedCard.getByRole('button', { name: 'Candidaturas encerradas' }),
     ).toHaveCount(0)
 
     await invitedApply.click()
