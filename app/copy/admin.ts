@@ -64,6 +64,14 @@ export const onlinePaymentsSettingCopy = {
   confirmOff: "Desligar",
 } as const
 
+export const registrationLimitSettingCopy = {
+  title: "Limite de candidaturas",
+  label: "Candidaturas que fecham as inscrições",
+  help: "Quando um evento atinge esse número, as candidaturas fecham automaticamente. Homens cis hétero podem se candidatar, mas não contam para o limite. Mudar o limite não abre nem fecha nenhum evento na hora: vale a partir da próxima candidatura.",
+  save: "Salvar",
+  invalid: "O limite precisa ser um número inteiro maior que zero.",
+} as const
+
 export const adminFeedbacksCopy = {
   title: "Feedbacks",
   loadFailed: "Erro ao carregar feedbacks. Tente novamente.",

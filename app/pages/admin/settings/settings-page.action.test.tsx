@@ -7,6 +7,7 @@ import {
 import {
   setCardPaymentsEnabled,
   setOnlinePaymentsEnabled,
+  setRegistrationLimit,
 } from "~/business/settings/app-settings.server"
 import { action } from "./settings-page"
 
@@ -22,6 +23,7 @@ vi.mock("~/business/newsletter/test-listmonk-connection.server", () => ({
 vi.mock("~/business/settings/app-settings.server", () => ({
   setCardPaymentsEnabled: vi.fn(),
   setOnlinePaymentsEnabled: vi.fn(),
+  setRegistrationLimit: vi.fn(),
 }))
 
 const buildRequest = (fields: Record<string, string>) =>
@@ -52,6 +54,11 @@ const INTENTS = [
     intent: "set-card-payments",
     fields: { enabled: "false" },
     mutation: setCardPaymentsEnabled,
+  },
+  {
+    intent: "set-registration-limit",
+    fields: { limit: "90" },
+    mutation: setRegistrationLimit,
   },
 ] as const
 
@@ -112,6 +119,32 @@ describe("SettingsPage action", () => {
       expect(setCardPaymentsEnabled).toHaveBeenCalledWith({
         enabled: expected,
         profileId: "admin-1",
+      })
+    },
+  )
+
+  it("should save the registration limit on behalf of the admin", async () => {
+    const result = await runAction({
+      intent: "set-registration-limit",
+      limit: "120",
+    })
+
+    expect(setRegistrationLimit).toHaveBeenCalledWith({
+      limit: 120,
+      profileId: "admin-1",
+    })
+    expect(result).toEqual({ intent: "set-registration-limit" })
+  })
+
+  it.each(["0", "-5", "1.5", "abc", ""])(
+    "should refuse a registration limit of %j without saving it",
+    async (limit) => {
+      const result = await runAction({ intent: "set-registration-limit", limit })
+
+      expect(setRegistrationLimit).not.toHaveBeenCalled()
+      expect(result).toEqual({
+        intent: "set-registration-limit",
+        error: expect.any(String),
       })
     },
   )
