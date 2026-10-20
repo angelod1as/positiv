@@ -45,15 +45,16 @@ const pruneExpired = (now: Date) =>
     .execute()
 
 /**
- * Counts an attempt against its key and answers whether it may go ahead. A
- * refused attempt is not recorded, so a key gets its turns back as its oldest
- * attempts leave the window.
+ * Counts an attempt against its key and answers with the row that holds its
+ * turn, or null when the key is at its limit. A refused attempt is not
+ * recorded, so a key gets its turns back as its oldest attempts leave the
+ * window.
  */
-export const recordAuthAttempt = async (
+export const reserveAuthAttempt = async (
   scope: AuthAttemptScope,
   key: string,
   now: Date = new Date(),
-): Promise<boolean> => {
+): Promise<number | null> => {
   const keyHash = hashAuthAttemptKey(key)
   const windowStart = windowStartFor(scope, now)
 
@@ -74,51 +75,29 @@ export const recordAuthAttempt = async (
       .where("created_at", ">=", windowStart)
       .executeTakeFirstOrThrow()
 
-    if (Number(count) >= AUTH_ATTEMPT_LIMITS[scope].limit) return false
+    if (Number(count) >= AUTH_ATTEMPT_LIMITS[scope].limit) return null
 
-    await trx
+    const { id } = await trx
       .insertInto("auth_attempts")
       .values({ scope, key_hash: keyHash, created_at: now.toISOString() })
-      .execute()
+      .returning("id")
+      .executeTakeFirstOrThrow()
 
-    return true
+    return id
   })
 }
 
+export const recordAuthAttempt = async (
+  scope: AuthAttemptScope,
+  key: string,
+  now: Date = new Date(),
+): Promise<boolean> => (await reserveAuthAttempt(scope, key, now)) !== null
+
 /**
- * Whether a key is still under its limit, without counting this as an
- * attempt. Paired with recordAuthFailure for limits that count only what went
- * wrong.
+ * Hands a reserved turn back, for limits that count only the attempts that
+ * went wrong. Reserving first and releasing after keeps a burst from all
+ * getting through before any failure is counted.
  */
-export const isAuthAttemptAllowed = async (
-  scope: AuthAttemptScope,
-  key: string,
-  now: Date = new Date(),
-): Promise<boolean> => {
-  const { count } = await kyselyDb
-    .selectFrom("auth_attempts")
-    .select((eb) => eb.fn.countAll<number>().as("count"))
-    .where("scope", "=", scope)
-    .where("key_hash", "=", hashAuthAttemptKey(key))
-    .where("created_at", ">=", windowStartFor(scope, now))
-    .executeTakeFirstOrThrow()
-
-  return Number(count) < AUTH_ATTEMPT_LIMITS[scope].limit
-}
-
-export const recordAuthFailure = async (
-  scope: AuthAttemptScope,
-  key: string,
-  now: Date = new Date(),
-): Promise<void> => {
-  await pruneExpired(now)
-
-  await kyselyDb
-    .insertInto("auth_attempts")
-    .values({
-      scope,
-      key_hash: hashAuthAttemptKey(key),
-      created_at: now.toISOString(),
-    })
-    .execute()
+export const releaseAuthAttempt = async (id: number): Promise<void> => {
+  await kyselyDb.deleteFrom("auth_attempts").where("id", "=", id).execute()
 }

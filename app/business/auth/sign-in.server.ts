@@ -9,9 +9,9 @@ import paths from "~/lib/paths"
 import type { CommitError } from "~types/forms/commit.types"
 import { contextSchema, loginSchema } from "../common"
 import {
-  isAuthAttemptAllowed,
   recordAuthAttempt,
-  recordAuthFailure,
+  releaseAuthAttempt,
+  reserveAuthAttempt,
 } from "./auth-attempt-guard.server"
 
 const {
@@ -72,7 +72,12 @@ export async function signIn({
     return rateLimited
   }
 
-  if (!(await isAuthAttemptAllowed("login_email", email))) {
+  // Only a wrong password counts against the e-mail, but the turn is taken
+  // before supabase is asked and handed back after, so a burst of guesses
+  // cannot all get through before the first failure is counted.
+  const reservation = await reserveAuthAttempt("login_email", email)
+
+  if (reservation === null) {
     logger.warn("[ADMIN] Refused sign-in: too many failures for one e-mail")
     return rateLimited
   }
@@ -80,9 +85,12 @@ export async function signIn({
   const { supabase } = context
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data)
 
+  if (error?.code !== "invalid_credentials") {
+    await releaseAuthAttempt(reservation)
+  }
+
   if (error) {
     if (error.code === "invalid_credentials") {
-      await recordAuthFailure("login_email", email)
       return {
         ok: false,
         errors: [],

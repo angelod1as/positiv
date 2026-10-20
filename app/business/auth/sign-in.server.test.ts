@@ -5,9 +5,9 @@ import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import type { DBClient } from "~types/utils/utils.types"
 import {
-  isAuthAttemptAllowed,
   recordAuthAttempt,
-  recordAuthFailure,
+  releaseAuthAttempt,
+  reserveAuthAttempt,
 } from "./auth-attempt-guard.server"
 import { signIn } from "./sign-in.server"
 
@@ -25,9 +25,11 @@ vi.mock("~/lib/logger/logger.server", () => ({
 
 vi.mock("./auth-attempt-guard.server", () => ({
   recordAuthAttempt: vi.fn(),
-  isAuthAttemptAllowed: vi.fn(),
-  recordAuthFailure: vi.fn(),
+  reserveAuthAttempt: vi.fn(),
+  releaseAuthAttempt: vi.fn(),
 }))
+
+const RESERVATION_ID = 42
 
 const CLIENT_IP = "203.0.113.7"
 
@@ -76,7 +78,7 @@ describe("signIn", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(recordAuthAttempt).mockResolvedValue(true)
-    vi.mocked(isAuthAttemptAllowed).mockResolvedValue(true)
+    vi.mocked(reserveAuthAttempt).mockResolvedValue(RESERVATION_ID)
   })
 
   it("signs in with the answers given", async () => {
@@ -240,7 +242,7 @@ describe("signIn", () => {
     })
 
     it("refuses an e-mail over its failure limit without asking supabase", async () => {
-      vi.mocked(isAuthAttemptAllowed).mockResolvedValue(false)
+      vi.mocked(reserveAuthAttempt).mockResolvedValue(null)
       const { supabase, signInWithPassword } = supabaseThat()
 
       const result = await signIn({
@@ -249,7 +251,7 @@ describe("signIn", () => {
         ip: CLIENT_IP,
       })
 
-      expect(isAuthAttemptAllowed).toHaveBeenCalledWith(
+      expect(reserveAuthAttempt).toHaveBeenCalledWith(
         "login_email",
         "pessoa@exemplo.com",
       )
@@ -258,7 +260,7 @@ describe("signIn", () => {
     })
 
     it("answers a limited e-mail the same whether or not it has an account", async () => {
-      vi.mocked(isAuthAttemptAllowed).mockResolvedValue(false)
+      vi.mocked(reserveAuthAttempt).mockResolvedValue(null)
       const known = supabaseThat()
       const unknown = supabaseThat({
         signInResult: { data: null, error: { code: "invalid_credentials" } },
@@ -278,26 +280,36 @@ describe("signIn", () => {
       expect(unknownResult).toEqual(knownResult)
     })
 
-    it("counts a refused password against the e-mail", async () => {
+    it("keeps a refused password counted against the e-mail", async () => {
       const { supabase } = supabaseThat({
         signInResult: { data: null, error: { code: "invalid_credentials" } },
       })
 
       await signIn({ answers, context: contextWith(supabase), ip: CLIENT_IP })
 
-      expect(recordAuthFailure).toHaveBeenCalledWith(
-        "login_email",
-        "pessoa@exemplo.com",
-      )
+      expect(releaseAuthAttempt).not.toHaveBeenCalled()
     })
 
-    it("does not count a sign-in that went through against the e-mail", async () => {
+    it("gives the e-mail its turn back after a sign-in that went through", async () => {
       const { supabase } = supabaseThat()
 
       await signIn({ answers, context: contextWith(supabase), ip: CLIENT_IP })
 
-      expect(recordAuthFailure).not.toHaveBeenCalled()
+      expect(releaseAuthAttempt).toHaveBeenCalledWith(RESERVATION_ID)
     })
+
+    it.each(["email_not_confirmed", "over_request_rate_limit"])(
+      "gives the e-mail its turn back when supabase answers %s",
+      async (code) => {
+        const { supabase } = supabaseThat({
+          signInResult: { data: null, error: { code, message: "" } },
+        })
+
+        await signIn({ answers, context: contextWith(supabase), ip: CLIENT_IP })
+
+        expect(releaseAuthAttempt).toHaveBeenCalledWith(RESERVATION_ID)
+      },
+    )
 
     it("leaves the address limit out when no address is known", async () => {
       const { supabase } = supabaseThat()
@@ -309,7 +321,7 @@ describe("signIn", () => {
       })
 
       expect(recordAuthAttempt).not.toHaveBeenCalled()
-      expect(isAuthAttemptAllowed).toHaveBeenCalled()
+      expect(reserveAuthAttempt).toHaveBeenCalled()
       expect(result.ok).toBe(true)
     })
 

@@ -3,9 +3,9 @@ import { setupIntegrationTest } from "~/test/integration-setup"
 import {
   AUTH_ATTEMPT_LIMITS,
   hashAuthAttemptKey,
-  isAuthAttemptAllowed,
   recordAuthAttempt,
-  recordAuthFailure,
+  releaseAuthAttempt,
+  reserveAuthAttempt,
 } from "./auth-attempt-guard.server"
 
 describe("Auth attempt guard - Integration Tests", () => {
@@ -114,43 +114,46 @@ describe("Auth attempt guard - Integration Tests", () => {
     })
   })
 
-  describe("isAuthAttemptAllowed and recordAuthFailure", () => {
-    const { limit, windowMs } = AUTH_ATTEMPT_LIMITS.login_email
+  describe("reserveAuthAttempt and releaseAuthAttempt", () => {
+    const { limit } = AUTH_ATTEMPT_LIMITS.login_email
 
-    it("allows a key until its failures reach the limit", async () => {
-      const key = testKey("failures")
+    it("refuses a reservation once the key holds the limit", async () => {
+      const key = testKey("reserve")
 
       for (let i = 0; i < limit; i++) {
-        await expect(isAuthAttemptAllowed("login_email", key)).resolves.toBe(
-          true,
-        )
-        await recordAuthFailure("login_email", key)
+        await expect(
+          reserveAuthAttempt("login_email", key),
+        ).resolves.not.toBeNull()
       }
 
-      await expect(isAuthAttemptAllowed("login_email", key)).resolves.toBe(
-        false,
+      await expect(reserveAuthAttempt("login_email", key)).resolves.toBeNull()
+    })
+
+    it("lets exactly the limit reserve when attempts arrive at once", async () => {
+      const key = testKey("reserve-burst")
+
+      const reservations = await Promise.all(
+        Array.from({ length: limit + 5 }, () =>
+          reserveAuthAttempt("login_email", key),
+        ),
       )
+
+      expect(reservations.filter((id) => id !== null)).toHaveLength(limit)
     })
 
-    it("does not count a check as an attempt", async () => {
-      const key = testKey("check-only")
-
-      for (let i = 0; i < limit + 5; i++) {
-        await isAuthAttemptAllowed("login_email", key)
-      }
-
-      await expect(isAuthAttemptAllowed("login_email", key)).resolves.toBe(true)
-    })
-
-    it("allows the key again once its failures leave the window", async () => {
-      const key = testKey("failure-window")
-      const longAgo = new Date(Date.now() - windowMs - 60_000)
+    it("gives a released reservation back", async () => {
+      const key = testKey("release")
+      const reservations: (number | null)[] = []
 
       for (let i = 0; i < limit; i++) {
-        await recordAuthFailure("login_email", key, longAgo)
+        reservations.push(await reserveAuthAttempt("login_email", key))
       }
 
-      await expect(isAuthAttemptAllowed("login_email", key)).resolves.toBe(true)
+      await releaseAuthAttempt(reservations[0] as number)
+
+      await expect(
+        reserveAuthAttempt("login_email", key),
+      ).resolves.not.toBeNull()
     })
   })
 })
