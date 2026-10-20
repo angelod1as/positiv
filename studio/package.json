@@ -26,7 +26,7 @@
   "devDependencies": {
     "@sanity/client": "^8.9.0",
     "@sanity/eslint-config-studio": "^7",
-    "@sanity/export": "^6.2.1",
+    "@sanity/export": "^7.0.3",
     "@sanity/import": "^7.0.4",
     "@sanity/schema": "6.19.0",
     "@sanity/validation": "6.19.0",
