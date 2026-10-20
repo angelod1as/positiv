@@ -83,7 +83,8 @@ export const reserveAuthAttempt = async (
       .returning("id")
       .executeTakeFirstOrThrow()
 
-    return id
+    // node-postgres hands a bigint back as a string.
+    return Number(id)
   })
 }
 

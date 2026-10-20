@@ -129,6 +129,14 @@ describe("Auth attempt guard - Integration Tests", () => {
       await expect(reserveAuthAttempt("login_email", key)).resolves.toBeNull()
     })
 
+    it("answers with the reservation as a number", async () => {
+      const key = testKey("reserve-id")
+
+      const id = await reserveAuthAttempt("login_email", key)
+
+      expect(typeof id).toBe("number")
+    })
+
     it("lets exactly the limit reserve when attempts arrive at once", async () => {
       const key = testKey("reserve-burst")
 
