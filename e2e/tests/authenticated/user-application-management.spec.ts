@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { MyApplicationsPage } from '../../pages/MyApplicationsPage'
+import { EventApplicationPage } from '../../pages/EventApplicationPage'
 import {
   createTestApplication,
   deleteTestApplication,
@@ -163,6 +164,9 @@ test.describe('POS-191: Application Management Tests', () => {
   })
 
   test('Cannot apply to closed event', async ({ page }) => {
+    // The invited leg walks the whole rules quiz, one round trip per screen.
+    test.setTimeout(120_000)
+
     // Check prerequisites
     expect(profileId).toBeTruthy()
     if (!profileId) return
@@ -248,11 +252,25 @@ test.describe('POS-191: Application Management Tests', () => {
       .getByRole('link', { name: 'Me candidatar' })
     await expect(invitedApply).toBeVisible({ timeout: 30000 })
 
+    await expect(
+      invitedCard.getByRole('button', { name: 'Candidaturas encerradas' }),
+    ).toHaveCount(0)
+
     await invitedApply.click()
     await expect(page).toHaveURL(
       new RegExp(`/dashboard/${invitedEvent.id}/regras`),
       { timeout: 30000 },
     )
+
+    // Through the quiz and the form to an application the closed event takes.
+    createdApplications.push({ profileId, eventId: invitedEvent.id })
+
+    const applicationPage = new EventApplicationPage(page)
+    await applicationPage.fillRulesForm()
+    await applicationPage.fillUserDataForm()
+    await applicationPage.submitApplication()
+
+    expect(await verifyApplicationExists(profileId, invitedEvent.id)).toBe(true)
   })
 
   test('POS-477: Can cancel application after registrations close', async ({ page: _page }) => {
