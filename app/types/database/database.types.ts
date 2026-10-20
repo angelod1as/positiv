@@ -14,6 +14,7 @@ export type Database = {
           card_payments_enabled: boolean
           id: boolean
           online_payments_enabled: boolean
+          registration_limit: number
           updated_at: string
           updated_by: string | null
         }
@@ -21,6 +22,7 @@ export type Database = {
           card_payments_enabled?: boolean
           id?: boolean
           online_payments_enabled?: boolean
+          registration_limit?: number
           updated_at?: string
           updated_by?: string | null
         }
@@ -28,6 +30,7 @@ export type Database = {
           card_payments_enabled?: boolean
           id?: boolean
           online_payments_enabled?: boolean
+          registration_limit?: number
           updated_at?: string
           updated_by?: string | null
         }
@@ -905,6 +908,10 @@ export type Database = {
       }
       get_admin_user_ids: { Args: never; Returns: string[] }
       get_applied_participants_count: {
+        Args: { event_id_input: string }
+        Returns: number
+      }
+      get_counted_applied_participants_count: {
         Args: { event_id_input: string }
         Returns: number
       }
