@@ -41,6 +41,27 @@ export type Database = {
           },
         ]
       }
+      auth_attempts: {
+        Row: {
+          created_at: string
+          id: number
+          key_hash: string
+          scope: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          key_hash: string
+          scope: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          key_hash?: string
+          scope?: string
+        }
+        Relationships: []
+      }
       blocked_signup_domains: {
         Row: {
           created_at: string
