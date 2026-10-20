@@ -54,10 +54,6 @@ export default [
     "pages/api/admin/event-demographics.ts",
   ),
   route("/api/admin/feedback-status", "pages/api/admin/feedback-status.ts"),
-  route(
-    "/api/admin/send-registration-limit-email",
-    "pages/api/admin/send-registration-limit-email.ts",
-  ),
   route("/robots.txt", "routes/robots[.txt].ts"),
   route("/sitemap.xml", "routes/sitemap[.xml].ts"),
 

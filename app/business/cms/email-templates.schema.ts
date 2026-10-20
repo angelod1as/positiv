@@ -7,7 +7,6 @@ import { APPLICATION_MAIL_VARIABLES } from "~/business/email/application-mail.va
 import { PAYMENT_CONFIRMED_MAIL_VARIABLES } from "~/business/email/payment-confirmed-mail.variables"
 import { PAYMENT_LINK_MAIL_VARIABLES } from "~/business/email/payment-link-mail.variables"
 import { PAYMENT_REFUND_MAIL_VARIABLES } from "~/business/email/payment-refund-mail.variables"
-import { REGISTRATION_LIMIT_ADMIN_MAIL_VARIABLES } from "~/business/email/registration-limit-admin-mail.variables"
 import { zod } from "~/lib/helpers/zod"
 import { portableTextSchema } from "./content.schema"
 import { unknownVariables } from "./placeholders"
@@ -88,20 +87,11 @@ export const paymentRefundEmailSchema = zod.object({
   cta: lineSchema(PAYMENT_REFUND_MAIL_VARIABLES.cta),
 })
 
-export const registrationLimitEmailSchema = zod.object({
-  subject: subjectSchema(REGISTRATION_LIMIT_ADMIN_MAIL_VARIABLES.subject),
-  heading: lineSchema(REGISTRATION_LIMIT_ADMIN_MAIL_VARIABLES.heading),
-  body: proseSchema("body", REGISTRATION_LIMIT_ADMIN_MAIL_VARIABLES.body),
-  cta: lineSchema(REGISTRATION_LIMIT_ADMIN_MAIL_VARIABLES.cta),
-  closing: proseSchema("closing", REGISTRATION_LIMIT_ADMIN_MAIL_VARIABLES.closing),
-})
-
 export const emailTemplatesSchema = zod.object({
   application: applicationEmailSchema,
   paymentConfirmed: paymentConfirmedEmailSchema,
   paymentLink: paymentLinkEmailSchema,
   paymentRefund: paymentRefundEmailSchema,
-  registrationLimit: registrationLimitEmailSchema,
 })
 
 export type EmailTemplates = z.output<typeof emailTemplatesSchema>
