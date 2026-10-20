@@ -320,4 +320,54 @@ describe("EventCardFooter", () => {
       ).not.toBeInTheDocument()
     })
   })
+
+  // Whoever applied keeps the way out after registrations close, paid or not:
+  // the participant limit closes an event on its own, and a paid charge is
+  // left for an admin to refund.
+  describe("card state matrix", () => {
+    const { apply, closed, scheduled, comingSoon, cancel, payment } =
+      eventCardCopy
+
+    it.each([
+      ["Registration Open", false, false, null, [apply]],
+      ["Registration Open", true, false, null, [cancel.trigger]],
+      ["Registration Open", true, false, "pay-1", [payment.pay, cancel.trigger]],
+      ["Registration Closed", false, false, null, [closed]],
+      ["Registration Closed", false, true, null, [apply]],
+      ["Registration Closed", true, false, null, [cancel.trigger]],
+      ["Registration Closed", true, true, null, [cancel.trigger]],
+      [
+        "Registration Closed",
+        true,
+        false,
+        "pay-1",
+        [payment.pay, cancel.trigger],
+      ],
+      ["Scheduled", false, false, null, [scheduled]],
+      ["Scheduled", true, false, null, [scheduled]],
+      ["Draft", false, false, null, [comingSoon]],
+    ] as const)(
+      "%s, applied %s, invited %s, open charge %s: %j",
+      (event_status, is_applied, is_invited, active_payment_id, expected) => {
+        const { container } = render(
+          <EventCardFooter
+            eventId="test-event-id"
+            event_status={event_status}
+            googleLink=""
+            is_applied={is_applied}
+            is_invited={is_invited}
+            active_payment_id={active_payment_id}
+            dataTestId="test-footer"
+          />,
+        )
+
+        // The mocked Button renders an anchor, with no href when disabled.
+        const offered = Array.from(container.querySelectorAll("a, button")).map(
+          (element) => element.textContent,
+        )
+
+        expect(offered.sort()).toEqual([...expected].sort())
+      },
+    )
+  })
 })
