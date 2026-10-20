@@ -17,15 +17,15 @@ const mockRequestPasswordReset = vi.mocked(requestPasswordReset)
 
 const answers = { email: "pessoa@exemplo.com" }
 
-const post = (body: unknown) =>
+const post = (body: unknown, headers: Record<string, string> = {}) =>
   new Request("http://localhost/api/auth/esqueci-senha", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...headers },
     body: typeof body === "string" ? body : JSON.stringify(body),
   })
 
-const run = (body: unknown) =>
-  action({ request: post(body), params: {}, context: {} as never })
+const run = (body: unknown, headers?: Record<string, string>) =>
+  action({ request: post(body, headers), params: {}, context: {} as never })
 
 describe("forgot password commit route", () => {
   beforeEach(() => {
@@ -41,6 +41,7 @@ describe("forgot password commit route", () => {
     expect(mockRequestPasswordReset).toHaveBeenCalledWith({
       answers,
       context: expect.anything(),
+      ip: null,
     })
   })
 
@@ -66,6 +67,32 @@ describe("forgot password commit route", () => {
       ok: false,
       errors: [],
       message: "Não foi possível enviar",
+    })
+  })
+
+  it("hands over the client IP the proxy saw", async () => {
+    await run(answers, { "x-real-ip": "203.0.113.7" })
+
+    expect(mockRequestPasswordReset).toHaveBeenCalledWith(
+      expect.objectContaining({ ip: "203.0.113.7" }),
+    )
+  })
+
+  it("answers a rate-limited request with 429", async () => {
+    mockRequestPasswordReset.mockResolvedValue({
+      ok: false,
+      errors: [],
+      message: "Muitas tentativas",
+      rateLimited: true,
+    })
+
+    const response = await run(answers, { "x-real-ip": "203.0.113.7" })
+
+    expect(response.status).toBe(429)
+    await expect(response.json()).resolves.toMatchObject({
+      ok: false,
+      errors: [],
+      message: "Muitas tentativas",
     })
   })
 })

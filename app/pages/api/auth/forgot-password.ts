@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "react-router"
 import { getContext } from "~/business/auth/auth.server"
 import { requestPasswordReset } from "~/business/auth/request-password-reset.server"
+import { getClientIp } from "~/lib/helpers/get-client-ip.server"
 
 /**
  * A route of its own rather than the page's action: a POST to a page route is
@@ -22,9 +23,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const result = await requestPasswordReset({
     answers: answers as Record<string, unknown>,
     context,
+    ip: getClientIp(request),
   })
 
   // The browser only reads the body, but a refused request should not read as
   // a success to anything watching the status.
-  return Response.json(result, { status: result.ok ? 200 : 422 })
+  return Response.json(result, {
+    status: result.ok ? 200 : "rateLimited" in result ? 429 : 422,
+  })
 }
