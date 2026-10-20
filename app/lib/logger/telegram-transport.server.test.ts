@@ -333,7 +333,7 @@ describe("TelegramTransport", () => {
     })
   })
 
-  it("truncates a long message without leaving a tag open", () => {
+  it("truncates a long message without losing the metadata", () => {
     return new Promise<void>((resolve) => {
       transport.log(
         { level: "error", message: "x".repeat(5000), paymentId: "pay-1" },
@@ -341,8 +341,31 @@ describe("TelegramTransport", () => {
           const body = JSON.parse(fetchSpy.mock.calls[0][1].body)
           const text: string = body.text
           expect(text.length).toBeLessThanOrEqual(4096)
-          expect(text.startsWith("<b>[ERROR]</b>\n")).toBe(true)
-          expect(text.endsWith("...")).toBe(true)
+          expect(text.startsWith("<b>[ERROR]</b>\nxxx")).toBe(true)
+          expect(text).toContain("x...\n<pre>")
+          expect(text).toContain("pay-1")
+          expect(text.endsWith("</pre>")).toBe(true)
+          resolve()
+        },
+      )
+    })
+  })
+
+  it("drops the preformatted block when too little room is left to say anything", () => {
+    return new Promise<void>((resolve) => {
+      transport.log(
+        {
+          level: "error",
+          message: "Boom",
+          paymentId: "pay-1",
+          links: { admin: `https://x.test/${"a".repeat(4024)}` },
+        },
+        () => {
+          const body = JSON.parse(fetchSpy.mock.calls[0][1].body)
+          const text: string = body.text
+          expect(text.length).toBeLessThanOrEqual(4096)
+          expect(text).toContain("Boom")
+          expect(text).toContain(">admin</a>")
           expect(text).not.toContain("<pre>")
           resolve()
         },

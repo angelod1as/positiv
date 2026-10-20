@@ -14,6 +14,7 @@ function escapeHtml(text: string): string {
 
 const MAX_MESSAGE_LENGTH = 4096
 const ELLIPSIS = "..."
+const MIN_METADATA_LENGTH = 500
 
 // Cut between whole characters, never inside an entity, so the result is
 // always valid inside the HTML around it.
@@ -120,26 +121,27 @@ export class TelegramTransport extends TransportStream {
     }
 
     // Telegram rejects the whole message when its HTML does not parse, so the
-    // content is cut before the tags go around it: metadata first, then the
-    // message, and never the anchors.
-    const rawMessage = String(info.message)
+    // content is cut before the tags go around it: metadata first, down to a
+    // floor that still identifies the alert, then the message, and never the
+    // anchors. Below that floor the metadata block says nothing and is dropped.
+    const available = MAX_MESSAGE_LENGTH - head.length - anchors.length
     const preTags = "\n<pre></pre>"
-    let pre = ""
-    if (Object.keys(metadata).length > 0) {
-      const budget =
-        MAX_MESSAGE_LENGTH -
-        head.length -
-        anchors.length -
-        preTags.length -
-        escapeHtml(rawMessage).length
-      const serialized = escapeHtmlWithin(safeStringify(metadata), budget)
-      if (serialized.length > 0) pre = `\n<pre>${serialized}</pre>`
-    }
+    const serialized =
+      Object.keys(metadata).length > 0 ? safeStringify(metadata) : ""
+    const metadataFloor =
+      serialized.length > 0
+        ? preTags.length +
+          Math.min(escapeHtml(serialized).length, MIN_METADATA_LENGTH)
+        : 0
+    const keepsMetadata = serialized.length > 0 && available >= metadataFloor
 
     const message = escapeHtmlWithin(
-      rawMessage,
-      MAX_MESSAGE_LENGTH - head.length - anchors.length - pre.length,
+      String(info.message),
+      available - (keepsMetadata ? metadataFloor : 0),
     )
+    const pre = keepsMetadata
+      ? `\n<pre>${escapeHtmlWithin(serialized, available - message.length - preTags.length)}</pre>`
+      : ""
     const text = `${head}${message}${anchors}${pre}`
 
     const url = `https://api.telegram.org/bot${this.botToken}/sendMessage`
