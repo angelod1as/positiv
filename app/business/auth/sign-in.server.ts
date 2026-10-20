@@ -82,15 +82,23 @@ export async function signIn({
     return rateLimited
   }
 
-  const { supabase } = context
-  const { data, error } = await supabase.auth.signInWithPassword(parsed.data)
-
   // A turn that cannot be handed back only expires with its window, which is
   // no reason to fail a sign-in supabase has already let through.
-  if (error?.code !== "invalid_credentials") {
-    await releaseAuthAttempt(reservation).catch((releaseError: unknown) => {
+  const handBack = () =>
+    releaseAuthAttempt(reservation).catch((releaseError: unknown) => {
       logger.error("Could not hand a sign-in turn back", { releaseError })
     })
+
+  const { supabase } = context
+  const { data, error } = await supabase.auth
+    .signInWithPassword(parsed.data)
+    .catch(async (thrown: unknown) => {
+      await handBack()
+      throw thrown
+    })
+
+  if (error?.code !== "invalid_credentials") {
+    await handBack()
   }
 
   if (error) {

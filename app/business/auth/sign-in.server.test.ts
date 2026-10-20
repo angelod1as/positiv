@@ -312,6 +312,17 @@ describe("signIn", () => {
       },
     )
 
+    it("gives the e-mail its turn back when supabase throws", async () => {
+      const { supabase, signInWithPassword } = supabaseThat()
+      signInWithPassword.mockRejectedValueOnce(new Error("network down"))
+
+      await expect(
+        signIn({ answers, context: contextWith(supabase), ip: CLIENT_IP }),
+      ).rejects.toThrow("network down")
+
+      expect(releaseAuthAttempt).toHaveBeenCalledWith(RESERVATION_ID)
+    })
+
     it("still signs in when the turn cannot be handed back", async () => {
       vi.mocked(releaseAuthAttempt).mockRejectedValueOnce(new Error("db down"))
       const { supabase } = supabaseThat()
