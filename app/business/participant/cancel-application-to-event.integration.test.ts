@@ -152,4 +152,68 @@ describe("cancelApplicationToEvent", () => {
     expect(result.success).toBe(true)
     expect(deleteAsaasPayment).not.toHaveBeenCalled()
   })
+
+  describe("once registrations have closed", () => {
+    beforeEach(async () => {
+      await kysely
+        .updateTable("events")
+        .set({ event_status: "Registration Closed" })
+        .where("id", "=", eventId)
+        .execute()
+    })
+
+    const appliedAndEventStatus = async () => ({
+      is_user_applied: (
+        await kysely
+          .selectFrom("event_participants")
+          .select("is_user_applied")
+          .where("id", "=", participantId)
+          .executeTakeFirstOrThrow()
+      ).is_user_applied,
+      event_status: (
+        await kysely
+          .selectFrom("events")
+          .select("event_status")
+          .where("id", "=", eventId)
+          .executeTakeFirstOrThrow()
+      ).event_status,
+    })
+
+    it("withdraws the application and calls off the open charge", async () => {
+      const payment = await createTestPayment(tracker, kysely, {
+        event_participant_id: participantId,
+        kind: "online",
+        status: "pending",
+        amount: null,
+        method: null,
+        paid_at: null,
+      })
+
+      const result = await cancelApplicationToEvent({ eventId, profileId })
+
+      expect(result.success).toBe(true)
+      expect(await appliedAndEventStatus()).toEqual({
+        is_user_applied: false,
+        event_status: "Registration Closed",
+      })
+      expect(await statusOf(payment.id)).toBe("cancelled")
+    })
+
+    it("withdraws a paid application and leaves the charge for a refund", async () => {
+      const payment = await createTestPayment(tracker, kysely, {
+        event_participant_id: participantId,
+        amount: 22000,
+        base_amount: 22000,
+      })
+
+      const result = await cancelApplicationToEvent({ eventId, profileId })
+
+      expect(result.success).toBe(true)
+      expect(await appliedAndEventStatus()).toEqual({
+        is_user_applied: false,
+        event_status: "Registration Closed",
+      })
+      expect(await statusOf(payment.id)).toBe("paid")
+    })
+  })
 })
