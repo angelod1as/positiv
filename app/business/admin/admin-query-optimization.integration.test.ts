@@ -22,9 +22,9 @@ function flattenPlan(node: PlanNode): PlanNode[] {
   return [node, ...(node.Plans ?? []).flatMap(flattenPlan)]
 }
 
-function indexesUsedBy(nodes: PlanNode[], alias: string): string[] {
+function indexesUsedBy(nodes: PlanNode[], alias: RegExp): string[] {
   return nodes
-    .filter((node) => node.Alias === alias)
+    .filter((node) => node.Alias !== undefined && alias.test(node.Alias))
     .flatMap(flattenPlan)
     .flatMap((node) => (node["Index Name"] ? [node["Index Name"]] : []))
 }
@@ -315,15 +315,12 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
     const nodes = flattenPlan(plan)
 
     expect(nodes.map((node) => node["Node Type"])).not.toContain("WindowAgg")
-    // Matched on the whole plan, not the "ep" alias: the joined
-    // event_participant_payments view has its own "ep", so Postgres renames ours
-    expect(nodes.map((node) => node["Index Name"])).toContain(
+    // The joined event_participant_payments view has its own "ep", so Postgres
+    // renames ours to "ep_N". Which index current_ep uses is a cost choice
+    // between several valid ones that shifts with table statistics, and is
+    // not what POS-275 guards.
+    expect(indexesUsedBy(nodes, /^ep(_\d+)?$/)).toContain(
       "idx_event_participants_profile_history",
-    )
-    expect(indexesUsedBy(nodes, "current_ep")).toEqual(
-      expect.arrayContaining([
-        expect.stringMatching(/^idx_event_participants_event_id/),
-      ]),
     )
   })
 
