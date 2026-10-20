@@ -350,6 +350,32 @@ describe("TelegramTransport", () => {
     })
   })
 
+  it("drops the anchors that do not fit instead of going over the limit", () => {
+    return new Promise<void>((resolve) => {
+      transport.log(
+        {
+          level: "error",
+          message: "Boom",
+          links: {
+            admin: `https://x.test/${"a".repeat(5000)}`,
+            asaasCustomer: "https://www.asaas.com/customerAccount/show/cus_1",
+          },
+        },
+        () => {
+          const body = JSON.parse(fetchSpy.mock.calls[0][1].body)
+          const text: string = body.text
+          expect(text.length).toBeLessThanOrEqual(4096)
+          expect(text).not.toContain(">admin</a>")
+          expect(text).toContain(
+            '<a href="https://www.asaas.com/customerAccount/show/cus_1">asaasCustomer</a>',
+          )
+          expect(text).toContain("Boom")
+          resolve()
+        },
+      )
+    })
+  })
+
   it("truncates message with metadata to 4096 characters", () => {
     return new Promise<void>((resolve) => {
       transport.log(

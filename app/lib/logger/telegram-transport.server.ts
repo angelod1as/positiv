@@ -101,7 +101,9 @@ export class TelegramTransport extends TransportStream {
       for (const [label, href] of Object.entries(links)) {
         if (typeof href !== "string") continue
         const attribute = escapeHtml(href).replace(/"/g, "&quot;")
-        anchors += `\n<a href="${attribute}">${escapeHtml(label)}</a>`
+        const anchor = `\n<a href="${attribute}">${escapeHtml(label)}</a>`
+        if (head.length + anchors.length + anchor.length > MAX_MESSAGE_LENGTH) continue
+        anchors += anchor
       }
     }
 
