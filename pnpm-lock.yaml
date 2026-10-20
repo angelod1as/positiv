@@ -386,8 +386,8 @@ importers:
         specifier: ^10.8.1
         version: 10.11.0(jiti@2.7.0)(supports-color@8.1.1)
       groq-js:
-        specifier: ^1.30.3
-        version: 1.30.3(supports-color@8.1.1)
+        specifier: ^2.0.0
+        version: 2.0.0
       tsx:
         specifier: ^4.20.3
         version: 4.20.3

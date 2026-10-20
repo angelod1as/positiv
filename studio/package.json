@@ -32,7 +32,7 @@
     "@sanity/validation": "6.19.0",
     "@types/react": "^19.2.18",
     "eslint": "^10.8.1",
-    "groq-js": "^1.30.3",
+    "groq-js": "^2.0.0",
     "tsx": "^4.20.3",
     "typescript": "^5.8",
     "vitest": "^3.2.4"
