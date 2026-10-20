@@ -108,4 +108,21 @@ describe("login commit route", () => {
       message: "Muitas tentativas",
     })
   })
+
+  it("carries the session cookies on a rate-limited answer too", async () => {
+    const supabaseHeaders = new Headers()
+    supabaseHeaders.append("Set-Cookie", "sb-access-token=abc; Path=/")
+    mockGetContext.mockResolvedValue({ supabaseHeaders } as never)
+    mockSignIn.mockResolvedValue({
+      ok: false,
+      errors: [],
+      message: "Muitas tentativas",
+      rateLimited: true,
+    })
+
+    const response = await run(answers)
+
+    expect(response.status).toBe(429)
+    expect(response.headers.get("Set-Cookie")).toContain("sb-access-token=abc")
+  })
 })
