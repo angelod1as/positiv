@@ -21,8 +21,8 @@ export const preOpeningReminderCopy = {
     heading: "🚨 Informações importantes",
     notes: {
       automaticClose:
-        "O sistema fecha as candidaturas AUTOMATICAMENTE quando bater 90 candidates",
-      selection: "Desses 90, selecionaremos 60 pessoas para o evento",
+        "O sistema fecha as candidaturas AUTOMATICAMENTE quando o número limite de candidates for atingido",
+      selection: "Do número limite, selecionaremos 60 pessoas para o evento",
       previousEditions:
         "Ter participado de edições anteriores <strong>não garante</strong> a sua participação em outras festas",
       companions:

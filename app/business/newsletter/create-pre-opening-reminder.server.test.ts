@@ -250,9 +250,12 @@ describe("createPreOpeningReminder", () => {
       const callBody = JSON.parse(mockFetch.mock.calls[0][1].body)
       expect(callBody.body).toContain("Atenção: Candidaturas abrem em 3 dias!")
       expect(callBody.body).toContain(
-        "O sistema fecha as candidaturas AUTOMATICAMENTE quando bater 90 candidates",
+        "O sistema fecha as candidaturas AUTOMATICAMENTE quando o número limite de candidates for atingido",
       )
-      expect(callBody.body).toContain("selecionaremos 60 pessoas para o evento")
+      expect(callBody.body).toContain(
+        "Do número limite, selecionaremos 60 pessoas para o evento",
+      )
+      expect(callBody.body).not.toContain("Desses 90")
     })
 
     it("should include CTA button", async () => {
