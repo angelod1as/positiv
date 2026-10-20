@@ -176,6 +176,19 @@ describe("requestPasswordReset", () => {
       },
     )
 
+    it("counts the address even when the e-mail is what refuses the request", async () => {
+      limitScope("reset_email")
+      const { supabase } = supabaseThat()
+
+      await requestPasswordReset({
+        answers: { email: "pessoa@exemplo.com" },
+        context: contextWith(supabase),
+        ip: CLIENT_IP,
+      })
+
+      expect(recordAuthAttempt).toHaveBeenCalledWith("reset_ip", CLIENT_IP)
+    })
+
     it("answers a limited e-mail the same whether or not it has an account", async () => {
       limitScope("reset_email")
       const known = supabaseThat()
