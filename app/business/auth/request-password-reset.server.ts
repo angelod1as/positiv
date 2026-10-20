@@ -70,6 +70,13 @@ export async function requestPasswordReset({
     { redirectTo: `${appOrigin(host)}${LOGON_CALLBACK}` },
   )
 
+  // GoTrue only holds back a repeat e-mail to an address that has an account,
+  // so telling the visitor would tell them the account exists.
+  if (error?.code === "over_email_send_rate_limit") {
+    logger.info("Password reset e-mail held back by supabase", { error })
+    return { ok: true }
+  }
+
   if (error) {
     logger.error("Password Reset Error", { error })
     return { ok: false, errors: [], message: errorsCopy.auth.resetRequestFailed }

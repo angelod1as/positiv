@@ -98,6 +98,20 @@ describe("requestPasswordReset", () => {
     })
   })
 
+  it("answers as if sent when supabase holds back a repeat e-mail", async () => {
+    const { supabase } = supabaseThat({
+      code: "over_email_send_rate_limit",
+      message: "For security purposes, you can only request this after 60 seconds.",
+    })
+
+    const result = await requestPasswordReset({
+      answers: { email: "pessoa@exemplo.com" },
+      context: contextWith(supabase),
+    })
+
+    expect(result).toEqual({ ok: true })
+  })
+
   it("records why the request failed", async () => {
     const { logger } = await import("~/lib/logger/logger.server")
     const { supabase } = supabaseThat({ message: "smtp down" })
