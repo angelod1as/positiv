@@ -57,3 +57,5 @@ export const LISTMONK_EVENT_OPENING_TEMPLATE_ID = 7
 // DataViz - Cutoff date for historical data (only show events from this date onwards)
 // Events before this date contain legacy/incomplete imported data
 export const DATAVIZ_EVENT_CUTOFF_DATE = "2025-07-01"
+
+export const MAX_REGISTRATION_LIMIT = 10_000

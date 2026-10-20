@@ -20,6 +20,7 @@ import { adminSettingsCopy, registrationLimitSettingCopy } from "~/copy/admin"
 import { metaCopy } from "~/copy/meta"
 import { createMetaArray } from "~/lib/helpers/meta"
 import { zod } from "~/lib/helpers/zod"
+import { MAX_REGISTRATION_LIMIT } from "~/lib/constants/constants"
 import type { Route } from "./+types/settings-page"
 
 export function meta({}: Route.MetaArgs) {
@@ -53,6 +54,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       .number()
       .int()
       .min(1)
+      .max(MAX_REGISTRATION_LIMIT)
       .safeParse(formData.get("limit"))
     if (!limit.success) {
       return { intent, error: registrationLimitSettingCopy.invalid }

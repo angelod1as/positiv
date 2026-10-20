@@ -4,10 +4,16 @@ import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
 import { registrationLimitSettingCopy as copy } from "~/copy/admin"
+import { MAX_REGISTRATION_LIMIT } from "~/lib/constants/constants"
 
 export function RegistrationLimitSection({ limit }: { limit: number }) {
   const fetcher = useFetcher<{ intent: string; error?: string }>()
   const [value, setValue] = useState(String(limit))
+  const [shownLimit, setShownLimit] = useState(limit)
+  if (limit !== shownLimit) {
+    setShownLimit(limit)
+    setValue(String(limit))
+  }
   const isSubmitting = fetcher.state !== "idle"
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -30,6 +36,7 @@ export function RegistrationLimitSection({ limit }: { limit: number }) {
             id="registration-limit"
             type="number"
             min={1}
+            max={MAX_REGISTRATION_LIMIT}
             step={1}
             className="w-32"
             value={value}

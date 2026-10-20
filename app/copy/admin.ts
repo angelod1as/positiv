@@ -69,7 +69,7 @@ export const registrationLimitSettingCopy = {
   label: "Candidaturas que fecham as inscrições",
   help: "Quando um evento atinge esse número, as candidaturas fecham automaticamente. Homens cis hétero podem se candidatar, mas não contam para o limite. Mudar o limite não abre nem fecha nenhum evento na hora: vale a partir da próxima candidatura.",
   save: "Salvar",
-  invalid: "O limite precisa ser um número inteiro maior que zero.",
+  invalid: "O limite precisa ser um número inteiro entre 1 e 10.000.",
 } as const
 
 export const adminFeedbacksCopy = {

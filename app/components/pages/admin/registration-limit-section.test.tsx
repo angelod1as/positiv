@@ -50,16 +50,24 @@ describe("RegistrationLimitSection", () => {
     )
   })
 
+  it("follows a new limit from the loader", () => {
+    const { rerender } = render(<RegistrationLimitSection limit={90} />)
+
+    rerender(<RegistrationLimitSection limit={120} />)
+
+    expect(limitInput()).toHaveValue(120)
+  })
+
   it("shows why a limit was refused", () => {
     fetcher.data = {
       intent: "set-registration-limit",
-      error: "O limite precisa ser um número inteiro maior que zero.",
+      error: "O limite precisa ser um número inteiro entre 1 e 10.000.",
     }
 
     render(<RegistrationLimitSection limit={90} />)
 
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "O limite precisa ser um número inteiro maior que zero.",
+      "O limite precisa ser um número inteiro entre 1 e 10.000.",
     )
   })
 })

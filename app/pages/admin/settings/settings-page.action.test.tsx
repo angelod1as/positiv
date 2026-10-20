@@ -136,7 +136,7 @@ describe("SettingsPage action", () => {
     expect(result).toEqual({ intent: "set-registration-limit" })
   })
 
-  it.each(["0", "-5", "1.5", "abc", ""])(
+  it.each(["0", "-5", "1.5", "abc", "", "10001", "3000000000"])(
     "should refuse a registration limit of %j without saving it",
     async (limit) => {
       const result = await runAction({ intent: "set-registration-limit", limit })
