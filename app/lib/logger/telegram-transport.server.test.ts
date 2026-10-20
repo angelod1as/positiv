@@ -326,7 +326,7 @@ describe("TelegramTransport", () => {
           expect(text.length).toBeLessThanOrEqual(4096)
           expect(text.endsWith("...</pre>")).toBe(true)
           const pre = text.slice(text.indexOf("<pre>") + 5, text.indexOf("</pre>"))
-          expect(pre.replace(/&(amp|lt|gt|quot);/g, "")).not.toMatch(/[&<>]/)
+          expect(pre.replace(/&(amp|lt|gt);/g, "")).not.toMatch(/[&<>]/)
           resolve()
         },
       )
