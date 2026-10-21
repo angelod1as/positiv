@@ -942,6 +942,7 @@ export type Database = {
         | "newsletter.manage"
         | "reports.read"
         | "events.apply_direct"
+        | "notifications.receive_admin"
       application_status_enum:
         | "pending"
         | "talking"
@@ -1123,6 +1124,7 @@ export const Constants = {
         "newsletter.manage",
         "reports.read",
         "events.apply_direct",
+        "notifications.receive_admin",
       ],
       application_status_enum: [
         "pending",
