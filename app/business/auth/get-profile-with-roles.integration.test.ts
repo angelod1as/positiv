@@ -58,12 +58,14 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
       full_name: string | null
       is_admin: boolean
       roles: string[] | null
+      permissions: string[] | null
     }>(testUserId)
 
     expect(result.rows).toHaveLength(1)
     const data = result.rows[0]
     expect(data.is_admin).toBe(false)
     expect(data.roles).toBeNull()
+    expect(data.permissions).toBeNull()
   })
 
   it("should return profile with is_admin=true and roles=['admin'] when user has admin role", async () => {
@@ -91,12 +93,12 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
     expect(data.full_name).toBeDefined()
   })
 
-  it("should return profile with is_admin=false when user has non-admin roles", async () => {
+  it("should return is_admin=false, roles=['staff'] and only the direct application for a staff", async () => {
     await kysely
       .insertInto("user_roles")
       .values({
         user_id: testUserId,
-        role_name: "moderator",
+        role_name: "staff",
         created_at: new Date().toISOString(),
       })
       .execute()
@@ -104,31 +106,28 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
     const result = await callAsOwner<{
       is_admin: boolean
       roles: string[] | null
+      permissions: string[] | null
     }>(testUserId)
 
     expect(result.rows).toHaveLength(1)
     const data = result.rows[0]
     expect(data.is_admin).toBe(false)
-    expect(data.roles).toEqual(["moderator"])
+    expect(data.roles).toEqual(["staff"])
+    expect(data.permissions).toEqual(["events.apply_direct"])
   })
 
-  it("should return profile with multiple roles sorted alphabetically", async () => {
+  it("should return every role sorted and the union of their permissions", async () => {
     await kysely
       .insertInto("user_roles")
       .values([
         {
           user_id: testUserId,
-          role_name: "moderator",
+          role_name: "staff",
           created_at: new Date().toISOString(),
         },
         {
           user_id: testUserId,
           role_name: "admin",
-          created_at: new Date().toISOString(),
-        },
-        {
-          user_id: testUserId,
-          role_name: "editor",
           created_at: new Date().toISOString(),
         },
       ])
@@ -137,12 +136,22 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
     const result = await callAsOwner<{
       is_admin: boolean
       roles: string[] | null
+      permissions: string[] | null
     }>(testUserId)
 
     expect(result.rows).toHaveLength(1)
     const data = result.rows[0]
     expect(data.is_admin).toBe(true)
-    expect(data.roles).toEqual(["admin", "editor", "moderator"])
+    expect(data.roles).toEqual(["admin", "staff"])
+    expect(data.permissions).toEqual([
+      "admin.panel",
+      "events.apply_direct",
+      "events.manage",
+      "newsletter.manage",
+      "participants.manage",
+      "profiles.manage",
+      "reports.read",
+    ])
   })
 
   it("should return all profile columns correctly", async () => {
@@ -190,6 +199,7 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
     expect(data).toHaveProperty("created_at")
     expect(data).toHaveProperty("is_admin")
     expect(data).toHaveProperty("roles")
+    expect(data).toHaveProperty("permissions")
 
     expect(data.is_admin).toBe(false)
     expect(data.roles).toBeNull()

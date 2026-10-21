@@ -818,6 +818,21 @@ export type Database = {
         }
         Relationships: []
       }
+      role_permissions: {
+        Row: {
+          permission: Database["public"]["Enums"]["app_permission"]
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Insert: {
+          permission: Database["public"]["Enums"]["app_permission"]
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Update: {
+          permission?: Database["public"]["Enums"]["app_permission"]
+          role?: Database["public"]["Enums"]["user_role"]
+        }
+        Relationships: []
+      }
       signup_attempts: {
         Row: {
           created_at: string
@@ -839,17 +854,17 @@ export type Database = {
       user_roles: {
         Row: {
           created_at: string
-          role_name: string
+          role_name: Database["public"]["Enums"]["user_role"]
           user_id: string
         }
         Insert: {
           created_at?: string
-          role_name: string
+          role_name: Database["public"]["Enums"]["user_role"]
           user_id: string
         }
         Update: {
           created_at?: string
-          role_name?: string
+          role_name?: Database["public"]["Enums"]["user_role"]
           user_id?: string
         }
         Relationships: []
@@ -874,6 +889,12 @@ export type Database = {
         Args: { p_role_name: string; p_user_id: string }
         Returns: undefined
       }
+      authorize: {
+        Args: {
+          requested_permission: Database["public"]["Enums"]["app_permission"]
+        }
+        Returns: boolean
+      }
       get_admin_user_ids: { Args: never; Returns: string[] }
       get_applied_participants_count: {
         Args: { event_id_input: string }
@@ -897,6 +918,7 @@ export type Database = {
           id: string
           is_admin: boolean
           orientation: string[]
+          permissions: string[]
           phone: number
           phone_is_international: boolean
           pronouns: string[]
@@ -912,6 +934,14 @@ export type Database = {
       update_event_statuses_automatically: { Args: never; Returns: Json }
     }
     Enums: {
+      app_permission:
+        | "admin.panel"
+        | "events.manage"
+        | "participants.manage"
+        | "profiles.manage"
+        | "newsletter.manage"
+        | "reports.read"
+        | "events.apply_direct"
       application_status_enum:
         | "pending"
         | "talking"
@@ -957,6 +987,7 @@ export type Database = {
         | "partially_refunded"
       profile_flag_enum: "none" | "yellow" | "red" | "gray"
       spot_type: "regular" | "social" | "staff"
+      user_role: "admin" | "staff"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1084,6 +1115,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_permission: [
+        "admin.panel",
+        "events.manage",
+        "participants.manage",
+        "profiles.manage",
+        "newsletter.manage",
+        "reports.read",
+        "events.apply_direct",
+      ],
       application_status_enum: [
         "pending",
         "talking",
@@ -1134,6 +1174,7 @@ export const Constants = {
       ],
       profile_flag_enum: ["none", "yellow", "red", "gray"],
       spot_type: ["regular", "social", "staff"],
+      user_role: ["admin", "staff"],
     },
   },
 } as const
