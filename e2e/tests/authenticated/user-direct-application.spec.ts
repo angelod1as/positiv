@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import path from 'path'
 import { createSoonOpenEvent, DIRECT_APPLY_LABEL, openParticipantDashboard } from '../../utils/direct-application-helpers'
 
-test.describe('POS-503: the direct application is for admins only', () => {
+test.describe('POS-503: the direct application is not for participants', () => {
   test.use({ storageState: path.resolve(import.meta.dirname, '../../.auth/user.json') })
 
   test('a participant is never offered it', async ({ page }) => {

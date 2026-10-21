@@ -8,11 +8,13 @@ import fs from 'fs/promises'
 const authDir = path.join(import.meta.dirname, '..', '..', '.auth')
 const adminFile = path.join(authDir, 'admin.json')
 const userFile = path.join(authDir, 'user.json')
+const staffFile = path.join(authDir, 'staff.json')
 
 // Store created users for potential cleanup
 export const setupUsers = {
   admin: null as { email: string; password: string; id: string } | null,
   user: null as { email: string; password: string; id: string } | null,
+  staff: null as { email: string; password: string; id: string } | null,
 }
 
 setup.beforeAll(async () => {
@@ -34,6 +36,23 @@ setup('authenticate as admin', async ({ page }) => {
   await page.context().storageState({ path: adminFile })
 
   console.info('✅ Admin authentication state saved')
+})
+
+setup('authenticate as staff', async ({ page }) => {
+  const email = generateTestEmail()
+  const password = generateTestPassword()
+
+  console.info('Creating test staff user:', email)
+  const staffUser = await createTestUser(email, password, { staff: true })
+  setupUsers.staff = { ...staffUser, password }
+
+  // A staff holds no admin.panel, so the login lands on the participant
+  // dashboard, through the same onboarding as anyone else.
+  await performUILogin(page, email, password)
+
+  await page.context().storageState({ path: staffFile })
+
+  console.info('✅ Staff authentication state saved')
 })
 
 setup('authenticate as user', async ({ page }) => {

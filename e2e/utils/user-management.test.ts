@@ -105,6 +105,48 @@ describe('createTestUser', () => {
   })
 })
 
+describe('createTestUser roles', () => {
+  function useRpcDouble() {
+    const admin = {
+      createUser: vi.fn(async () => ({ data: { user: { id: 'created', email: 'created@example.com' } }, error: null })),
+    }
+    const double = createSupabaseDouble(() => ({ data: [], error: null }), { admin })
+    const client = double.client as { rpc: (...args: unknown[]) => Promise<unknown> }
+    const rpc = vi.spyOn(client, 'rpc')
+    createClient.mockReturnValue(client)
+    return rpc
+  }
+
+  it('gives a staff the staff role', async () => {
+    const rpc = useRpcDouble()
+    const { createTestUser } = await import('./user-management')
+
+    await createTestUser('staff@example.com', 'Password1!', { staff: true })
+
+    expect(rpc).toHaveBeenCalledWith('add_user_role', { p_user_id: 'created', p_role_name: 'staff' })
+    expect(rpc).toHaveBeenCalledTimes(1)
+  })
+
+  it('gives an admin the admin role', async () => {
+    const rpc = useRpcDouble()
+    const { createTestUser } = await import('./user-management')
+
+    await createTestUser('admin@example.com', 'Password1!', { admin: true })
+
+    expect(rpc).toHaveBeenCalledWith('add_user_role', { p_user_id: 'created', p_role_name: 'admin' })
+    expect(rpc).toHaveBeenCalledTimes(1)
+  })
+
+  it('gives anyone else no role at all', async () => {
+    const rpc = useRpcDouble()
+    const { createTestUser } = await import('./user-management')
+
+    await createTestUser('someone@example.com', 'Password1!')
+
+    expect(rpc).not.toHaveBeenCalled()
+  })
+})
+
 describe('deleteAllTestUsers', () => {
   it('deletes the users this run created', async () => {
     const admin = useAuthDouble([OWN_USER, OTHER_RUN_USER, REAL_USER])
