@@ -86,6 +86,8 @@ export const currentProfileSchema = zod.object({
   rg_issuer: zod.string().nullish(),
   created_at: zod.string(),
   is_admin: zod.boolean(),
+  roles: zod.array(zod.string()).nullish(),
+  permissions: zod.array(zod.string()).nullish(),
 })
 
 export const getSupabaseSchema = zod.object({

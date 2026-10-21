@@ -3,6 +3,7 @@ import { errorsCopy } from "~/copy/errors"
 import paths from "~/lib/paths"
 import type { contextSchema } from "~/business/common"
 import type { z } from "zod"
+import { can, type Permission } from "./permissions"
 
 const {
   auth: { LOGIN },
@@ -19,13 +20,16 @@ export function requireUser(currentUser: CurrentUser): NonNullable<CurrentUser> 
   return currentUser
 }
 
-export function requireAdmin(currentProfile: CurrentProfile): NonNullable<CurrentProfile> {
+export function requirePermission(
+  currentProfile: CurrentProfile,
+  permission: Permission,
+): NonNullable<CurrentProfile> {
   if (!currentProfile) {
     throw redirectWithError(LOGIN, errorsCopy.auth.loginRequired)
   }
 
-  if (!currentProfile.is_admin) {
-    throw redirectWithError(DASHBOARD, errorsCopy.auth.adminRequired)
+  if (!can(currentProfile, permission)) {
+    throw redirectWithError(DASHBOARD, errorsCopy.auth.permissionRequired)
   }
 
   return currentProfile
