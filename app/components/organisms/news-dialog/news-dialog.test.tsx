@@ -188,6 +188,8 @@ describe("NewsDialog", () => {
         email: "admin@test.com",
         full_name: "Admin User",
         is_admin: true,
+        roles: ["admin"],
+        permissions: ["admin.panel", "events.apply_direct"],
         basic_data_filled: true,
         social_name: null,
         pronouns: null,
@@ -216,6 +218,35 @@ describe("NewsDialog", () => {
 
       expect(screen.getByText("Regular Feature Update")).toBeInTheDocument()
       expect(screen.getByText("Admin-Only Update")).toBeInTheDocument()
+    })
+  })
+
+  describe("Staff", () => {
+    it("shows a staff only what everyone sees", async () => {
+      const staffProfile: ProfileWithRoles = {
+        id: "1",
+        email: "staff@test.com",
+        full_name: "Staff User",
+        is_admin: false,
+        roles: ["staff"],
+        permissions: ["events.apply_direct"],
+        basic_data_filled: true,
+        created_at: "2024-01-01",
+      }
+
+      render(
+        <NewsDialog
+          isThereAnyNews={true}
+          isHeader={false}
+          currentProfile={staffProfile}
+        />,
+      )
+
+      const user = userEvent.setup()
+      await user.click(screen.getByText("Veja as novidades do site"))
+
+      expect(screen.getByText("Regular Feature Update")).toBeInTheDocument()
+      expect(screen.queryByText("Admin-Only Update")).not.toBeInTheDocument()
     })
   })
 
