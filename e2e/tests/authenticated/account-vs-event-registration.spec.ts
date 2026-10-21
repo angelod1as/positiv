@@ -41,8 +41,6 @@ test.describe('Account signup versus event registration', () => {
   })
 
   test('an event moves to the applied section after registration and appears once', async ({ page }) => {
-    // Guarantee at least one open event so this test exercises the real
-    // application flow instead of skipping vacuously.
     await ensureMinimumOpenEvents(1)
 
     await page.goto('/dashboard')
@@ -50,8 +48,7 @@ test.describe('Account signup versus event registration', () => {
     const applyableCards = page
       .locator('[data-testid^="event-card"]')
       .filter({ has: page.getByRole('link', { name: 'Me candidatar' }) })
-    const applyButtonCount = await applyableCards.count()
-    test.skip(applyButtonCount === 0, 'No event with open registration in this environment')
+    await expect(applyableCards.first()).toBeVisible()
 
     const applyButton = applyableCards
       .first()
