@@ -4,6 +4,7 @@ import { Suspense } from "react"
 import { redirectWithInfo } from "remix-toast"
 import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { getContext, getUserContext } from "~/business/auth/auth.server"
+import { can, PERMISSIONS } from "~/business/auth/permissions"
 import { applyToEvent } from "~/business/participant/apply-to-event.server"
 import { cancelApplicationToEvent } from "~/business/participant/cancel-application-to-event.server"
 import { hasEverApplied } from "~/business/participant/has-ever-applied.server"
@@ -70,7 +71,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return {
     events,
     hasEverApplied: everApplied,
-    isAdmin: currentProfile.is_admin ?? false,
+    canApplyDirectly: can(currentProfile, PERMISSIONS.EVENTS_APPLY_DIRECT),
     cardPaymentsEnabled,
   }
 }
@@ -101,9 +102,9 @@ export async function action({ request, params }: Route.ClientActionArgs) {
   if (fetchId === "handleAdminApply") {
     const context = await getUserContext(request, params)
 
-    // The only gate this application has. Whoever is not an admin walks the
-    // whole flow, quiz included, exactly as before.
-    if (!context.currentProfile?.is_admin) {
+    // The only gate this application has. Whoever lacks the permission walks
+    // the whole flow, quiz included, exactly as before.
+    if (!can(context.currentProfile, PERMISSIONS.EVENTS_APPLY_DIRECT)) {
       return { error: dashboardCopy.directApply.notAllowed }
     }
 
@@ -140,9 +141,9 @@ export async function action({ request, params }: Route.ClientActionArgs) {
 export const EventsContent: FC<{
   events: Event[]
   hasEverApplied: boolean
-  isAdmin?: boolean
+  canApplyDirectly?: boolean
   cardPaymentsEnabled?: boolean
-}> = ({ events, hasEverApplied, isAdmin, cardPaymentsEnabled }) => {
+}> = ({ events, hasEverApplied, canApplyDirectly, cardPaymentsEnabled }) => {
   const { applied, available } = splitEvents(events)
 
   return (
@@ -181,7 +182,7 @@ export const EventsContent: FC<{
                 data-testid="event-card-available"
                 key={event.id}
                 event={event}
-                directApply={isAdmin}
+                directApply={canApplyDirectly}
                 cardPaymentsEnabled={cardPaymentsEnabled}
               />
             ))}
@@ -202,7 +203,7 @@ const DashboardPage = ({ loaderData }: Route.ComponentProps) => {
           <EventsContent
             events={events}
             hasEverApplied={loaderData.hasEverApplied}
-            isAdmin={loaderData.isAdmin}
+            canApplyDirectly={loaderData.canApplyDirectly}
             cardPaymentsEnabled={loaderData.cardPaymentsEnabled}
           />
         )}
