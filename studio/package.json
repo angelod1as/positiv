@@ -13,8 +13,7 @@
     "test": "vitest --run",
     "seed": "sanity exec seed/cli.ts --with-user-token",
     "fixtures": "tsx fixtures/cli.ts",
-    "refresh-dev": "sanity exec refresh-dev/cli.ts --with-user-token --",
-    "migrate:remove-registration-limit-email": "sanity exec migrations/remove-registration-limit-email/cli.ts --with-user-token --"
+    "refresh-dev": "sanity exec refresh-dev/cli.ts --with-user-token --"
   },
   "dependencies": {
     "@sanity/icons": "^5.2.3",
