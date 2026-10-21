@@ -12,10 +12,9 @@ labels the Platform owns there: buttons, registration statuses, alt text.
 
 The transactional emails under `emails/` are a second, narrower case: each
 `*MailContent` export (`paymentLinkMailContent`, `applicationMailContent`,
-`paymentConfirmedMailContent`, `paymentRefundMailContent`,
-`registrationLimitAdminMailContent`) holds that email's Sanity-editable copy as
-the code fallback, with prose as Portable Text objects rather than a Markdown
-string. The `*MailCopy` export beside it keeps the labels that stay in code.
+`paymentConfirmedMailContent`, `paymentRefundMailContent`) holds that email's
+Sanity-editable copy as the code fallback, with prose as Portable Text objects
+rather than a Markdown string. The `*MailCopy` export beside it keeps the labels that stay in code.
 These files are deliberately free of any `~`-aliased import so the Studio
 package can import them for its seed and migrations (see
 [Email copy lives in Sanity](../../docs/architecture/decisions/20261018-email-copy-lives-in-sanity.md)).
