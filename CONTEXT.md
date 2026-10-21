@@ -89,3 +89,27 @@ _Avoid_: Profile, founder (as a type), author (as a type), team member
 A quote shown inside a testimonials Section, attributed by name only. Its
 author is never a Person and exists nowhere else.
 _Avoid_: Review, quote
+
+### Access
+
+**Role**:
+A named set of Permissions a person holds on the Platform — today Admin and
+Staff. Assigned only by whoever runs the Platform, never by the person or
+through the Platform itself. Says who someone is, never what they may do.
+_Avoid_: Group, user type, profile type
+
+**Permission**:
+One thing a person may do on the Platform, such as managing events or applying
+to an event directly. Roles grant Permissions, and every access decision asks
+for a Permission, never for a Role.
+_Avoid_: Right, privilege, scope, capability
+
+**Admin**:
+The Role that holds every Permission: runs events, participants and the
+newsletter, enters the admin panel and receives admin notifications.
+_Avoid_: Administrator, superuser, Editor (who changes Public Site content)
+
+**Staff**:
+The Role for people who work at events. A Staff may apply to an event
+directly, skipping the usual application, and holds nothing else.
+_Avoid_: Crew, team member, volunteer
