@@ -27,11 +27,32 @@ describe("permission guard", () => {
       'export const f = (roles: string[]) => roles.includes("staff")',
     ],
     [
+      "compares a profile's role",
+      'export const f = (user: { role: string }) => user.role !== "admin"',
+    ],
+    [
+      "looks for a role in a profile",
+      'export const f = (p: { roles?: string[] }) => p.roles?.includes("admin")',
+    ],
+    [
       "reaches for the ROLES constant",
       'import { ROLES } from "~/lib/constants/roles"\nexport const admin = ROLES.ADMIN',
     ],
   ])("fails when app code %s", async (_, code) => {
     expect(await restrictedSyntaxErrors(code)).not.toEqual([])
+  }, 60_000)
+
+  it.each([
+    [
+      "looks for admin in a path",
+      'export const f = (pathname: string) => pathname.includes("admin")',
+    ],
+    [
+      "compares a route segment with admin",
+      'export const f = (segment: string) => segment === "admin"',
+    ],
+  ])("lets app code that %s through", async (_, code) => {
+    expect(await restrictedSyntaxErrors(code)).toEqual([])
   }, 60_000)
 
   it("lets app code ask for a permission", async () => {

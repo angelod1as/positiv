@@ -235,8 +235,8 @@ export default defineConfig([
           "Identifier[name='role_name']",
           "Literal[value=/role_name/]",
           "MemberExpression[object.name='ROLES']",
-          "BinaryExpression[operator=/^[!=]==?$/] > Literal[value='admin']",
-          "CallExpression[callee.property.name='includes'] > Literal[value=/^(admin|staff)$/]",
+          "BinaryExpression[operator=/^[!=]==?$/]:has(Identifier[name=/role/i]) > Literal[value='admin']",
+          "CallExpression[callee.property.name='includes']:has(Identifier[name=/role/i]) > Literal[value=/^(admin|staff)$/]",
         ].map((selector) => ({
           selector,
           message:
