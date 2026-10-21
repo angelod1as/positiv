@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type winston from "winston"
+import TransportStream from "winston-transport"
 
 const { ENV } = vi.hoisted(() => ({ ENV: {} as Record<string, unknown> }))
 vi.mock("varlock/env", () => ({ ENV }))
@@ -82,5 +83,59 @@ describe("logger", () => {
       (t: winston.transport) => t.constructor.name === "TelegramTransport",
     )
     expect(telegram?.level).toBe("error")
+  })
+
+  describe("incident ID", () => {
+    class CaptureTransport extends TransportStream {
+      entries: Record<string, unknown>[] = []
+      log(info: Record<string, unknown>, callback: () => void) {
+        this.entries.push(info)
+        callback()
+      }
+    }
+
+    async function capture() {
+      const { logger } = await import("./logger.server")
+      const console = new CaptureTransport()
+      const telegram = new CaptureTransport()
+      logger.add(console)
+      logger.add(telegram)
+      return { logger, console, telegram }
+    }
+
+    it("stamps every error entry with a short hex incident ID", async () => {
+      const { logger, console } = await capture()
+
+      logger.error("boom")
+
+      expect(console.entries[0].incidentId).toMatch(/^[0-9a-f]{8}$/)
+    })
+
+    it("hands every transport the same incident ID", async () => {
+      const { logger, console, telegram } = await capture()
+
+      logger.error("boom")
+
+      expect(telegram.entries[0].incidentId).toBe(console.entries[0].incidentId)
+    })
+
+    it("gives each error its own incident ID", async () => {
+      const { logger, console } = await capture()
+
+      logger.error("first")
+      logger.error("second")
+
+      expect(console.entries[0].incidentId).not.toBe(
+        console.entries[1].incidentId,
+      )
+    })
+
+    it("leaves warnings without one", async () => {
+      const { logger, console } = await capture()
+
+      logger.warn("careful")
+
+      expect(console.entries[0]).not.toHaveProperty("incidentId")
+    })
   })
 })

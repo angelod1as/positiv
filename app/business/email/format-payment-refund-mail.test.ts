@@ -3,7 +3,14 @@ import { formatPaymentRefundMail } from "./format-payment-refund-mail"
 import { paymentRefundCopyFallback } from "./payment-refund-mail-copy"
 import { loadPaymentRefundCopy } from "./payment-refund-mail-copy.server"
 
-vi.mock("~/lib/logger/logger.server", () => ({ logger: { error: vi.fn() } }))
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: {
+    error: vi.fn(),
+    child() {
+      return this
+    },
+  },
+}))
 vi.mock("./payment-refund-mail-copy.server", () => ({
   loadPaymentRefundCopy: vi.fn(),
 }))

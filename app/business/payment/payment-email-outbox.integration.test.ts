@@ -28,7 +28,9 @@ vi.mock("./payment-emails.server", () => ({
   sendPaymentConfirmedEmail,
   sendPaymentRefundEmail,
 }))
-vi.mock("~/lib/logger/logger.server", () => ({ logger }))
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { ...logger, child: () => logger },
+}))
 
 import { kyselyDb } from "~/kysely-db"
 import {

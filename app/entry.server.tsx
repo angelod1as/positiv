@@ -11,6 +11,7 @@ import type {
 } from "react-router"
 import { ServerRouter } from "react-router"
 import { logger, serializeError } from "~/lib/logger/logger.server"
+import { requestContext } from "~/lib/logger/request-context.server"
 import { applyDraftCacheControl } from "./business/cms/draft-mode.server"
 
 // The react-router 7.6.3 framework default (npx react-router reveal), with two
@@ -21,9 +22,16 @@ import { applyDraftCacheControl } from "./business/cms/draft-mode.server"
 // Telegram). Re-reveal and re-diff when upgrading react-router.
 export const streamTimeout = 5_000
 
-export const handleError: HandleErrorFunction = (error, { request }) => {
+export const handleError: HandleErrorFunction = (
+  error,
+  { request, params },
+) => {
   if (request.signal.aborted) return
-  logger.error("Unhandled server error", { error: serializeError(error) })
+  logger.error("Unhandled server error", {
+    category: "unhandled",
+    ...requestContext(request, params),
+    error: serializeError(error),
+  })
 }
 
 export async function handleDataRequest(

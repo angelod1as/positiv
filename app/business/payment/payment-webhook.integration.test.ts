@@ -27,7 +27,9 @@ vi.mock("./payment-emails.server", async (importOriginal) => {
   return { ...original, sendPaymentConfirmedEmail, sendPaymentRefundEmail }
 })
 
-vi.mock("~/lib/logger/logger.server", () => ({ logger }))
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { ...logger, child: () => logger },
+}))
 
 import { applyWebhookEvent, recordWebhookEvent } from "./payment-webhook.server"
 import {

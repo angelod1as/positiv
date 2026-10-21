@@ -20,7 +20,9 @@ const { sendEmail, logger, appUrl, cardEnabled } = vi.hoisted(() => ({
 }))
 
 vi.mock("~/business/email/send-email", () => ({ sendEmail }))
-vi.mock("~/lib/logger/logger.server", () => ({ logger }))
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { ...logger, child: () => logger },
+}))
 
 // A real Supabase is on the other end, so ENV cannot be replaced wholesale --
 // that would strip the connection settings. Only APP_URL is pinned, and only

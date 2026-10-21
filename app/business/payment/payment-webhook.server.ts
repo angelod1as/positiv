@@ -1,7 +1,7 @@
 import { sql, type Kysely } from "kysely"
 import { kyselyDb } from "~/kysely-db"
 import type { Database } from "~types/database/kysely.types"
-import { logger } from "~/lib/logger/logger.server"
+import { paymentLogger as logger } from "./payment-logger.server"
 import type { PaymentEvent, ProviderRefund } from "./payment-provider"
 import {
   deliverPaymentEmail,

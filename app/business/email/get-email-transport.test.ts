@@ -13,7 +13,14 @@ vi.mock("@aws-sdk/client-sesv2", () => ({
 }))
 
 vi.mock("~/lib/logger/logger.server", () => ({
-  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    child() {
+      return this
+    },
+  },
 }))
 
 describe("getEmailTransport", () => {

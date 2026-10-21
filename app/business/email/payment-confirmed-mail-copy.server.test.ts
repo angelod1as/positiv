@@ -4,7 +4,14 @@ import { emailTemplatesSchema } from "~/business/cms/email-templates.schema"
 import { paymentConfirmedCopyFallback } from "./payment-confirmed-mail-copy"
 import { loadPaymentConfirmedCopy } from "./payment-confirmed-mail-copy.server"
 
-vi.mock("~/lib/logger/logger.server", () => ({ logger: { error: vi.fn() } }))
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: {
+    error: vi.fn(),
+    child() {
+      return this
+    },
+  },
+}))
 
 const block = (text: string, marks: string[] = []) => ({
   _type: "block",

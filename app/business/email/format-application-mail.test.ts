@@ -4,7 +4,14 @@ import { applicationCopyFallback } from "./application-mail-copy"
 import { loadApplicationCopy } from "./application-mail-copy.server"
 import { formatApplicationMail } from "./format-application-mail"
 
-vi.mock("~/lib/logger/logger.server", () => ({ logger: { error: vi.fn() } }))
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: {
+    error: vi.fn(),
+    child() {
+      return this
+    },
+  },
+}))
 vi.mock("./application-mail-copy.server", () => ({
   loadApplicationCopy: vi.fn(),
 }))

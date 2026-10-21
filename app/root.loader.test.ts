@@ -184,7 +184,11 @@ describe("root loader", () => {
     await loader({ request, params: {} } as never)
 
     expect(logger.error).toHaveBeenCalledWith("Root loader error", {
-      error: { message: "Supabase is down", stack: expect.any(String) },
+      error: {
+        name: "Error",
+        message: "Supabase is down",
+        stack: expect.any(String),
+      },
     })
   })
 

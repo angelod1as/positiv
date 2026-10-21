@@ -2,7 +2,14 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { logger } from "~/lib/logger/logger.server"
 import { renderWithFallback } from "./render-with-fallback"
 
-vi.mock("~/lib/logger/logger.server", () => ({ logger: { error: vi.fn() } }))
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: {
+    error: vi.fn(),
+    child() {
+      return this
+    },
+  },
+}))
 
 const fallback = { word: "código" }
 

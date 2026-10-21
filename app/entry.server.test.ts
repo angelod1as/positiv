@@ -50,9 +50,46 @@ describe("handleError", () => {
 
     handleError(error, { request, params: {}, context: {} } as never)
 
-    expect(logger.error).toHaveBeenCalledWith("Unhandled server error", {
-      error: { message: "render blew up", stack: expect.any(String) },
-    })
+    expect(logger.error).toHaveBeenCalledWith(
+      "Unhandled server error",
+      expect.objectContaining({
+        error: {
+          name: "Error",
+          message: "render blew up",
+          stack: expect.any(String),
+        },
+      }),
+    )
+  })
+
+  it("tags the alert as unhandled, with the area and the masked request", () => {
+    const request = new Request(
+      "http://localhost/convite/tok_123abc?ref=secret",
+      { headers: { "user-agent": "Mozilla/5.0 Firefox/131.0" } },
+    )
+
+    handleError(new Error("boom"), {
+      request,
+      params: { token: "tok_123abc" },
+      context: {},
+    } as never)
+
+    expect(logger.error).toHaveBeenCalledWith(
+      "Unhandled server error",
+      expect.objectContaining({
+        category: "unhandled",
+        area: "convite",
+        request: {
+          method: "GET",
+          path: "/convite/***",
+          params: { token: "***" },
+          userAgent: "Firefox",
+        },
+      }),
+    )
+    expect(JSON.stringify(vi.mocked(logger.error).mock.calls[0])).not.toMatch(
+      /tok_123abc|secret/,
+    )
   })
 
   it("ignores an aborted request", () => {

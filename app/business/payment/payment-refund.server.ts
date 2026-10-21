@@ -3,7 +3,7 @@ import { paymentsCopy } from "~/copy/payments"
 import { kyselyDb } from "~/kysely-db"
 import { reaisToCents } from "~/lib/helpers/format-currency"
 import { zod } from "~/lib/helpers/zod"
-import { logger } from "~/lib/logger/logger.server"
+import { paymentLogger as logger } from "./payment-logger.server"
 import {
   deliverPaymentEmail,
   queuePaymentEmail,

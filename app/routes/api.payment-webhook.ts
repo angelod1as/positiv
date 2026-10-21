@@ -4,7 +4,7 @@ import {
   applyWebhookEvent,
   recordWebhookEvent,
 } from "~/business/payment/payment-webhook.server"
-import { logger } from "~/lib/logger/logger.server"
+import { paymentLogger as logger } from "~/business/payment/payment-logger.server"
 
 /**
  * Where the payment provider delivers its events. The connector checks the

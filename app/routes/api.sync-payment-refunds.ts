@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto"
 import type { ActionFunctionArgs } from "react-router"
 import { ENV } from "varlock/env"
 import { syncOpenPayments } from "~/business/payment/payment-sync.server"
-import { logger } from "~/lib/logger/logger.server"
+import { paymentLogger as logger } from "~/business/payment/payment-logger.server"
 
 /**
  * Reads from the provider the payments it may still have news about -- refunds

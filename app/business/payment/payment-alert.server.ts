@@ -1,6 +1,6 @@
 import { kyselyDb } from "~/kysely-db"
 import { appOrigin } from "~/lib/helpers/app-origin"
-import { logger } from "~/lib/logger/logger.server"
+import { paymentLogger as logger } from "./payment-logger.server"
 import paths from "~/lib/paths"
 import { paymentProvider } from "./payment-provider.server"
 

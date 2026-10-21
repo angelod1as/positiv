@@ -4,7 +4,14 @@ import { formatPaymentLinkMail } from "./format-payment-link-mail"
 import { paymentLinkCopyFallback } from "./payment-link-mail-copy"
 import { loadPaymentLinkCopy } from "./payment-link-mail-copy.server"
 
-vi.mock("~/lib/logger/logger.server", () => ({ logger: { error: vi.fn() } }))
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: {
+    error: vi.fn(),
+    child() {
+      return this
+    },
+  },
+}))
 vi.mock("./payment-link-mail-copy.server", () => ({
   loadPaymentLinkCopy: vi.fn(),
 }))

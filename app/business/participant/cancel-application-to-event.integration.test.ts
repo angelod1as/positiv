@@ -23,7 +23,9 @@ vi.mock("~/business/payment/provider/asaas/asaas-client.server", async (importOr
   return { ...original, deleteAsaasPayment }
 })
 
-vi.mock("~/lib/logger/logger.server", () => ({ logger }))
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { ...logger, child: () => logger },
+}))
 
 import { cancelApplicationToEvent } from "./cancel-application-to-event.server"
 

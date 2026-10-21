@@ -27,7 +27,9 @@ vi.mock("./payment-emails.server", async (importOriginal) => {
   return { ...original, sendPaymentRefundEmail }
 })
 
-vi.mock("~/lib/logger/logger.server", () => ({ logger }))
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { ...logger, child: () => logger },
+}))
 
 import { AsaasError } from "./provider/asaas/asaas-client.server"
 import { cancelPayment } from "./payment-cancel.server"
