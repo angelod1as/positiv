@@ -51,7 +51,11 @@ describe("handleError", () => {
     handleError(error, { request, params: {}, context: {} } as never)
 
     expect(logger.error).toHaveBeenCalledWith("Unhandled server error", {
-      error: { message: "render blew up", stack: expect.any(String) },
+      error: {
+        name: "Error",
+        message: "render blew up",
+        stack: expect.any(String),
+      },
     })
   })
 
