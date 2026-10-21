@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto"
 import { isRouteErrorResponse } from "react-router"
 import winston from "winston"
 import { ENV } from "varlock/env"
@@ -32,8 +33,18 @@ if (telegramEnabled && botToken && chatId) {
   )
 }
 
+// The same ID goes to the Telegram alert and the console line, so the alert
+// can be looked up in the Coolify logs with grep.
+const stampIncidentId = winston.format((info) => {
+  if (info.level === "error" && info.incidentId === undefined) {
+    info.incidentId = randomBytes(4).toString("hex")
+  }
+  return info
+})
+
 export const logger = winston.createLogger({
   level: isProduction ? "warn" : "debug",
+  format: stampIncidentId(),
   transports,
 })
 
