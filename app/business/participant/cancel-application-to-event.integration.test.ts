@@ -155,6 +155,63 @@ describe("cancelApplicationToEvent", () => {
     expect(deleteAsaasPayment).not.toHaveBeenCalled()
   })
 
+  describe("the cancellation reason", () => {
+    const registration = async () =>
+      kysely
+        .selectFrom("event_participants")
+        .select(["is_user_applied", "cancellation_reason"])
+        .where("id", "=", participantId)
+        .executeTakeFirstOrThrow()
+
+    it("saves the reason the participant gave", async () => {
+      const result = await cancelApplicationToEvent({
+        eventId,
+        profileId,
+        reason: "Vou viajar nesse fim de semana",
+      })
+
+      expect(result.success).toBe(true)
+      expect(await registration()).toEqual({
+        is_user_applied: false,
+        cancellation_reason: "Vou viajar nesse fim de semana",
+      })
+    })
+
+    it("saves no reason when none was given", async () => {
+      await cancelApplicationToEvent({ eventId, profileId })
+
+      expect((await registration()).cancellation_reason).toBeNull()
+    })
+
+    it("saves no reason when only blanks were typed", async () => {
+      await cancelApplicationToEvent({ eventId, profileId, reason: "   " })
+
+      expect((await registration()).cancellation_reason).toBeNull()
+    })
+
+    it("accepts a reason of exactly 500 characters", async () => {
+      const reason = "a".repeat(500)
+
+      await cancelApplicationToEvent({ eventId, profileId, reason })
+
+      expect((await registration()).cancellation_reason).toBe(reason)
+    })
+
+    it("refuses a reason longer than 500 characters and keeps the application", async () => {
+      const result = await cancelApplicationToEvent({
+        eventId,
+        profileId,
+        reason: "a".repeat(501),
+      })
+
+      expect(result.success).toBe(false)
+      expect(await registration()).toEqual({
+        is_user_applied: true,
+        cancellation_reason: null,
+      })
+    })
+  })
+
   describe("once registrations have closed", () => {
     beforeEach(async () => {
       await kysely
