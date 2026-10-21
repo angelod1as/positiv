@@ -28,7 +28,6 @@ describe("useRootData", () => {
         id: "profile-123",
         email: "test@example.com",
         social_name: "Test User",
-        is_admin: false,
         created_at: "2025-01-01T00:00:00Z",
         basic_data_filled: true,
       },

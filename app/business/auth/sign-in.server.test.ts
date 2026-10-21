@@ -52,7 +52,7 @@ const supabaseThat = ({
 }: SupabaseParts = {}) => {
   const signInWithPassword = vi.fn().mockResolvedValue(signInResult)
   const single = vi.fn().mockResolvedValue({
-    data: { is_admin: permissions.includes("admin.panel"), permissions },
+    data: { permissions },
   })
   const rpc = vi.fn().mockReturnValue({ single })
 

@@ -11,7 +11,6 @@ vi.mock("../auth/auth.server", () => ({
     },
     currentProfile: {
       id: "test-profile-id",
-      is_admin: true,
       permissions: ["admin.panel"],
     },
     supabase: {
@@ -88,7 +87,7 @@ describe("getAdminContext", () => {
   // loader before a child action, so this is the only check standing there
   it("should refuse a signed-in profile that is not an admin", async () => {
     vi.mocked(getUserContext).mockResolvedValueOnce({
-      currentProfile: { id: "test-profile-id", is_admin: false },
+      currentProfile: { id: "test-profile-id" },
     } as unknown as Awaited<ReturnType<typeof getUserContext>>)
 
     await expect(
@@ -100,7 +99,6 @@ describe("getAdminContext", () => {
     vi.mocked(getUserContext).mockResolvedValueOnce({
       currentProfile: {
         id: "test-profile-id",
-        is_admin: false,
         permissions: ["events.apply_direct"],
       },
     } as unknown as Awaited<ReturnType<typeof getUserContext>>)

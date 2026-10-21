@@ -73,7 +73,6 @@ describe("applyToEvent", () => {
       how_came_to_us: null,
       rg_issuer: null,
       created_at: "2025-01-01T00:00:00Z",
-      is_admin: false,
     },
     isProdInDev: false,
     host: "localhost",
@@ -197,7 +196,6 @@ describe("applyToEvent", () => {
           how_came_to_us: null,
           rg_issuer: null,
           created_at: "2025-01-01T00:00:00Z",
-          is_admin: false,
         },
       })
 

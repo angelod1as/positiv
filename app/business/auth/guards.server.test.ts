@@ -21,7 +21,6 @@ describe("requirePermission", () => {
     id: "profile-123",
     email: "someone@example.com",
     social_name: "Someone",
-    is_admin: false,
     roles: null,
     permissions,
     created_at: "2025-01-01T00:00:00Z",

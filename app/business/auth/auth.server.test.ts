@@ -296,7 +296,6 @@ describe("getContext", () => {
     const mockProfile = {
       id: "test-profile-id",
       email: "test@example.com",
-      is_admin: false,
       basic_data_filled: true,
       created_at: "2025-01-01",
     }
@@ -358,7 +357,6 @@ describe("getContext", () => {
     const mockProfile = {
       id: "test-profile-id",
       email: "test@example.com",
-      is_admin: false,
       basic_data_filled: true,
       created_at: "2025-01-01",
     }
@@ -414,7 +412,6 @@ describe("getContext", () => {
     const mockProfile = {
       id: "test-profile-id",
       email: "test@example.com",
-      is_admin: false,
       basic_data_filled: true,
       created_at: "2025-01-01",
     }

@@ -43,7 +43,6 @@ describe("applying to a closed event with an invite", () => {
         full_name: "Invited Person",
         basic_data_filled: true,
         created_at: new Date().toISOString(),
-        is_admin: false,
       },
       isProdInDev: false,
       host: "localhost",

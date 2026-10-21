@@ -9,7 +9,7 @@ const getAdminContext = vi.hoisted(() => vi.fn())
 vi.mock("~/business/feedback/feedback.server", () => ({ updateFeedbackStatus }))
 vi.mock("~/business/admin/admin.server", () => ({ getAdminContext }))
 
-const context = { currentProfile: { id: "profile-1", is_admin: true } }
+const context = { currentProfile: { id: "profile-1" } }
 
 const post = (body: string) =>
   action({
