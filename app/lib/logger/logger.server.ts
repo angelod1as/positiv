@@ -60,15 +60,28 @@ const MAX_DEPTH = 3
 const MAX_STRING_LENGTH = 1000
 const MAX_ARRAY_LENGTH = 20
 const MAX_PREVIEW_LENGTH = 200
+const MASK = "***"
+const SECRET_KEY = /token|secret|password|authorization|cookie|api[-_]?key/i
+
+// What a thrown value carries reaches a Telegram chat: a Postgres error's
+// details quote the row ("Key (email)=(…)"), an upstream error its headers.
+function redact(text: string): string {
+  return text
+    .replace(/[\w.+-]+@([\w-]+(?:\.[\w-]+)+)/g, `${MASK}@$1`)
+    .replace(/\beyJ[\w-]+\.[\w-]+\.[\w-]+/g, MASK)
+    .replace(/\b(Bearer )[\w.~+/=-]+/gi, `$1${MASK}`)
+    .replace(/\b\d{3}\.\d{3}\.\d{3}-\d{2}\b|\b\d{11}\b/g, MASK)
+}
 
 // A copy that is always safe to JSON.stringify and never huge, because it is
 // built on the error path: circular references, deep trees and long strings
 // are cut rather than allowed to throw or flood the alert.
 function capValue(value: unknown, depth: number, seen: WeakSet<object>): unknown {
   if (typeof value === "string") {
-    return value.length > MAX_STRING_LENGTH
-      ? `${value.slice(0, MAX_STRING_LENGTH)}...`
-      : value
+    const redacted = redact(value)
+    return redacted.length > MAX_STRING_LENGTH
+      ? `${redacted.slice(0, MAX_STRING_LENGTH)}...`
+      : redacted
   }
   if (typeof value === "bigint" || typeof value === "symbol") return String(value)
   if (typeof value === "function") return `[Function ${value.name || "anonymous"}]`
@@ -82,9 +95,19 @@ function capValue(value: unknown, depth: number, seen: WeakSet<object>): unknown
       .slice(0, MAX_ARRAY_LENGTH)
       .map((item) => capValue(item, depth + 1, seen))
   }
+  return copyFields(value, depth + 1, seen)
+}
+
+function copyFields(
+  value: object,
+  depth: number,
+  seen: WeakSet<object>,
+  skip: string[] = [],
+): Record<string, unknown> {
   const copy: Record<string, unknown> = {}
   for (const [key, item] of Object.entries(value)) {
-    copy[key] = capValue(item, depth + 1, seen)
+    if (skip.includes(key)) continue
+    copy[key] = SECRET_KEY.test(key) ? MASK : capValue(item, depth, seen)
   }
   return copy
 }
@@ -114,7 +137,7 @@ export function serializeError(
       message: statusMessage("Response", error.status, error.statusText),
       status: error.status,
       statusText: error.statusText,
-      url: error.url,
+      url: redact(error.url.split("?")[0]),
     }
   }
   if (isRouteErrorResponse(error)) {
@@ -140,20 +163,23 @@ export function serializeError(
     }
   }
   if (seen.has(error)) {
-    return { message: error instanceof Error ? error.message : "[Circular]" }
+    return {
+      message: error instanceof Error ? redact(error.message) : "[Circular]",
+    }
   }
   seen.add(error)
 
   if (error instanceof Error) {
-    const extra: Record<string, unknown> = {}
-    for (const [key, value] of Object.entries(error)) {
-      if (["name", "message", "stack", "cause"].includes(key)) continue
-      extra[key] = capValue(value, 1, seen)
-    }
+    const extra = copyFields(error, 1, seen, [
+      "name",
+      "message",
+      "stack",
+      "cause",
+    ])
     return {
       name:
         error.name !== "Error" ? error.name : (error.constructor?.name ?? "Error"),
-      message: error.message,
+      message: redact(error.message),
       stack: error.stack,
       ...extra,
       ...(error.cause !== undefined && {
@@ -165,13 +191,10 @@ export function serializeError(
     }
   }
 
-  const copy: Record<string, unknown> = {}
-  for (const [key, value] of Object.entries(error)) {
-    copy[key] = capValue(value, 1, seen)
-  }
+  const copy = copyFields(error, 1, seen)
   const message =
     "message" in error && typeof error.message === "string"
-      ? error.message
+      ? redact(error.message)
       : JSON.stringify(copy).slice(0, MAX_PREVIEW_LENGTH)
   const constructorName = Object.getPrototypeOf(error)?.constructor?.name
   const isPostgrestError = ["code", "details", "hint"].every((key) => key in error)

@@ -166,4 +166,84 @@ describe("serializeError", () => {
       "[object Object]",
     )
   })
+
+  describe("redaction", () => {
+    it("drops the query string from a Response URL", () => {
+      const response = new Response(null, { status: 500 })
+      Object.defineProperty(response, "url", {
+        value: "https://api.test/convite/abc?token=s3cret&page=2",
+      })
+
+      expect(serializeError(response).url).toBe("https://api.test/convite/abc")
+    })
+
+    it("masks an email but keeps its domain", () => {
+      const result = serializeError({
+        code: "23505",
+        details: "Key (email)=(maria.silva@gmail.com) already exists.",
+        hint: null,
+        message: "duplicate key",
+      })
+
+      expect(result.details).toBe("Key (email)=(***@gmail.com) already exists.")
+      expect(result.code).toBe("23505")
+    })
+
+    it.each([
+      ["a formatted CPF", "Key (cpf)=(123.456.789-09) already exists.", "Key (cpf)=(***) already exists."],
+      ["a bare CPF", "cpf 12345678909 is taken", "cpf *** is taken"],
+      [
+        "a JWT",
+        "token eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.abc_DEF-123 expired",
+        "token *** expired",
+      ],
+      ["a bearer token", "sent Bearer abc.def-123 upstream", "sent Bearer *** upstream"],
+    ])("masks %s in any copied string", (_label, value, expected) => {
+      expect(serializeError({ details: value }).details).toBe(expected)
+    })
+
+    it("masks the message too", () => {
+      expect(
+        serializeError(new Error("no profile for joao@positiv.test")).message,
+      ).toBe("no profile for ***@positiv.test")
+    })
+
+    it("masks a value under a secret-looking key, at any depth", () => {
+      const result = serializeError({
+        message: "upstream failed",
+        accessToken: "abc",
+        headers: { Authorization: "Basic xyz", cookie: "sid=1" },
+        config: { apiKey: "k", password: "p", secret: "s" },
+      })
+
+      expect(result).toMatchObject({
+        accessToken: "***",
+        headers: { Authorization: "***", cookie: "***" },
+        config: { apiKey: "***", password: "***", secret: "***" },
+      })
+    })
+
+    it("masks the data of a route error response", () => {
+      const error = new ErrorResponseImpl(400, "Bad Request", {
+        email: "ana@x.test",
+      })
+
+      expect(serializeError(error).data).toEqual({ email: "***@x.test" })
+    })
+
+    it("keeps ordinary identifiers readable", () => {
+      const result = serializeError({
+        message: "charge failed",
+        paymentId: "pay_8f3a2b1c",
+        eventId: "3f2b9c1e-7d4a-4b8e-9f1a-2c3d4e5f6a7b",
+        code: "23505",
+      })
+
+      expect(result).toMatchObject({
+        paymentId: "pay_8f3a2b1c",
+        eventId: "3f2b9c1e-7d4a-4b8e-9f1a-2c3d4e5f6a7b",
+        code: "23505",
+      })
+    })
+  })
 })
