@@ -87,6 +87,7 @@ export async function action({ request, params }: Route.ClientActionArgs) {
     const result = await cancelApplicationToEvent({
       eventId,
       profileId: currentProfile?.id,
+      reason: formData.get("reason")?.toString(),
     })
 
     if (!result.success) {

@@ -1,9 +1,12 @@
 import { EyeIcon } from "lucide-react"
-import { useEffect, type FC } from "react"
+import { useEffect, useId, useState, type FC } from "react"
 import { useFetcher } from "react-router"
 import { toast } from "sonner"
 import { Button } from "~/components/atoms/button/button"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
+import { Label } from "~/components/ui/label"
+import { TextArea } from "~/components/ui/textarea"
+import { MAX_CANCELLATION_REASON_LENGTH } from "~/business/participant/cancellation-reason-schema"
 import { eventCardCopy } from "~/copy/events"
 
 import { checkEventStatus } from "~/lib/helpers/check-event-status"
@@ -55,6 +58,8 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
   const fetcher = useFetcher()
   const prefetchStrategy = useSmartPrefetch()
   const { track } = useAnalytics()
+  const [cancellationReason, setCancellationReason] = useState("")
+  const reasonId = useId()
 
   useEffect(() => {
     if (fetcher.data?.error) {
@@ -85,7 +90,12 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
   const handleConfirmCancel = async (closeDialog: () => void) => {
     track("event_cancel_clicked", { eventId })
     await fetcher.submit(
-      { cancel: true, eventId, fetchId: "handleConfirmCancel" },
+      {
+        cancel: true,
+        eventId,
+        fetchId: "handleConfirmCancel",
+        reason: cancellationReason,
+      },
       { method: "POST" },
     )
     closeDialog()
@@ -150,8 +160,23 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
           <ConfirmDialog
             title={eventCardCopy.cancel.title}
             description={
-              <div>
+              <div className="flex flex-col gap-4">
                 <p>{eventCardCopy.cancel.description}</p>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor={reasonId}>
+                    {eventCardCopy.cancel.reasonLabel}
+                  </Label>
+                  <TextArea
+                    id={reasonId}
+                    name="reason"
+                    maxLength={MAX_CANCELLATION_REASON_LENGTH}
+                    placeholder={eventCardCopy.cancel.reasonPlaceholder}
+                    value={cancellationReason}
+                    onChange={(event) =>
+                      setCancellationReason(event.target.value)
+                    }
+                  />
+                </div>
               </div>
             }
             confirmLabel={eventCardCopy.cancel.confirmLabel}
