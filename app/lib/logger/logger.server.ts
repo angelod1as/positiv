@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto"
 import { isRouteErrorResponse } from "react-router"
 import winston from "winston"
 import { ENV } from "varlock/env"
+import { MASK, redact } from "./redact.server"
 import { TelegramTransport } from "./telegram-transport.server"
 
 const isProduction = ENV.APP_ENV === "production"
@@ -60,18 +61,7 @@ const MAX_DEPTH = 3
 const MAX_STRING_LENGTH = 1000
 const MAX_ARRAY_LENGTH = 20
 const MAX_PREVIEW_LENGTH = 200
-const MASK = "***"
 const SECRET_KEY = /token|secret|password|authorization|cookie|api[-_]?key/i
-
-// What a thrown value carries reaches a Telegram chat: a Postgres error's
-// details quote the row ("Key (email)=(…)"), an upstream error its headers.
-function redact(text: string): string {
-  return text
-    .replace(/[\w.+-]+@([\w-]+(?:\.[\w-]+)+)/g, `${MASK}@$1`)
-    .replace(/\beyJ[\w-]+\.[\w-]+\.[\w-]+/g, MASK)
-    .replace(/\b(Bearer )[\w.~+/=-]+/gi, `$1${MASK}`)
-    .replace(/\b\d{3}\.\d{3}\.\d{3}-\d{2}\b|\b\d{11}\b/g, MASK)
-}
 
 // A copy that is always safe to JSON.stringify and never huge, because it is
 // built on the error path: circular references, deep trees and long strings

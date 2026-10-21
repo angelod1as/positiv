@@ -5,8 +5,6 @@ import { requestContext } from "./request-context.server"
 const CHROME =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
 
-const MASK_FOR_TEST = "***"
-
 function request(url: string, init: RequestInit = {}) {
   return new Request(url, init)
 }
@@ -59,6 +57,15 @@ describe("requestContext", () => {
     expect(context.request.path).toBe("/convite/***")
   })
 
+  it("redacts an email or a CPF in a segment that is not a param", () => {
+    const context = requestContext(
+      request("http://localhost/admin/usuarios/maria%40gmail.com/123.456.789-09"),
+      {},
+    )
+
+    expect(context.request.path).toBe("/admin/usuarios/***@gmail.com/***")
+  })
+
   it("keeps an ordinary param as it is", () => {
     const context = requestContext(request("http://localhost/eventos/42"), {
       eventId: "42",
@@ -82,7 +89,7 @@ describe("requestContext", () => {
       token: "tok_123abc",
     })
 
-    expect(context.area).toBe(MASK_FOR_TEST)
+    expect(context.area).toBe("***")
   })
 
   it("leaves the area out on the home page", () => {

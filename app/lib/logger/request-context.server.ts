@@ -1,3 +1,5 @@
+import { MASK, redact } from "./redact.server"
+
 export interface RequestContext {
   area?: string
   request: {
@@ -8,7 +10,6 @@ export interface RequestContext {
   }
 }
 
-const MASK = "***"
 const SENSITIVE_PARAM = /token|secret|key|code|password|hash/i
 // React Router's single fetch asks for /some/path.data on client navigations.
 const DATA_SUFFIX = /\.data$/
@@ -48,9 +49,12 @@ export function requestContext(
   const segments = new URL(request.url).pathname
     .replace(DATA_SUFFIX, "")
     .split("/")
-  const safeSegments = segments.map((segment) =>
-    secrets.has(segment) || secrets.has(decodeSegment(segment)) ? MASK : segment,
-  )
+  const safeSegments = segments.map((segment) => {
+    const decoded = decodeSegment(segment)
+    if (secrets.has(segment) || secrets.has(decoded)) return MASK
+    const redacted = redact(decoded)
+    return redacted === decoded ? segment : redacted
+  })
   const path = safeSegments.join("/")
   const area = safeSegments.find((segment) => segment.length > 0)
   const userAgent = request.headers.get("user-agent")
