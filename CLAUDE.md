@@ -204,7 +204,7 @@ The "Default privileges on new objects in public" test in
 
 3. **Form Handling**: Consistent pattern using React Hook Form + Zod schemas. Forms are organized in `/app/components/forms`: `runtime` is the form runtime every form runs on, `base` holds the shared field components it renders, and `admin` and `custom` hold the forms built on top.
 
-4. **Email System**: templates in `/app/components/email/templates`, sending logic in `/app/business/email/`. Locally, mail goes to Mailpit, bundled with local Supabase — SMTP on port 54325, web UI at <http://127.0.0.1:54324>. Some emails are fired by database triggers rather than by a request; see Recipes.
+4. **Email System**: templates in `/app/components/email/templates`, sending logic in `/app/business/email/`. Locally, mail goes to Mailpit, bundled with local Supabase — SMTP on port 54325, web UI at <http://127.0.0.1:54324>.
 
 5. **Protected Routes**: admin routes verify authentication and the admin role in their loaders.
 
@@ -221,11 +221,6 @@ The "Default privileges on new objects in public" test in
 4. **Environment variables**: Every variable the project reads is declared in `.env.schema`, with its type and whether it is required — read that file, never `.env`, which holds the values. Application code reads them through `ENV` from `varlock/env`, not `process.env`. Every variable resolves at runtime; the handful the browser reads carry `@static` and are inlined into the bundle at build time. Adding `@static` to a server-only variable freezes its build-time value into the artifact and lets the bundler delete any `if (ENV.FLAG)` around it — `scripts/env-schema.test.ts` guards that line. The replacement matches `ENV.X` and not `const { X } = ENV`, so the two forms do not behave alike for a `@static` variable: destructuring keeps the runtime read that dot access gives up. Local development requires Supabase setup.
 
 5. No comments in code unless the method is genuinely complex.
-
-### Recipes
-
-Automated email notification fired by a database trigger: the
-`email-notification` skill.
 
 ### Testing
 

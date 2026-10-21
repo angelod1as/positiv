@@ -5,17 +5,22 @@ import {
 } from "~/business/newsletter/test-listmonk-connection.server"
 import {
   getOnlinePaymentsSetting,
+  getRegistrationLimit,
   isCardPaymentsEnabled,
   setCardPaymentsEnabled,
   setOnlinePaymentsEnabled,
+  setRegistrationLimit,
 } from "~/business/settings/app-settings.server"
 import { ListmonkDiagnosticSection } from "~/components/pages/admin/listmonk-diagnostic-section"
 import { OnlinePaymentsSection } from "~/components/pages/admin/online-payments-section"
+import { RegistrationLimitSection } from "~/components/pages/admin/registration-limit-section"
 import { CenteredLayout } from "~/components/layouts/centered-layout"
 import { Separator } from "~/components/ui/separator"
-import { adminSettingsCopy } from "~/copy/admin"
+import { adminSettingsCopy, registrationLimitSettingCopy } from "~/copy/admin"
 import { metaCopy } from "~/copy/meta"
 import { createMetaArray } from "~/lib/helpers/meta"
+import { zod } from "~/lib/helpers/zod"
+import { MAX_REGISTRATION_LIMIT } from "~/lib/constants/constants"
 import type { Route } from "./+types/settings-page"
 
 export function meta({}: Route.MetaArgs) {
@@ -44,6 +49,23 @@ export async function action({ request, params }: Route.ActionArgs) {
     return { intent }
   }
 
+  if (intent === "set-registration-limit") {
+    const limit = zod.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(MAX_REGISTRATION_LIMIT)
+      .safeParse(formData.get("limit"))
+    if (!limit.success) {
+      return { intent, error: registrationLimitSettingCopy.invalid }
+    }
+    await setRegistrationLimit({
+      limit: limit.data,
+      profileId: currentProfile?.id,
+    })
+    return { intent }
+  }
+
   if (intent === "test-listmonk") {
     const diagnosticResult = await testListmonkConnection()
     return { intent: "test-listmonk", diagnosticResult }
@@ -62,6 +84,7 @@ export async function loader() {
   return {
     onlinePayments: await getOnlinePaymentsSetting(),
     cardPayments: await isCardPaymentsEnabled(),
+    registrationLimit: await getRegistrationLimit(),
   }
 }
 
@@ -74,6 +97,10 @@ const SettingsPage = ({ loaderData }: Route.ComponentProps) => {
         setting={loaderData.onlinePayments}
         cardEnabled={loaderData.cardPayments}
       />
+
+      <Separator />
+
+      <RegistrationLimitSection limit={loaderData.registrationLimit} />
 
       <Separator />
 

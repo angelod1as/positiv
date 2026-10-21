@@ -156,7 +156,7 @@ export default async function setup() {
       try {
         // TRUNCATE ... CASCADE is intentional: it also wipes tables that have FK
         // references to the seeded tables but are not themselves seeded (e.g.
-        // event_reminders, event_registration_limit_emails). Those rows are created
+        // event_invites, payment_emails). Those rows are created
         // by integration tests and do not need to be restored.
         const tableList = TABLES.join(", ")
         await client.query(`TRUNCATE TABLE ${tableList} CASCADE`)

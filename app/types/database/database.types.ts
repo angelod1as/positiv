@@ -14,6 +14,7 @@ export type Database = {
           card_payments_enabled: boolean
           id: boolean
           online_payments_enabled: boolean
+          registration_limit: number
           updated_at: string
           updated_by: string | null
         }
@@ -21,6 +22,7 @@ export type Database = {
           card_payments_enabled?: boolean
           id?: boolean
           online_payments_enabled?: boolean
+          registration_limit?: number
           updated_at?: string
           updated_by?: string | null
         }
@@ -28,6 +30,7 @@ export type Database = {
           card_payments_enabled?: boolean
           id?: boolean
           online_payments_enabled?: boolean
+          registration_limit?: number
           updated_at?: string
           updated_by?: string | null
         }
@@ -353,38 +356,6 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      event_registration_limit_emails: {
-        Row: {
-          admin_emails: string[]
-          created_at: string
-          event_id: string
-          id: string
-          sent_at: string
-        }
-        Insert: {
-          admin_emails: string[]
-          created_at?: string
-          event_id: string
-          id?: string
-          sent_at?: string
-        }
-        Update: {
-          admin_emails?: string[]
-          created_at?: string
-          event_id?: string
-          id?: string
-          sent_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "event_registration_limit_emails_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
             referencedColumns: ["id"]
           },
         ]
@@ -908,6 +879,10 @@ export type Database = {
         Args: { event_id_input: string }
         Returns: number
       }
+      get_counted_applied_participants_count: {
+        Args: { event_id_input: string }
+        Returns: number
+      }
       get_profile_with_roles: {
         Args: { user_id_input: string }
         Returns: {
@@ -934,10 +909,6 @@ export type Database = {
         }[]
       }
       get_vault_secret: { Args: { secret_name: string }; Returns: string }
-      notify_registration_limit_reached: {
-        Args: { event_id_param: string }
-        Returns: undefined
-      }
       update_event_statuses_automatically: { Args: never; Returns: Json }
     }
     Enums: {

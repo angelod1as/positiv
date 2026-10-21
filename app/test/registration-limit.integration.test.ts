@@ -2,6 +2,7 @@ import { describe, expect, it, beforeEach, afterEach } from "vitest"
 import { sql } from "kysely"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
 import { createTestProfile, createTestEvent } from "~/test/db-test-utils"
+import { GENDERS, ORIENTATIONS } from "~/lib/constants/constants"
 
 describe("Registration Limit - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()
@@ -314,5 +315,129 @@ describe("Registration Limit - Integration Tests", () => {
       .executeTakeFirstOrThrow()
 
     expect(eventAfter.event_status).toBe("Registration Open")
+  })
+
+  describe("configurable limit that leaves cis het men out of the count", () => {
+    const CIS_MAN = GENDERS[0]
+    const HETERO = ORIENTATIONS[4]
+    let originalLimit: number
+
+    beforeEach(async () => {
+      const row = await kysely
+        .selectFrom("app_settings")
+        .select("registration_limit")
+        .executeTakeFirstOrThrow()
+      originalLimit = row.registration_limit
+    })
+
+    afterEach(async () => {
+      await setLimit(originalLimit)
+    })
+
+    const setLimit = (limit: number) =>
+      kysely
+        .updateTable("app_settings")
+        .set({ registration_limit: limit })
+        .where("id", "=", true)
+        .execute()
+
+    const statusOf = async (eventId: string) =>
+      (
+        await kysely
+          .selectFrom("events")
+          .select("event_status")
+          .where("id", "=", eventId)
+          .executeTakeFirstOrThrow()
+      ).event_status
+
+    const apply = async (
+      eventId: string,
+      profile: { gender?: string[] | null; orientation?: string[] | null } = {},
+    ) => {
+      const created = await createTestProfile(tracker, kysely, {
+        user_id: null,
+        full_name: "Limit Test User",
+        email: `limit-${crypto.randomUUID()}@example.com`,
+        ...profile,
+      })
+      await kysely
+        .insertInto("event_participants")
+        .values({
+          event_id: eventId,
+          profile_id: created.id,
+          is_user_applied: true,
+          application_status: "finalised",
+          attendance_status: "pending",
+        })
+        .execute()
+    }
+
+    const openEvent = () =>
+      createTestEvent(tracker, kysely, {
+        title: "Test Event - Configurable Limit",
+        event_status: "Registration Open",
+      })
+
+    it("closes registrations at the limit read from the settings", async () => {
+      await setLimit(3)
+      const event = await openEvent()
+
+      await apply(event.id)
+      await apply(event.id)
+      expect(await statusOf(event.id)).toBe("Registration Open")
+
+      await apply(event.id)
+      expect(await statusOf(event.id)).toBe("Registration Closed")
+    })
+
+    it("lets cis het men apply without counting them toward the limit", async () => {
+      await setLimit(3)
+      const event = await openEvent()
+
+      await apply(event.id)
+      await apply(event.id)
+      for (let i = 0; i < 5; i++) {
+        await apply(event.id, { gender: [CIS_MAN], orientation: [HETERO] })
+      }
+      expect(await statusOf(event.id)).toBe("Registration Open")
+
+      await apply(event.id)
+      expect(await statusOf(event.id)).toBe("Registration Closed")
+    })
+
+    it("counts a cis man with more than one orientation", async () => {
+      await setLimit(3)
+      const event = await openEvent()
+
+      await apply(event.id)
+      await apply(event.id)
+      await apply(event.id, { gender: [CIS_MAN], orientation: [HETERO, "Bi"] })
+
+      expect(await statusOf(event.id)).toBe("Registration Closed")
+    })
+
+    it("counts profiles with no gender or orientation filled in", async () => {
+      await setLimit(3)
+      const event = await openEvent()
+
+      await apply(event.id, { gender: null, orientation: null })
+      await apply(event.id, { gender: [CIS_MAN], orientation: [] })
+      await apply(event.id, { gender: [], orientation: [HETERO] })
+
+      expect(await statusOf(event.id)).toBe("Registration Closed")
+    })
+
+    it("moves the threshold when the setting changes", async () => {
+      await setLimit(2)
+      const event = await openEvent()
+      await apply(event.id)
+
+      await setLimit(3)
+      await apply(event.id)
+      expect(await statusOf(event.id)).toBe("Registration Open")
+
+      await apply(event.id)
+      expect(await statusOf(event.id)).toBe("Registration Closed")
+    })
   })
 })

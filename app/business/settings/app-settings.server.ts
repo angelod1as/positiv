@@ -93,3 +93,32 @@ export const setCardPaymentsEnabled = async ({
     .onConflict((oc) => oc.column("id").doUpdateSet(values))
     .execute()
 }
+
+export const getRegistrationLimit = async () => {
+  const row = await kyselyDb
+    .selectFrom("app_settings")
+    .select("registration_limit")
+    .executeTakeFirst()
+
+  return row?.registration_limit ?? 90
+}
+
+export const setRegistrationLimit = async ({
+  limit,
+  profileId,
+}: {
+  limit: number
+  profileId: string | undefined
+}) => {
+  const values = {
+    registration_limit: limit,
+    updated_at: new Date().toISOString(),
+    updated_by: profileId ?? null,
+  }
+
+  await kyselyDb
+    .insertInto("app_settings")
+    .values({ id: true, ...values })
+    .onConflict((oc) => oc.column("id").doUpdateSet(values))
+    .execute()
+}

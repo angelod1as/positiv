@@ -8,7 +8,6 @@ import {
   paymentConfirmedEmailSchema,
   paymentLinkEmailSchema,
   paymentRefundEmailSchema,
-  registrationLimitEmailSchema,
 } from "./email-templates.schema"
 import { createSanityClient } from "./sanity-client.server"
 
@@ -52,11 +51,6 @@ export function resolveEmailTemplates(
     ),
     paymentLink: parseEmail("paymentLink", paymentLinkEmailSchema, emails.paymentLink),
     paymentRefund: parseEmail("paymentRefund", paymentRefundEmailSchema, emails.paymentRefund),
-    registrationLimit: parseEmail(
-      "registrationLimit",
-      registrationLimitEmailSchema,
-      emails.registrationLimit,
-    ),
   }
 }
 

@@ -32,10 +32,12 @@ vi.mock("varlock/env", async (importOriginal) => {
 
 import {
   getOnlinePaymentsSetting,
+  getRegistrationLimit,
   isCardPaymentsEnabled,
   isOnlinePaymentsEnabled,
   setCardPaymentsEnabled,
   setOnlinePaymentsEnabled,
+  setRegistrationLimit,
 } from "./app-settings.server"
 
 describe("online payments setting", () => {
@@ -233,5 +235,86 @@ describe("card payments setting", () => {
     await setCardPaymentsEnabled({ enabled: true, profileId: admin.id })
 
     expect(await isCardPaymentsEnabled()).toBe(true)
+  })
+})
+
+describe("registration limit setting", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+
+  const resetSettings = () =>
+    kysely
+      .insertInto("app_settings")
+      .values({ id: true, registration_limit: 90, updated_by: null })
+      .onConflict((oc) =>
+        oc
+          .column("id")
+          .doUpdateSet({ registration_limit: 90, updated_by: null }),
+      )
+      .execute()
+
+  beforeEach(async () => {
+    tracker.clear()
+    await resetSettings()
+  })
+
+  afterEach(async () => {
+    await resetSettings()
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  it("starts at 90", async () => {
+    expect(await getRegistrationLimit()).toBe(90)
+  })
+
+  it("is the value an admin saved, and records who saved it", async () => {
+    const admin = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: uniqueEmail(),
+      full_name: "Admin Souza",
+    })
+
+    await setRegistrationLimit({ limit: 120, profileId: admin.id })
+
+    expect(await getRegistrationLimit()).toBe(120)
+    const row = await kysely
+      .selectFrom("app_settings")
+      .select("updated_by")
+      .executeTakeFirstOrThrow()
+    expect(row.updated_by).toBe(admin.id)
+  })
+
+  it("leaves the payment switches alone", async () => {
+    const admin = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: uniqueEmail(),
+    })
+    await setCardPaymentsEnabled({ enabled: true, profileId: admin.id })
+
+    await setRegistrationLimit({ limit: 50, profileId: admin.id })
+
+    expect(await isCardPaymentsEnabled()).toBe(true)
+    await setCardPaymentsEnabled({ enabled: false, profileId: admin.id })
+    expect(await getRegistrationLimit()).toBe(50)
+  })
+
+  it("reads a missing row as 90, and saving brings it back", async () => {
+    const admin = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: uniqueEmail(),
+    })
+    await kysely.deleteFrom("app_settings").execute()
+
+    expect(await getRegistrationLimit()).toBe(90)
+
+    await setRegistrationLimit({ limit: 70, profileId: admin.id })
+
+    expect(await getRegistrationLimit()).toBe(70)
+  })
+
+  it("rejects a limit below 1", async () => {
+    await expect(
+      setRegistrationLimit({ limit: 0, profileId: undefined }),
+    ).rejects.toThrow()
+    expect(await getRegistrationLimit()).toBe(90)
   })
 })
