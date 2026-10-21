@@ -30,10 +30,25 @@ vi.mock("~/lib/logger/logger.server", () => ({
   logger: { ...logger, child: () => logger },
 }))
 
+const { notifyParticipantCancellation } = vi.hoisted(() => ({
+  notifyParticipantCancellation: vi.fn(),
+}))
+
+// The lookup stays real, so these cases read what the database holds; only the
+// call to Telegram is replaced.
+vi.mock("./notify-participant-cancellation.server", async (importOriginal) => {
+  const original =
+    await importOriginal<
+      typeof import("./notify-participant-cancellation.server")
+    >()
+  return { ...original, notifyParticipantCancellation }
+})
+
 vi.mock("./send-application-mail.server", () => ({
   sendApplicationMail: vi.fn().mockResolvedValue({ emailSent: false }),
 }))
 
+import { updateEventParticipantById } from "~/business/admin/admin.server"
 import { applyToEvent } from "./apply-to-event.server"
 import { cancelApplicationToEvent } from "./cancel-application-to-event.server"
 
@@ -51,6 +66,8 @@ describe("cancelApplicationToEvent", () => {
     deleteAsaasPayment.mockReset()
     deleteAsaasPayment.mockResolvedValue(true)
     logger.error.mockClear()
+    notifyParticipantCancellation.mockReset()
+    notifyParticipantCancellation.mockResolvedValue(undefined)
 
     const event = await createTestEvent(tracker, kysely, {
       title: "Withdraw Event",
@@ -63,6 +80,8 @@ describe("cancelApplicationToEvent", () => {
       user_id: null,
       email: profileEmail,
       full_name: "Withdraw Tester",
+      social_name: "Withdrawn",
+      phone: 11987654321,
     })
     profileId = profile.id
 
@@ -72,6 +91,7 @@ describe("cancelApplicationToEvent", () => {
         profile_id: profileId,
         spot_type: "regular",
         is_user_applied: true,
+        application_status: "talking",
       })
     ).id
   })
@@ -257,6 +277,98 @@ describe("cancelApplicationToEvent", () => {
         is_user_applied: true,
         cancellation_reason: null,
       })
+    })
+  })
+
+  describe("the editors' Telegram notice", () => {
+    it("is sent once, with what the database holds about the cancellation", async () => {
+      await cancelApplicationToEvent({
+        eventId,
+        profileId,
+        reason: "Fiquei doente",
+      })
+
+      expect(notifyParticipantCancellation).toHaveBeenCalledTimes(1)
+      const [cancellation] = notifyParticipantCancellation.mock.calls[0]
+      expect(cancellation).toMatchObject({
+        eventId,
+        eventTitle: "Withdraw Event",
+        fullName: "Withdraw Tester",
+        socialName: "Withdrawn",
+        email: expect.stringContaining("-withdraw@example.com"),
+        phone: "11987654321",
+        applicationStatus: "talking",
+        reason: "Fiquei doente",
+        hasPaid: false,
+      })
+      expect(Number.isNaN(Date.parse(cancellation.cancelledAt))).toBe(false)
+    })
+
+    it("flags a registration with a confirmed payment", async () => {
+      await createTestPayment(tracker, kysely, {
+        event_participant_id: participantId,
+        amount: 22000,
+        base_amount: 22000,
+      })
+
+      await cancelApplicationToEvent({ eventId, profileId })
+
+      expect(notifyParticipantCancellation).toHaveBeenCalledWith(
+        expect.objectContaining({ hasPaid: true, reason: null }),
+      )
+    })
+
+    it("does not flag a charge that was never paid", async () => {
+      await createTestPayment(tracker, kysely, {
+        event_participant_id: participantId,
+        kind: "online",
+        status: "pending",
+        amount: null,
+        method: null,
+        paid_at: null,
+      })
+
+      await cancelApplicationToEvent({ eventId, profileId })
+
+      expect(notifyParticipantCancellation).toHaveBeenCalledWith(
+        expect.objectContaining({ hasPaid: false }),
+      )
+    })
+
+    it("never fails the cancellation when the notice fails", async () => {
+      notifyParticipantCancellation.mockRejectedValue(new Error("telegram down"))
+
+      const result = await cancelApplicationToEvent({ eventId, profileId })
+
+      expect(result.success).toBe(true)
+      const after = await kysely
+        .selectFrom("event_participants")
+        .select("is_user_applied")
+        .where("id", "=", participantId)
+        .executeTakeFirstOrThrow()
+      expect(after.is_user_applied).toBe(false)
+      expect(logger.error).toHaveBeenCalled()
+    })
+
+    it("is not sent when there was no application to cancel", async () => {
+      await cancelApplicationToEvent({ eventId, profileId })
+      notifyParticipantCancellation.mockClear()
+
+      await cancelApplicationToEvent({ eventId, profileId })
+
+      expect(notifyParticipantCancellation).not.toHaveBeenCalled()
+    })
+
+    it("is not sent when an admin marks the participant as withdrawn", async () => {
+      const result = await updateEventParticipantById({
+        id: participantId,
+        profile_id: profileId,
+        intent: "update-event-participant",
+        attendance_status: "withdrew",
+      })
+
+      expect(result.success).toBe(true)
+      expect(notifyParticipantCancellation).not.toHaveBeenCalled()
     })
   })
 

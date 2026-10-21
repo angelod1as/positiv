@@ -4,6 +4,10 @@ import { kyselyDb } from "~/kysely-db"
 import { dateToString } from "~/lib/helpers/date-to-string"
 import { logger } from "~/lib/logger/logger.server"
 import { cancellationReasonSchema } from "./cancellation-reason-schema"
+import {
+  findParticipantCancellation,
+  notifyParticipantCancellation,
+} from "./notify-participant-cancellation.server"
 
 type CancelApplicationToEventProps = {
   profileId?: string
@@ -45,6 +49,18 @@ export const cancelApplicationToEvent = composable(
         await cancelActivePayment({ eventParticipantId: participant.id })
       } catch (error) {
         logger.error("Could not call off the charge of a withdrawn application", {
+          eventParticipantId: participant.id,
+          error: error instanceof Error ? error.message : String(error),
+        })
+      }
+
+      // Swallowed for the same reason: the editors hearing about it late is
+      // better than the participant not being able to leave.
+      try {
+        const cancellation = await findParticipantCancellation(participant.id)
+        if (cancellation) await notifyParticipantCancellation(cancellation)
+      } catch (error) {
+        logger.error("Could not notify the editors of a cancellation", {
           eventParticipantId: participant.id,
           error: error instanceof Error ? error.message : String(error),
         })
