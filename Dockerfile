@@ -49,6 +49,10 @@ RUN corepack enable && corepack prepare pnpm@11.22.0 --activate
 ENV APP_ENV=production \
     NODE_ENV=production
 
+# The server build ships with source maps, so stacks in the logs and in the
+# Telegram alerts point at app/... file:line rather than build/server/index.js.
+ENV NODE_OPTIONS=--enable-source-maps
+
 # .env.schema ships with the image: varlock reads it at boot to validate the
 # environment injected by the host and to redact sensitive values in logs.
 COPY ./package.json pnpm-lock.yaml .env.schema /app/

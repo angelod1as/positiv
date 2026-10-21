@@ -34,7 +34,7 @@ const lazilyReachedDeps = [
   "recharts",
 ]
 
-export default defineConfig({
+export default defineConfig(({ isSsrBuild }) => ({
   plugins: [
     varlockVitePlugin(),
     tailwindcss(),
@@ -48,6 +48,10 @@ export default defineConfig({
    * (about 906 kB with the modules ag-data-table.tsx registers) can never meet
    * Vite's 500 kB default. The limit sits just above it: a warning now means
    * that chunk grew or something else got this heavy.
+   *
+   * Only the server build gets source maps, so a logged stack names app/...
+   * file:line (the Dockerfile runs Node with --enable-source-maps). The client
+   * build gets none, and the browser never sees the source.
    */
-  build: { chunkSizeWarningLimit: 950 },
-})
+  build: { chunkSizeWarningLimit: 950, sourcemap: isSsrBuild === true },
+}))
