@@ -1,10 +1,13 @@
 import { ESLint } from "eslint"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 // Linted as if it were this file, so the real config and its globs decide.
 const PROBE_PATH = "app/business/common.ts"
 
 const restrictedSyntaxErrors = async (code: string) => {
+  // On CI typescript-eslint assumes a single run and parses the file from
+  // disk, so the first probe would lint common.ts instead of the code given.
+  vi.stubEnv("TSESTREE_SINGLE_RUN", "false")
   const eslint = new ESLint()
   const [result] = await eslint.lintText(code, { filePath: PROBE_PATH })
 
