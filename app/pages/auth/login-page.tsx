@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef } from "react"
+import { can, PERMISSIONS } from "~/business/auth/permissions"
 import { redirect, useNavigate, useSearchParams } from "react-router"
 import { toast } from "sonner"
 import { getContext } from "~/business/auth/auth.server"
@@ -43,7 +44,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   )
 
   if (currentUser) {
-    const home = currentProfile?.is_admin ? ADMIN_DASHBOARD : DASHBOARD
+    const home = can(currentProfile, PERMISSIONS.ADMIN_PANEL)
+      ? ADMIN_DASHBOARD
+      : DASHBOARD
     const targetPath = safeRedirect(
       new URL(request.url).searchParams.get("redirect_to"),
       home,

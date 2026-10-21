@@ -9,7 +9,11 @@ vi.mock("../auth/auth.server", () => ({
       email: "admin@test.com",
       user_metadata: { admin: true },
     },
-    currentProfile: { id: "test-profile-id", is_admin: true },
+    currentProfile: {
+      id: "test-profile-id",
+      is_admin: true,
+      permissions: ["admin.panel"],
+    },
     supabase: {
       from: vi.fn(() => ({
         select: vi.fn(() => ({
@@ -85,6 +89,20 @@ describe("getAdminContext", () => {
   it("should refuse a signed-in profile that is not an admin", async () => {
     vi.mocked(getUserContext).mockResolvedValueOnce({
       currentProfile: { id: "test-profile-id", is_admin: false },
+    } as unknown as Awaited<ReturnType<typeof getUserContext>>)
+
+    await expect(
+      getAdminContext(new Request("http://localhost/admin"), {}),
+    ).rejects.toBeInstanceOf(Response)
+  })
+
+  it("should refuse a staff, who may apply directly but not enter the admin panel", async () => {
+    vi.mocked(getUserContext).mockResolvedValueOnce({
+      currentProfile: {
+        id: "test-profile-id",
+        is_admin: false,
+        permissions: ["events.apply_direct"],
+      },
     } as unknown as Awaited<ReturnType<typeof getUserContext>>)
 
     await expect(

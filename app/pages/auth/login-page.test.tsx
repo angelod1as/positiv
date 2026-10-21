@@ -137,6 +137,8 @@ describe("Login Page Loader", () => {
         full_name: "Admin User",
         basic_data_filled: true,
         is_admin: true,
+        roles: ["admin"],
+        permissions: ["admin.panel", "events.apply_direct"],
         social_name: null,
         pronouns: null,
         rg: null,
@@ -162,6 +164,46 @@ describe("Login Page Loader", () => {
     ).rejects.toThrow()
 
     expect(redirect).toHaveBeenCalledWith("/admin", {
+      headers: mockSupabaseHeaders,
+    })
+  })
+
+  it("should redirect a staff to /dashboard when already logged in", async () => {
+    vi.mocked(authServer.getContext).mockResolvedValue({
+      currentUser: { id: "staff-123", email: "staff@test.com" },
+      currentProfile: {
+        id: "staff-profile-123",
+        email: "staff@test.com",
+        full_name: "Staff User",
+        basic_data_filled: true,
+        is_admin: false,
+        roles: ["staff"],
+        permissions: ["events.apply_direct"],
+        social_name: null,
+        pronouns: null,
+        rg: null,
+        cpf: null,
+        phone: null,
+        date_of_birth: null,
+        gender: null,
+        orientation: null,
+        race_color: null,
+        where_lives: null,
+        how_came_to_us: null,
+        rg_issuer: null,
+        created_at: "2024-01-01T00:00:00Z",
+      },
+      supabase: {} as SupabaseClient<Database>,
+      supabaseHeaders: mockSupabaseHeaders,
+      host: "localhost:3000",
+      isProdInDev: false,
+    })
+
+    await expect(
+      loader({ request: mockRequest, params: mockParams, context: {} }),
+    ).rejects.toThrow()
+
+    expect(redirect).toHaveBeenCalledWith("/dashboard", {
       headers: mockSupabaseHeaders,
     })
   })

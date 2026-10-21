@@ -1,6 +1,7 @@
 import { Outlet } from "react-router"
 import { redirectWithError } from "remix-toast"
 import { getUserContext } from "~/business/auth/auth.server"
+import { can, PERMISSIONS } from "~/business/auth/permissions"
 import { adminLayoutCopy } from "~/copy/admin"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/layout"
@@ -11,7 +12,7 @@ const {
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { currentProfile } = await getUserContext(request, params)
-  if (!currentProfile?.is_admin) {
+  if (!can(currentProfile, PERMISSIONS.ADMIN_PANEL)) {
     return redirectWithError(HOME, adminLayoutCopy.accessDenied)
   }
 }

@@ -147,13 +147,30 @@ describe("BasicDataPage", () => {
 
     it("sends an admin to the admin dashboard", async () => {
       draw({
-        profile: { ...filledProfile, is_admin: true, basic_data_filled: false },
+        profile: {
+          ...filledProfile,
+          is_admin: true,
+          permissions: ["admin.panel", "events.apply_direct"],
+          basic_data_filled: false,
+        },
         orphanedProfile: null,
       })
 
       await save()
 
       await waitFor(() => expect(navigate).toHaveBeenCalledWith("/admin"))
+    })
+
+    it("sends a staff to the dashboard", async () => {
+      draw({
+        profile: { ...filledProfile, permissions: ["events.apply_direct"] },
+        orphanedProfile: null,
+      })
+
+      await save()
+
+      await waitFor(() => expect(navigate).toHaveBeenCalledWith("/dashboard"))
+      expect(navigate).not.toHaveBeenCalledWith("/admin")
     })
 
     it("sends someone whose old profile was found where their history says", async () => {

@@ -1,4 +1,5 @@
 import { CalendarIcon, MenuIcon, Table2Icon, UserIcon } from "lucide-react"
+import { can, PERMISSIONS } from "~/business/auth/permissions"
 import { type FC, useEffect, useRef, useState } from "react"
 import { useLocation } from "react-router"
 import PositivLogo from "~/assets/brand/positiv-logo-colors.png"
@@ -75,7 +76,7 @@ export const Header: FC<HeaderProps> = ({
   const displayName = profile
     ? profile.social_name || profile.full_name || profile.email
     : userEmail || undefined
-  const isAdmin = profile?.is_admin
+  const canEnterAdminPanel = can(profile, PERMISSIONS.ADMIN_PANEL)
   const showButtons = profile || userEmail
 
   return (
@@ -163,7 +164,7 @@ export const Header: FC<HeaderProps> = ({
                   >
                     <CalendarIcon />
                   </Button>
-                  {isAdmin && (
+                  {canEnterAdminPanel && (
                     <Button
                       asChild
                       variant="outline"
