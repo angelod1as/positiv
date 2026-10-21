@@ -36,6 +36,7 @@ import { hasEverApplied } from "~/business/participant/has-ever-applied.server"
 import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
 import { getNextEvents } from "../page/fetch/get-next-events"
 import { action, loader } from "./dashboard-page"
+import { PERMISSIONS } from "~/business/auth/permissions"
 
 const mockGetContext = vi.mocked(getContext)
 const mockGetUserContext = vi.mocked(getUserContext)
@@ -45,9 +46,13 @@ const mockIsCardPaymentsEnabled = vi.mocked(isCardPaymentsEnabled)
 const mockTrackServerEvent = vi.mocked(trackServerEvent)
 const mockGetNextEvents = vi.mocked(getNextEvents)
 
-const contextFor = (isAdmin: boolean) =>
+const ADMIN = [PERMISSIONS.ADMIN_PANEL, PERMISSIONS.EVENTS_APPLY_DIRECT]
+const STAFF = [PERMISSIONS.EVENTS_APPLY_DIRECT]
+const USER: string[] = []
+
+const contextFor = (permissions: string[]) =>
   ({
-    currentProfile: { id: "profile-123", is_admin: isAdmin },
+    currentProfile: { id: "profile-123", permissions },
     currentUser: { id: "user-123" },
     supabase: {},
     supabaseHeaders: new Headers(),
@@ -67,7 +72,7 @@ const run = (fields: Record<string, string>) =>
     context: {},
   } as unknown as Parameters<typeof action>[0])
 
-describe("dashboard action — direct admin application", () => {
+describe("dashboard action — direct application", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockApplyToEvent.mockResolvedValue({
@@ -79,7 +84,7 @@ describe("dashboard action — direct admin application", () => {
   })
 
   it("applies an admin to the event with the default answers", async () => {
-    mockGetUserContext.mockResolvedValue(contextFor(true))
+    mockGetUserContext.mockResolvedValue(contextFor(ADMIN))
 
     const result = await run({
       fetchId: "handleAdminApply",
@@ -102,7 +107,7 @@ describe("dashboard action — direct admin application", () => {
   })
 
   it("records the application it just made", async () => {
-    mockGetUserContext.mockResolvedValue(contextFor(true))
+    mockGetUserContext.mockResolvedValue(contextFor(ADMIN))
 
     await run({ fetchId: "handleAdminApply", eventId: "event-123" })
 
@@ -114,15 +119,27 @@ describe("dashboard action — direct admin application", () => {
   })
 
   it("records nothing when the application never happened", async () => {
-    mockGetUserContext.mockResolvedValue(contextFor(false))
+    mockGetUserContext.mockResolvedValue(contextFor(USER))
 
     await run({ fetchId: "handleAdminApply", eventId: "event-123" })
 
     expect(mockTrackServerEvent).not.toHaveBeenCalled()
   })
 
-  it("refuses whoever is not an admin", async () => {
-    mockGetUserContext.mockResolvedValue(contextFor(false))
+  it("applies a staff the same way", async () => {
+    mockGetUserContext.mockResolvedValue(contextFor(STAFF))
+
+    const result = await run({
+      fetchId: "handleAdminApply",
+      eventId: "event-123",
+    })
+
+    expect(mockApplyToEvent).toHaveBeenCalledTimes(1)
+    expect(result).toBeUndefined()
+  })
+
+  it("refuses whoever may not apply directly", async () => {
+    mockGetUserContext.mockResolvedValue(contextFor(USER))
 
     const result = await run({
       fetchId: "handleAdminApply",
@@ -136,7 +153,7 @@ describe("dashboard action — direct admin application", () => {
   })
 
   it("refuses a request with no event", async () => {
-    mockGetUserContext.mockResolvedValue(contextFor(true))
+    mockGetUserContext.mockResolvedValue(contextFor(ADMIN))
 
     const result = await run({ fetchId: "handleAdminApply" })
 
@@ -145,7 +162,7 @@ describe("dashboard action — direct admin application", () => {
   })
 
   it("reports back the reason the application was refused", async () => {
-    mockGetUserContext.mockResolvedValue(contextFor(true))
+    mockGetUserContext.mockResolvedValue(contextFor(ADMIN))
     mockApplyToEvent.mockResolvedValue({
       success: false,
       errors: [{ message: "Candidaturas encerradas!" }],
@@ -180,12 +197,12 @@ describe("dashboard loader", () => {
     mockIsCardPaymentsEnabled.mockResolvedValue(false)
   })
 
-  const load = (isAdmin: boolean) => {
+  const load = (permissions: string[]) => {
     mockGetContext.mockResolvedValue({
       currentProfile: {
         id: "profile-123",
         basic_data_filled: true,
-        is_admin: isAdmin,
+        permissions,
       },
     } as unknown as Awaited<ReturnType<typeof getContext>>)
 
@@ -197,16 +214,20 @@ describe("dashboard loader", () => {
   }
 
   it("tells the page that an admin may apply directly", async () => {
-    await expect(load(true)).resolves.toMatchObject({ isAdmin: true })
+    await expect(load(ADMIN)).resolves.toMatchObject({ canApplyDirectly: true })
+  })
+
+  it("tells the page that a staff may apply directly", async () => {
+    await expect(load(STAFF)).resolves.toMatchObject({ canApplyDirectly: true })
   })
 
   it("tells the page that anyone else may not", async () => {
-    await expect(load(false)).resolves.toMatchObject({ isAdmin: false })
+    await expect(load(USER)).resolves.toMatchObject({ canApplyDirectly: false })
   })
 
   it("passes the card-payments flag through to the page", async () => {
     mockIsCardPaymentsEnabled.mockResolvedValue(true)
-    await expect(load(false)).resolves.toMatchObject({
+    await expect(load(USER)).resolves.toMatchObject({
       cardPaymentsEnabled: true,
     })
   })

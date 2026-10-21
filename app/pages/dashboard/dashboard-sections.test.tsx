@@ -22,7 +22,7 @@ const makeEvent = (overrides: Partial<Event>): Event =>
 const renderContent = (props: {
   events: Event[]
   hasEverApplied: boolean
-  isAdmin?: boolean
+  canApplyDirectly?: boolean
   cardPaymentsEnabled?: boolean
 }) => {
   const router = createMemoryRouter(
@@ -33,7 +33,7 @@ const renderContent = (props: {
           <EventsContent
             events={props.events}
             hasEverApplied={props.hasEverApplied}
-            isAdmin={props.isAdmin}
+            canApplyDirectly={props.canApplyDirectly}
             cardPaymentsEnabled={props.cardPaymentsEnabled}
           />
         ),
@@ -137,15 +137,15 @@ describe("Dashboard sections", () => {
   })
 })
 
-describe("EventsContent — direct admin application", () => {
-  it("offers the direct application on an open event for an admin", () => {
+describe("EventsContent — direct application", () => {
+  it("offers the direct application on an open event to whoever may apply directly", () => {
     renderContent({
       events: [makeEvent({ id: "open-event" })],
       hasEverApplied: true,
-      isAdmin: true,
+      canApplyDirectly: true,
     })
 
-    expect(screen.getByText(/Candidatura direta \(admin\)/i)).toBeInTheDocument()
+    expect(screen.getByText("Candidatura direta")).toBeInTheDocument()
   })
 
   it("offers nothing of the sort to anyone else", () => {
@@ -156,7 +156,7 @@ describe("EventsContent — direct admin application", () => {
 
     expect(screen.getByText(/Me candidatar/i)).toBeInTheDocument()
     expect(
-      screen.queryByText(/Candidatura direta \(admin\)/i),
+      screen.queryByText("Candidatura direta"),
     ).not.toBeInTheDocument()
   })
 })

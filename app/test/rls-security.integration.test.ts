@@ -79,6 +79,7 @@ describe("RLS Security - Integration Tests", () => {
       "get_vault_secret",
       "update_veteran_status",
       "get_profile_with_roles",
+      "authorize",
     ]
 
     functionsToTest.forEach((functionName) => {
@@ -110,6 +111,7 @@ describe("RLS Security - Integration Tests", () => {
     const allowedGrantees: Record<string, string[]> = {
       get_profile_with_roles: ["authenticated"],
       get_admin_user_ids: ["authenticated"],
+      authorize: ["authenticated"],
     }
 
     it("should not grant EXECUTE to anon or authenticated beyond the allowlist", async () => {
@@ -163,10 +165,10 @@ describe("RLS Security - Integration Tests", () => {
         FROM pg_proc p
         INNER JOIN pg_namespace n ON n.oid = p.pronamespace
         WHERE n.nspname = 'public'
-        AND p.proname IN ('get_profile_with_roles', 'get_admin_user_ids')
+        AND p.proname IN ('get_profile_with_roles', 'get_admin_user_ids', 'authorize')
       `.execute(db)
 
-      expect(rows.length).toBe(2)
+      expect(rows.length).toBe(3)
 
       rows.forEach((row) => {
         expect(row.authed_can_execute).toBe(true)

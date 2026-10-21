@@ -1,4 +1,5 @@
 import { applySchema, composable } from "composable-functions"
+import { can, PERMISSIONS } from "~/business/auth/permissions"
 import { sql } from "kysely"
 import type { Params } from "react-router"
 import { redirectWithError } from "remix-toast"
@@ -49,7 +50,7 @@ export const getAdminContext = async (
 
   // Actions call this directly because React Router does not run the admin
   // layout loader, which holds the same check, before a child action
-  if (!context.currentProfile?.is_admin) {
+  if (!can(context.currentProfile, PERMISSIONS.ADMIN_PANEL)) {
     throw await redirectWithError(HOME, adminLayoutCopy.accessDenied)
   }
 

@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { portableTextSchema } from "~/business/cms/content.schema"
 import { headerCopy, noticeCopy } from "~/copy/layout"
 import { paragraph } from "~/test/page-documents"
-import { render, renderWithRouter, screen, within } from "~/test/test-utils"
+import { render, renderWithDataRouter, renderWithRouter, screen, within } from "~/test/test-utils"
 import { Header } from "./header"
 
 const navigation = [
@@ -18,6 +18,35 @@ function renderHeader(links = navigation) {
     <Header profile={null} isThereAnyNews={false} navigation={links} />,
   )
 }
+
+describe("Header — the admin link", () => {
+  const profile = (permissions: string[]) => ({
+    id: "profile-1",
+    email: "someone@example.com",
+    full_name: "Someone",
+    basic_data_filled: true,
+    created_at: "2024-01-01T00:00:00Z",
+    is_admin: permissions.includes("admin.panel"),
+    permissions,
+  })
+
+  const renderFor = (permissions: string[]) =>
+    renderWithDataRouter(
+      <Header profile={profile(permissions)} isThereAnyNews={false} />,
+    )
+
+  it("shows the admin area to whoever may enter the admin panel", () => {
+    renderFor(["admin.panel", "events.apply_direct"])
+
+    expect(screen.getByTitle(headerCopy.adminTitle)).toBeInTheDocument()
+  })
+
+  it("hides it from a staff", () => {
+    renderFor(["events.apply_direct"])
+
+    expect(screen.queryByTitle(headerCopy.adminTitle)).not.toBeInTheDocument()
+  })
+})
 
 describe("Header", () => {
   it("renders the Navigation links in order", () => {

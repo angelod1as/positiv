@@ -1,4 +1,5 @@
 import { BellDotIcon } from "lucide-react"
+import { can, PERMISSIONS } from "~/business/auth/permissions"
 import { useFetcher } from "react-router"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
 import { newsDialogCopy } from "~/copy/layout"
@@ -16,7 +17,7 @@ export const NewsDialog = ({
   currentProfile?: ProfileWithRoles | null
 }) => {
   const fetcher = useFetcher()
-  const isAdmin = currentProfile?.is_admin ?? false
+  const isAdmin = can(currentProfile, PERMISSIONS.ADMIN_PANEL)
 
   // Check if user has any news they can actually see
   const userHasVisibleNews = hasVisibleNews(isAdmin, DEFAULT_NEWS_ITEMS)

@@ -4,7 +4,7 @@
  */
 export const ROLES = {
   ADMIN: 'admin',
-  // Add other roles here as needed
+  STAFF: 'staff',
 } as const
 
 export type RoleName = typeof ROLES[keyof typeof ROLES]

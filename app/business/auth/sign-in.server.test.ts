@@ -40,7 +40,7 @@ const {
 
 type SupabaseParts = {
   signInResult?: { data: unknown; error: unknown }
-  isAdmin?: boolean
+  permissions?: string[]
 }
 
 const supabaseThat = ({
@@ -48,10 +48,12 @@ const supabaseThat = ({
     data: { user: { id: "user-1" } },
     error: null,
   },
-  isAdmin = false,
+  permissions = [],
 }: SupabaseParts = {}) => {
   const signInWithPassword = vi.fn().mockResolvedValue(signInResult)
-  const single = vi.fn().mockResolvedValue({ data: { is_admin: isAdmin } })
+  const single = vi.fn().mockResolvedValue({
+    data: { is_admin: permissions.includes("admin.panel"), permissions },
+  })
   const rpc = vi.fn().mockReturnValue({ single })
 
   return {
@@ -102,11 +104,21 @@ describe("signIn", () => {
   })
 
   it("sends an admin to the admin dashboard", async () => {
-    const { supabase } = supabaseThat({ isAdmin: true })
+    const { supabase } = supabaseThat({
+      permissions: ["admin.panel", "events.apply_direct"],
+    })
 
     const result = await signIn({ answers, context: contextWith(supabase) })
 
     expect(result).toEqual({ ok: true, redirectTo: ADMIN_DASHBOARD })
+  })
+
+  it("sends a staff to their dashboard", async () => {
+    const { supabase } = supabaseThat({ permissions: ["events.apply_direct"] })
+
+    const result = await signIn({ answers, context: contextWith(supabase) })
+
+    expect(result).toEqual({ ok: true, redirectTo: DASHBOARD })
   })
 
   it("sends the person where they were going", async () => {

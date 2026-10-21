@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from "react"
+import { can, PERMISSIONS } from "~/business/auth/permissions"
 import { useNavigate } from "react-router"
 import { toast } from "sonner"
 import { getUserContext } from "~/business/auth/auth.server"
@@ -96,9 +97,9 @@ const BasicDataPage = ({ loaderData }: Route.ComponentProps) => {
   // under their e-mail is not filling this in for the first time, and by the
   // time the run is done basic_data_filled is true for everyone.
   //
-  // Being an admin is read from the account instead, because roles hang off
+  // The admin panel is read from the account instead, because roles hang off
   // user_id and a profile left behind has none — an orphan is never an admin.
-  const destination = profile?.is_admin
+  const destination = can(profile, PERMISSIONS.ADMIN_PANEL)
     ? ADMIN_DASHBOARD
     : profileData?.basic_data_filled
       ? DASHBOARD

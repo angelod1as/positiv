@@ -15,8 +15,9 @@ export interface TestUser {
 
 export async function createTestUser(email: string, password: string, options?: { 
   admin?: boolean 
+  staff?: boolean
 }): Promise<TestUser> {
-  const { admin = false } = options || {}
+  const { admin = false, staff = false } = options || {}
   const supabase = createSupabaseAdminClient()
 
   try {
@@ -41,15 +42,16 @@ export async function createTestUser(email: string, password: string, options?: 
 
     const newUser = data.user
 
-    // Assign admin role if requested
-    if (admin) {
+    const roles = [...(admin ? ['admin'] : []), ...(staff ? ['staff'] : [])]
+
+    for (const role of roles) {
       const { error: roleError } = await supabase.rpc('add_user_role', {
         p_user_id: newUser.id,
-        p_role_name: 'admin',
+        p_role_name: role,
       })
 
       if (roleError) {
-        console.error(`Error assigning admin role to user ${newUser.email}:`, roleError)
+        console.error(`Error assigning ${role} role to user ${newUser.email}:`, roleError)
         // Continue anyway - user is created
       }
     }
