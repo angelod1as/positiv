@@ -916,7 +916,6 @@ export type Database = {
           gender: string[]
           how_came_to_us: string
           id: string
-          is_admin: boolean
           orientation: string[]
           permissions: string[]
           phone: number
