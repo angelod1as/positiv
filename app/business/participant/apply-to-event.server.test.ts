@@ -169,6 +169,16 @@ describe("applyToEvent", () => {
       expect(sendApplicationMail).not.toHaveBeenCalled()
     })
 
+    it("should clear the reason a previous cancellation left", async () => {
+      vi.mocked(sendApplicationMail).mockResolvedValue({ emailSent: true })
+
+      await applyToEvent(validValues, createContext())
+
+      expect(mockUpsert.mock.calls[0][0]).toMatchObject({
+        cancellation_reason: null,
+      })
+    })
+
     it("should keep the opt-out flag out of the participant row", async () => {
       vi.mocked(sendApplicationMail).mockResolvedValue({ emailSent: true })
 

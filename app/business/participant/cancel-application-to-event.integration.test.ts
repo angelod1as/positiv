@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import type { z } from "zod"
+import type { userContextSchema } from "../common"
 import {
   cleanupAfterTest,
   setupIntegrationTest,
@@ -8,6 +10,7 @@ import {
   createTestEventParticipant,
   createTestPayment,
   createTestProfile,
+  getTestSupabaseClient,
 } from "~/test/db-test-utils"
 
 const { deleteAsaasPayment, logger } = vi.hoisted(() => ({
@@ -27,12 +30,18 @@ vi.mock("~/lib/logger/logger.server", () => ({
   logger: { ...logger, child: () => logger },
 }))
 
+vi.mock("./send-application-mail.server", () => ({
+  sendApplicationMail: vi.fn().mockResolvedValue({ emailSent: false }),
+}))
+
+import { applyToEvent } from "./apply-to-event.server"
 import { cancelApplicationToEvent } from "./cancel-application-to-event.server"
 
 describe("cancelApplicationToEvent", () => {
   const { tracker, kysely } = setupIntegrationTest()
   let eventId: string
   let profileId: string
+  let profileEmail: string
   let participantId: string
   let counter = 0
 
@@ -49,9 +58,10 @@ describe("cancelApplicationToEvent", () => {
     })
     eventId = event.id
 
+    profileEmail = `test${Date.now()}-${counter}-withdraw@example.com`
     const profile = await createTestProfile(tracker, kysely, {
       user_id: null,
-      email: `test${Date.now()}-${counter}-withdraw@example.com`,
+      email: profileEmail,
       full_name: "Withdraw Tester",
     })
     profileId = profile.id
@@ -205,6 +215,44 @@ describe("cancelApplicationToEvent", () => {
       })
 
       expect(result.success).toBe(false)
+      expect(await registration()).toEqual({
+        is_user_applied: true,
+        cancellation_reason: null,
+      })
+    })
+
+    it("is cleared when the participant applies again", async () => {
+      await cancelApplicationToEvent({
+        eventId,
+        profileId,
+        reason: "Mudei de ideia",
+      })
+
+      const result = await applyToEvent(
+        {
+          eventId,
+          applicationDate: new Date(),
+          referred: "Administração",
+          bond: "Posso ir sozinhe.",
+        },
+        {
+          supabase: getTestSupabaseClient(),
+          supabaseHeaders: new Headers(),
+          currentUser: { id: profileId, email: profileEmail },
+          currentProfile: {
+            id: profileId,
+            email: profileEmail,
+            full_name: "Withdraw Tester",
+            basic_data_filled: true,
+            created_at: new Date().toISOString(),
+            is_admin: false,
+          },
+          isProdInDev: false,
+          host: "localhost",
+        } as unknown as z.infer<typeof userContextSchema>,
+      )
+
+      expect(result.success).toBe(true)
       expect(await registration()).toEqual({
         is_user_applied: true,
         cancellation_reason: null,

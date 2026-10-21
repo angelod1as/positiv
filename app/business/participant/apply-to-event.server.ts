@@ -62,6 +62,7 @@ export const applyToEvent = applySchema(
     application_date: dateToString(applicationDate),
     ...values, // Supabase sanitizes automatically
     is_user_applied: true,
+    cancellation_reason: null,
   })
 
   if (error) {
