@@ -17,15 +17,15 @@ const mockSignIn = vi.mocked(signIn)
 
 const answers = { email: "pessoa@exemplo.com", password: "segredo123" }
 
-const post = (body: unknown) =>
+const post = (body: unknown, headers: Record<string, string> = {}) =>
   new Request("http://localhost/api/auth/login", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...headers },
     body: typeof body === "string" ? body : JSON.stringify(body),
   })
 
-const run = (body: unknown) =>
-  action({ request: post(body), params: {}, context: {} as never })
+const run = (body: unknown, headers?: Record<string, string>) =>
+  action({ request: post(body, headers), params: {}, context: {} as never })
 
 describe("login commit route", () => {
   beforeEach(() => {
@@ -44,6 +44,7 @@ describe("login commit route", () => {
     expect(mockSignIn).toHaveBeenCalledWith({
       answers,
       context: expect.anything(),
+      ip: null,
     })
   })
 
@@ -80,5 +81,48 @@ describe("login commit route", () => {
       errors: [],
       message: "Credenciais inválidas",
     })
+  })
+
+  it("hands over the client IP the proxy saw", async () => {
+    await run(answers, { "x-real-ip": "203.0.113.7" })
+
+    expect(mockSignIn).toHaveBeenCalledWith(
+      expect.objectContaining({ ip: "203.0.113.7" }),
+    )
+  })
+
+  it("answers a rate-limited request with 429", async () => {
+    mockSignIn.mockResolvedValue({
+      ok: false,
+      errors: [],
+      message: "Muitas tentativas",
+      rateLimited: true,
+    })
+
+    const response = await run(answers, { "x-real-ip": "203.0.113.7" })
+
+    expect(response.status).toBe(429)
+    await expect(response.json()).resolves.toMatchObject({
+      ok: false,
+      errors: [],
+      message: "Muitas tentativas",
+    })
+  })
+
+  it("carries the session cookies on a rate-limited answer too", async () => {
+    const supabaseHeaders = new Headers()
+    supabaseHeaders.append("Set-Cookie", "sb-access-token=abc; Path=/")
+    mockGetContext.mockResolvedValue({ supabaseHeaders } as never)
+    mockSignIn.mockResolvedValue({
+      ok: false,
+      errors: [],
+      message: "Muitas tentativas",
+      rateLimited: true,
+    })
+
+    const response = await run(answers)
+
+    expect(response.status).toBe(429)
+    expect(response.headers.get("Set-Cookie")).toContain("sb-access-token=abc")
   })
 })

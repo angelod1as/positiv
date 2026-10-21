@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "react-router"
 import { getContext } from "~/business/auth/auth.server"
 import { signIn } from "~/business/auth/sign-in.server"
+import { getClientIp } from "~/lib/helpers/get-client-ip.server"
 
 /**
  * A route of its own rather than the login page's action: a POST to a page
@@ -25,12 +26,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const result = await signIn({
     answers: answers as Record<string, unknown>,
     context,
+    ip: getClientIp(request),
   })
 
   // The browser only reads the body, but a refused sign-in should not read as
   // a success to anything watching the status.
   return Response.json(result, {
-    status: result.ok ? 200 : 422,
+    status: result.ok ? 200 : "rateLimited" in result ? 429 : 422,
     headers: context.supabaseHeaders,
   })
 }

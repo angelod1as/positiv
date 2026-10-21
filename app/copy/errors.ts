@@ -38,6 +38,10 @@ Avise-nos pelo [email](mailto:${email}) com as informações:
       'Houve um erro no cadastro da sua conta. Se você já tem uma conta, tente acessar o "esqueci minha senha". Se não, entre em contato pelo WhatsApp (em nossa homepage) e indique qual email você utilizou.',
     signupRateLimited:
       "Muitas tentativas de cadastro a partir desta conexão. Tente de novo amanhã ou fale com a gente pelo WhatsApp (em nossa homepage).",
+    loginRateLimited:
+      'Muitas tentativas de login. Aguarde alguns minutos e tente de novo, ou use o "esqueci minha senha".',
+    resetRateLimited:
+      "Muitos pedidos de recuperação de senha. Aguarde uma hora e tente de novo.",
     signupDomainBlocked:
       "Não aceitamos cadastros com este provedor de e-mail. Use outro e-mail, como Gmail ou Outlook.",
   },
