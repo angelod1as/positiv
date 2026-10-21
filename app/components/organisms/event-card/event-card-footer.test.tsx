@@ -223,7 +223,7 @@ describe("EventCardFooter", () => {
 
       expect(screen.getByText(/Me candidatar/i)).toBeInTheDocument()
       expect(
-        screen.getByText(/Candidatura direta \(admin\)/i),
+        screen.getByText("Candidatura direta"),
       ).toBeInTheDocument()
     })
 
@@ -233,7 +233,7 @@ describe("EventCardFooter", () => {
 
       renderFooter({ eventId: "event-123" })
 
-      await user.click(screen.getByText(/Candidatura direta \(admin\)/i))
+      await user.click(screen.getByText("Candidatura direta"))
 
       expect(mockSubmit).toHaveBeenCalledWith(
         { fetchId: "handleAdminApply", eventId: "event-123" },
@@ -247,7 +247,7 @@ describe("EventCardFooter", () => {
 
       renderFooter({ eventId: "event-123" })
 
-      await user.click(screen.getByText(/Candidatura direta \(admin\)/i))
+      await user.click(screen.getByText("Candidatura direta"))
 
       expect(mockTrack).toHaveBeenCalledWith("event_direct_application_clicked", {
         eventId: "event-123",
@@ -258,7 +258,7 @@ describe("EventCardFooter", () => {
       renderFooter({ is_applied: true })
 
       expect(
-        screen.queryByText(/Candidatura direta \(admin\)/i),
+        screen.queryByText("Candidatura direta"),
       ).not.toBeInTheDocument()
     })
 
@@ -266,7 +266,7 @@ describe("EventCardFooter", () => {
       renderFooter({ event_status: "Registration Closed" })
 
       expect(
-        screen.queryByText(/Candidatura direta \(admin\)/i),
+        screen.queryByText("Candidatura direta"),
       ).not.toBeInTheDocument()
     })
 
@@ -275,7 +275,7 @@ describe("EventCardFooter", () => {
 
       expect(screen.getByText(/Me candidatar/i)).toBeInTheDocument()
       expect(
-        screen.queryByText(/Candidatura direta \(admin\)/i),
+        screen.queryByText("Candidatura direta"),
       ).not.toBeInTheDocument()
     })
   })

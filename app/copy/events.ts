@@ -233,7 +233,7 @@ export const eventCardCopy = {
   scheduled: "Candidaturas em breve",
   closed: "Candidaturas encerradas",
   apply: "Me candidatar",
-  directApply: "Candidatura direta (admin)",
+  directApply: "Candidatura direta",
   comingSoon: "Candidate-se em breve",
   cancel: {
     trigger: "Cancelar candidatura",

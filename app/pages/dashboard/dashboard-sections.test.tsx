@@ -145,7 +145,7 @@ describe("EventsContent — direct application", () => {
       canApplyDirectly: true,
     })
 
-    expect(screen.getByText(/Candidatura direta \(admin\)/i)).toBeInTheDocument()
+    expect(screen.getByText("Candidatura direta")).toBeInTheDocument()
   })
 
   it("offers nothing of the sort to anyone else", () => {
@@ -156,7 +156,7 @@ describe("EventsContent — direct application", () => {
 
     expect(screen.getByText(/Me candidatar/i)).toBeInTheDocument()
     expect(
-      screen.queryByText(/Candidatura direta \(admin\)/i),
+      screen.queryByText("Candidatura direta"),
     ).not.toBeInTheDocument()
   })
 })

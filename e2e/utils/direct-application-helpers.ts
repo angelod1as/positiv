@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test'
 import { createSupabaseAdminClient } from './db-cleanup'
 import { runEventTitle } from './run-context'
 
-export const DIRECT_APPLY_LABEL = 'Candidatura direta (admin)'
+export const DIRECT_APPLY_LABEL = 'Candidatura direta'
 
 /**
  * The dashboard lists the twelve events starting soonest, so an event created
