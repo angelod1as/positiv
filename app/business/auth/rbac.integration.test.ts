@@ -11,16 +11,9 @@ import {
   runAsAuthenticatedUser,
 } from "~/test/db-test-utils"
 import { ROLES, type RoleName } from "~/lib/constants/roles"
+import { PERMISSIONS } from "./permissions"
 
-const ALL_PERMISSIONS = [
-  "admin.panel",
-  "events.manage",
-  "participants.manage",
-  "profiles.manage",
-  "newsletter.manage",
-  "reports.read",
-  "events.apply_direct",
-] as const
+const ALL_PERMISSIONS = Object.values(PERMISSIONS)
 
 describe("RBAC - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()
@@ -117,12 +110,30 @@ describe("RBAC - Integration Tests", () => {
     })
   })
 
-  describe("authorize()", () => {
-    it.each(ALL_PERMISSIONS)("is true for an admin on %s", async (permission) => {
-      const { userId } = await createUser(ROLES.ADMIN)
+  describe("get_admin_user_ids", () => {
+    it("still returns the admins, and no staff, after the enum cast", async () => {
+      const admin = await createUser(ROLES.ADMIN)
+      const staff = await createUser(ROLES.STAFF)
 
-      expect(await authorize(userId, permission)).toBe(true)
+      const { rows } = await sql<{ user_id: string }>`
+        SELECT public.get_admin_user_ids() AS user_id
+      `.execute(kysely)
+      const ids = rows.map((row) => row.user_id)
+
+      expect(ids).toContain(admin.userId)
+      expect(ids).not.toContain(staff.userId)
     })
+  })
+
+  describe("authorize()", () => {
+    it.each(ALL_PERMISSIONS)(
+      "is true for an admin on %s",
+      async (permission) => {
+        const { userId } = await createUser(ROLES.ADMIN)
+
+        expect(await authorize(userId, permission)).toBe(true)
+      },
+    )
 
     it.each(ALL_PERMISSIONS)(
       "is true for a staff only on events.apply_direct (%s)",
