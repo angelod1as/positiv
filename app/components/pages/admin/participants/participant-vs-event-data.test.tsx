@@ -62,6 +62,7 @@ const mockEventParticipant: EventParticipantWithEvent = {
   event_emoji: "🎉",
   is_user_applied: true,
   cancellation_date: null,
+  cancellation_reason: null,
   created_at: "2024-01-01",
   updated_at: "2024-01-01",
   was_selected_for_rotation: false,
