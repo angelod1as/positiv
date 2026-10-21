@@ -7,7 +7,14 @@ import {
 import { logger } from "~/lib/logger/logger.server"
 import { EMAIL_COPY_TIMEOUT_MS, loadEmailCopy } from "./email-copy.server"
 
-vi.mock("~/lib/logger/logger.server", () => ({ logger: { error: vi.fn() } }))
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: {
+    error: vi.fn(),
+    child() {
+      return this
+    },
+  },
+}))
 
 const templates = emailTemplatesSchema.parse({
   ...baselineEmailTemplates,

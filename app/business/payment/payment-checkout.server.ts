@@ -6,7 +6,7 @@ import { kyselyDb } from "~/kysely-db"
 import { appOrigin } from "~/lib/helpers/app-origin"
 import { isProd } from "~/lib/helpers/is-prod.server"
 import { zod } from "~/lib/helpers/zod"
-import { logger } from "~/lib/logger/logger.server"
+import { paymentLogger as logger } from "~/business/payment/payment-logger.server"
 import paths from "~/lib/paths"
 import {
   isCardPaymentsEnabled,

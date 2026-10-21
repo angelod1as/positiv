@@ -14,7 +14,9 @@ const logger = vi.hoisted(() => ({
   info: vi.fn(),
   debug: vi.fn(),
 }))
-vi.mock("~/lib/logger/logger.server", () => ({ logger }))
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { ...logger, child: () => logger },
+}))
 
 const recordWebhookEvent = vi.hoisted(() => vi.fn())
 const applyWebhookEvent = vi.hoisted(() => vi.fn())

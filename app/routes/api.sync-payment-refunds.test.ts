@@ -10,7 +10,9 @@ vi.mock("varlock/env", () => ({ ENV }))
 vi.mock("~/business/payment/payment-sync.server", () => ({
   syncOpenPayments,
 }))
-vi.mock("~/lib/logger/logger.server", () => ({ logger }))
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { ...logger, child: () => logger },
+}))
 
 const { action } = await import("./api.sync-payment-refunds")
 

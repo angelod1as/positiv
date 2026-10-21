@@ -14,7 +14,9 @@ const { env, logger, selectFrom } = vi.hoisted(() => ({
 }))
 
 vi.mock("varlock/env", () => ({ ENV: env }))
-vi.mock("~/lib/logger/logger.server", () => ({ logger }))
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { ...logger, child: () => logger },
+}))
 vi.mock("~/kysely-db", () => ({ kyselyDb: { selectFrom } }))
 
 const row: PaymentAlertRow = {

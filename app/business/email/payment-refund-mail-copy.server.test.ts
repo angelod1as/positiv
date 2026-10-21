@@ -4,7 +4,14 @@ import { emailTemplatesSchema } from "~/business/cms/email-templates.schema"
 import { paymentRefundCopyFallback } from "./payment-refund-mail-copy"
 import { loadPaymentRefundCopy } from "./payment-refund-mail-copy.server"
 
-vi.mock("~/lib/logger/logger.server", () => ({ logger: { error: vi.fn() } }))
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: {
+    error: vi.fn(),
+    child() {
+      return this
+    },
+  },
+}))
 
 const templates = emailTemplatesSchema.parse({
   ...baselineEmailTemplates,

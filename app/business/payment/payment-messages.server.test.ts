@@ -11,7 +11,12 @@ import {
 import { buildPaymentOptions } from "./pricing"
 
 vi.mock("~/lib/logger/logger.server", () => ({
-  logger: { error: vi.fn() },
+  logger: {
+    error: vi.fn(),
+    child() {
+      return this
+    },
+  },
 }))
 
 function cacheOf(paymentMessages: SiteSnapshot["paymentMessages"]) {

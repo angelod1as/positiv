@@ -1,4 +1,4 @@
-import { logger } from "~/lib/logger/logger.server"
+import { emailLogger as logger } from "~/business/email/email-logger.server"
 
 export function renderWithFallback<Copy, Rendered>(
   name: string,

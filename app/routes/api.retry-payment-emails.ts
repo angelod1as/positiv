@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto"
 import type { ActionFunctionArgs } from "react-router"
 import { ENV } from "varlock/env"
 import { sweepPaymentEmails } from "~/business/payment/payment-email-outbox.server"
-import { logger } from "~/lib/logger/logger.server"
+import { paymentLogger as logger } from "~/business/payment/payment-logger.server"
 
 /**
  * Sends the payment emails nobody managed to send.

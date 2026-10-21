@@ -61,7 +61,9 @@ vi.mock("./provider/asaas/asaas-client.server", async (importOriginal) => {
   }
 })
 
-vi.mock("~/lib/logger/logger.server", () => ({ logger }))
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { ...logger, child: () => logger },
+}))
 
 // The admin switches, pinned per test. Everything else reads the real settings.
 vi.mock("~/business/settings/app-settings.server", async (importOriginal) => ({

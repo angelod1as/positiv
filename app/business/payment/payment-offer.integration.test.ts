@@ -51,7 +51,9 @@ vi.mock("./payment-email-outbox.server", async (importOriginal) => {
   outbox.deliver = original.deliverPaymentEmail
   return { ...original, deliverPaymentEmail }
 })
-vi.mock("~/lib/logger/logger.server", () => ({ logger }))
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { ...logger, child: () => logger },
+}))
 
 // The admin switch, pinned per test. Everything else reads the real settings.
 vi.mock("~/business/settings/app-settings.server", async (importOriginal) => ({

@@ -1,7 +1,7 @@
 import { emailTemplatesCache } from "~/business/cms/email-templates-cache.server"
 import type { EmailTemplates } from "~/business/cms/email-templates.schema"
 import type { ResolvedEmailTemplates } from "~/business/cms/email-templates-source.server"
-import { logger } from "~/lib/logger/logger.server"
+import { emailLogger as logger } from "~/business/email/email-logger.server"
 
 export const EMAIL_COPY_TIMEOUT_MS = 2_000
 

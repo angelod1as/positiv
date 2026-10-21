@@ -4,7 +4,14 @@ import { emailTemplatesSchema } from "~/business/cms/email-templates.schema"
 import { applicationCopyFallback } from "./application-mail-copy"
 import { loadApplicationCopy } from "./application-mail-copy.server"
 
-vi.mock("~/lib/logger/logger.server", () => ({ logger: { error: vi.fn() } }))
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: {
+    error: vi.fn(),
+    child() {
+      return this
+    },
+  },
+}))
 
 const block = (text: string, marks: string[] = []) => ({
   _type: "block",
