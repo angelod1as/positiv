@@ -111,7 +111,7 @@ describe("serializeError", () => {
     })
   })
 
-  it("keeps the fields of a PostgrestError-like plain object", () => {
+  it("names a PostgrestError-shaped plain object and keeps its fields", () => {
     const error = {
       message: 'duplicate key value violates unique constraint "x_pkey"',
       code: "23505",
@@ -120,7 +120,7 @@ describe("serializeError", () => {
     }
 
     expect(serializeError(error)).toEqual({
-      name: "Object",
+      name: "PostgrestError",
       message: 'duplicate key value violates unique constraint "x_pkey"',
       code: "23505",
       details: "Key (id)=(1) already exists.",

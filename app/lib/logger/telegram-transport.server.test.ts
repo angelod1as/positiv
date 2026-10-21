@@ -342,7 +342,7 @@ describe("TelegramTransport", () => {
           const text: string = body.text
           expect(text.length).toBeLessThanOrEqual(4096)
           expect(text.startsWith("<b>[ERROR]</b>\nxxx")).toBe(true)
-          expect(text).toContain("x...\n<pre>")
+          expect(text).toContain("x...\n")
           expect(text).toContain("pay-1")
           expect(text.endsWith("</pre>")).toBe(true)
           resolve()
@@ -358,7 +358,7 @@ describe("TelegramTransport", () => {
           level: "error",
           message: "Boom",
           paymentId: "pay-1",
-          links: { admin: `https://x.test/${"a".repeat(4024)}` },
+          links: { admin: `https://x.test/${"a".repeat(3985)}` },
         },
         () => {
           const body = JSON.parse(fetchSpy.mock.calls[0][1].body)
@@ -409,6 +409,133 @@ describe("TelegramTransport", () => {
           resolve()
         },
       )
+    })
+  })
+
+  describe("alert context", () => {
+    function send(info: Record<string, unknown>): Promise<string> {
+      return new Promise((resolve) => {
+        transport.log({ level: "error", message: "Boom", ...info }, () => {
+          resolve(JSON.parse(fetchSpy.mock.calls[0][1].body).text)
+        })
+      })
+    }
+
+    const cwd = process.cwd()
+    const stack = [
+      "TypeError: Cannot read properties of undefined (reading 'id')",
+      "    at node:internal/process/task_queues:105:5",
+      `    at loadEvent (${cwd}/app/business/events.server.ts:42:7)`,
+      `    at ${cwd}/node_modules/react-router/dist/index.js:900:12`,
+      `    at loader (${cwd}/app/pages/events/event-page.tsx:18:3)`,
+      `    at file://${cwd}/app/root.tsx:235:5`,
+      `    at render (${cwd}/app/entry.server.tsx:60:1)`,
+    ].join("\n")
+
+    it("shows the category and area in the header", async () => {
+      const text = await send({ category: "unhandled", area: "convite" })
+
+      expect(text.startsWith("<b>[ERROR · unhandled · convite]</b>\nBoom")).toBe(
+        true,
+      )
+    })
+
+    it("shows a category on its own", async () => {
+      const text = await send({ category: "payments" })
+
+      expect(text.startsWith("<b>[ERROR · payments]</b>")).toBe(true)
+    })
+
+    it("escapes the category", async () => {
+      const text = await send({ category: "<b>x</b>" })
+
+      expect(text).toContain("[ERROR · &lt;b&gt;x&lt;/b&gt;]")
+    })
+
+    it("shows the time in UTC and in São Paulo", async () => {
+      const text = await send({ timestamp: "2026-10-21T16:30:05.000Z" })
+
+      expect(text).toContain(
+        "2026-10-21 16:30:05 UTC · 2026-10-21 13:30:05 BRT",
+      )
+    })
+
+    it("shows the time even without a timestamp", async () => {
+      const text = await send({})
+
+      expect(text).toMatch(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} UTC/)
+    })
+
+    it("shows the incident ID", async () => {
+      const text = await send({ incidentId: "a1b2c3d4" })
+
+      expect(text).toContain("\nid a1b2c3d4")
+      expect(text).not.toContain('"incidentId"')
+    })
+
+    it("shows the error class and code", async () => {
+      const text = await send({
+        error: { name: "PostgrestError", code: "23505", message: "dup" },
+      })
+
+      expect(text).toContain("\nPostgrestError 23505\n")
+    })
+
+    it("shows a status when the error has no code", async () => {
+      const text = await send({
+        error: { name: "Response", status: 500, message: "Response 500" },
+      })
+
+      expect(text).toContain("\nResponse 500\n")
+    })
+
+    it("shows the request above the preformatted block, not inside it", async () => {
+      const text = await send({
+        request: { method: "GET", path: "/convite/***", userAgent: "Chrome" },
+      })
+
+      const [beforePre] = text.split("<pre>")
+      expect(beforePre).toContain("\nGET /convite/*** · Chrome")
+      expect(text).not.toContain('"request"')
+    })
+
+    it("shows the first three app frames as where it came from", async () => {
+      const text = await send({ error: { name: "TypeError", message: "x", stack } })
+
+      expect(text).toContain(
+        "\nwhere: app/business/events.server.ts:42 ← app/pages/events/event-page.tsx:18 ← app/root.tsx:235\n",
+      )
+      expect(text).not.toContain("where: node:")
+      expect(text).not.toContain("entry.server.tsx:60 ←")
+    })
+
+    it("finds the frames in the cause when the error has no stack", async () => {
+      const text = await send({
+        error: { name: "Object", message: "x", cause: { message: "y", stack } },
+      })
+
+      expect(text).toContain("where: app/business/events.server.ts:42")
+    })
+
+    it("keeps the context and a valid message when everything is long", async () => {
+      const text = await send({
+        message: "m".repeat(5000),
+        category: "unhandled",
+        area: "convite",
+        incidentId: "a1b2c3d4",
+        timestamp: "2026-10-21T16:30:05.000Z",
+        request: { method: "POST", path: `/${"p".repeat(5000)}`, userAgent: "Chrome" },
+        error: { name: "TypeError", message: "e".repeat(5000), stack },
+        links: { admin: "https://positiv.test/admin" },
+      })
+
+      expect(text.length).toBeLessThanOrEqual(4096)
+      expect(text.startsWith("<b>[ERROR · unhandled · convite]</b>")).toBe(true)
+      expect(text).toContain("\nid a1b2c3d4")
+      expect(text).toContain("where: app/business/events.server.ts:42")
+      expect(text).toContain('<a href="https://positiv.test/admin">admin</a>')
+      expect(text.match(/<pre>/g)).toHaveLength(1)
+      expect(text.match(/<\/pre>/g)).toHaveLength(1)
     })
   })
 })

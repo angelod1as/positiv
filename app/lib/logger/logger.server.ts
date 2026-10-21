@@ -173,8 +173,15 @@ export function serializeError(
     "message" in error && typeof error.message === "string"
       ? error.message
       : JSON.stringify(copy).slice(0, MAX_PREVIEW_LENGTH)
+  const constructorName = Object.getPrototypeOf(error)?.constructor?.name
+  const isPostgrestError = ["code", "details", "hint"].every((key) => key in error)
   return {
-    name: Object.getPrototypeOf(error)?.constructor?.name ?? "Object",
+    name:
+      constructorName && constructorName !== "Object"
+        ? constructorName
+        : isPostgrestError
+          ? "PostgrestError"
+          : "Object",
     ...copy,
     message,
   }
