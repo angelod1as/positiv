@@ -49,6 +49,7 @@ function safeStringify(value: unknown): string {
 }
 
 const MAX_CONTEXT_LINE_LENGTH = 300
+const MAX_LABEL_LENGTH = 100
 const WHERE_FRAMES = 3
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -147,7 +148,7 @@ export class TelegramTransport extends TransportStream {
     const label = [info.level.toUpperCase(), info.category, info.area]
       .filter((part) => typeof part === "string" && part.length > 0)
       .join(" · ")
-    const head = `<b>[${escapeHtml(label)}]</b>\n`
+    const head = `<b>[${escapeHtmlWithin(label, MAX_LABEL_LENGTH)}]</b>\n`
     const context = [
       errorClass(info.error),
       formatTime(info.timestamp),

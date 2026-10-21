@@ -452,6 +452,18 @@ describe("TelegramTransport", () => {
       expect(text).toContain("[ERROR · &lt;b&gt;x&lt;/b&gt;]")
     })
 
+    it("caps an oversized area so the alert still fits", async () => {
+      const text = await send({
+        category: "unhandled",
+        area: "a".repeat(5000),
+        paymentId: "pay-1",
+      })
+
+      expect(text.length).toBeLessThanOrEqual(4096)
+      expect(text).toMatch(/^<b>\[ERROR · unhandled · a+\.\.\.\]<\/b>\nBoom/)
+      expect(text).toContain("pay-1")
+    })
+
     it("shows the time in UTC and in São Paulo", async () => {
       const text = await send({ timestamp: "2026-10-21T16:30:05.000Z" })
 
