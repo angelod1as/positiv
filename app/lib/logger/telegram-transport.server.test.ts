@@ -342,7 +342,7 @@ describe("TelegramTransport", () => {
           const text: string = body.text
           expect(text.length).toBeLessThanOrEqual(4096)
           expect(text.startsWith("<b>[ERROR]</b>\nxxx")).toBe(true)
-          expect(text).toContain("x...\n")
+          expect(text).toMatch(/x\.\.\.\n\d{4}-\d{2}-\d{2} [^\n]+ BRT\n<pre>/)
           expect(text).toContain("pay-1")
           expect(text.endsWith("</pre>")).toBe(true)
           resolve()
