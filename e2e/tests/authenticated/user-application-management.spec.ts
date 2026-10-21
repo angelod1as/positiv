@@ -82,8 +82,8 @@ test.describe('POS-191: Application Management Tests', () => {
     const initialAppExists = await verifyApplicationExists(profileId, testEvent.id)
     expect(initialAppExists).toBe(true)
     
-    // Step 2: Cancel the application
-    await myApplicationsPage.cancelApplication(testEvent.title)
+    // Step 2: Cancel the application, saying why
+    await myApplicationsPage.cancelApplication(testEvent.title, { reason: 'Vou viajar nesse fim de semana' })
     
     // Verify UI shows not applied
     await myApplicationsPage.waitForApplicationStatusChange(testEvent.title, 'not-applied')
@@ -98,6 +98,7 @@ test.describe('POS-191: Application Management Tests', () => {
     const canceledApp = await getApplicationState(profileId, testEvent.id)
     expect(canceledApp?.cancellation_date).toBeTruthy()
     expect(canceledApp?.is_user_applied).toBe(false)
+    expect(canceledApp?.cancellation_reason).toBe('Vou viajar nesse fim de semana')
     
     // Step 4: Reapply to the same event
     // For simplicity, we'll update the database directly instead of going through the complex form
