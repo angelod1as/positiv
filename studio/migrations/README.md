@@ -40,3 +40,34 @@ If a migration leaves behind code that other parts of the Studio still use —
 the way `code-of-conduct-to-page` left the page content the seed writes — move
 that code out of `migrations/` into its real home before deleting the
 migration.
+
+## Migrations
+
+### `remove-registration-limit-email` (POS-626)
+
+Contract step of POS-626: the registration-limit admin email is gone, the app
+no longer reads `emailTemplates.registrationLimit`, and the field has left the
+Studio schema. This migration unsets `registrationLimit` on the
+`emailTemplates` singleton, both the published document and its draft.
+
+It is idempotent: it patches only the documents that exist, and unsetting a
+field that is already gone is a no-op. It runs through `sanity exec`, so
+`--dataset` is required and it dry-runs until you add `--no-dry-run`.
+
+From the repository root, `development` first:
+
+```sh
+pnpm --filter studio migrate:remove-registration-limit-email --dataset development
+pnpm --filter studio migrate:remove-registration-limit-email --dataset development --no-dry-run
+```
+
+Then `production`:
+
+```sh
+pnpm --filter studio migrate:remove-registration-limit-email --dataset production
+pnpm --filter studio migrate:remove-registration-limit-email --dataset production --no-dry-run
+```
+
+Once it has run on `production`, the follow-up pull request deletes the
+script, its `package.json` script and this entry, naming the run date in the
+commit message.

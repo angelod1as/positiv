@@ -6,7 +6,6 @@ import { validateDocumentOf } from "../../test/validate"
 import { applicationMailContent } from "../../../app/copy/emails/application-mail"
 import { paymentConfirmedMailContent } from "../../../app/copy/emails/payment-confirmed"
 import { paymentRefundMailContent } from "../../../app/copy/emails/payment-refund"
-import { registrationLimitAdminMailContent } from "../../../app/copy/emails/registration-limit-admin"
 import { emailTemplates as emailTemplatesType } from "./email-templates"
 
 const body = (...texts: { text: string; strong?: boolean }[]) =>
@@ -248,42 +247,9 @@ describe("the payment-refund email in emailTemplates", () => {
 })
 
 describe("the registration-limit email in emailTemplates", () => {
-  const validateLimit = (registrationLimit: Record<string, unknown>) =>
-    validateDocumentOf("emailTemplates", {
-      paymentLink: valid.paymentLink,
-      registrationLimit: {
-        ...registrationLimitAdminMailContent,
-        ...registrationLimit,
-      },
-    })
-
-  it("accepts the baseline copy", async () => {
-    expect(await validateLimit({})).toEqual([])
-  })
-
-  it("rejects a variable the subject or body does not allow", async () => {
-    const paths = pathsOf(
-      await validateLimit({
-        subject: "{{participantes}}",
-        body: body({ text: "{{nome}}" }),
-      }),
+  it("is no longer a field: the email it held is gone", () => {
+    expect(emailTemplatesType.fields.map((field) => field.name)).not.toContain(
+      "registrationLimit",
     )
-    expect(paths).toContain("registrationLimit.subject")
-    expect(paths).toContain("registrationLimit.body")
-  })
-
-  it("requires every field", async () => {
-    const paths = pathsOf(
-      await validateLimit({
-        subject: undefined,
-        heading: undefined,
-        body: undefined,
-        cta: undefined,
-        closing: undefined,
-      }),
-    )
-    for (const field of ["subject", "heading", "body", "cta", "closing"]) {
-      expect(paths).toContain(`registrationLimit.${field}`)
-    }
   })
 })
