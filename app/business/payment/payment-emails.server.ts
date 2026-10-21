@@ -4,7 +4,7 @@ import { formatPaymentRefundMail } from "~/business/email/format-payment-refund-
 import { type MailOptions, sendEmail } from "~/business/email/send-email"
 import { kyselyDb } from "~/kysely-db"
 import { appOrigin } from "~/lib/helpers/app-origin"
-import { paymentLogger as logger } from "~/business/payment/payment-logger.server"
+import { paymentLogger as logger } from "./payment-logger.server"
 import paths from "~/lib/paths"
 import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
 import { buildPaymentOptions, splitInstallments } from "./pricing"

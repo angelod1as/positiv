@@ -1,6 +1,6 @@
 import { sql, type Kysely } from "kysely"
 import { kyselyDb } from "~/kysely-db"
-import { paymentLogger as logger } from "~/business/payment/payment-logger.server"
+import { paymentLogger as logger } from "./payment-logger.server"
 import type { Database } from "~types/database/kysely.types"
 import { ACTIVE_PAYMENT_STATUSES } from "./payment-totals.server"
 import {

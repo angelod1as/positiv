@@ -2,7 +2,7 @@ import { applySchema } from "composable-functions"
 import { paymentsCopy } from "~/copy/payments"
 import { kyselyDb } from "~/kysely-db"
 import { zod } from "~/lib/helpers/zod"
-import { paymentLogger as logger } from "~/business/payment/payment-logger.server"
+import { paymentLogger as logger } from "./payment-logger.server"
 import {
   logPaymentProviderFailure,
   readPaymentAlertContext,
