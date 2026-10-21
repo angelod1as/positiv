@@ -67,3 +67,7 @@ Then `production`:
 pnpm --filter studio migrate:remove-registration-limit-email --dataset production
 pnpm --filter studio migrate:remove-registration-limit-email --dataset production --no-dry-run
 ```
+
+Once it has run on `production`, the follow-up pull request deletes the
+script, its `package.json` script and this entry, naming the run date in the
+commit message.
