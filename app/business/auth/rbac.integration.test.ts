@@ -111,7 +111,7 @@ describe("RBAC - Integration Tests", () => {
   })
 
   describe("get_admin_user_ids", () => {
-    it("still returns the admins, and no staff, after the enum cast", async () => {
+    it("returns whoever receives admin notifications: the admins, and no staff", async () => {
       const admin = await createUser(ROLES.ADMIN)
       const staff = await createUser(ROLES.STAFF)
 
@@ -167,6 +167,36 @@ describe("RBAC - Integration Tests", () => {
       `.execute(kysely)
 
       expect(rows).toEqual([])
+    })
+
+    it("no policy asks get_admin_user_ids who the admins are", async () => {
+      const { rows } = await sql<{ policy: string }>`
+        SELECT tablename || '.' || policyname AS policy
+        FROM pg_policies
+        WHERE schemaname = 'public'
+        AND (coalesce(qual, '') ILIKE '%get_admin_user_ids%'
+          OR coalesce(with_check, '') ILIKE '%get_admin_user_ids%')
+      `.execute(kysely)
+
+      expect(rows).toEqual([])
+    })
+
+    it("lets an admin read another person's roles, and nobody else", async () => {
+      const admin = await createUser(ROLES.ADMIN)
+      const staff = await createUser(ROLES.STAFF)
+      const other = await createUser(ROLES.STAFF)
+
+      const visibleTo = (userId: string) =>
+        runAsAuthenticatedUser(kysely, userId, (trx) =>
+          trx
+            .selectFrom("user_roles")
+            .select("role_name")
+            .where("user_id", "=", other.userId)
+            .execute(),
+        )
+
+      expect(await visibleTo(admin.userId)).toHaveLength(1)
+      expect(await visibleTo(staff.userId)).toHaveLength(0)
     })
 
     it("lets an admin read another person's profile, and nobody else", async () => {
