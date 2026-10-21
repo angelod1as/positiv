@@ -216,6 +216,36 @@ export default defineConfig([
     },
   },
 
+  // 4d. Permission guard: app code gates on permissions, never on a role name
+  //     or is_admin. Roles are written only inside Supabase; the tests that
+  //     seed them and the constant they seed from may name them.
+  {
+    files: ["app/**/*.{ts,tsx}"],
+    ignores: [
+      "**/*.test.{ts,tsx}",
+      "app/test/**",
+      "app/lib/constants/roles.ts",
+      "app/types/database/**",
+    ],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        ...[
+          "Identifier[name='is_admin']",
+          "Identifier[name='role_name']",
+          "Literal[value=/role_name/]",
+          "MemberExpression[object.name='ROLES']",
+          "BinaryExpression[operator=/^[!=]==?$/] > Literal[value='admin']",
+          "CallExpression[callee.property.name='includes'] > Literal[value=/^(admin|staff)$/]",
+        ].map((selector) => ({
+          selector,
+          message:
+            "Gate on a permission with can() / requirePermission, never on a role name or is_admin.",
+        })),
+      ],
+    },
+  },
+
   // 5. React Refresh Configuration: For Vite development
   {
     files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"], // Apply to all applicable files for refresh
