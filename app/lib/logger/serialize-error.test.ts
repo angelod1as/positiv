@@ -208,6 +208,14 @@ describe("serializeError", () => {
       ).toBe("no profile for ***@positiv.test")
     })
 
+    it("masks the stack, which repeats the message", () => {
+      const result = serializeError(new Error("no profile for joao@positiv.test"))
+
+      expect(result.stack).toContain("no profile for ***@positiv.test")
+      expect(result.stack).not.toContain("joao@")
+      expect(result.stack).toMatch(/serialize-error\.test\.ts:\d+/)
+    })
+
     it("masks a value under a secret-looking key, at any depth", () => {
       const result = serializeError({
         message: "upstream failed",

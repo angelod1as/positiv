@@ -180,7 +180,7 @@ export function serializeError(
       name:
         error.name !== "Error" ? error.name : (error.constructor?.name ?? "Error"),
       message: redact(error.message),
-      stack: error.stack,
+      stack: error.stack === undefined ? undefined : redact(error.stack),
       ...extra,
       ...(error.cause !== undefined && {
         cause:
