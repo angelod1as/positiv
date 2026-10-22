@@ -76,6 +76,17 @@ describe("deploy-and-test workflow", () => {
     expect(step).toContain("SUPABASE_CONNECT_URL: ${{ steps.supabase-creds.outputs.db_url }}")
   })
 
+  it("gives the integration suite the values a developer's .env supplies", () => {
+    const step = jobBlock("e2e-test").match(
+      /- name: Run integration tests\n((?: {8}.+\n)+)/,
+    )?.[1] ?? ""
+
+    expect(step).toMatch(/APP_URL: http:\/\/localhost:\d+/)
+    expect(step).toContain("LISTMONK_API_URL: ${{ secrets.LISTMONK_API_URL }}")
+    expect(step).toContain("LISTMONK_API_USERNAME: ${{ secrets.LISTMONK_API_USERNAME }}")
+    expect(step).toContain("LISTMONK_API_PASSWORD: ${{ secrets.LISTMONK_API_PASSWORD }}")
+  })
+
   it("runs e2e alongside the other checks rather than queued behind them", () => {
     expect(jobBlock("e2e-test")).not.toMatch(/^ {4}needs:/m)
   })
