@@ -13,6 +13,8 @@ const workflow = readFileSync(
   "utf8",
 )
 
+const dockerfile = readFileSync(join(import.meta.dirname, "..", "Dockerfile"), "utf8")
+
 function jobBlock(name: string): string {
   const start = workflow.indexOf(`\n  ${name}:\n`)
 
@@ -131,5 +133,44 @@ describe("deploy-and-test workflow", () => {
     expect(step).toContain("pnpm exec varlock codegen")
     expect(step).toContain("pnpm exec tsx scripts/check-env-types.ts")
     expect(step).not.toContain("git diff --exit-code env.d.ts")
+  })
+})
+
+// The production image failed to build for weeks before anyone noticed: CI
+// never ran `docker build`, so a Dockerfile that broke against a new pnpm
+// surfaced only as a failed deploy during a credential rotation.
+describe("docker build check", () => {
+  it("builds the production image without pushing it anywhere", () => {
+    const job = jobBlock("docker-build")
+
+    expect(job).toContain("docker/build-push-action")
+    expect(job).toMatch(/file: \.\/Dockerfile/)
+    expect(job).toMatch(/push: false/)
+  })
+
+  it("passes exactly the build args the Dockerfile declares", () => {
+    const declared = [...dockerfile.matchAll(/^ARG (\w+)/gm)].map((m) => m[1])
+    const args = jobBlock("docker-build").match(/build-args: \|\n((?: {12}.+\n)+)/)?.[1] ?? ""
+    const passed = args
+      .trim()
+      .split("\n")
+      .map((line) => line.trim().split("=")[0])
+
+    expect(passed.sort()).toEqual(declared.sort())
+  })
+
+  it("needs no secret, so a fork's pull request builds too", () => {
+    expect(jobBlock("docker-build")).not.toContain("secrets.")
+  })
+
+  it("reuses cached layers between runs", () => {
+    const job = jobBlock("docker-build")
+
+    expect(job).toContain("cache-from: type=gha")
+    expect(job).toContain("cache-to: type=gha")
+  })
+
+  it("is bounded, so a hung build fails as a timeout", () => {
+    expect(jobBlock("docker-build")).toMatch(/^ {4}timeout-minutes: \d+/m)
   })
 })

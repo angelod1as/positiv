@@ -95,6 +95,34 @@ jobs:
       - name: Check production content against the Page contract
         run: pnpm test:contract
 
+  # Coolify builds the image only after a merge, so a Dockerfile that stopped
+  # building used to surface as a failed production deploy, weeks later. This
+  # builds it on every pull request. The build args are placeholders: the image
+  # inlines them into the client bundle, and nothing here ships, so no secret
+  # is needed — which also keeps every other secret out of the build layers.
+  docker-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build the production image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VITE_SUPABASE_URL=http://127.0.0.1:54321
+            VITE_SUPABASE_ANON_KEY=ci-placeholder-anon-key
+            VITE_TURNSTILE_SITE_KEY=1x00000000000000000000AA
+            VITE_UMAMI_WEBSITE_ID=ci-placeholder-website-id
+            VITE_UMAMI_URL=https://umami.example.com
+            VITE_GTM_ID=GTM-PLACEHOLDER
+            VITE_APP_DOMAIN=www.positivparty.com
+
   # Deliberately ungated. Waiting on validate-schema and unit-test saved a
   # runner when they failed, but it cost every green pull request their three
   # and a half minutes in series before e2e could start. All three are required
