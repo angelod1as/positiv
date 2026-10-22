@@ -88,6 +88,131 @@ export type ProfileWithExtraData = Profile &
     last_attended_event_id?: string | null
   }
 
+// The attendance history both admin queries show. The event-scoped one passes
+// excludedEventId so the event being viewed never counts towards its own history
+const participantHistoryFields = ({
+  profileId,
+  excludedEventId,
+}: {
+  profileId: "current_ep.profile_id" | "p.id"
+  excludedEventId?: "current_ep.event_id"
+}) => {
+  const profile = sql.ref<string>(profileId)
+  const excludedEvent =
+    excludedEventId === undefined ? undefined : sql.ref<string>(excludedEventId)
+
+  return [
+    kyselyDb
+      .selectFrom("event_participants as ep_count")
+      .innerJoin("events as e_count", "ep_count.event_id", "e_count.id")
+      .select(sql<number>`COALESCE(COUNT(*)::int, 0)`.as("count"))
+      .where("ep_count.profile_id", "=", profile)
+      .where("ep_count.attendance_status", "=", "attended")
+      .where("ep_count.application_status", "=", "finalised")
+      .where("e_count.event_status", "!=", "Cancelled")
+      .$call((qb) =>
+        excludedEvent ? qb.where("ep_count.event_id", "!=", excludedEvent) : qb,
+      )
+      .as("attended_events_count"),
+    kyselyDb
+      .selectFrom("event_participants as ep_last")
+      .innerJoin("events as e_last", "ep_last.event_id", "e_last.id")
+      .select("e_last.title")
+      .where("ep_last.profile_id", "=", profile)
+      .where("ep_last.attendance_status", "=", "attended")
+      .where("ep_last.application_status", "=", "finalised")
+      .where("e_last.event_status", "!=", "Cancelled")
+      .$call((qb) =>
+        excludedEvent ? qb.where("ep_last.event_id", "!=", excludedEvent) : qb,
+      )
+      .orderBy("e_last.time_event_start", "desc")
+      .limit(1)
+      .as("last_attended_event_title"),
+    kyselyDb
+      .selectFrom("event_participants as ep_last_date")
+      .innerJoin(
+        "events as e_last_date",
+        "ep_last_date.event_id",
+        "e_last_date.id",
+      )
+      .select("e_last_date.time_event_start")
+      .where("ep_last_date.profile_id", "=", profile)
+      .where("ep_last_date.attendance_status", "=", "attended")
+      .where("ep_last_date.application_status", "=", "finalised")
+      .where("e_last_date.event_status", "!=", "Cancelled")
+      .$call((qb) =>
+        excludedEvent
+          ? qb.where("ep_last_date.event_id", "!=", excludedEvent)
+          : qb,
+      )
+      .orderBy("e_last_date.time_event_start", "desc")
+      .limit(1)
+      .as("last_attended_event_date"),
+    kyselyDb
+      .selectFrom("event_participants as ep_last_id")
+      .innerJoin("events as e_last_id", "ep_last_id.event_id", "e_last_id.id")
+      .select("e_last_id.id")
+      .where("ep_last_id.profile_id", "=", profile)
+      .where("ep_last_id.attendance_status", "=", "attended")
+      .where("ep_last_id.application_status", "=", "finalised")
+      .where("e_last_id.event_status", "!=", "Cancelled")
+      .$call((qb) =>
+        excludedEvent
+          ? qb.where("ep_last_id.event_id", "!=", excludedEvent)
+          : qb,
+      )
+      .orderBy("e_last_id.time_event_start", "desc")
+      .limit(1)
+      .as("last_attended_event_id"),
+    kyselyDb
+      .selectFrom("event_participants as ep_recent")
+      .innerJoin("events as e_recent", "ep_recent.event_id", "e_recent.id")
+      .select(sql<number>`COALESCE(COUNT(*)::int, 0)`.as("count"))
+      .where("ep_recent.profile_id", "=", profile)
+      .where("ep_recent.attendance_status", "=", "attended")
+      .where("ep_recent.application_status", "=", "finalised")
+      .where("e_recent.event_status", "!=", "Cancelled")
+      .$call((qb) =>
+        excludedEvent
+          ? qb.where("ep_recent.event_id", "!=", excludedEvent)
+          : qb,
+      )
+      .where("ep_recent.event_id", "in", (subEb) =>
+        subEb
+          .selectFrom("events as e_top")
+          .select("e_top.id")
+          .where("e_top.event_status", "=", "Completed")
+          .$call((qb) =>
+            excludedEvent ? qb.where("e_top.id", "!=", excludedEvent) : qb,
+          )
+          .orderBy("e_top.time_event_start", "desc")
+          .limit(6),
+      )
+      // Going through the rodízio restarts the count: an attendance only counts
+      // when no rodízio skip happened at or after its event
+      .where((recentEb) =>
+        recentEb.not(
+          recentEb.exists(
+            recentEb
+              .selectFrom("event_participants as ep_reset")
+              .innerJoin("events as e_reset", "ep_reset.event_id", "e_reset.id")
+              .select("ep_reset.id")
+              .whereRef("ep_reset.profile_id", "=", "ep_recent.profile_id")
+              .where("ep_reset.attendance_status", "=", "skipped")
+              .where("ep_reset.was_selected_for_rotation", "=", true)
+              .where("e_reset.event_status", "=", "Completed")
+              .whereRef(
+                "e_reset.time_event_start",
+                ">=",
+                "e_recent.time_event_start",
+              ),
+          ),
+        ),
+      )
+      .as("last_attended_events_count"),
+  ]
+}
+
 // Main query to get event_participants information along with if they were skipped in the last event
 const profilesWithExtraDataQuery = kyselyDb
   .selectFrom("event_participants as current_ep")
@@ -122,96 +247,10 @@ const profilesWithExtraDataQuery = kyselyDb
       .orderBy("e.time_event_start", "desc")
       .limit(1)
       .as("was_admin_skipped_last_event"),
-    eb
-      .selectFrom("event_participants as ep_count")
-      .innerJoin("events as e_count", "ep_count.event_id", "e_count.id")
-      .select(sql<number>`COUNT(*)::int`.as("count"))
-      .whereRef("ep_count.profile_id", "=", "current_ep.profile_id")
-      .where("ep_count.attendance_status", "=", "attended")
-      .where("ep_count.application_status", "=", "finalised")
-      .where("e_count.event_status", "!=", "Cancelled")
-      .whereRef("ep_count.event_id", "!=", "current_ep.event_id")
-      .as("attended_events_count"),
-    eb
-      .selectFrom("event_participants as ep_last")
-      .innerJoin("events as e_last", "ep_last.event_id", "e_last.id")
-      .select("e_last.title")
-      .whereRef("ep_last.profile_id", "=", "current_ep.profile_id")
-      .where("ep_last.attendance_status", "=", "attended")
-      .where("ep_last.application_status", "=", "finalised")
-      .where("e_last.event_status", "!=", "Cancelled")
-      .whereRef("ep_last.event_id", "!=", "current_ep.event_id")
-      .orderBy("e_last.time_event_start", "desc")
-      .limit(1)
-      .as("last_attended_event_title"),
-    eb
-      .selectFrom("event_participants as ep_last_date")
-      .innerJoin(
-        "events as e_last_date",
-        "ep_last_date.event_id",
-        "e_last_date.id",
-      )
-      .select("e_last_date.time_event_start")
-      .whereRef("ep_last_date.profile_id", "=", "current_ep.profile_id")
-      .where("ep_last_date.attendance_status", "=", "attended")
-      .where("ep_last_date.application_status", "=", "finalised")
-      .where("e_last_date.event_status", "!=", "Cancelled")
-      .whereRef("ep_last_date.event_id", "!=", "current_ep.event_id")
-      .orderBy("e_last_date.time_event_start", "desc")
-      .limit(1)
-      .as("last_attended_event_date"),
-    eb
-      .selectFrom("event_participants as ep_last_id")
-      .innerJoin("events as e_last_id", "ep_last_id.event_id", "e_last_id.id")
-      .select("e_last_id.id")
-      .whereRef("ep_last_id.profile_id", "=", "current_ep.profile_id")
-      .where("ep_last_id.attendance_status", "=", "attended")
-      .where("ep_last_id.application_status", "=", "finalised")
-      .where("e_last_id.event_status", "!=", "Cancelled")
-      .whereRef("ep_last_id.event_id", "!=", "current_ep.event_id")
-      .orderBy("e_last_id.time_event_start", "desc")
-      .limit(1)
-      .as("last_attended_event_id"),
-    eb
-      .selectFrom("event_participants as ep_recent")
-      .innerJoin("events as e_recent", "ep_recent.event_id", "e_recent.id")
-      .select(sql<number>`COALESCE(COUNT(*)::int, 0)`.as("count"))
-      .whereRef("ep_recent.profile_id", "=", "current_ep.profile_id")
-      .where("ep_recent.attendance_status", "=", "attended")
-      .where("ep_recent.application_status", "=", "finalised")
-      .where("e_recent.event_status", "!=", "Cancelled")
-      .whereRef("ep_recent.event_id", "!=", "current_ep.event_id")
-      .where("ep_recent.event_id", "in", (subEb) =>
-        subEb
-          .selectFrom("events as e_top")
-          .select("e_top.id")
-          .where("e_top.event_status", "=", "Completed")
-          .whereRef("e_top.id", "!=", "current_ep.event_id")
-          .orderBy("e_top.time_event_start", "desc")
-          .limit(6),
-      )
-      // Going through the rodízio restarts the count: an attendance only counts
-      // when no rodízio skip happened at or after its event
-      .where((recentEb) =>
-        recentEb.not(
-          recentEb.exists(
-            recentEb
-              .selectFrom("event_participants as ep_reset")
-              .innerJoin("events as e_reset", "ep_reset.event_id", "e_reset.id")
-              .select("ep_reset.id")
-              .whereRef("ep_reset.profile_id", "=", "ep_recent.profile_id")
-              .where("ep_reset.attendance_status", "=", "skipped")
-              .where("ep_reset.was_selected_for_rotation", "=", true)
-              .where("e_reset.event_status", "=", "Completed")
-              .whereRef(
-                "e_reset.time_event_start",
-                ">=",
-                "e_recent.time_event_start",
-              ),
-          ),
-        ),
-      )
-      .as("last_attended_events_count"),
+    ...participantHistoryFields({
+      profileId: "current_ep.profile_id",
+      excludedEventId: "current_ep.event_id",
+    }),
   ])
 
 export const getProfileWithExtraDataById = composable(
@@ -266,100 +305,7 @@ export async function getRejectedEventParticipants(
 const globalProfileBaseQuery = kyselyDb
   .selectFrom("profiles as p")
   .selectAll("p")
-  .select((eb) => [
-    eb
-      .selectFrom("event_participants as ep_count")
-      .innerJoin("events as e_count", "ep_count.event_id", "e_count.id")
-      .select(sql<number>`COALESCE(COUNT(*)::int, 0)`.as("count"))
-      .whereRef("ep_count.profile_id", "=", "p.id")
-      .where("ep_count.attendance_status", "=", "attended")
-      .where("ep_count.application_status", "=", "finalised")
-      .where("e_count.event_status", "!=", "Cancelled")
-      .as("attended_events_count"),
-    eb
-      .selectFrom("event_participants as ep_last")
-      .innerJoin("events as e_last", "ep_last.event_id", "e_last.id")
-      .select("e_last.title")
-      .whereRef("ep_last.profile_id", "=", "p.id")
-      .where("ep_last.attendance_status", "=", "attended")
-      .where("ep_last.application_status", "=", "finalised")
-      .where("e_last.event_status", "!=", "Cancelled")
-      .orderBy("e_last.time_event_start", "desc")
-      .limit(1)
-      .as("last_attended_event_title"),
-    eb
-      .selectFrom("event_participants as ep_last_date")
-      .innerJoin(
-        "events as e_last_date",
-        "ep_last_date.event_id",
-        "e_last_date.id",
-      )
-      .select("e_last_date.time_event_start")
-      .whereRef("ep_last_date.profile_id", "=", "p.id")
-      .where("ep_last_date.attendance_status", "=", "attended")
-      .where("ep_last_date.application_status", "=", "finalised")
-      .where("e_last_date.event_status", "!=", "Cancelled")
-      .orderBy("e_last_date.time_event_start", "desc")
-      .limit(1)
-      .as("last_attended_event_date"),
-    eb
-      .selectFrom("event_participants as ep_last_id")
-      .innerJoin(
-        "events as e_last_id",
-        "ep_last_id.event_id",
-        "e_last_id.id",
-      )
-      .select("e_last_id.id")
-      .whereRef("ep_last_id.profile_id", "=", "p.id")
-      .where("ep_last_id.attendance_status", "=", "attended")
-      .where("ep_last_id.application_status", "=", "finalised")
-      .where("e_last_id.event_status", "!=", "Cancelled")
-      .orderBy("e_last_id.time_event_start", "desc")
-      .limit(1)
-      .as("last_attended_event_id"),
-    eb
-      .selectFrom("event_participants as ep_recent")
-      .innerJoin(
-        "events as e_recent",
-        "ep_recent.event_id",
-        "e_recent.id",
-      )
-      .select(sql<number>`COALESCE(COUNT(*)::int, 0)`.as("count"))
-      .whereRef("ep_recent.profile_id", "=", "p.id")
-      .where("ep_recent.attendance_status", "=", "attended")
-      .where("ep_recent.application_status", "=", "finalised")
-      .where("e_recent.event_status", "!=", "Cancelled")
-      .where("ep_recent.event_id", "in", (subEb) =>
-        subEb
-          .selectFrom("events as e_top")
-          .select("e_top.id")
-          .where("e_top.event_status", "=", "Completed")
-          .orderBy("e_top.time_event_start", "desc")
-          .limit(6),
-      )
-      // Going through the rodízio restarts the count: an attendance only counts
-      // when no rodízio skip happened at or after its event
-      .where((recentEb) =>
-        recentEb.not(
-          recentEb.exists(
-            recentEb
-              .selectFrom("event_participants as ep_reset")
-              .innerJoin("events as e_reset", "ep_reset.event_id", "e_reset.id")
-              .select("ep_reset.id")
-              .whereRef("ep_reset.profile_id", "=", "ep_recent.profile_id")
-              .where("ep_reset.attendance_status", "=", "skipped")
-              .where("ep_reset.was_selected_for_rotation", "=", true)
-              .where("e_reset.event_status", "=", "Completed")
-              .whereRef(
-                "e_reset.time_event_start",
-                ">=",
-                "e_recent.time_event_start",
-              ),
-          ),
-        ),
-      )
-      .as("last_attended_events_count"),
-  ])
+  .select(participantHistoryFields({ profileId: "p.id" }))
 
 export const getAllProfiles = composable(
   async (filters?: GetAllProfilesFilters): Promise<ProfileGlobal[]> => {
@@ -745,8 +691,15 @@ export const updateParticipantVsEvent = applySchema(
 export const updateEventParticipantById = applySchema(
   updateEventParticipantByIdSchema,
 )(async (formData) => {
-  const { id, profile_id, is_veteran, flag, flag_notes, approved_to_attend, ...data } =
-    formData
+  const {
+    id,
+    profile_id,
+    is_veteran,
+    flag,
+    flag_notes,
+    approved_to_attend,
+    ...data
+  } = formData
 
   return await kyselyDb.transaction().execute(async (transaction) => {
     if (
