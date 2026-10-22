@@ -18,8 +18,9 @@ checkout, the refund reading, the webhook, the schema and the modal.
 
 **The payment domain talks to `PaymentProvider` and never to a provider's
 API.** The interface (`app/business/payment/payment-provider.ts`) is ours:
-find or create a customer, create a charge, cancel it, read its refunds, link
-to it in the provider's dashboard, translate an error into a sentence, and read
+find or create a customer, create a charge, split a card plan into the
+installments it will charge, cancel it, read its refunds, link to it in the
+provider's dashboard, translate an error into a sentence, and read
 a webhook delivery into our own `PaymentEvent` — amounts in cents, ids as
 opaque strings, event types the domain names (paid, overdue, cancelled,
 restored, updated, refunded, partially refunded, refund in progress, refund
@@ -27,7 +28,8 @@ denied, alarm, ignored).
 
 - **Asaas is the one connector**, in `app/business/payment/provider/asaas/`.
   Everything that is true only of Asaas lives there: reais and cents, the
-  São Paulo due date, the phone retry, `DONE`/`CANCELLED`, the event-name
+  São Paulo due date, the phone retry, the installment split (each truncated to
+  the cent, the remainder on the last), `DONE`/`CANCELLED`, the event-name
   tables, the access-token check, `additionalInfo.denialReason`.
 - **`paymentProvider()`** (`payment-provider.server.ts`) is the one place a
   connector is chosen. An ESLint `no-restricted-imports` block refuses any
@@ -57,8 +59,6 @@ denied, alarm, ignored).
 
 - No `provider` column: every online row is assumed to belong to the current
   provider. A second provider running side by side would need one.
-- Card prices on the payment page still split installments the way Asaas
-  does (`splitInstallments` in `pricing.ts`), outside the connector.
 
 ### Neutral
 
