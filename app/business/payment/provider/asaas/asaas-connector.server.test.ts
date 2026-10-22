@@ -271,6 +271,40 @@ describe("asaasConnector", () => {
       expect(getAsaasPaymentRefunds).not.toHaveBeenCalled()
     })
   })
+
+  describe("splitInstallments", () => {
+    it("charges a single installment as the whole total", () => {
+      expect(asaasConnector.splitInstallments(22000, 1)).toEqual([22000])
+    })
+
+    it("splits evenly when the total divides", () => {
+      expect(asaasConnector.splitInstallments(22000, 4)).toEqual([
+        5500, 5500, 5500, 5500,
+      ])
+    })
+
+    // Asaas truncates each installment and puts the difference on the last:
+    // R$ 350,00 in 12x is 11 × 29,16 + 29,24 in their own example.
+    it("puts the remainder on the last installment, the way Asaas does", () => {
+      expect(asaasConnector.splitInstallments(25000, 6)).toEqual([
+        4166, 4166, 4166, 4166, 4166, 4170,
+      ])
+      expect(asaasConnector.splitInstallments(35000, 12)).toEqual([
+        ...Array(11).fill(2916),
+        2924,
+      ])
+    })
+
+    it("always sums to the total", () => {
+      for (const total of [1, 999, 12345, 22000, 4645]) {
+        for (let n = 1; n <= 6; n++) {
+          const installments = asaasConnector.splitInstallments(total, n)
+          expect(installments).toHaveLength(n)
+          expect(installments.reduce((a, b) => a + b, 0)).toBe(total)
+        }
+      }
+    })
+  })
 })
 
 describe("asaasRefunds", () => {

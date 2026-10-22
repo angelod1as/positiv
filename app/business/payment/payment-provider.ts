@@ -14,6 +14,11 @@ export type PaymentProvider = {
   /** The provider's customer for this person: found by CPF, else created. */
   findOrCreateCustomer(input: CustomerInput): Promise<string>
   createCharge(input: ChargeInput): Promise<CreatedCharge>
+  /**
+   * How the provider splits a card plan's total into `count` installments, in
+   * the order it charges them, so the site quotes what the card will show.
+   */
+  splitInstallments(total: number, count: number): number[]
   /** Calls off an unpaid charge. False when the provider refused. */
   cancelCharge(chargeId: string): Promise<boolean>
   /**
