@@ -9,7 +9,7 @@ import type {
   EntryContext,
   HandleErrorFunction,
 } from "react-router"
-import { ServerRouter } from "react-router"
+import { isRouteErrorResponse, ServerRouter } from "react-router"
 import { logger, serializeError } from "~/lib/logger/logger.server"
 import { requestContext } from "~/lib/logger/request-context.server"
 import { applyDraftCacheControl } from "./business/cms/draft-mode.server"
@@ -19,7 +19,8 @@ import { applyDraftCacheControl } from "./business/cms/draft-mode.server"
 // (handleRequest) and the client-navigation data responses
 // (handleDataRequest), so a draft render is never cached and served to a
 // visitor; and handleError, so unhandled server errors reach the logger (and
-// Telegram). Re-reveal and re-diff when upgrading react-router.
+// Telegram), skipping 4xx route responses. Re-reveal and re-diff when
+// upgrading react-router.
 export const streamTimeout = 5_000
 
 export const handleError: HandleErrorFunction = (
@@ -27,6 +28,7 @@ export const handleError: HandleErrorFunction = (
   { request, params },
 ) => {
   if (request.signal.aborted) return
+  if (isRouteErrorResponse(error) && error.status < 500) return
   logger.error("Unhandled server error", {
     category: "unhandled",
     ...requestContext(request, params),

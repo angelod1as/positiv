@@ -295,12 +295,10 @@ describe("payments schema", () => {
         .updateTable("payments")
         .set({ note: "touched" })
         .where("id", "=", payment.id)
-        .returning(["updated_at"])
+        .returning(sql<boolean>`updated_at > created_at`.as("moved"))
         .executeTakeFirstOrThrow()
 
-      expect(new Date(after.updated_at).getTime()).toBeGreaterThan(
-        new Date(payment.updated_at).getTime(),
-      )
+      expect(after.moved).toBe(true)
     })
   })
 

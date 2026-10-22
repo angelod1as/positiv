@@ -1,3 +1,4 @@
+import { UNSAFE_ErrorResponseImpl as ErrorResponseImpl } from "react-router"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { logger } from "~/lib/logger/logger.server"
@@ -102,6 +103,37 @@ describe("handleError", () => {
     handleError(error, { request, params: {}, context: {} } as never)
 
     expect(logger.error).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    [405, "Method Not Allowed", "OPTIONS"],
+    [404, "Not Found", "GET"],
+  ])("does not log a %i route response", (status, statusText, method) => {
+    const request = new Request("http://localhost/", { method })
+
+    handleError(new ErrorResponseImpl(status, statusText, null), {
+      request,
+      params: {},
+      context: {},
+    } as never)
+
+    expect(logger.error).not.toHaveBeenCalled()
+    expect(logger.warn).not.toHaveBeenCalled()
+  })
+
+  it("still reports a 500 route response as unhandled", () => {
+    const request = new Request("http://localhost/")
+
+    handleError(new ErrorResponseImpl(500, "Internal Server Error", null), {
+      request,
+      params: {},
+      context: {},
+    } as never)
+
+    expect(logger.error).toHaveBeenCalledWith(
+      "Unhandled server error",
+      expect.objectContaining({ category: "unhandled" }),
+    )
   })
 })
 
