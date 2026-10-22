@@ -1,19 +1,11 @@
+import type { PaymentProvider } from "./payment-provider"
+
 export const MAX_INSTALLMENTS = 6
 
 export const PIX_DISCOUNT_PERCENT = 10
 
 export function pixPrice(base: number): number {
   return Math.floor((base * (100 - PIX_DISCOUNT_PERCENT)) / 100)
-}
-
-/**
- * Asaas takes a plan's total and an installment count, truncates each
- * installment to the cent and charges the difference on the last one. This
- * mirrors it, so the page shows what the card will actually be charged.
- */
-export function splitInstallments(total: number, n: number): number[] {
-  const each = Math.floor(total / n)
-  return [...Array(n - 1).fill(each), total - each * (n - 1)]
 }
 
 export type PaymentOptionId =
@@ -56,11 +48,18 @@ export type PaymentOption = {
 /**
  * Card on: Pix at 10% off, card in 1x to 6x at the event price, no interest.
  * Card off: Pix alone at the event price. Positiv absorbs every fee, so what
- * the event costs is what the organisers priced it at.
+ * the event costs is what the organisers priced it at. Each installment is
+ * split the way the provider will charge it.
  */
 export function buildPaymentOptions(
   base: number,
-  { cardEnabled }: { cardEnabled: boolean },
+  {
+    cardEnabled,
+    splitInstallments,
+  }: {
+    cardEnabled: boolean
+    splitInstallments: PaymentProvider["splitInstallments"]
+  },
 ): PaymentOption[] {
   const pixTotal = cardEnabled ? pixPrice(base) : base
   const options: PaymentOption[] = [

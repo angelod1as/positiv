@@ -9,6 +9,7 @@ import {
   loadWhatsappPaymentMessage,
 } from "./payment-messages.server"
 import { buildPaymentOptions } from "./pricing"
+import { asaasConnector } from "./provider/asaas/asaas-connector.server"
 
 vi.mock("~/lib/logger/logger.server", () => ({
   logger: {
@@ -89,6 +90,7 @@ describe("buildWhatsappPaymentMessage", () => {
 
     const options = buildPaymentOptions(activeCharge.base_amount, {
       cardEnabled: true,
+      splitInstallments: asaasConnector.splitInstallments,
     })
     const formas = options
       .map((option) => `• ${paymentsCopy.options.label(option)}`)

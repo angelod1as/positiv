@@ -162,6 +162,7 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
   const option = findPaymentOption(
     buildPaymentOptions(payment.base_amount, {
       cardEnabled: await isCardPaymentsEnabled(),
+      splitInstallments: paymentProvider().splitInstallments,
     }),
     values.optionId,
   )

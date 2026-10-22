@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { buildPaymentOptions } from "~/business/payment/pricing"
+import { asaasConnector } from "~/business/payment/provider/asaas/asaas-connector.server"
 import { paymentLinkMailTemplate } from "./payment-link-mail.template"
 
 const input = {
@@ -8,7 +9,10 @@ const input = {
   eventEmoji: "🌸",
   paymentUrl: "https://www.positivparty.com/pagamento/abc-123",
   dueAt: "2026-12-31T12:00:00Z",
-  options: buildPaymentOptions(25000, { cardEnabled: true }),
+  options: buildPaymentOptions(25000, {
+    cardEnabled: true,
+    splitInstallments: asaasConnector.splitInstallments,
+  }),
 }
 
 // The payment-link email must render byte-for-byte as it did before its copy
