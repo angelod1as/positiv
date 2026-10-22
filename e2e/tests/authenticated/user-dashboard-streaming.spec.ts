@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { completeOnboarding } from '../../fixtures/auth'
 import { ensureTestUserProfileExists } from '../../utils/application-helpers'
 
 test.describe('POS-268: Dashboard Event Streaming Tests', () => {
@@ -15,10 +16,8 @@ test.describe('POS-268: Dashboard Event Streaming Tests', () => {
 
     // Check if we need to complete onboarding
     const currentUrl = page.url()
-    if (currentUrl.includes('agree-to-terms')) {
-      await page.getByRole('checkbox').check()
-      await page.getByRole('button', { name: 'Aceitar' }).click()
-      await page.waitForURL('/dashboard')
+    if (currentUrl.includes('/conta/termos-e-condicoes')) {
+      await completeOnboarding(page)
       await page.waitForLoadState('networkidle')
     }
   })
