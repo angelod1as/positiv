@@ -38,7 +38,10 @@ describe("payment option ids", () => {
 
 describe("buildPaymentOptions", () => {
   describe("with card payments on", () => {
-    const options = buildPaymentOptions(25000, { cardEnabled: true, splitInstallments })
+    const options = buildPaymentOptions(25000, {
+      cardEnabled: true,
+      splitInstallments,
+    })
 
     it("returns pix first, then card 1x..6x", () => {
       expect(options.map((option) => option.id)).toEqual(PAYMENT_OPTION_IDS)
@@ -90,7 +93,12 @@ describe("buildPaymentOptions", () => {
 
   describe("with card payments off", () => {
     it("offers Pix alone, at the full event price", () => {
-      expect(buildPaymentOptions(25000, { cardEnabled: false, splitInstallments })).toEqual([
+      expect(
+        buildPaymentOptions(25000, {
+          cardEnabled: false,
+          splitInstallments,
+        }),
+      ).toEqual([
         {
           id: "pix",
           method: "pix",
@@ -105,13 +113,19 @@ describe("buildPaymentOptions", () => {
 
 describe("findPaymentOption", () => {
   it("returns the option for an id and null for an unknown one", () => {
-    const options = buildPaymentOptions(22000, { cardEnabled: true, splitInstallments })
+    const options = buildPaymentOptions(22000, {
+      cardEnabled: true,
+      splitInstallments,
+    })
     expect(findPaymentOption(options, "card_2")?.installmentCount).toBe(2)
     expect(findPaymentOption(options, "card_9")).toBeNull()
   })
 
   it("finds no card option while card payments are off", () => {
-    const options = buildPaymentOptions(22000, { cardEnabled: false, splitInstallments })
+    const options = buildPaymentOptions(22000, {
+      cardEnabled: false,
+      splitInstallments,
+    })
     expect(findPaymentOption(options, "card_1")).toBeNull()
     expect(findPaymentOption(options, "pix")?.total).toBe(22000)
   })
