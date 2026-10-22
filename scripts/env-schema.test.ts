@@ -87,6 +87,17 @@ function resolvesAtRuntime(item: EnvSchemaItem): boolean {
 describe(".env.schema", () => {
   const config = loadSchema()
 
+  // The staging Supabase project and the production database password were
+  // both deleted in the 2026-08-15 credential rotation. Declaring them keeps
+  // them looking like configuration somebody has to fill in.
+  it("declares nothing from the deleted staging project or the rotated password", () => {
+    const deleted = Object.keys(config).filter(
+      (key) => key.startsWith("STAGING_") || key === "PRODUCTION_DB_PASSWORD",
+    )
+
+    expect(deleted).toEqual([])
+  })
+
   it.each(MUST_RESOLVE_AT_RUNTIME)("resolves %s at runtime", (key) => {
     expect(config[key]).toBeDefined()
     expect(resolvesAtRuntime(config[key])).toBe(true)

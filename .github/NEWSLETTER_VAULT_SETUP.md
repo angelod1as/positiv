@@ -43,31 +43,13 @@ SELECT name, description FROM vault.decrypted_secrets;
 SELECT * FROM cron.job WHERE jobname = 'process-newsletter-campaigns';
 ```
 
-### For Staging
-
-**Staging setup is NOT needed.** The cron job will automatically skip creation when Vault secrets are not present.
-
-**Why skip staging?**
-- Staging URLs may be dynamic (change per branch/deployment)
-- Automated cron processing isn't necessary for staging
-- Manual testing is sufficient: use `curl` to test the API endpoint directly
-
-**Manual testing in staging:**
-```bash
-# Get INTERNAL_JOB_SECRET from your staging environment variables
-curl -X POST https://<your-staging-url>/api/process-campaigns \
-  -H "Authorization: Bearer <STAGING_INTERNAL_JOB_SECRET>" \
-  -H "Content-Type: application/json" \
-  -d '{}'
-```
-
 ### For Local Development
 
 No Vault setup needed! The cron job automatically skips creation in local development.
 
 Add this to your `.env` file for local API testing:
 ```bash
-# Copy the staging value or use any test value
+# Any test value works locally
 INTERNAL_JOB_SECRET=<your-local-test-secret>
 ```
 
