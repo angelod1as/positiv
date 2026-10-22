@@ -95,6 +95,21 @@ All other secrets (TEST_USER_PASSWORD, COOKIE_SECRET, etc.) come from GitHub sec
 
 ---
 
+#### Job 4: `docker-build`
+
+**Purpose**: Build the production image from `Dockerfile` on every PR
+
+**Steps**:
+1. Checkout code
+2. Set up Docker Buildx
+3. Build the image (no push), reusing layers cached in GitHub Actions
+
+**Why**: Coolify builds the image only after a merge. Without this job a Dockerfile that stopped building (a pnpm or Node mismatch, a missing file) surfaced as a failed production deploy, which is how the image went unbuildable for weeks before the 2026-08-15 credential rotation.
+
+**Build args**: only the `VITE_*` variables the Dockerfile declares, with placeholder values. The job reads no secret. A test in `scripts/ci-workflow.test.ts` keeps its build args in step with the Dockerfile's `ARG` list.
+
+---
+
 ### Production Deployment (`production.yml`)
 
 Triggered on: Push to `main` branch (after PR merge)
@@ -117,7 +132,6 @@ Same as PR workflow - ensures tests pass before deploying
 **Environment Variables**:
 ```yaml
 SUPABASE_ACCESS_TOKEN: (GitHub secret)
-SUPABASE_DB_PASSWORD: (GitHub secret - production)
 SUPABASE_PROJECT_ID: (GitHub secret - production)
 SUPABASE_CONNECT_URL: (GitHub secret - production)
 ```
@@ -271,14 +285,13 @@ TEST_USER_PASSWORD
 TEST_USER_ADMIN_EMAIL
 COOKIE_SECRET
 UNSUBSCRIBE_SECRET
-STAGING_TURNSTILE_SITE_KEY  # Still using test keys for now
-STAGING_TURNSTILE_SECRET    # Still using test keys for now
 LISTMONK_API_URL
 LISTMONK_API_USERNAME
 LISTMONK_API_PASSWORD
 ```
 
 Note: Supabase credentials are NOT needed for PRs! They come from the local instance.
+Turnstile uses Cloudflare's public "always passes" test keys, written into the workflow, so it needs no secret either.
 
 **Important**: The following secrets MUST match the seed data in `supabase/seed.sql`:
 
@@ -299,7 +312,6 @@ If E2E tests fail with authentication errors, verify these secrets match the see
 ```
 SUPABASE_ACCESS_TOKEN
 PRODUCTION_PROJECT_ID
-PRODUCTION_DB_PASSWORD
 PRODUCTION_SUPABASE_URL
 PRODUCTION_SUPABASE_ANON_KEY
 PRODUCTION_SUPABASE_SERVICE_ROLE_KEY
