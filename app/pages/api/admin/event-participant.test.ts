@@ -11,7 +11,7 @@ vi.mock("~/business/admin/admin.server", () => ({
   getAdminContext,
 }))
 
-const context = { currentProfile: { id: "profile-1", is_admin: true } }
+const context = { currentProfile: { id: "profile-1" } }
 
 const post = (body: string) =>
   action({

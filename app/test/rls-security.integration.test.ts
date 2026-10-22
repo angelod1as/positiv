@@ -110,7 +110,6 @@ describe("RLS Security - Integration Tests", () => {
     // authenticated must hold EXECUTE only where the client genuinely calls it.
     const allowedGrantees: Record<string, string[]> = {
       get_profile_with_roles: ["authenticated"],
-      get_admin_user_ids: ["authenticated"],
       authorize: ["authenticated"],
     }
 
@@ -165,10 +164,10 @@ describe("RLS Security - Integration Tests", () => {
         FROM pg_proc p
         INNER JOIN pg_namespace n ON n.oid = p.pronamespace
         WHERE n.nspname = 'public'
-        AND p.proname IN ('get_profile_with_roles', 'get_admin_user_ids', 'authorize')
+        AND p.proname IN ('get_profile_with_roles', 'authorize')
       `.execute(db)
 
-      expect(rows.length).toBe(3)
+      expect(rows.length).toBe(2)
 
       rows.forEach((row) => {
         expect(row.authed_can_execute).toBe(true)

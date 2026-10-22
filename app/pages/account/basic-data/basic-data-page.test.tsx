@@ -85,7 +85,6 @@ describe("basic-data-page loader", () => {
         full_name: "Current User",
         basic_data_filled: true,
         created_at: "2024-01-01T00:00:00Z",
-        is_admin: false,
         email: null,
         social_name: null,
         pronouns: null,

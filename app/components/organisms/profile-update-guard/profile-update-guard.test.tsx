@@ -8,7 +8,6 @@ const mockProfile: ProfileWithRoles = {
   id: "123",
   full_name: "Test User",
   race_color: null,
-  is_admin: false,
   created_at: new Date().toISOString(),
   basic_data_filled: false,
 }

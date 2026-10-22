@@ -15,7 +15,6 @@ vi.mock("sonner", () => ({ toast: { success } }))
 
 const filledProfile = {
   id: "profile-1",
-  is_admin: false,
   basic_data_filled: true,
   full_name: "Maria Silva",
   social_name: "Mari",
@@ -149,7 +148,6 @@ describe("BasicDataPage", () => {
       draw({
         profile: {
           ...filledProfile,
-          is_admin: true,
           permissions: ["admin.panel", "events.apply_direct"],
           basic_data_filled: false,
         },
@@ -192,7 +190,7 @@ describe("BasicDataPage", () => {
       // account is the only thing that can say someone is an admin.
       draw({
         profile: null,
-        orphanedProfile: { ...filledProfile, is_admin: true },
+        orphanedProfile: { ...filledProfile, permissions: ["admin.panel"] },
       })
 
       await save()

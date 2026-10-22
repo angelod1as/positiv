@@ -10,6 +10,7 @@ export const PERMISSIONS = {
   NEWSLETTER_MANAGE: "newsletter.manage",
   REPORTS_READ: "reports.read",
   EVENTS_APPLY_DIRECT: "events.apply_direct",
+  NOTIFICATIONS_RECEIVE_ADMIN: "notifications.receive_admin",
 } as const satisfies Record<string, Permission>
 
 export function can(

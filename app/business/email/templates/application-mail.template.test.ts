@@ -10,7 +10,6 @@ describe("applicationMailTemplate", () => {
     email: "test@example.com",
     basic_data_filled: true,
     created_at: "2024-01-01T00:00:00Z",
-    is_admin: false,
   }
 
   const mockEvent: Event = {
@@ -149,7 +148,6 @@ describe("applicationMailTemplate - XSS Protection", () => {
     email: "test@example.com",
     basic_data_filled: true,
     created_at: "2024-01-01T00:00:00Z",
-    is_admin: false,
     ...overrides,
   })
 

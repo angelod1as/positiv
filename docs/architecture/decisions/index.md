@@ -27,6 +27,7 @@ ADRs are immutable once accepted - only their status can change (deprecated or s
 | [2025-01-24](./20250124-use-rls-for-authorization.md) | Use Row-Level Security for Authorization | Accepted |
 | [2025-01-25](./20250125-use-kysely-as-sql-query-builder.md) | Use Kysely as SQL Query Builder | Accepted |
 | [2025-01-26](./20250126-use-server-only-file-suffixes.md) | Use Server-Only File Suffixes (.server.ts) | Accepted |
+| [2026-10-21](./20261021-authorization-asks-for-permissions-never-roles.md) | Authorization asks for permissions, never roles | Accepted |
 
 ### Frontend & UI
 

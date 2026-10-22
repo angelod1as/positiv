@@ -112,12 +112,12 @@ describe("the event application submit", () => {
   })
 
   it("carries nothing the form did not ask", async () => {
-    await submit({ ...filledIn, skipEmail: true, is_admin: true })
+    await submit({ ...filledIn, skipEmail: true, permissions: ["admin.panel"] })
 
     const [payload] = mockApplyToEvent.mock.calls[0]
 
     expect(payload).not.toHaveProperty("skipEmail")
-    expect(payload).not.toHaveProperty("is_admin")
+    expect(payload).not.toHaveProperty("permissions")
   })
 
   it("names the question it turned down, with its own message", async () => {

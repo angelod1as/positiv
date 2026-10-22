@@ -36,7 +36,6 @@ describe("sendApplicationMail", () => {
     how_came_to_us: null,
     rg_issuer: null,
     created_at: "2025-01-01T00:00:00Z",
-    is_admin: false,
   }
 
   const mockEvent: Event = {

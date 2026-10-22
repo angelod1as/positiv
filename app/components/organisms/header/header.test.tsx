@@ -26,7 +26,6 @@ describe("Header — the admin link", () => {
     full_name: "Someone",
     basic_data_filled: true,
     created_at: "2024-01-01T00:00:00Z",
-    is_admin: permissions.includes("admin.panel"),
     permissions,
   })
 

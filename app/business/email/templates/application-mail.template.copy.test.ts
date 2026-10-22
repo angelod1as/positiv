@@ -10,7 +10,6 @@ const profile: NonNullable<ProfileWithRoles> = {
   email: "ana@example.com",
   basic_data_filled: true,
   created_at: "2024-01-01T00:00:00Z",
-  is_admin: false,
 }
 
 const event = {

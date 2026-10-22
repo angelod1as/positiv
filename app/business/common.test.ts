@@ -5,6 +5,7 @@ import {
   applyToEventSchema,
   basicDataFieldsSchema,
   basicDataSchema,
+  currentProfileSchema,
   ExtraBasicDataSchema,
   registerUserFieldsSchema,
   registerUserSchema,
@@ -521,4 +522,24 @@ describe("ExtraBasicDataSchema", () => {
       expect(result.error.issues[0].message).toBe(validationMessages.maxOptions(10))
     },
   )
+})
+
+describe("currentProfileSchema", () => {
+  const profile = {
+    id: "profile-1",
+    basic_data_filled: true,
+    created_at: "2026-10-21T00:00:00Z",
+    roles: ["admin"],
+    permissions: ["admin.panel"],
+  }
+
+  it("accepts a profile that carries only roles and permissions", () => {
+    expect(currentProfileSchema.safeParse(profile).success).toBe(true)
+  })
+
+  it("drops an is_admin flag, so nothing can gate on it", () => {
+    const parsed = currentProfileSchema.parse({ ...profile, is_admin: true })
+
+    expect(parsed).not.toHaveProperty("is_admin")
+  })
 })
