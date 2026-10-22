@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { completeOnboarding } from '../../fixtures/auth'
 import { MyApplicationsPage } from '../../pages/MyApplicationsPage'
 import { EventApplicationPage } from '../../pages/EventApplicationPage'
 import {
@@ -34,11 +35,9 @@ test.describe('POS-191: Application Management Tests', () => {
 
     // Check if we need to complete onboarding
     const currentUrl = page.url()
-    if (currentUrl.includes('agree-to-terms')) {
+    if (currentUrl.includes('/conta/termos-e-condicoes')) {
       // Complete onboarding
-      await page.getByRole('checkbox').check()
-      await page.getByRole('button', { name: 'Aceitar' }).click()
-      await page.waitForURL('/dashboard')
+      await completeOnboarding(page)
       await page.waitForLoadState('networkidle')
     }
 

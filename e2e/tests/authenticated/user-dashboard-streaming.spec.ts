@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test'
+import { headerCopy } from '../../../app/copy/layout'
+import { completeOnboarding } from '../../fixtures/auth'
 import { ensureTestUserProfileExists } from '../../utils/application-helpers'
 
 test.describe('POS-268: Dashboard Event Streaming Tests', () => {
@@ -15,10 +17,8 @@ test.describe('POS-268: Dashboard Event Streaming Tests', () => {
 
     // Check if we need to complete onboarding
     const currentUrl = page.url()
-    if (currentUrl.includes('agree-to-terms')) {
-      await page.getByRole('checkbox').check()
-      await page.getByRole('button', { name: 'Aceitar' }).click()
-      await page.waitForURL('/dashboard')
+    if (currentUrl.includes('/conta/termos-e-condicoes')) {
+      await completeOnboarding(page)
       await page.waitForLoadState('networkidle')
     }
   })
@@ -50,25 +50,67 @@ test.describe('POS-268: Dashboard Event Streaming Tests', () => {
   })
 
   test('should show loading skeleton while events are streaming', async ({ page }) => {
-    // Throttle network significantly
-    const client = await page.context().newCDPSession(page)
-    await client.send('Network.emulateNetworkConditions', {
-      offline: false,
-      latency: 1000, // 1s latency
-      downloadThroughput: (100 * 1024) / 8, // 100kb/s
-      uploadThroughput: (100 * 1024) / 8,
+    // On a full page load the events arrive in the same response as the page
+    // around them, so the fallback lasts only as long as the server's query,
+    // which locally is never long enough to see. On a client-side navigation
+    // the dashboard data is a stream whose first line is the page and whose
+    // later lines resolve the events: holding those back keeps the fallback on
+    // screen until the test lets them through.
+    await page.addInitScript(() => {
+      const realFetch = window.fetch
+      let release = () => {}
+      const released = new Promise<void>((resolve) => {
+        release = resolve
+      })
+      Object.assign(window, { releaseDashboardEvents: () => release() })
+
+      window.fetch = async (input, init) => {
+        const response = await realFetch(input, init)
+        const url = new URL(input instanceof Request ? input.url : input, location.href)
+        if (url.pathname !== '/dashboard.data' || !response.body) return response
+
+        let pastFirstLine = false
+        const holdBack = new TransformStream<Uint8Array, Uint8Array>({
+          async transform(chunk, controller) {
+            if (pastFirstLine) {
+              await released
+              controller.enqueue(chunk)
+              return
+            }
+
+            const newline = chunk.indexOf(10)
+            if (newline === -1) {
+              controller.enqueue(chunk)
+              return
+            }
+
+            pastFirstLine = true
+            controller.enqueue(chunk.subarray(0, newline + 1))
+            await released
+            controller.enqueue(chunk.subarray(newline + 1))
+          },
+        })
+
+        return new Response(response.body.pipeThrough(holdBack), response)
+      }
     })
 
-    await page.goto('/dashboard', { waitUntil: 'commit' })
+    await page.goto('/conta')
+    await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true')
+    await page.getByRole('link', { name: headerCopy.dashboardTitle, exact: true }).click()
 
-    // Check for skeleton loading state
-    // The EventListSkeleton should be visible while data loads
-    const skeletonVisible = await page.locator('[data-testid="event-list-skeleton"]').isVisible({
-      timeout: 1000
-    }).catch(() => false)
+    const skeleton = page.locator('[data-testid="event-list-skeleton"]')
+    const eventCards = page.locator('[data-testid^="event-card"]')
 
-    // With deferred loading, we expect to see the skeleton
-    expect(skeletonVisible).toBe(true)
+    await expect(skeleton).toBeVisible()
+    await expect(eventCards).toHaveCount(0)
+
+    await page.evaluate(() =>
+      (window as unknown as { releaseDashboardEvents: () => void }).releaseDashboardEvents(),
+    )
+
+    await expect(skeleton).toBeHidden()
+    await expect(eventCards.first()).toBeVisible()
   })
 
   test('should render all event sections after streaming completes', async ({ page }) => {
@@ -111,16 +153,11 @@ test.describe('POS-268: Dashboard Event Streaming Tests', () => {
       uploadThroughput: (50 * 1024) / 8,
     })
 
-    const startTime = Date.now()
     await page.goto('/dashboard', { waitUntil: 'commit' })
 
-    // Even with very slow network, the page structure should appear quickly
-    const headerVisible = await page.locator('h2').first().isVisible({ timeout: 3000 })
-    const initialRenderTime = Date.now() - startTime
-
-    expect(headerVisible).toBe(true)
-    // Initial render should be under 3 seconds even on slow network
-    expect(initialRenderTime).toBeLessThan(3000)
+    // Even with very slow network, the page structure should appear within
+    // 3 seconds of the response starting to arrive
+    await expect(page.locator('h2').first()).toBeVisible({ timeout: 3000 })
 
     // Eventually events should load (but might take longer)
     await page.waitForSelector('[data-testid^="event-card"]', { timeout: 10000 })

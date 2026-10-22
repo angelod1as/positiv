@@ -1,3 +1,5 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 beforeEach(() => {
@@ -38,5 +40,26 @@ describe('playwright config', () => {
     const config = await import('../playwright.config')
 
     expect(config.default.use?.baseURL).toBe('http://localhost:5301')
+  })
+
+  it('runs every spec under e2e/tests in some project', async () => {
+    const { projects = [] } = (await import('../playwright.config')).default
+    const asList = (globs: unknown) => [globs ?? []].flat().map(String)
+
+    const specs = fs
+      .globSync('tests/**/*.spec.ts', { cwd: import.meta.dirname })
+      .map((spec) => path.join(import.meta.dirname, spec))
+
+    const unmatched = specs.filter(
+      (spec) =>
+        !projects.some(
+          ({ testMatch, testIgnore }) =>
+            asList(testMatch).some((glob) => path.matchesGlob(spec, glob)) &&
+            !asList(testIgnore).some((glob) => path.matchesGlob(spec, glob)),
+        ),
+    )
+
+    expect(specs.length).toBeGreaterThan(0)
+    expect(unmatched.map((spec) => path.relative(import.meta.dirname, spec))).toEqual([])
   })
 })

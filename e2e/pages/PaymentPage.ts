@@ -5,6 +5,7 @@ export class PaymentPage extends BasePage {
   async navigate(paymentId: string): Promise<void> {
     await this.page.goto(`/pagamento/${paymentId}`)
     await this.waitForPageLoad()
+    await this.waitForHydration()
   }
 
   async fillCpfIfAsked(cpf: string): Promise<void> {

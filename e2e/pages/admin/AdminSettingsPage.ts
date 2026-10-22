@@ -5,6 +5,7 @@ export class AdminSettingsPage extends BasePage {
   async navigate(): Promise<void> {
     await this.page.goto("/admin/configuracoes")
     await this.waitForPageLoad()
+    await this.waitForHydration()
   }
 
   private onlinePaymentsSwitch() {

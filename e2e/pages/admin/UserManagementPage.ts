@@ -31,6 +31,7 @@ export class UserManagementPage extends BasePage {
 
   async navigate(eventId: string): Promise<void> {
     await this.page.goto(`/admin/eventos/${eventId}`)
+    await this.waitForHydration()
     await this.participantsTable.waitFor({ state: "visible" })
   }
 
