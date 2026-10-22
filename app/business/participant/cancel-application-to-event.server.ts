@@ -36,11 +36,49 @@ export const cancelApplicationToEvent = composable(
       .where("event_id", "=", eventId)
       .where("profile_id", "=", profileId)
       .where("is_user_applied", "=", true)
+      // A paid participant cancels by talking to the team, so the money is
+      // settled in the same conversation. Checked in the update itself, so a
+      // payment confirmed mid-request cannot slip through.
+      .where(({ not, exists, selectFrom }) =>
+        not(
+          exists(
+            selectFrom("event_participant_payments")
+              .select("event_participant_payments.event_participant_id")
+              .whereRef(
+                "event_participant_payments.event_participant_id",
+                "=",
+                "event_participants.id",
+              )
+              .where("event_participant_payments.has_paid", "=", true),
+          ),
+        ),
+      )
       .returning("id")
       .execute()
 
-    // No live charge survives a withdrawal. A paid one is left alone: giving
-    // the money back is a separate decision, taken by an admin.
+    if (withdrawn.length === 0) {
+      const paid = await kyselyDb
+        .selectFrom("event_participants")
+        .innerJoin(
+          "event_participant_payments",
+          "event_participant_payments.event_participant_id",
+          "event_participants.id",
+        )
+        .select("event_participants.id")
+        .where("event_participants.event_id", "=", eventId)
+        .where("event_participants.profile_id", "=", profileId)
+        .where("event_participants.is_user_applied", "=", true)
+        .where("event_participant_payments.has_paid", "=", true)
+        .executeTakeFirst()
+
+      if (paid) {
+        throw new Error(
+          "A paid registration cannot be cancelled by the participant",
+        )
+      }
+    }
+
+    // No live charge survives a withdrawal.
     //
     // Swallowed on purpose. The person asked to leave, and a provider outage or
     // a charge that changed under us is not a reason to refuse them.
@@ -48,10 +86,13 @@ export const cancelApplicationToEvent = composable(
       try {
         await cancelActivePayment({ eventParticipantId: participant.id })
       } catch (error) {
-        logger.error("Could not call off the charge of a withdrawn application", {
-          eventParticipantId: participant.id,
-          error: error instanceof Error ? error.message : String(error),
-        })
+        logger.error(
+          "Could not call off the charge of a withdrawn application",
+          {
+            eventParticipantId: participant.id,
+            error: error instanceof Error ? error.message : String(error),
+          },
+        )
       }
 
       // Swallowed for the same reason: the editors hearing about it late is
