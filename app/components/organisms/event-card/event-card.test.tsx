@@ -100,8 +100,6 @@ describe("EventCard", () => {
     expect(footer).toHaveAttribute("data-event-id", "test-event-id")
   })
 
-  // The footer swaps the cancel button for WhatsApp once paid, and names the
-  // event in the message.
   it("should pass whether the participant paid, and the event title", () => {
     const { getByTestId } = render(
       <EventCard

@@ -146,9 +146,7 @@ describe("EventCardFooter", () => {
 
       const cancelButton = screen.getByText(/Cancelar candidatura/i)
       expect(cancelButton).toBeInTheDocument()
-      expect(
-        screen.queryByText(/Candidaturas encerradas/i),
-      ).not.toBeInTheDocument()
+      expect(screen.queryByText(/Candidaturas encerradas/i)).not.toBeInTheDocument()
     })
 
     it("should render closed button when registrations closed and user is not applied", () => {
@@ -225,7 +223,9 @@ describe("EventCardFooter", () => {
       renderFooter()
 
       expect(screen.getByText(/Me candidatar/i)).toBeInTheDocument()
-      expect(screen.getByText("Candidatura direta")).toBeInTheDocument()
+      expect(
+        screen.getByText("Candidatura direta"),
+      ).toBeInTheDocument()
     })
 
     it("should submit the direct application for the event", async () => {
@@ -250,31 +250,34 @@ describe("EventCardFooter", () => {
 
       await user.click(screen.getByText("Candidatura direta"))
 
-      expect(mockTrack).toHaveBeenCalledWith(
-        "event_direct_application_clicked",
-        {
-          eventId: "event-123",
-        },
-      )
+      expect(mockTrack).toHaveBeenCalledWith("event_direct_application_clicked", {
+        eventId: "event-123",
+      })
     })
 
     it("should not render it once the person has applied", () => {
       renderFooter({ is_applied: true })
 
-      expect(screen.queryByText("Candidatura direta")).not.toBeInTheDocument()
+      expect(
+        screen.queryByText("Candidatura direta"),
+      ).not.toBeInTheDocument()
     })
 
     it("should not render it once registrations are closed", () => {
       renderFooter({ event_status: "Registration Closed" })
 
-      expect(screen.queryByText("Candidatura direta")).not.toBeInTheDocument()
+      expect(
+        screen.queryByText("Candidatura direta"),
+      ).not.toBeInTheDocument()
     })
 
     it("should not render it for whoever did not ask for it", () => {
       renderFooter({ directApply: false })
 
       expect(screen.getByText(/Me candidatar/i)).toBeInTheDocument()
-      expect(screen.queryByText("Candidatura direta")).not.toBeInTheDocument()
+      expect(
+        screen.queryByText("Candidatura direta"),
+      ).not.toBeInTheDocument()
     })
   })
 
@@ -358,6 +361,19 @@ describe("EventCardFooter", () => {
       },
     )
 
+    it("leaves the event out of the message when it has no title", () => {
+      renderPaid({ eventTitle: null })
+
+      expect(
+        screen.getByRole("link", { name: paidCancel.trigger }),
+      ).toHaveAttribute(
+        "href",
+        `https://wa.me/${POSITIV_WHATSAPP}?text=${encodeURIComponent(
+          "Oi! Paguei minha inscrição em um evento e preciso cancelar.",
+        )}`,
+      )
+    })
+
     it("keeps the cancel button for whoever has not paid", () => {
       renderPaid({ has_paid: false, active_payment_id: "pay-1" })
 
@@ -377,13 +393,7 @@ describe("EventCardFooter", () => {
     it.each([
       ["Registration Open", false, false, null, [apply]],
       ["Registration Open", true, false, null, [cancel.trigger]],
-      [
-        "Registration Open",
-        true,
-        false,
-        "pay-1",
-        [payment.pay, cancel.trigger],
-      ],
+      ["Registration Open", true, false, "pay-1", [payment.pay, cancel.trigger]],
       ["Registration Closed", false, false, null, [closed]],
       ["Registration Closed", false, true, null, [apply]],
       ["Registration Closed", true, false, null, [cancel.trigger]],

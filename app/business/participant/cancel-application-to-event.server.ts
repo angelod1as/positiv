@@ -36,9 +36,8 @@ export const cancelApplicationToEvent = composable(
       .where("event_id", "=", eventId)
       .where("profile_id", "=", profileId)
       .where("is_user_applied", "=", true)
-      // A paid participant cancels by talking to the team, so the money is
-      // settled in the same conversation. Checked in the update itself, so a
-      // payment confirmed mid-request cannot slip through.
+      // Checked in the update itself, so a payment confirmed mid-request
+      // cannot slip through.
       .where(({ not, exists, selectFrom }) =>
         not(
           exists(
@@ -86,13 +85,10 @@ export const cancelApplicationToEvent = composable(
       try {
         await cancelActivePayment({ eventParticipantId: participant.id })
       } catch (error) {
-        logger.error(
-          "Could not call off the charge of a withdrawn application",
-          {
-            eventParticipantId: participant.id,
-            error: error instanceof Error ? error.message : String(error),
-          },
-        )
+        logger.error("Could not call off the charge of a withdrawn application", {
+          eventParticipantId: participant.id,
+          error: error instanceof Error ? error.message : String(error),
+        })
       }
 
       // Swallowed for the same reason: the editors hearing about it late is

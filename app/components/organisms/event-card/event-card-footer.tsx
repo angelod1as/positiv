@@ -163,8 +163,6 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
           </DialogContent>
         </Dialog> */}
 
-        {/* A paid participant cancels with the team, who settle the refund in
-            the same conversation. The server refuses it too. */}
         {has_paid ? (
           <div className="flex flex-col gap-2 w-full">
             <p className="text-sm text-muted-foreground">
@@ -172,7 +170,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
             </p>
             <Button
               variant="outline"
-              to={`https://wa.me/${POSITIV_WHATSAPP}?text=${encodeURIComponent(eventCardCopy.paidCancel.whatsappMessage(eventTitle ?? ""))}`}
+              to={`https://wa.me/${POSITIV_WHATSAPP}?text=${encodeURIComponent(eventCardCopy.paidCancel.whatsappMessage(eventTitle))}`}
               linkProps={{ target: "_blank", rel: "noopener noreferrer" }}
             >
               {eventCardCopy.paidCancel.trigger}
