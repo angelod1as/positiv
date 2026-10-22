@@ -22,7 +22,7 @@ function expand(command: string, seen = new Set<string>()): string {
 describe("pre-push hook", () => {
   const pushPath = expand(hook)
 
-  it("never takes the database lock", () => {
+  it("never takes the database lock through the pnpm scripts it calls", () => {
     expect(pushPath).not.toContain("with-db-lock")
   })
 

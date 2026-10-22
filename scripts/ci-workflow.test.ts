@@ -60,7 +60,16 @@ describe("deploy-and-test workflow", () => {
   it("runs the integration suite in the e2e job, once the database is up and before playwright", () => {
     const e2e = jobBlock("e2e-test")
     const position = (step: string) => e2e.indexOf(`- name: ${step}\n`)
+    const steps = [
+      "Get Supabase local credentials",
+      "Install dependencies",
+      "Run integration tests",
+      "Run E2E tests",
+    ]
 
+    for (const step of steps) {
+      expect(position(step), `step "${step}" not found`).toBeGreaterThanOrEqual(0)
+    }
     expect(runCommand("Run integration tests")).toBe("pnpm test:integration")
     expect(position("Run integration tests")).toBeGreaterThan(position("Get Supabase local credentials"))
     expect(position("Run integration tests")).toBeGreaterThan(position("Install dependencies"))
