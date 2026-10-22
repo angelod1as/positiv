@@ -1105,6 +1105,51 @@ describe("getProfilesWithExtraDataById - Event Count and Last Event - Integratio
       expect(participant?.last_attended_event_id).toBeNull()
     }
   })
+
+  it("should leave an attended current event out of the count and the last event", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-event-count-attended-current@example.com",
+      full_name: "Test Attended Current Event"
+    })
+
+    const previousEvent = await createTestEvent(tracker, kysely, {
+      title: "Previous Event",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    const currentEvent = await createTestEvent(tracker, kysely, {
+      title: "Current Attended Event",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: previousEvent.id,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: currentEvent.id,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    const result = await getProfilesWithExtraDataById({ eventId: currentEvent.id })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      const participant = result.data.find(p => p.profile_id === profile.id)
+      expect(participant).toBeDefined()
+      expect(participant?.attended_events_count).toBe(1)
+      expect(participant?.last_attended_event_title).toBe("Previous Event")
+      expect(participant?.last_attended_event_id).toBe(previousEvent.id)
+    }
+  })
 })
 
 describe("Computed fields: last_attended_events_count - Integration Tests", () => {
