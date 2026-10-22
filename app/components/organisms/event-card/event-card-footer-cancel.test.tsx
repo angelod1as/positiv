@@ -91,6 +91,20 @@ describe("EventCardFooter cancel dialog", () => {
     )
   })
 
+  it("starts empty the next time the dialog opens after a cancellation", async () => {
+    const user = await openCancelDialog()
+
+    await user.type(reasonField(), "Vou viajar")
+    await user.click(
+      screen.getByRole("button", { name: eventCardCopy.cancel.confirmLabel }),
+    )
+    await user.click(
+      screen.getByRole("button", { name: eventCardCopy.cancel.trigger }),
+    )
+
+    expect(reasonField()).toHaveValue("")
+  })
+
   it("cancels with an empty reason when none was typed", async () => {
     const user = await openCancelDialog()
 

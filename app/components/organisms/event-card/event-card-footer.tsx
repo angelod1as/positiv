@@ -98,6 +98,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
       },
       { method: "POST" },
     )
+    setCancellationReason("")
     closeDialog()
   }
 
