@@ -261,8 +261,13 @@ jobs:
           TEST_USER_ADMIN_EMAIL: ${{ secrets.TEST_USER_ADMIN_EMAIL }}
           COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
           UNSUBSCRIBE_SECRET: ${{ secrets.UNSUBSCRIBE_SECRET }}
-          VITE_TURNSTILE_SITE_KEY: ${{ secrets.STAGING_TURNSTILE_SITE_KEY }}
-          SUPABASE_TURNSTILE_SECRET: ${{ secrets.STAGING_TURNSTILE_SECRET }}
+          # Not secrets. The site key is Cloudflare's published "always passes"
+          # test key, which the register page needs to render the widget. The
+          # secret is never sent: verification from 127.0.0.1 swaps in the test
+          # secret itself, so this only satisfies getTurnstileConfig's check
+          # that one is set.
+          VITE_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+          SUPABASE_TURNSTILE_SECRET: ci-placeholder-never-sent
           LISTMONK_API_URL: ${{ secrets.LISTMONK_API_URL }}
           LISTMONK_API_USERNAME: ${{ secrets.LISTMONK_API_USERNAME }}
           LISTMONK_API_PASSWORD: ${{ secrets.LISTMONK_API_PASSWORD }}

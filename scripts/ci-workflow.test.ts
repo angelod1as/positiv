@@ -134,6 +134,10 @@ describe("deploy-and-test workflow", () => {
     expect(step).toContain("pnpm exec tsx scripts/check-env-types.ts")
     expect(step).not.toContain("git diff --exit-code env.d.ts")
   })
+
+  it("reads no secret of the deleted staging project", () => {
+    expect(jobBlock("e2e-test")).not.toContain("secrets.STAGING_")
+  })
 })
 
 // The production image failed to build for weeks before anyone noticed: CI
