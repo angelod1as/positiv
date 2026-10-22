@@ -207,10 +207,9 @@ jobs:
       # database is already migrated here, and its global setup restores the
       # seeded tables it touches, so e2e starts from the same data.
       #
-      # APP_URL and the Listmonk credentials are what a developer's .env
-      # supplies: the payment links are built from APP_URL, and the campaign
-      # code checks the credentials are configured before reaching the fetch
-      # the tests mock.
+      # APP_URL is what a developer's .env supplies: the payment links are built
+      # from it. No Listmonk credentials, ever: without them the client refuses
+      # before any request, so the suite cannot reach a real Listmonk.
       - name: Run integration tests
         run: pnpm test:integration
         env:
@@ -220,9 +219,6 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ steps.supabase-creds.outputs.anon_key }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ steps.supabase-creds.outputs.service_role_key }}
           SUPABASE_CONNECT_URL: ${{ steps.supabase-creds.outputs.db_url }}
-          LISTMONK_API_URL: ${{ secrets.LISTMONK_API_URL }}
-          LISTMONK_API_USERNAME: ${{ secrets.LISTMONK_API_USERNAME }}
-          LISTMONK_API_PASSWORD: ${{ secrets.LISTMONK_API_PASSWORD }}
 
       # Run E2E tests against local Supabase
       - name: Run E2E tests
