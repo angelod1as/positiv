@@ -1,4 +1,5 @@
 import type { Page, Locator } from '@playwright/test'
+import { eventCardCopy } from '../../app/copy/events'
 import { BasePage } from './BasePage'
 
 export class MyApplicationsPage extends BasePage {
@@ -73,7 +74,7 @@ export class MyApplicationsPage extends BasePage {
 
     if (options.reason) {
       await this.page
-        .getByRole('textbox', { name: 'Quer contar por que está cancelando? (opcional)' })
+        .getByRole('textbox', { name: eventCardCopy.cancel.reasonLabel })
         .fill(options.reason)
     }
 
