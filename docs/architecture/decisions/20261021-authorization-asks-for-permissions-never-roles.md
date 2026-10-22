@@ -29,10 +29,12 @@ Users have roles, roles grant permissions, and every gate asks for a permission.
   "whoever is called admin".
 - Roles are assigned only inside Supabase. No route, UI or API writes `user_roles`.
 
-The rule is enforced, not just documented: block 4d of `eslint.config.js` fails the build when
-app code reads `is_admin` or `role_name`, uses the `ROLES` constant, compares a value with
-`'admin'` or looks for a role with `includes()`. `app/test/permission-guard.test.ts` proves it
-fires. In the database, `rbac.integration.test.ts` fails if a policy mentions `role_name` or
+The common forms are guarded, not just documented: block 4d of `eslint.config.js` fails the
+build when app code reads `is_admin` or `role_name`, uses the `ROLES` constant, or compares
+something named like a role with `'admin'` or looks for one with `includes()`.
+`app/test/permission-guard.test.ts` proves it fires. A syntax guard cannot follow values, so an
+indirect check (a role list copied into a variable named otherwise) is still review's job. In
+the database, `rbac.integration.test.ts` fails if a policy mentions `role_name` or
 `get_admin_user_ids`.
 
 ## Consequences
