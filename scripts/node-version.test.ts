@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs"
+import { readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
@@ -14,6 +14,11 @@ const dockerfile = readFileSync(join(import.meta.dirname, "..", "Dockerfile"), "
 const packageJson = JSON.parse(
   readFileSync(join(import.meta.dirname, "..", "package.json"), "utf8"),
 ) as { engines: { node: string }; devEngines: { runtime: { version: string } } }
+
+const workflowsDir = join(import.meta.dirname, "..", ".github", "workflows")
+const workflows = readdirSync(workflowsDir)
+  .filter((file) => file.endsWith(".yml"))
+  .map((file) => [file, readFileSync(join(workflowsDir, file), "utf8")] as const)
 
 function parse(version: string): number[] {
   return version.split(".").map(Number)
@@ -49,4 +54,19 @@ describe("Node version", () => {
     expect(floor, `"${range}" has no exact >=x.y.z <25 floor`).toBeDefined()
     expect(atLeastPatched(parse(floor ?? ""))).toBe(true)
   })
+
+  // .nvmrc says 24, and setup-node takes whatever 24.x the runner image has
+  // cached unless told to look for the newest one.
+  it.each(workflows.filter(([, text]) => text.includes("actions/setup-node")))(
+    "resolves the latest Node 24 patch in every setup-node step of %s",
+    (_file, text) => {
+      const steps = [...text.matchAll(/uses: actions\/setup-node@.+\n((?: {8,}.+\n)+)/g)]
+
+      expect(steps.length).toBeGreaterThan(0)
+      for (const [, body] of steps) {
+        expect(body).toContain("node-version-file: .nvmrc")
+        expect(body).toContain("check-latest: true")
+      }
+    },
+  )
 })
