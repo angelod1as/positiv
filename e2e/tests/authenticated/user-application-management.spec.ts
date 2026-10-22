@@ -176,8 +176,8 @@ test.describe('POS-191: Application Management Tests', () => {
     const closedEvent = await ensureClosedTestEvent()
     expect(closedEvent).toBeTruthy()
     
-    // Navigate to events page
-    await page.goto('/dashboard/eventos')
+    // The dashboard lists the events
+    await page.goto('/dashboard')
     await page.waitForLoadState('networkidle')
     
     // Verify that closed events either don't show "Me candidatar" button
