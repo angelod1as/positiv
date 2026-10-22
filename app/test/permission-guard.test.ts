@@ -20,6 +20,10 @@ describe("permission guard", () => {
   it.each([
     ["reads is_admin", "export const f = (p: { is_admin: boolean }) => p.is_admin"],
     ["filters on role_name", 'export const column = "user_roles.role_name"'],
+    [
+      "builds role_name in a template",
+      "export const column = (table: string) => `${table}.role_name`",
+    ],
     ["reads role_name", "export const f = (row: { role_name: string }) => row.role_name"],
     ["compares a role name", 'export const f = (role: string) => role === "admin"'],
     [

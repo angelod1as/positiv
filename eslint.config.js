@@ -234,6 +234,7 @@ export default defineConfig([
           "Identifier[name='is_admin']",
           "Identifier[name='role_name']",
           "Literal[value=/role_name/]",
+          "TemplateElement[value.raw=/role_name/]",
           "MemberExpression[object.name='ROLES']",
           "BinaryExpression[operator=/^[!=]==?$/]:has(Identifier[name=/role/i]) > Literal[value='admin']",
           "CallExpression[callee.property.name='includes']:has(Identifier[name=/role/i]) > Literal[value=/^(admin|staff)$/]",
