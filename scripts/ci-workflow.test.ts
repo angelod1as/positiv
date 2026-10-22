@@ -57,6 +57,25 @@ describe("deploy-and-test workflow", () => {
     expect(key).toContain("steps.playwright-version.outputs.version")
   })
 
+  it("runs the integration suite in the e2e job, once the database is up and before playwright", () => {
+    const e2e = jobBlock("e2e-test")
+    const position = (step: string) => e2e.indexOf(`- name: ${step}\n`)
+
+    expect(runCommand("Run integration tests")).toBe("pnpm test:integration")
+    expect(position("Run integration tests")).toBeGreaterThan(position("Get Supabase local credentials"))
+    expect(position("Run integration tests")).toBeGreaterThan(position("Install dependencies"))
+    expect(position("Run integration tests")).toBeLessThan(position("Run E2E tests"))
+  })
+
+  it("lets a red integration suite fail the job", () => {
+    const step = jobBlock("e2e-test").match(
+      /- name: Run integration tests\n((?: {8}.+\n)+)/,
+    )?.[1] ?? ""
+
+    expect(step).not.toContain("continue-on-error")
+    expect(step).toContain("SUPABASE_CONNECT_URL: ${{ steps.supabase-creds.outputs.db_url }}")
+  })
+
   it("runs e2e alongside the other checks rather than queued behind them", () => {
     expect(jobBlock("e2e-test")).not.toMatch(/^ {4}needs:/m)
   })
