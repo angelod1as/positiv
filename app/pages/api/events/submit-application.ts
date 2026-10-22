@@ -8,6 +8,7 @@ import {
 import { buildApplicationQuestions } from "~/components/forms/custom/application/build-application-questions"
 import { participantCopy } from "~/copy/participant"
 import { trackServerEvent } from "~/lib/analytics/umami.server"
+import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
 
 const {
@@ -20,6 +21,8 @@ const {
  * answer comes back as HTML the runtime cannot read.
  */
 export async function action({ request, params }: ActionFunctionArgs) {
+  assertUuidParams(params.id)
+
   if (!params.id) return redirect(DASHBOARD)
 
   const context = await getUserContext(request, params)

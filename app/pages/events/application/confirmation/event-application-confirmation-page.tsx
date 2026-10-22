@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "~/components/ui/card"
 import { createMetaArray } from "~/lib/helpers/meta"
+import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
 import { kyselyDb } from "~/kysely-db"
 import type { Route } from "./+types/event-application-confirmation-page"
@@ -21,6 +22,8 @@ const {
 } = paths
 
 export async function loader({ request, params }: Route.LoaderArgs) {
+  assertUuidParams(params.id)
+
   const { currentProfile } = await getUserContext(request, params)
 
   if (!params.id || !currentProfile) return redirect(DASHBOARD)

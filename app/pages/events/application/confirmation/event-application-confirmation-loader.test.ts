@@ -38,7 +38,9 @@ const mockApplication = (row: { id: string } | undefined) => {
   return { executeTakeFirst, where }
 }
 
-const runLoader = (params: { id?: string } = { id: "event-id" }) =>
+const runLoader = (
+  params: { id?: string } = { id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" },
+) =>
   loader({
     request: new Request("http://localhost"),
     params: params as Route.LoaderArgs["params"],
@@ -90,7 +92,11 @@ describe("event application confirmation loader", () => {
     await runLoader()
 
     expect(mockRedirect).not.toHaveBeenCalled()
-    expect(where).toHaveBeenCalledWith("event_id", "=", "event-id")
+    expect(where).toHaveBeenCalledWith(
+      "event_id",
+      "=",
+      "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c",
+    )
     expect(where).toHaveBeenCalledWith("profile_id", "=", "profile-id")
     expect(where).toHaveBeenCalledWith("is_user_applied", "=", true)
   })

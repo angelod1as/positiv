@@ -29,8 +29,10 @@ vi.mock("~/business/participant/format-calendar-event.server", () => ({
 
 const runLoader = () =>
   loader({
-    request: new Request("http://localhost/dashboard/calendar/event-1"),
-    params: { eventId: "event-1" },
+    request: new Request(
+      "http://localhost/dashboard/calendar/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c",
+    ),
+    params: { eventId: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" },
   } as Parameters<typeof loader>[0])
 
 describe("download calendar loader", () => {
@@ -38,7 +40,10 @@ describe("download calendar loader", () => {
     vi.clearAllMocks()
     const single = vi
       .fn()
-      .mockResolvedValue({ data: { id: "event-1" }, error: null })
+      .mockResolvedValue({
+        data: { id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" },
+        error: null,
+      })
     vi.mocked(getContext).mockResolvedValue({
       supabase: {
         from: () => ({ select: () => ({ eq: () => ({ single }) }) }),
@@ -53,7 +58,7 @@ describe("download calendar loader", () => {
 
     expect(logger.warn).toHaveBeenCalledWith(
       "Event is missing the fields a calendar needs",
-      { eventId: "event-1" },
+      { eventId: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" },
     )
   })
 

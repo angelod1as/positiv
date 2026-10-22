@@ -13,6 +13,7 @@ import type { Answers } from "~/components/forms/runtime/question.types"
 import { buildSingleScreenFlow } from "~/components/forms/runtime/single-screen-flow"
 import { eventApplicationCopy } from "~/copy/events"
 import { useAnalytics } from "~/lib/hooks/use-analytics"
+import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
 import type { CommitResult } from "~types/forms/commit.types"
 import type { Route } from "./+types/event-user-data"
@@ -28,6 +29,8 @@ const {
 } = paths
 
 export async function loader({ request, params }: Route.LoaderArgs) {
+  assertUuidParams(params.id)
+
   const { commitSession, getSession } = rulesSessionStorage
   const session = await getSession(request.headers.get("Cookie"))
   if (!hasPassedRulesQuiz(session, params.id)) {

@@ -45,15 +45,18 @@ const passedQuizFor = (events?: string[]) => {
 }
 
 const submit = async (answers: unknown = filledIn) => {
-  const request = new Request("http://localhost/api/events/123/application", {
-    method: "POST",
-    body: typeof answers === "string" ? answers : JSON.stringify(answers),
-    headers: { "Content-Type": "application/json" },
-  })
+  const request = new Request(
+    "http://localhost/api/events/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/application",
+    {
+      method: "POST",
+      body: typeof answers === "string" ? answers : JSON.stringify(answers),
+      headers: { "Content-Type": "application/json" },
+    },
+  )
 
   const response = (await action({
     request,
-    params: { id: "123" },
+    params: { id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" },
     context: {} as never,
   })) as Response
 
@@ -71,7 +74,7 @@ const submit = async (answers: unknown = filledIn) => {
 describe("the event application submit", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    passedQuizFor(["123"])
+    passedQuizFor(["3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c"])
     mockApplyToEvent.mockResolvedValue({
       success: true,
       data: { emailSent: true },
@@ -102,7 +105,7 @@ describe("the event application submit", () => {
 
     expect(mockApplyToEvent).toHaveBeenCalledWith(
       expect.objectContaining({
-        eventId: "123",
+        eventId: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c",
         referred: "ninguém",
         bond: "Posso ir sozinhe.",
         applicationDate: expect.any(Date),
@@ -167,8 +170,8 @@ describe("the event application submit", () => {
 
     expect(mockTrackServerEvent).toHaveBeenCalledWith(
       "event_application_completed",
-      { eventId: "123" },
-      "/events/123/apply",
+      { eventId: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" },
+      "/events/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/apply",
     )
   })
 

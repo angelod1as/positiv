@@ -28,8 +28,10 @@ const context = {
 
 const load = () =>
   loader({
-    request: new Request("http://localhost/pagamento/payment-1"),
-    params: { paymentId: "payment-1" },
+    request: new Request(
+      "http://localhost/pagamento/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c",
+    ),
+    params: { paymentId: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" },
     context: {},
   } as unknown as Route.LoaderArgs)
 
@@ -48,7 +50,7 @@ describe("payment page loader", () => {
       await load()
 
       expect(loadPaymentPage).toHaveBeenCalledWith({
-        paymentId: "payment-1",
+        paymentId: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c",
         profileId: "profile-1",
         onlinePaymentsEnabled: enabled,
         cardPaymentsEnabled: !enabled,

@@ -14,6 +14,7 @@ import {
 import { metaCopy } from "~/copy/meta"
 import { paymentsCopy } from "~/copy/payments"
 import { createMetaArray } from "~/lib/helpers/meta"
+import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/payment-thanks-page"
 import {
@@ -33,6 +34,8 @@ export function meta({}: Route.MetaArgs) {
  * nothing: only the webhook may mark a payment paid.
  */
 export async function loader({ params, request }: Route.LoaderArgs) {
+  assertUuidParams(params.paymentId)
+
   const { currentProfile } = await getUserContext(request, params)
 
   if (!currentProfile) {

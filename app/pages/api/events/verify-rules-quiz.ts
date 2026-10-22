@@ -9,6 +9,7 @@ import {
 import { getRulesFormSchema } from "~/components/forms/custom/rules/rules-form-schema"
 import { kyselyDb } from "~/kysely-db"
 import { trackServerEvent } from "~/lib/analytics/umami.server"
+import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
 
 const {
@@ -21,6 +22,8 @@ const {
  * HTML, so the answers the runtime needs back never survive the trip.
  */
 export async function action({ request, params }: ActionFunctionArgs) {
+  assertUuidParams(params.id)
+
   if (!params.id) return redirect(DASHBOARD)
 
   const { currentProfile } = await getUserContext(request, params)

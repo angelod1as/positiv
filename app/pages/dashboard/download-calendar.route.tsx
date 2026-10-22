@@ -3,6 +3,7 @@ import { getContext } from "~/business/auth/auth.server"
 import { formatCalendarEvent } from "~/business/participant/format-calendar-event.server"
 import { dashboardCopy } from "~/copy/dashboard"
 import { logger } from "~/lib/logger/logger.server"
+import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/download-calendar.route"
 
@@ -11,6 +12,8 @@ const {
 } = paths
 
 export async function loader({ request, params }: Route.LoaderArgs) {
+  assertUuidParams(params.eventId)
+
   const { supabase } = await getContext(request, params)
   const { data, error } = await supabase
     .from("events")
