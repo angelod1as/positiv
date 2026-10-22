@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { dashboardCopy } from '../../../app/copy/dashboard'
 import { EventApplicationPage } from '../../pages/EventApplicationPage'
 import { ensureTestUserProfileExists } from '../../utils/application-helpers'
 import { cleanupEventParticipations } from '../../utils/db-cleanup'
@@ -15,21 +16,16 @@ test.describe('Account signup versus event registration', () => {
 
     await page.goto('/dashboard')
 
-    // The Alert title/description render as plain divs (not headings), since
-    // shadcn's AlertTitle/AlertDescription don't use heading elements. While
-    // the dashboard streams, React can keep a hidden copy of this content, so
-    // match only the visible one.
-    await expect(
-      page.getByText('Sua conta está pronta', { exact: true }).filter({ visible: true }),
-    ).toBeVisible()
+    // React streams the resolved events into a hidden div and then moves them
+    // into place, and 19.2 batches those reveals, so for a moment the banner
+    // is in the document twice. The hidden copy is outside the accessibility
+    // tree, which the alert role is not.
+    const welcome = page.getByRole('alert')
+    await expect(welcome.getByText(dashboardCopy.welcome.title, { exact: true })).toBeVisible()
+    await expect(welcome.getByText(dashboardCopy.welcome.body)).toBeVisible()
 
-    await expect(
-      page
-        .getByText(
-          'Mas ter conta não te coloca em nenhuma festa. Escolha um evento abaixo e envie sua candidatura.',
-        )
-        .filter({ visible: true }),
-    ).toBeVisible()
+    // A copy that stayed behind after the swap would be a bug, not timing.
+    await expect(page.getByText(dashboardCopy.welcome.title, { exact: true })).toHaveCount(1)
 
     await expect(
       page.getByRole('heading', { name: 'Eventos em que você se candidatou' }),
