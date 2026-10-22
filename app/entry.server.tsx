@@ -19,7 +19,8 @@ import { applyDraftCacheControl } from "./business/cms/draft-mode.server"
 // (handleRequest) and the client-navigation data responses
 // (handleDataRequest), so a draft render is never cached and served to a
 // visitor; and handleError, so unhandled server errors reach the logger (and
-// Telegram), skipping 4xx route responses. Re-reveal and re-diff when upgrading react-router.
+// Telegram), skipping 4xx route responses. Re-reveal and re-diff when
+// upgrading react-router.
 export const streamTimeout = 5_000
 
 export const handleError: HandleErrorFunction = (
