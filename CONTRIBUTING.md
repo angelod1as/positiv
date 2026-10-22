@@ -10,7 +10,7 @@ By participating in this project, you agree to abide by our Code of Conduct. Ple
 
 ### Prerequisites
 
-- Node.js (latest LTS version)
+- Node.js 24, 24.22.1 or newer (see `.nvmrc`)
 - pnpm package manager
 - Supabase account for local development
 - Basic knowledge of React, TypeScript, and Supabase
