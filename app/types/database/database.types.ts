@@ -290,6 +290,7 @@ export type Database = {
           attendance_status: Database["public"]["Enums"]["attendance_status_enum"]
           bond: string | null
           cancellation_date: string | null
+          cancellation_reason: string | null
           companions: string | null
           created_at: string
           event_id: string
@@ -310,6 +311,7 @@ export type Database = {
           attendance_status?: Database["public"]["Enums"]["attendance_status_enum"]
           bond?: string | null
           cancellation_date?: string | null
+          cancellation_reason?: string | null
           companions?: string | null
           created_at?: string
           event_id: string
@@ -330,6 +332,7 @@ export type Database = {
           attendance_status?: Database["public"]["Enums"]["attendance_status_enum"]
           bond?: string | null
           cancellation_date?: string | null
+          cancellation_reason?: string | null
           companions?: string | null
           created_at?: string
           event_id?: string

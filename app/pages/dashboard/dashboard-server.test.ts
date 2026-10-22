@@ -32,6 +32,7 @@ vi.mock("../page/fetch/get-next-events", () => ({
 import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { getContext, getUserContext } from "~/business/auth/auth.server"
 import { applyToEvent } from "~/business/participant/apply-to-event.server"
+import { cancelApplicationToEvent } from "~/business/participant/cancel-application-to-event.server"
 import { hasEverApplied } from "~/business/participant/has-ever-applied.server"
 import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
 import { getNextEvents } from "../page/fetch/get-next-events"
@@ -41,6 +42,7 @@ import { PERMISSIONS } from "~/business/auth/permissions"
 const mockGetContext = vi.mocked(getContext)
 const mockGetUserContext = vi.mocked(getUserContext)
 const mockApplyToEvent = vi.mocked(applyToEvent)
+const mockCancelApplicationToEvent = vi.mocked(cancelApplicationToEvent)
 const mockHasEverApplied = vi.mocked(hasEverApplied)
 const mockIsCardPaymentsEnabled = vi.mocked(isCardPaymentsEnabled)
 const mockTrackServerEvent = vi.mocked(trackServerEvent)
@@ -71,6 +73,45 @@ const run = (fields: Record<string, string>) =>
     params: {},
     context: {},
   } as unknown as Parameters<typeof action>[0])
+
+describe("dashboard action — cancellation", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockGetContext.mockResolvedValue(
+      contextFor(USER) as unknown as Awaited<ReturnType<typeof getContext>>,
+    )
+    mockCancelApplicationToEvent.mockResolvedValue({
+      success: true,
+      data: [],
+      errors: [],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)
+  })
+
+  it("passes the reason the participant typed on to the cancellation", async () => {
+    await run({
+      fetchId: "handleConfirmCancel",
+      eventId: "event-123",
+      reason: "Vou viajar",
+    })
+
+    expect(mockCancelApplicationToEvent).toHaveBeenCalledWith({
+      eventId: "event-123",
+      profileId: "profile-123",
+      reason: "Vou viajar",
+    })
+  })
+
+  it("cancels without a reason when none was typed", async () => {
+    await run({ fetchId: "handleConfirmCancel", eventId: "event-123" })
+
+    expect(mockCancelApplicationToEvent).toHaveBeenCalledWith({
+      eventId: "event-123",
+      profileId: "profile-123",
+      reason: undefined,
+    })
+  })
+})
 
 describe("dashboard action — direct application", () => {
   beforeEach(() => {

@@ -63,6 +63,7 @@ export const adminPropMapsCopy = {
     application_status: "Status de Processo",
     application_date: "Data da candidatura",
     cancellation_date: "Data de cancelamento",
+    cancellation_reason: "Motivo do cancelamento",
     created_at: "Criado em",
     notes: "Notas",
     referrals: "Indicações",

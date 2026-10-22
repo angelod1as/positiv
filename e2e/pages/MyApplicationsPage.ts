@@ -1,4 +1,5 @@
 import type { Page, Locator } from '@playwright/test'
+import { eventCardCopy } from '../../app/copy/events'
 import { BasePage } from './BasePage'
 
 export class MyApplicationsPage extends BasePage {
@@ -55,7 +56,10 @@ export class MyApplicationsPage extends BasePage {
     return await cancelButton.isVisible()
   }
 
-  async cancelApplication(eventTitle: string, options: { registrationsClosed?: boolean } = {}): Promise<void> {
+  async cancelApplication(
+    eventTitle: string,
+    options: { registrationsClosed?: boolean; reason?: string } = {},
+  ): Promise<void> {
     const eventCard = await this.findEventByTitle(eventTitle)
     if (!eventCard) {
       throw new Error(`Event "${eventTitle}" not found`)
@@ -67,6 +71,12 @@ export class MyApplicationsPage extends BasePage {
 
     // Wait for confirmation dialog
     await this.confirmCancelButton.waitFor({ state: 'visible' })
+
+    if (options.reason) {
+      await this.page
+        .getByRole('textbox', { name: eventCardCopy.cancel.reasonLabel })
+        .fill(options.reason)
+    }
 
     // Confirm cancellation
     await this.confirmCancelButton.click()

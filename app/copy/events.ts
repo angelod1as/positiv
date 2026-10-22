@@ -239,6 +239,8 @@ export const eventCardCopy = {
     trigger: "Cancelar candidatura",
     title: "Cancelar candidatura",
     description: "Você tem certeza que deseja cancelar sua candidatura?",
+    reasonLabel: "Quer contar por que está cancelando? (opcional)",
+    reasonPlaceholder: "Seu motivo nos ajuda a melhorar os próximos eventos",
     confirmLabel: "😢 Cancelar",
     cancelLabel: "🎉 Voltar",
   },

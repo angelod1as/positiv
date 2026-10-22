@@ -95,6 +95,21 @@ export const adminFeedbacksCopy = {
   },
 } as const
 
+export const participantCancellationAlertCopy = {
+  title: "🚪 Candidatura cancelada",
+  event: (title: string) => `Evento: ${title}`,
+  participant: (fullName: string, socialName: string | null) =>
+    `Participante: ${fullName}${socialName ? ` (${socialName})` : ""}`,
+  email: (email: string) => `E-mail: ${email}`,
+  phone: (phone: string) => `WhatsApp: ${phone}`,
+  notInformed: "não informado",
+  status: (status: string) => `Status da candidatura: ${status}`,
+  cancelledAt: (date: string, time: string) =>
+    `Cancelada em: ${date} às ${time}`,
+  reason: (reason: string) => `Motivo: ${reason}`,
+  paid: "💸 Pago — reembolso pendente no Asaas",
+} as const
+
 export const listmonkDiagnosticCopy = {
   title: "Diagnóstico de Email",
   description:

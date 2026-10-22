@@ -32,6 +32,7 @@ const createMockHistoryItem = (
   companions: null,
   spot_type: "regular",
   cancellation_date: null,
+  cancellation_reason: null,
   is_veteran: true,
   approved_to_attend: "approved",
   updated_at: "2024-02-15T10:00:00",

@@ -42,6 +42,7 @@ const MUST_RESOLVE_AT_RUNTIME = [
   "SANITY_VIEWER_TOKEN",
   "TELEGRAM_ALERTS_ENABLED",
   "TELEGRAM_CHAT_ID",
+  "TELEGRAM_EDITOR_CHAT_ID",
 ]
 
 // Read in the browser, which has no process to resolve them from. A dynamic
