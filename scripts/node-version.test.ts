@@ -11,6 +11,10 @@ const PATCHED = [24, 22, 1] as const
 
 const dockerfile = readFileSync(join(import.meta.dirname, "..", "Dockerfile"), "utf8")
 
+const packageJson = JSON.parse(
+  readFileSync(join(import.meta.dirname, "..", "package.json"), "utf8"),
+) as { engines: { node: string }; devEngines: { runtime: { version: string } } }
+
 function parse(version: string): number[] {
   return version.split(".").map(Number)
 }
@@ -34,5 +38,15 @@ describe("Node version", () => {
     expect(version, `"${tags[0]}" is not an exact x.y.z-alpine tag`).toBeDefined()
     expect(parse(version ?? "")[0]).toBe(24)
     expect(atLeastPatched(parse(version ?? ""))).toBe(true)
+  })
+
+  it.each([
+    ["engines", packageJson.engines.node],
+    ["devEngines", packageJson.devEngines.runtime.version],
+  ])("refuses an unpatched Node in %s", (_field, range) => {
+    const floor = range.match(/^>=(\d+\.\d+\.\d+) <25$/)?.[1]
+
+    expect(floor, `"${range}" has no exact >=x.y.z <25 floor`).toBeDefined()
+    expect(atLeastPatched(parse(floor ?? ""))).toBe(true)
   })
 })
