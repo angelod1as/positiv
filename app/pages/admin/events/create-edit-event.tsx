@@ -1,9 +1,12 @@
 import { getAdminEventById } from "~/business/admin/admin.server"
 import { EventForm } from "~/components/forms/admin/event-form"
 import { adminEventsCopy } from "~/copy/admin/events"
+import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import type { Route } from "./+types/create-edit-event"
 
 export async function loader({ params }: Route.LoaderArgs) {
+  assertUuidParams(params.id)
+
   const eventId = params.id
   if (!eventId) return { event: undefined }
   const result = await getAdminEventById({ eventId })

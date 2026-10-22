@@ -25,8 +25,10 @@ type HistoryResult = Awaited<ReturnType<typeof getParticipantFullEventHistory>>
 
 const runLoader = () =>
   loader({
-    request: new Request("http://localhost/admin/perfis/profile-1"),
-    params: { profileId: "profile-1" },
+    request: new Request(
+      "http://localhost/admin/perfis/7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",
+    ),
+    params: { profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f" },
   } as Parameters<typeof loader>[0])
 
 describe("view profile page loader", () => {
@@ -34,7 +36,7 @@ describe("view profile page loader", () => {
     vi.clearAllMocks()
     vi.mocked(getProfileById).mockResolvedValue({
       success: true,
-      data: { id: "profile-1" },
+      data: { id: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f" },
       errors: [],
     } as unknown as ProfileResult)
     vi.mocked(getParticipantFullEventHistory).mockResolvedValue({
@@ -54,7 +56,7 @@ describe("view profile page loader", () => {
 
     expect(response).toBeInstanceOf(Response)
     expect(logger.warn).toHaveBeenCalledWith("Profile not found", {
-      profileId: "profile-1",
+      profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",
     })
     expect(logger.error).not.toHaveBeenCalled()
   })
@@ -70,7 +72,7 @@ describe("view profile page loader", () => {
 
     expect(response).toBeInstanceOf(Response)
     expect(logger.error).toHaveBeenCalledWith("Failed to fetch profile", {
-      profileId: "profile-1",
+      profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",
       errors,
     })
   })
@@ -87,7 +89,7 @@ describe("view profile page loader", () => {
     expect(data).toMatchObject({ fullHistory: [] })
     expect(logger.error).toHaveBeenCalledWith(
       "Failed to fetch participant history",
-      { profileId: "profile-1", errors },
+      { profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f", errors },
     )
   })
 })

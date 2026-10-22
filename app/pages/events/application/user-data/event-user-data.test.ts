@@ -28,8 +28,8 @@ const loadFor = async (passedEvents?: string[]) => {
   mockCommitSession.mockResolvedValue("__session_rules=refreshed")
 
   return await loader({
-    request: new Request("http://localhost/dashboard/event-id/dados"),
-    params: { id: "event-id" } as Route.LoaderArgs["params"],
+    request: new Request("http://localhost/dashboard/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/dados"),
+    params: { id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" } as Route.LoaderArgs["params"],
   } as Route.LoaderArgs)
 }
 
@@ -48,21 +48,21 @@ describe("event user data loader", () => {
   })
 
   it("turns away a browser that passed no quiz at all", async () => {
-    expect(sentBack(await loadFor(undefined))).toBe("/dashboard/event-id/regras")
+    expect(sentBack(await loadFor(undefined))).toBe("/dashboard/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/regras")
   })
 
   it("turns away a browser that passed another event's quiz", async () => {
     expect(sentBack(await loadFor(["another-event"]))).toBe(
-      "/dashboard/event-id/regras",
+      "/dashboard/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/regras",
     )
   })
 
   it("lets in a browser that passed this event's quiz", async () => {
-    expect(sentBack(await loadFor(["another-event", "event-id"]))).toBeNull()
+    expect(sentBack(await loadFor(["another-event", "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c"]))).toBeNull()
   })
 
   it("restarts the clock while the form is being filled", async () => {
-    expect(cookieOf(await loadFor(["event-id"]))).toBe(
+    expect(cookieOf(await loadFor(["3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c"]))).toBe(
       "__session_rules=refreshed",
     )
   })

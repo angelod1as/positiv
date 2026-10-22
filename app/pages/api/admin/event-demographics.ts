@@ -4,6 +4,7 @@ import {
   updateEventDemographics,
 } from "~/business/admin/admin.server"
 import { toCommitResult } from "~/lib/helpers/to-commit-result"
+import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 
 /**
  * A route of its own rather than the page's action: the button asks for a
@@ -14,6 +15,8 @@ import { toCommitResult } from "~/lib/helpers/to-commit-result"
  * read from the database, so the body has nothing to say.
  */
 export async function action({ request, params }: ActionFunctionArgs) {
+  assertUuidParams(params.id)
+
   const context = await getAdminContext(request, params)
 
   const eventId = params.id

@@ -50,8 +50,8 @@ type ParticipantResult = Awaited<ReturnType<typeof getEventParticipantBasic>>
 
 const runLoader = () =>
   loader({
-    request: new Request("http://localhost/admin/eventos/event-1/profile-1"),
-    params: { eventId: "event-1", profileId: "profile-1" },
+    request: new Request("http://localhost/admin/eventos/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f"),
+    params: { eventId: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c", profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f" },
   } as Parameters<typeof loader>[0])
 
 describe("view event participant loader", () => {
@@ -60,7 +60,7 @@ describe("view event participant loader", () => {
     vi.mocked(isOnlinePaymentsEnabled).mockResolvedValue(false)
     vi.mocked(getProfileById).mockResolvedValue({
       success: true,
-      data: { id: "profile-1" },
+      data: { id: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f" },
       errors: [],
     } as unknown as ProfileResult)
     vi.mocked(getEventParticipantBasic).mockResolvedValue({
@@ -80,7 +80,7 @@ describe("view event participant loader", () => {
 
     expect(response).toBeInstanceOf(Response)
     expect(logger.warn).toHaveBeenCalledWith("Profile not found", {
-      profileId: "profile-1",
+      profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",
     })
     expect(logger.error).not.toHaveBeenCalled()
   })
@@ -96,7 +96,7 @@ describe("view event participant loader", () => {
 
     expect(response).toBeInstanceOf(Response)
     expect(logger.error).toHaveBeenCalledWith("Failed to fetch profile", {
-      profileId: "profile-1",
+      profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",
       errors,
     })
   })
@@ -107,7 +107,7 @@ describe("view event participant loader", () => {
     expect(response).toBeInstanceOf(Response)
     expect(logger.warn).toHaveBeenCalledWith(
       "Participant has not applied to this event",
-      { profileId: "profile-1", eventId: "event-1" },
+      { profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f", eventId: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" },
     )
     expect(logger.error).not.toHaveBeenCalled()
   })
@@ -124,7 +124,7 @@ describe("view event participant loader", () => {
     expect(response).toBeInstanceOf(Response)
     expect(logger.error).toHaveBeenCalledWith(
       "Failed to fetch event participant",
-      { profileId: "profile-1", eventId: "event-1", errors },
+      { profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f", eventId: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c", errors },
     )
   })
 
@@ -158,7 +158,7 @@ describe("view event participant loader", () => {
     vi.mocked(getProfileById).mockResolvedValue({
       success: true,
       data: {
-        id: "profile-1",
+        id: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",
         social_name: "Ana Social",
         full_name: "Ana Legal",
       },
@@ -192,7 +192,7 @@ describe("view event participant loader", () => {
   it("hands the modal no message when there is no active charge", async () => {
     vi.mocked(getProfileById).mockResolvedValue({
       success: true,
-      data: { id: "profile-1", full_name: "Ana" },
+      data: { id: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f", full_name: "Ana" },
       errors: [],
     } as unknown as ProfileResult)
     vi.mocked(getEventParticipantBasic).mockResolvedValue({

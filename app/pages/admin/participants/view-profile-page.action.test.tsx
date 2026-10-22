@@ -15,27 +15,36 @@ vi.mock("~/business/admin/admin.server", () => ({
 }))
 
 const buildRequest = (fields: Record<string, string>) =>
-  new Request("http://localhost/admin/perfis/profile-1", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams(fields).toString(),
-  })
+  new Request(
+    "http://localhost/admin/perfis/7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(fields).toString(),
+    },
+  )
 
 const runAction = (fields: Record<string, string>) =>
   action({
     request: buildRequest(fields),
-    params: { profileId: "profile-1" },
+    params: { profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f" },
   } as Parameters<typeof action>[0])
 
 const INTENTS = [
   {
     intent: "update-profile-approval-status",
-    fields: { profile_id: "profile-1", approved_to_attend: "approved" },
+    fields: {
+      profile_id: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",
+      approved_to_attend: "approved",
+    },
     mutation: updateProfileApprovalStatus,
   },
   {
     intent: "update-profile-admin-notes",
-    fields: { profile_id: "profile-1", admin_notes: "a note" },
+    fields: {
+      profile_id: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",
+      admin_notes: "a note",
+    },
     mutation: updateProfileAdminNotes,
   },
 ] as const

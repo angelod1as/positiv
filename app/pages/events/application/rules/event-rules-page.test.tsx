@@ -46,7 +46,7 @@ const eventLookupReturns = (
 }
 
 const eventExists = () =>
-  eventLookupReturns({ id: "123", event_status: "Registration Open" })
+  eventLookupReturns({ id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c", event_status: "Registration Open" })
 
 const signedInAs = (profileId: string | null) => {
   mockGetUserContext.mockResolvedValue({
@@ -77,7 +77,7 @@ describe("event-rules-page loader", () => {
     eventLookupReturns(undefined)
 
     const mockRequest = new Request("http://localhost")
-    const mockParams = { id: "123" }
+    const mockParams = { id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" }
 
     await loader({
       request: mockRequest,
@@ -91,7 +91,7 @@ describe("event-rules-page loader", () => {
     eventExists()
 
     const mockRequest = new Request("http://localhost")
-    const mockParams = { id: "123" }
+    const mockParams = { id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" }
 
     await loader({
       request: mockRequest,
@@ -99,7 +99,7 @@ describe("event-rules-page loader", () => {
     } as Route.LoaderArgs)
 
     expect(mockRedirect).not.toHaveBeenCalled()
-    expect(mockFindVisibleEvent).toHaveBeenCalledWith("123")
+    expect(mockFindVisibleEvent).toHaveBeenCalledWith("3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c")
   })
 
   it("asks the database itself whether the person has been before", async () => {
@@ -108,10 +108,10 @@ describe("event-rules-page loader", () => {
 
     const data = await loader({
       request: new Request("http://localhost"),
-      params: { id: "123" },
+      params: { id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" },
     } as Route.LoaderArgs)
 
-    expect(mockIsVeteran).toHaveBeenCalledWith("profile-1", "123")
+    expect(mockIsVeteran).toHaveBeenCalledWith("profile-1", "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c")
     expect(data).toEqual({
       eventStatus: "Registration Open",
       isVeteran: true,
@@ -125,7 +125,7 @@ describe("event-rules-page loader", () => {
 
     const data = await loader({
       request: new Request("http://localhost"),
-      params: { id: "123" },
+      params: { id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" },
     } as Route.LoaderArgs)
 
     expect(mockIsVeteran).not.toHaveBeenCalled()
@@ -159,10 +159,10 @@ const renderPage = ({
   eventStatus?: EventStatus
 } = {}) =>
   render(
-    <MemoryRouter initialEntries={["/dashboard/123/regras"]}>
+    <MemoryRouter initialEntries={["/dashboard/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/regras"]}>
       <EventRulesPage
         {...({} as Route.ComponentProps)}
-        params={{ id: "123" }}
+        params={{ id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" }}
         loaderData={{ eventStatus, isVeteran, profileId }}
       />
     </MemoryRouter>,
@@ -370,7 +370,7 @@ const renderPageAt = (entry: string) =>
     <MemoryRouter initialEntries={[entry]}>
       <EventRulesPage
         {...({} as Route.ComponentProps)}
-        params={{ id: "123" }}
+        params={{ id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" }}
         loaderData={{ eventStatus: "Registration Open", isVeteran: false, profileId: "profile-1" }}
       />
       <Location />
@@ -385,7 +385,7 @@ describe("event-rules-page in the url", () => {
   })
 
   it("names the question it is showing", async () => {
-    renderPageAt("/dashboard/123/regras")
+    renderPageAt("/dashboard/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/regras")
 
     const { prompt } = await shownQuestion()
     const id = promptHeadings()[0].id.replace(/-prompt$/, "")
@@ -396,7 +396,7 @@ describe("event-rules-page in the url", () => {
 
   it("follows the reader forward", async () => {
     const user = userEvent.setup()
-    renderPageAt("/dashboard/123/regras")
+    renderPageAt("/dashboard/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/regras")
 
     const { entry } = await firstSingleAnswerQuestion()
     const before = currentSearch()
@@ -415,7 +415,7 @@ describe("event-rules-page in the url", () => {
     const first = order[0]
     const last = order[order.length - 1]
 
-    renderPageAt(`/dashboard/123/regras?q=${last.id}`)
+    renderPageAt(`/dashboard/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/regras?q=${last.id}`)
 
     await waitFor(() => expect(promptHeadings()[0].id).toBe(`${first.id}-prompt`))
 
@@ -486,10 +486,10 @@ const Pathname = () => {
 
 const renderPageWithPathname = () =>
   render(
-    <MemoryRouter initialEntries={["/dashboard/123/regras"]}>
+    <MemoryRouter initialEntries={["/dashboard/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/regras"]}>
       <EventRulesPage
         {...({} as Route.ComponentProps)}
-        params={{ id: "123" }}
+        params={{ id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" }}
         loaderData={{ eventStatus: "Registration Open", isVeteran: false, profileId: "profile-1" }}
       />
       <Pathname />
@@ -540,11 +540,11 @@ describe("event-rules-page skip in development", () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
 
     const [url, init] = fetchMock.mock.calls[0]
-    expect(url).toBe("/api/events/123/rules-quiz")
+    expect(url).toBe("/api/events/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/rules-quiz")
     expect(JSON.parse(String(init?.body))).toEqual(buildCorrectRulesAnswers())
 
     await waitFor(() =>
-      expect(currentPathname()).toBe("/dashboard/123/dados"),
+      expect(currentPathname()).toBe("/dashboard/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/dados"),
     )
   })
 
@@ -559,7 +559,7 @@ describe("event-rules-page skip in development", () => {
 
     await user.click(await screen.findByRole("button", { name: skipLabel }))
 
-    await waitFor(() => expect(currentPathname()).toBe("/dashboard/123/regras"))
+    await waitFor(() => expect(currentPathname()).toBe("/dashboard/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/regras"))
   })
 })
 
@@ -641,10 +641,10 @@ describe("event-rules-page for two people in one browser session", () => {
     // person — no remount to reset anything, so the page has to notice on its
     // own that the run it is showing is not theirs.
     rerender(
-      <MemoryRouter initialEntries={["/dashboard/123/regras"]}>
+      <MemoryRouter initialEntries={["/dashboard/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/regras"]}>
         <EventRulesPage
           {...({} as Route.ComponentProps)}
-          params={{ id: "123" }}
+          params={{ id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" }}
           loaderData={{ eventStatus: "Registration Open", isVeteran: true, profileId: "profile-2" }}
         />
       </MemoryRouter>,
@@ -746,10 +746,10 @@ describe("what the quiz tells a veteran it is about to ask", () => {
     })
 
     rerender(
-      <MemoryRouter initialEntries={["/dashboard/123/regras"]}>
+      <MemoryRouter initialEntries={["/dashboard/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/regras"]}>
         <EventRulesPage
           {...({} as Route.ComponentProps)}
-          params={{ id: "123" }}
+          params={{ id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" }}
           loaderData={{ eventStatus: "Registration Open", isVeteran: true, profileId: "profile-2" }}
         />
       </MemoryRouter>,

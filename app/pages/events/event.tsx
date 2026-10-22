@@ -1,6 +1,7 @@
 import { redirect } from "react-router"
 import { getUserContext } from "~/business/auth/auth.server"
 import { findVisibleEvent } from "~/business/event/find-visible-event.server"
+import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/event"
 
@@ -12,6 +13,8 @@ const {
 } = paths
 
 export async function loader({ request, params }: Route.LoaderArgs) {
+  assertUuidParams(params.id)
+
   if (!params.id) return redirect(DASHBOARD)
 
   await getUserContext(request, params)

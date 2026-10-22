@@ -24,6 +24,7 @@ import {
 import { adminEventsCopy } from "~/copy/admin/events"
 import { appOrigin } from "~/lib/helpers/app-origin"
 import { logger } from "~/lib/logger/logger.server"
+import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event-participant"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
@@ -48,6 +49,8 @@ export function shouldRevalidate({
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
+  assertUuidParams(params.eventId, params.profileId)
+
   const context = await getAdminContext(request, params)
 
   const formData = await request.formData()
@@ -77,6 +80,8 @@ export async function action({ request, params }: Route.ActionArgs) {
 }
 
 export async function loader({ params }: Route.LoaderArgs) {
+  assertUuidParams(params.eventId, params.profileId)
+
   const { eventId, profileId } = params
 
   if (!eventId) {

@@ -10,6 +10,7 @@ import {
 import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
 import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { logger } from "~/lib/logger/logger.server"
+import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-profile-page"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
@@ -19,6 +20,8 @@ const {
 } = paths
 
 export async function loader({ params }: Route.LoaderArgs) {
+  assertUuidParams(params.profileId)
+
   const { profileId } = params
 
   if (!profileId) {
@@ -70,6 +73,8 @@ export async function loader({ params }: Route.LoaderArgs) {
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
+  assertUuidParams(params.profileId)
+
   await getAdminContext(request, params)
 
   const formData = await request.formData()

@@ -38,6 +38,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card"
+import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
 import type { FCC } from "~types/utils/utils.types"
 import type { Route } from "./+types/event-rules-page"
@@ -51,6 +52,8 @@ const {
 } = paths
 
 export async function loader({ request, params }: Route.LoaderArgs) {
+  assertUuidParams(params.id)
+
   if (!params.id) return redirect(DASHBOARD)
 
   const { currentProfile } = await getUserContext(request, params)

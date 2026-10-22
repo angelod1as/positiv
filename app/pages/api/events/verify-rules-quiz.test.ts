@@ -58,7 +58,7 @@ const rightAnswers = () =>
   )
 
 const postAnswers = async (answers: Record<string, unknown>) => {
-  const request = new Request("http://localhost/api/events/123/rules-quiz", {
+  const request = new Request("http://localhost/api/events/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/rules-quiz", {
     method: "POST",
     body: JSON.stringify(answers),
     headers: { "Content-Type": "application/json" },
@@ -66,7 +66,7 @@ const postAnswers = async (answers: Record<string, unknown>) => {
 
   const response = (await action({
     request,
-    params: { id: "123" },
+    params: { id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" },
     context: {} as never,
   })) as Response
 
@@ -88,7 +88,7 @@ describe("the rules quiz check", () => {
         where: vi.fn().mockReturnValue({
           executeTakeFirst: vi
             .fn()
-            .mockResolvedValue({ id: "123" }),
+            .mockResolvedValue({ id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" }),
         }),
       }),
     })
@@ -147,7 +147,7 @@ describe("the rules quiz check", () => {
 
     const { response } = await postAnswers(rightAnswers())
 
-    expect(set).toHaveBeenCalledWith("rulesCorrect", ["123"])
+    expect(set).toHaveBeenCalledWith("rulesCorrect", ["3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c"])
     expect(response.headers.get("Set-Cookie")).toBe("__session_rules=signed")
   })
 
@@ -160,19 +160,19 @@ describe("the rules quiz check", () => {
 
     await postAnswers(rightAnswers())
 
-    expect(set).toHaveBeenCalledWith("rulesCorrect", ["456", "123"])
+    expect(set).toHaveBeenCalledWith("rulesCorrect", ["456", "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c"])
   })
 
   it("names an event once, however many times the quiz is passed", async () => {
     const set = vi.fn()
     mockGetSession.mockResolvedValue({
-      get: vi.fn().mockReturnValue(["123"]),
+      get: vi.fn().mockReturnValue(["3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c"]),
       set,
     } as never)
 
     await postAnswers(rightAnswers())
 
-    expect(set).toHaveBeenCalledWith("rulesCorrect", ["123"])
+    expect(set).toHaveBeenCalledWith("rulesCorrect", ["3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c"])
   })
 
   it("records the quiz as passed only once it is", async () => {
@@ -182,8 +182,8 @@ describe("the rules quiz check", () => {
     await postAnswers(rightAnswers())
     expect(mockTrackServerEvent).toHaveBeenCalledWith(
       "rules_quiz_passed",
-      { eventId: "123" },
-      "/events/123/rules",
+      { eventId: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" },
+      "/events/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/rules",
     )
   })
 })
@@ -200,7 +200,7 @@ describe("the rules quiz check for someone who has been to a Positiv", () => {
     mockKysely.selectFrom = vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          executeTakeFirst: vi.fn().mockResolvedValue({ id: "123" }),
+          executeTakeFirst: vi.fn().mockResolvedValue({ id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" }),
         }),
       }),
     })
@@ -219,7 +219,7 @@ describe("the rules quiz check for someone who has been to a Positiv", () => {
   it("counts the past editions itself instead of believing the post", async () => {
     await postAnswers(rightAnswersTo("trigger", ...twoOthers))
 
-    expect(mockIsVeteran).toHaveBeenCalledWith("profile-1", "123")
+    expect(mockIsVeteran).toHaveBeenCalledWith("profile-1", "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c")
   })
 
   it("lets three right answers through", async () => {

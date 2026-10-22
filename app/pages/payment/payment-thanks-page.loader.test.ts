@@ -26,8 +26,10 @@ describe("payment thanks page loader", () => {
 
   const load = () =>
     loader({
-      request: new Request("http://localhost/pagamento/payment-1/obrigado"),
-      params: { paymentId: "payment-1" },
+      request: new Request(
+        "http://localhost/pagamento/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/obrigado",
+      ),
+      params: { paymentId: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" },
       context: {},
     } as unknown as Route.LoaderArgs)
 
@@ -41,7 +43,7 @@ describe("payment thanks page loader", () => {
     await load()
 
     expect(loadPaymentThanks).toHaveBeenCalledWith({
-      paymentId: "payment-1",
+      paymentId: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c",
       profileId: "profile-1",
     })
   })

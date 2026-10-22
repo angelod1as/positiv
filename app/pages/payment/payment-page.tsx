@@ -27,6 +27,7 @@ import { paymentsCopy } from "~/copy/payments"
 import { formatCurrency } from "~/lib/helpers/format-currency"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { createMetaArray } from "~/lib/helpers/meta"
+import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/payment-page"
 import { loadPaymentPage, type PaymentPageData } from "./payment-page.server"
@@ -38,6 +39,8 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export async function loader({ params, request }: Route.LoaderArgs) {
+  assertUuidParams(params.paymentId)
+
   const { currentProfile } = await getUserContext(request, params)
 
   if (!currentProfile) {
@@ -53,6 +56,8 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 }
 
 export async function action({ params, request }: Route.ActionArgs) {
+  assertUuidParams(params.paymentId)
+
   const { currentProfile } = await getUserContext(request, params)
 
   if (!currentProfile) {

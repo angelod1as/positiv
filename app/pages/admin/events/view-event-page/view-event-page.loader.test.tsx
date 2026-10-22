@@ -49,8 +49,10 @@ vi.mock("~/business/payment/payment-messages.server", async (importActual) => ({
 
 const runLoader = () =>
   loader({
-    request: new Request("http://localhost/admin/eventos/event-1"),
-    params: { id: "event-1" },
+    request: new Request(
+      "http://localhost/admin/eventos/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c",
+    ),
+    params: { id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" },
   } as Parameters<typeof loader>[0])
 
 describe("view event page loader", () => {
@@ -59,7 +61,10 @@ describe("view event page loader", () => {
     vi.mocked(isOnlinePaymentsEnabled).mockResolvedValue(false)
     vi.mocked(getAdminEventById).mockResolvedValue({
       success: true,
-      data: { id: "event-1", event_status: "Open" },
+      data: {
+        id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c",
+        event_status: "Open",
+      },
       errors: [],
     } as unknown as Awaited<ReturnType<typeof getAdminEventById>>)
     vi.mocked(getProfilesWithExtraDataById).mockResolvedValue({

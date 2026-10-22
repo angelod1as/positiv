@@ -47,30 +47,30 @@ describe("Event navigation loader", () => {
     mockFindVisibleEvent.mockResolvedValue(undefined)
 
     const args = {
-      request: new Request("http://localhost/dashboard/non-existent-id"),
-      params: { id: "non-existent-id" },
+      request: new Request("http://localhost/dashboard/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c"),
+      params: { id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" },
     } as Route.LoaderArgs
 
     await loader(args)
 
-    expect(mockFindVisibleEvent).toHaveBeenCalledWith("non-existent-id")
+    expect(mockFindVisibleEvent).toHaveBeenCalledWith("3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c")
     expect(mockRedirect).toHaveBeenCalledWith("/dashboard")
   })
 
   it("redirects to the rules page for a visible event", async () => {
     mockFindVisibleEvent.mockResolvedValue({
-      id: "closed-event-id",
+      id: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",
       event_status: "Registration Closed",
     })
 
     const args = {
-      request: new Request("http://localhost/dashboard/closed-event-id"),
-      params: { id: "closed-event-id" },
+      request: new Request("http://localhost/dashboard/7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f"),
+      params: { id: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f" },
     } as Route.LoaderArgs
 
     await loader(args)
 
-    expect(mockRedirect).toHaveBeenCalledWith("/dashboard/closed-event-id/regras")
+    expect(mockRedirect).toHaveBeenCalledWith("/dashboard/7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f/regras")
   })
 
   it("requires an authenticated user before looking the event up", async () => {
@@ -78,8 +78,8 @@ describe("Event navigation loader", () => {
     mockGetUserContext.mockRejectedValue(loginRedirect)
 
     const args = {
-      request: new Request("http://localhost/dashboard/any-event"),
-      params: { id: "any-event" },
+      request: new Request("http://localhost/dashboard/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d"),
+      params: { id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d" },
     } as Route.LoaderArgs
 
     await expect(loader(args)).rejects.toBe(loginRedirect)

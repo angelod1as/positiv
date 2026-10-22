@@ -11,9 +11,11 @@ vi.mock("~/business/admin/admin.server", () => ({
   getAdminContext,
 }))
 
-const context = { currentProfile: { id: "profile-1" } }
+const context = {
+  currentProfile: { id: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f" },
+}
 
-const post = (body: string, id = "event-1") =>
+const post = (body: string, id = "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c") =>
   action({
     request: new Request(`http://localhost/api/admin/event-status/${id}`, {
       method: "POST",
@@ -41,7 +43,7 @@ describe("event status commit endpoint", () => {
     expect(await response.json()).toEqual({ ok: true })
     expect(updateEventStatus).toHaveBeenCalledWith(
       { event_status: "Completed" },
-      { ...context, eventId: "event-1" },
+      { ...context, eventId: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" },
     )
   })
 
