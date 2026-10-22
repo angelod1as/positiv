@@ -18,13 +18,16 @@ const { deleteAsaasPayment, logger } = vi.hoisted(() => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
-vi.mock("~/business/payment/provider/asaas/asaas-client.server", async (importOriginal) => {
-  const original =
-    await importOriginal<
-      typeof import("~/business/payment/provider/asaas/asaas-client.server")
-    >()
-  return { ...original, deleteAsaasPayment }
-})
+vi.mock(
+  "~/business/payment/provider/asaas/asaas-client.server",
+  async (importOriginal) => {
+    const original =
+      await importOriginal<
+        typeof import("~/business/payment/provider/asaas/asaas-client.server")
+      >()
+    return { ...original, deleteAsaasPayment }
+  },
+)
 
 vi.mock("~/lib/logger/logger.server", () => ({
   logger: { ...logger, child: () => logger },
@@ -142,16 +145,49 @@ describe("cancelApplicationToEvent", () => {
     expect(deleteAsaasPayment).toHaveBeenCalledWith(asaasPaymentId)
   })
 
-  it("leaves a paid charge alone -- a refund is a separate decision", async () => {
+  // A paid participant cancels by talking to the team, so the money is handled
+  // in the same conversation.
+  it("refuses to withdraw a paid application and leaves it untouched", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
       amount: 22000,
       base_amount: 22000,
     })
 
-    await cancelApplicationToEvent({ eventId, profileId })
+    const result = await cancelApplicationToEvent({
+      eventId,
+      profileId,
+      reason: "Fiquei doente",
+    })
 
+    expect(result.success).toBe(false)
+    expect(
+      await kysely
+        .selectFrom("event_participants")
+        .select(["is_user_applied", "cancellation_date", "cancellation_reason"])
+        .where("id", "=", participantId)
+        .executeTakeFirstOrThrow(),
+    ).toEqual({
+      is_user_applied: true,
+      cancellation_date: null,
+      cancellation_reason: null,
+    })
     expect(await statusOf(payment.id)).toBe("paid")
+  })
+
+  it("withdraws an application whose payment was fully refunded", async () => {
+    await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      status: "refunded",
+      amount: 22000,
+      base_amount: 22000,
+      refund_amount: 22000,
+      refunded_at: new Date().toISOString(),
+    })
+
+    const result = await cancelApplicationToEvent({ eventId, profileId })
+
+    expect(result.success).toBe(true)
   })
 
   it("withdraws the application even when Asaas refuses the delete", async () => {
@@ -304,7 +340,7 @@ describe("cancelApplicationToEvent", () => {
       expect(Number.isNaN(Date.parse(cancellation.cancelledAt))).toBe(false)
     })
 
-    it("flags a registration with a confirmed payment", async () => {
+    it("is not sent when a paid application is refused", async () => {
       await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
         amount: 22000,
@@ -313,9 +349,7 @@ describe("cancelApplicationToEvent", () => {
 
       await cancelApplicationToEvent({ eventId, profileId })
 
-      expect(notifyParticipantCancellation).toHaveBeenCalledWith(
-        expect.objectContaining({ hasPaid: true, reason: null }),
-      )
+      expect(notifyParticipantCancellation).not.toHaveBeenCalled()
     })
 
     it("does not flag a charge that was never paid", async () => {
@@ -336,7 +370,9 @@ describe("cancelApplicationToEvent", () => {
     })
 
     it("never fails the cancellation when the notice fails", async () => {
-      notifyParticipantCancellation.mockRejectedValue(new Error("telegram down"))
+      notifyParticipantCancellation.mockRejectedValue(
+        new Error("telegram down"),
+      )
 
       const result = await cancelApplicationToEvent({ eventId, profileId })
 
@@ -418,7 +454,7 @@ describe("cancelApplicationToEvent", () => {
       expect(await statusOf(payment.id)).toBe("cancelled")
     })
 
-    it("withdraws a paid application and leaves the charge for a refund", async () => {
+    it("refuses to withdraw a paid application", async () => {
       const payment = await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
         amount: 22000,
@@ -427,9 +463,9 @@ describe("cancelApplicationToEvent", () => {
 
       const result = await cancelApplicationToEvent({ eventId, profileId })
 
-      expect(result.success).toBe(true)
+      expect(result.success).toBe(false)
       expect(await appliedAndEventStatus()).toEqual({
-        is_user_applied: false,
+        is_user_applied: true,
         event_status: "Registration Closed",
       })
       expect(await statusOf(payment.id)).toBe("paid")
