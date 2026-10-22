@@ -18,16 +18,13 @@ const { deleteAsaasPayment, logger } = vi.hoisted(() => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
-vi.mock(
-  "~/business/payment/provider/asaas/asaas-client.server",
-  async (importOriginal) => {
-    const original =
-      await importOriginal<
-        typeof import("~/business/payment/provider/asaas/asaas-client.server")
-      >()
-    return { ...original, deleteAsaasPayment }
-  },
-)
+vi.mock("~/business/payment/provider/asaas/asaas-client.server", async (importOriginal) => {
+  const original =
+    await importOriginal<
+      typeof import("~/business/payment/provider/asaas/asaas-client.server")
+    >()
+  return { ...original, deleteAsaasPayment }
+})
 
 vi.mock("~/lib/logger/logger.server", () => ({
   logger: { ...logger, child: () => logger },
@@ -145,8 +142,6 @@ describe("cancelApplicationToEvent", () => {
     expect(deleteAsaasPayment).toHaveBeenCalledWith(asaasPaymentId)
   })
 
-  // A paid participant cancels by talking to the team, so the money is handled
-  // in the same conversation.
   it("refuses to withdraw a paid application and leaves it untouched", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
@@ -370,9 +365,7 @@ describe("cancelApplicationToEvent", () => {
     })
 
     it("never fails the cancellation when the notice fails", async () => {
-      notifyParticipantCancellation.mockRejectedValue(
-        new Error("telegram down"),
-      )
+      notifyParticipantCancellation.mockRejectedValue(new Error("telegram down"))
 
       const result = await cancelApplicationToEvent({ eventId, profileId })
 
