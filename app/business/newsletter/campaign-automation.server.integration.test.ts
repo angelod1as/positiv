@@ -11,6 +11,25 @@ import {
 } from "./campaign-automation.server"
 import * as campaignCreator from "./create-event-opening-campaign.server"
 
+// The code refuses to run without Listmonk credentials before it reaches the
+// fetch these tests stub, so pin fake ones: the suite must pass with no .env
+// and must never reach a real Listmonk. A real Supabase is on the other end, so
+// ENV cannot be replaced wholesale -- that would strip the connection settings.
+vi.mock("varlock/env", async (importOriginal) => {
+  const original = await importOriginal<{ ENV: Record<string, unknown> }>()
+  const listmonk: Record<string, string> = {
+    LISTMONK_API_URL: "https://listmonk.invalid",
+    LISTMONK_API_USERNAME: "integration-test",
+    LISTMONK_API_PASSWORD: "integration-test",
+  }
+  return {
+    ENV: new Proxy(original.ENV, {
+      get: (target, key: string) =>
+        key in listmonk ? listmonk[key] : Reflect.get(target, key),
+    }),
+  }
+})
+
 describe("Campaign Automation - Integration Tests", () => {
   const { tracker, kysely: db } = setupIntegrationTest()
 

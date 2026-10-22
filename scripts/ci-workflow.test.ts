@@ -24,6 +24,18 @@ function jobBlock(name: string): string {
   return nextJob === -1 ? rest : rest.slice(0, nextJob + 1)
 }
 
+function stepBlock(jobName: string, stepName: string): string {
+  const step = jobBlock(jobName).match(
+    new RegExp(`- name: ${stepName}\\n((?: {8}.+\\n)+)`),
+  )?.[1]
+
+  if (!step) {
+    throw new Error(`no body found for step "${stepName}" in job "${jobName}"`)
+  }
+
+  return step
+}
+
 function runCommand(stepName: string): string {
   const step = workflow.match(
     new RegExp(`- name: ${stepName}\\n(?: +[a-z-]+:.*\\n)*? +run: (.+)`),
@@ -55,6 +67,44 @@ describe("deploy-and-test workflow", () => {
     const key = jobBlock("e2e-test").match(/key: (.+)/)?.[1] ?? ""
 
     expect(key).toContain("steps.playwright-version.outputs.version")
+  })
+
+  it("runs the integration suite in the e2e job, once the database is up and before playwright", () => {
+    const e2e = jobBlock("e2e-test")
+    const position = (step: string) => e2e.indexOf(`- name: ${step}\n`)
+    const steps = [
+      "Get Supabase local credentials",
+      "Install dependencies",
+      "Run integration tests",
+      "Run E2E tests",
+    ]
+
+    for (const step of steps) {
+      expect(position(step), `step "${step}" not found`).toBeGreaterThanOrEqual(0)
+    }
+    expect(runCommand("Run integration tests")).toBe("pnpm test:integration")
+    expect(position("Run integration tests")).toBeGreaterThan(position("Get Supabase local credentials"))
+    expect(position("Run integration tests")).toBeGreaterThan(position("Install dependencies"))
+    expect(position("Run integration tests")).toBeLessThan(position("Run E2E tests"))
+  })
+
+  it("lets a red integration suite fail the job", () => {
+    const step = stepBlock("e2e-test", "Run integration tests")
+
+    expect(step).not.toContain("continue-on-error")
+    expect(step).toContain("SUPABASE_CONNECT_URL: ${{ steps.supabase-creds.outputs.db_url }}")
+  })
+
+  it("gives the integration suite the APP_URL a developer's .env supplies", () => {
+    const step = stepBlock("e2e-test", "Run integration tests")
+
+    expect(step).toMatch(/APP_URL: http:\/\/localhost:\d+/)
+  })
+
+  it("never hands the integration suite Listmonk credentials", () => {
+    const step = stepBlock("e2e-test", "Run integration tests")
+
+    expect(step).not.toContain("LISTMONK")
   })
 
   it("runs e2e alongside the other checks rather than queued behind them", () => {

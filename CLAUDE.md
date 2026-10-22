@@ -260,16 +260,23 @@ explicit yes.
 4. Write a detailed plan, in baby steps
 5. **Wait for approval.** Do not start implementing without it.
 6. Implement following TDD (red-green-refactor)
-7. Run all tests and lint
+7. Run lint and the unit tests, plus `pnpm test:integration` or
+   `pnpm test:e2e` only when the change reaches them (see the E2E section).
+   The pre-push hook runs lint and the changed unit tests; it never takes
+   the database lock
 8. **Open the PR as soon as the work is done** — not a gate, a duty. Once the
    code is written and local tests and lint are green, open it without asking.
-   The PR runs an idempotent E2E suite in CI, more reliable than the local run,
-   so opening the PR is how the work gets its trustworthy check.
+   The PR runs the integration and an idempotent E2E suite in CI, more
+   reliable than a local run, so opening the PR is how the work gets its
+   trustworthy check.
 
 ## Definition of Done
 
 - ⁠A task is not done if the linter is not passing for the whole project
-- ⁠A task is not done if the tests are not green for the whole project
+- ⁠A task is not done if the tests are not green for the whole project — unit
+  and lint locally, integration and E2E in the PR's CI. That CI run is the
+  merge gate for the database suites: running them less often locally never
+  means skipping them
 - ⁠A task is not done if it has new behavior without tests to ensure the new behavior
 
 ## Commit Guidelines
@@ -359,9 +366,17 @@ run at a time an exclusive turn; a second run blocks for up to 30 minutes and
 then fails. E2E is the worst offender — it takes ~13 minutes and holds the
 database and a port for all of it.
 
-1. **Run E2E once, as the last step.** Code written, unit and integration
-   tests green, lint green — then E2E. Never as a mid-task check, never a
-   second time "to be sure".
+1. **Run the database suites locally only when the change reaches them.**
+   The PR's CI runs both on every push, and that run is the check. Locally:
+   - `pnpm test:e2e` only when the change touches `e2e/`.
+   - `pnpm test:integration` only when the change touches a migration, an
+     integration test or server code that reaches the database — anything
+     that queries through Kysely or supabase-js.
+   - Otherwise neither — open the PR and let CI run them.
+
+   When you do run E2E, run it once, as the last step: code written, unit
+   tests and lint green, integration green if it applies. Never as a
+   mid-task check, never a second time "to be sure".
 2. **Check the lock before starting**:
 
    ```bash

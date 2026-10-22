@@ -453,7 +453,8 @@ describe("payment email outbox", () => {
       const stealClaim = async () => {
         await kysely
           .updateTable("payment_emails")
-          .set({ claimed_at: new Date().toISOString() })
+          // Later than the claim, which can be taken in this same millisecond.
+          .set({ claimed_at: new Date(Date.now() + 60_000).toISOString() })
           .where("id", "=", id)
           .execute()
         throw new Error("smtp timed out")
@@ -478,7 +479,8 @@ describe("payment email outbox", () => {
       sendPaymentConfirmedEmail.mockImplementation(async () => {
         await kysely
           .updateTable("payment_emails")
-          .set({ claimed_at: new Date().toISOString() })
+          // Later than the claim, which can be taken in this same millisecond.
+          .set({ claimed_at: new Date(Date.now() + 60_000).toISOString() })
           .where("id", "=", id)
           .execute()
         return { success: true }
@@ -502,7 +504,8 @@ describe("payment email outbox", () => {
       sendPaymentConfirmedEmail.mockImplementationOnce(async () => {
         await kysely
           .updateTable("payment_emails")
-          .set({ claimed_at: new Date().toISOString() })
+          // Later than the claim, which can be taken in this same millisecond.
+          .set({ claimed_at: new Date(Date.now() + 60_000).toISOString() })
           .where("id", "=", id)
           .execute()
         return { success: true }
