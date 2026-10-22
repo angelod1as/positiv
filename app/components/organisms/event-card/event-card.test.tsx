@@ -32,14 +32,20 @@ vi.mock("./event-card-footer", () => ({
   EventCardFooter: ({
     isAdmin,
     eventId,
+    eventTitle,
+    has_paid,
   }: {
     isAdmin?: boolean
     eventId: string
+    eventTitle?: string
+    has_paid?: boolean
   }) => (
     <div
       data-testid="event-card-footer"
       data-is-admin={isAdmin}
       data-event-id={eventId}
+      data-event-title={eventTitle}
+      data-has-paid={has_paid}
     />
   ),
 }))
@@ -92,6 +98,21 @@ describe("EventCard", () => {
 
     const footer = getByTestId("event-card-footer")
     expect(footer).toHaveAttribute("data-event-id", "test-event-id")
+  })
+
+  // The footer swaps the cancel button for WhatsApp once paid, and names the
+  // event in the message.
+  it("should pass whether the participant paid, and the event title", () => {
+    const { getByTestId } = render(
+      <EventCard
+        event={{ ...mockEvent, is_applied: true, has_paid: true }}
+        data-testid="test-card"
+      />,
+    )
+
+    const footer = getByTestId("event-card-footer")
+    expect(footer).toHaveAttribute("data-has-paid", "true")
+    expect(footer).toHaveAttribute("data-event-title", "Test Event")
   })
 
   it("should not badge a legacy BDSM event", () => {

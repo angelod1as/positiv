@@ -8,6 +8,7 @@ import { Label } from "~/components/ui/label"
 import { TextArea } from "~/components/ui/textarea"
 import { MAX_CANCELLATION_REASON_LENGTH } from "~/business/participant/cancellation-reason-schema"
 import { eventCardCopy } from "~/copy/events"
+import { POSITIV_WHATSAPP } from "~/lib/constants/constants"
 
 import { checkEventStatus } from "~/lib/helpers/check-event-status"
 import { useAnalytics } from "~/lib/hooks/use-analytics"
@@ -32,6 +33,9 @@ type EventCardFooterProps = {
   is_invited?: boolean
   /** The charge this person still owes for this event, if there is one. */
   active_payment_id?: string | null
+  /** Whether Positiv holds this person's money for this event. */
+  has_paid?: boolean
+  eventTitle?: string | null
   event_status: EventStatus
   googleLink: string | undefined
   eventId: string
@@ -48,6 +52,8 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
   is_applied,
   is_invited,
   active_payment_id,
+  has_paid,
+  eventTitle,
   event_status,
   // googleLink,
   eventId,
@@ -157,39 +163,56 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
           </DialogContent>
         </Dialog> */}
 
-        <fetcher.Form method="post">
-          <ConfirmDialog
-            title={eventCardCopy.cancel.title}
-            description={
-              <div className="flex flex-col gap-4">
-                <p>{eventCardCopy.cancel.description}</p>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor={reasonId}>
-                    {eventCardCopy.cancel.reasonLabel}
-                  </Label>
-                  <TextArea
-                    id={reasonId}
-                    name="reason"
-                    maxLength={MAX_CANCELLATION_REASON_LENGTH}
-                    placeholder={eventCardCopy.cancel.reasonPlaceholder}
-                    value={cancellationReason}
-                    onChange={(event) =>
-                      setCancellationReason(event.target.value)
-                    }
-                  />
+        {/* A paid participant cancels with the team, who settle the refund in
+            the same conversation. The server refuses it too. */}
+        {has_paid ? (
+          <div className="flex flex-col gap-2 w-full">
+            <p className="text-sm text-muted-foreground">
+              {eventCardCopy.paidCancel.hint}
+            </p>
+            <Button
+              variant="outline"
+              to={`https://wa.me/${POSITIV_WHATSAPP}?text=${encodeURIComponent(eventCardCopy.paidCancel.whatsappMessage(eventTitle ?? ""))}`}
+              linkProps={{ target: "_blank", rel: "noopener noreferrer" }}
+            >
+              {eventCardCopy.paidCancel.trigger}
+            </Button>
+          </div>
+        ) : (
+          <fetcher.Form method="post">
+            <ConfirmDialog
+              title={eventCardCopy.cancel.title}
+              description={
+                <div className="flex flex-col gap-4">
+                  <p>{eventCardCopy.cancel.description}</p>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor={reasonId}>
+                      {eventCardCopy.cancel.reasonLabel}
+                    </Label>
+                    <TextArea
+                      id={reasonId}
+                      name="reason"
+                      maxLength={MAX_CANCELLATION_REASON_LENGTH}
+                      placeholder={eventCardCopy.cancel.reasonPlaceholder}
+                      value={cancellationReason}
+                      onChange={(event) =>
+                        setCancellationReason(event.target.value)
+                      }
+                    />
+                  </div>
                 </div>
-              </div>
-            }
-            confirmLabel={eventCardCopy.cancel.confirmLabel}
-            cancelLabel={eventCardCopy.cancel.cancelLabel}
-            isLoading={fetcher.state !== "idle"}
-            onConfirm={handleConfirmCancel}
-          >
-            <ConfirmDialog.Trigger variant="destructive" className="w-full">
-              {eventCardCopy.cancel.trigger}
-            </ConfirmDialog.Trigger>
-          </ConfirmDialog>
-        </fetcher.Form>
+              }
+              confirmLabel={eventCardCopy.cancel.confirmLabel}
+              cancelLabel={eventCardCopy.cancel.cancelLabel}
+              isLoading={fetcher.state !== "idle"}
+              onConfirm={handleConfirmCancel}
+            >
+              <ConfirmDialog.Trigger variant="destructive" className="w-full">
+                {eventCardCopy.cancel.trigger}
+              </ConfirmDialog.Trigger>
+            </ConfirmDialog>
+          </fetcher.Form>
+        )}
       </div>
     )
   }
