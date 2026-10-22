@@ -9,6 +9,7 @@ import paths from "~/lib/paths"
 import type { ParticipantApplicationStatus } from "~types/database/entities.types"
 
 const TIME_ZONE = "America/Sao_Paulo"
+const TELEGRAM_TIMEOUT_MS = 5000
 
 export interface ParticipantCancellation {
   eventId: string
@@ -111,6 +112,7 @@ export async function notifyParticipantCancellation(
           text: buildMessage(cancellation),
           disable_web_page_preview: true,
         }),
+        signal: AbortSignal.timeout(TELEGRAM_TIMEOUT_MS),
       },
     )
 

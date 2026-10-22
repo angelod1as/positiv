@@ -219,6 +219,28 @@ describe("notifyParticipantCancellation", () => {
     expect(logger.error).toHaveBeenCalledTimes(1)
   })
 
+  it("gives up on a request that hangs, so the cancellation is not held open", async () => {
+    const timeout = vi
+      .spyOn(AbortSignal, "timeout")
+      .mockReturnValue(AbortSignal.abort(new Error("timed out")))
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        (_url: string, init: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            if (init.signal?.aborted) reject(init.signal.reason)
+            init.signal?.addEventListener("abort", () =>
+              reject(init.signal?.reason),
+            )
+          }),
+      ),
+    )
+
+    await expect((await loadNotifier())(cancellation)).resolves.toBeUndefined()
+    expect(timeout).toHaveBeenCalledWith(5000)
+    expect(logger.error).toHaveBeenCalledTimes(1)
+  })
+
   it("logs a message Telegram rejected, without the token", async () => {
     vi.stubGlobal(
       "fetch",
