@@ -90,6 +90,25 @@ describe("loadPaymentPage", () => {
     expect(result.chosen).toBeNull()
   })
 
+  // Truncated to the cent, the remainder on the last installment: what the card
+  // is actually charged.
+  it("quotes each installment the way the card will be charged", async () => {
+    const payment = await openCharge()
+
+    const result = await loadPaymentPage({
+      paymentId: payment.id,
+      profileId,
+      onlinePaymentsEnabled: true,
+      cardPaymentsEnabled: true,
+    })
+
+    expect(result.state).toBe("ready")
+    if (result.state !== "ready") return
+    expect(result.options.map((option) => option.perInstallment)).toEqual([
+      19800, 22000, 11000, 7333, 5500, 4400, 3666,
+    ])
+  })
+
   it("refuses someone else's charge", async () => {
     const payment = await openCharge()
 

@@ -52,6 +52,13 @@ export const asaasConnector: PaymentProvider = {
     }
   },
 
+  // Asaas takes a plan's total and an installment count, truncates each
+  // installment to the cent and charges the difference on the last one.
+  splitInstallments: (total, count) => {
+    const each = Math.floor(total / count)
+    return [...Array(count - 1).fill(each), total - each * (count - 1)]
+  },
+
   // Asaas answers a refusal with `deleted: false` and a 200, not an error.
   cancelCharge: (chargeId) => deleteAsaasPayment(chargeId),
 

@@ -3,9 +3,13 @@ import {
   buildPaymentOptions,
   type PaymentOption,
 } from "~/business/payment/pricing"
+import { asaasConnector } from "~/business/payment/provider/asaas/asaas-connector.server"
 import { paymentLinkMailTemplate } from "./payment-link-mail.template"
 
-const options = buildPaymentOptions(22000, { cardEnabled: true })
+const options = buildPaymentOptions(22000, {
+  cardEnabled: true,
+  splitInstallments: asaasConnector.splitInstallments,
+})
 
 const base = {
   displayName: "Ana",
@@ -40,7 +44,10 @@ describe("paymentLinkMailTemplate", () => {
     const html = textOf(
       paymentLinkMailTemplate({
         ...base,
-        options: buildPaymentOptions(22000, { cardEnabled: false }),
+        options: buildPaymentOptions(22000, {
+          cardEnabled: false,
+          splitInstallments: asaasConnector.splitInstallments,
+        }),
       }),
     )
 

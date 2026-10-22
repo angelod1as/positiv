@@ -96,11 +96,11 @@ test.describe('POS-577: flat prices, and refunds done in the Asaas dashboard', (
     await expect(pix).toHaveAccessibleDescription(/10% de desconto sobre R\$\s?220,00/)
     await expect(participantPage.getByRole('radio', { name: /^Cartão de crédito — à vista R\$\s?220,00$/ })).toBeVisible()
     await expect(
-      participantPage.getByRole('radio', { name: /^Cartão de crédito — 6x de R\$\s?36,66 R\$\s?220,00$/ }),
+      participantPage.getByRole('radio', { name: /^Cartão de crédito — 6x de R\$\s?36,66\* R\$\s?220,00$/ }),
     ).toBeVisible()
     await expect(participantPage.getByRole('radio')).toHaveCount(7)
 
-    await paymentPage.chooseOption(/^Cartão de crédito — 3x de R\$\s?73,33 R\$\s?220,00$/)
+    await paymentPage.chooseOption(/^Cartão de crédito — 3x de R\$\s?73,33\* R\$\s?220,00$/)
     await paymentPage.pay()
 
     // The app hands off to the invoice page Asaas gave it.

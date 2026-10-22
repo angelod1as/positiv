@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import { renderWithRouter } from "~/test/test-utils"
 import { buildPaymentOptions } from "~/business/payment/pricing"
+import { asaasConnector } from "~/business/payment/provider/asaas/asaas-connector.server"
 import { paymentsCopy } from "~/copy/payments"
 import PaymentPage from "./payment-page"
 import type { PaymentPageData } from "./payment-page.server"
@@ -29,7 +30,10 @@ vi.mock("react-router", async (importOriginal) => {
   }
 })
 
-const options = buildPaymentOptions(25000, { cardEnabled: true })
+const options = buildPaymentOptions(25000, {
+  cardEnabled: true,
+  splitInstallments: asaasConnector.splitInstallments,
+})
 
 // The page reads one prop of the many a route component is handed, and a test
 // that built the rest would be describing React Router, not this page.
@@ -70,7 +74,7 @@ describe("PaymentPage", () => {
     ).toHaveAccessibleDescription(/10% de desconto sobre R\$\s?250,00/)
 
     expect(
-      screen.getByRole("radio", { name: /^Cartão de crédito — 6x de R\$\s?41,66 R\$\s?250,00$/ }),
+      screen.getByRole("radio", { name: /^Cartão de crédito — 6x de R\$\s?41,66\* R\$\s?250,00$/ }),
     ).toHaveAccessibleDescription("")
     expect(screen.queryByText(/juros|última parcela/i)).not.toBeInTheDocument()
 
@@ -79,16 +83,30 @@ describe("PaymentPage", () => {
     ).toHaveAccessibleDescription("")
   })
 
+  it("warns that an installment may move by a cent at checkout", () => {
+    renderPage(ready)
+
+    expect(
+      screen.getByText(
+        "*O valor das parcelas pode variar em um centavo, para mais ou para menos, no site de pagamento.",
+      ),
+    ).toBeInTheDocument()
+  })
+
   it("offers Pix alone while card payments are off", () => {
     renderPage({
       ...ready,
-      options: buildPaymentOptions(25000, { cardEnabled: false }),
+      options: buildPaymentOptions(25000, {
+        cardEnabled: false,
+        splitInstallments: asaasConnector.splitInstallments,
+      }),
     })
 
     expect(screen.getAllByRole("radio")).toHaveLength(1)
     expect(
       screen.getByRole("radio", { name: /^Pix R\$\s?250,00$/ }),
     ).toHaveAccessibleDescription("")
+    expect(screen.queryByText(/valor das parcelas/)).not.toBeInTheDocument()
   })
 
   it("lists every option with its price and defaults to Pix", () => {

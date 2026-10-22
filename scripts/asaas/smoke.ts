@@ -19,10 +19,10 @@ import {
   findAsaasCustomerByCpf,
   reaisToCents,
 } from "../../app/business/payment/provider/asaas/asaas-client.server"
+import { asaasConnector } from "../../app/business/payment/provider/asaas/asaas-connector.server"
 import {
   buildPaymentOptions,
   type PaymentOption,
-  splitInstallments,
 } from "../../app/business/payment/pricing"
 import { WEBHOOK_NAME } from "./register-webhook"
 
@@ -135,7 +135,7 @@ async function run(option: PaymentOption, customerId: string, checkWebhooks: boo
   const charged = [...charges]
     .sort((a, b) => (a.installmentNumber ?? 0) - (b.installmentNumber ?? 0))
     .map((item) => reaisToCents(item.value))
-  const expected = splitInstallments(option.total, option.installmentCount ?? 1)
+  const expected = asaasConnector.splitInstallments(option.total, option.installmentCount ?? 1)
 
   return {
     option: option.id,
@@ -151,7 +151,10 @@ async function main() {
     throw new Error(`ASAAS_API_URL must point at the sandbox, got ${ENV.ASAAS_API_URL}`)
   }
 
-  const options = buildPaymentOptions(BASE, { cardEnabled: true }).filter(
+  const options = buildPaymentOptions(BASE, {
+    cardEnabled: true,
+    splitInstallments: asaasConnector.splitInstallments,
+  }).filter(
     (option) => option.id === "pix" || option.id === "card_6",
   )
 

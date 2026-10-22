@@ -129,6 +129,7 @@ export async function loadPaymentPage({
 
   const options = buildPaymentOptions(payment.base_amount, {
     cardEnabled: cardPaymentsEnabled,
+    splitInstallments: paymentProvider().splitInstallments,
   })
 
   return {

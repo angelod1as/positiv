@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { buildPaymentOptions } from "~/business/payment/pricing"
+import { asaasConnector } from "~/business/payment/provider/asaas/asaas-connector.server"
 import { formatPaymentLinkMail } from "./format-payment-link-mail"
 import { paymentLinkCopyFallback } from "./payment-link-mail-copy"
 import { loadPaymentLinkCopy } from "./payment-link-mail-copy.server"
@@ -28,7 +29,10 @@ const input = {
   eventEmoji: "🎉",
   paymentUrl: "https://www.positivparty.com/pagamento/abc",
   dueAt: "2026-09-01T12:00:00Z",
-  options: buildPaymentOptions(22000, { cardEnabled: true }),
+  options: buildPaymentOptions(22000, {
+    cardEnabled: true,
+    splitInstallments: asaasConnector.splitInstallments,
+  }),
 }
 
 beforeEach(() => {

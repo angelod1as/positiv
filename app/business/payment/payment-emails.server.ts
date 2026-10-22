@@ -7,7 +7,8 @@ import { appOrigin } from "~/lib/helpers/app-origin"
 import { paymentLogger as logger } from "./payment-logger.server"
 import paths from "~/lib/paths"
 import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
-import { buildPaymentOptions, splitInstallments } from "./pricing"
+import { paymentProvider } from "./payment-provider.server"
+import { buildPaymentOptions } from "./pricing"
 import type { PaymentOption, PaymentOptionId } from "./pricing"
 
 type CommittedRow = {
@@ -25,7 +26,10 @@ function committedOption(row: CommittedRow): PaymentOption[] | null {
   if (row.method !== "pix" && row.method !== "credit_card") return null
 
   const installmentCount = row.installment_count
-  const installments = splitInstallments(row.amount, installmentCount ?? 1)
+  const installments = paymentProvider().splitInstallments(
+    row.amount,
+    installmentCount ?? 1,
+  )
   return [
     {
       id: installmentCount ? (`card_${installmentCount}` as PaymentOptionId) : "pix",
@@ -99,6 +103,7 @@ export async function sendPaymentLinkEmail({
       committed ??
       buildPaymentOptions(payment.base_amount, {
         cardEnabled: await isCardPaymentsEnabled(),
+        splitInstallments: paymentProvider().splitInstallments,
       })
 
     mail = await formatPaymentLinkMail({

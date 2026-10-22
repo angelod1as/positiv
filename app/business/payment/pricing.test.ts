@@ -7,8 +7,10 @@ import {
   parsePaymentOptionId,
   PIX_DISCOUNT_PERCENT,
   pixPrice,
-  splitInstallments,
 } from "./pricing"
+import { asaasConnector } from "./provider/asaas/asaas-connector.server"
+
+const { splitInstallments } = asaasConnector
 
 describe("payment option ids", () => {
   it("lists pix and one card option per installment count", () => {
@@ -36,7 +38,10 @@ describe("payment option ids", () => {
 
 describe("buildPaymentOptions", () => {
   describe("with card payments on", () => {
-    const options = buildPaymentOptions(25000, { cardEnabled: true })
+    const options = buildPaymentOptions(25000, {
+      cardEnabled: true,
+      splitInstallments,
+    })
 
     it("returns pix first, then card 1x..6x", () => {
       expect(options.map((option) => option.id)).toEqual(PAYMENT_OPTION_IDS)
@@ -71,11 +76,29 @@ describe("buildPaymentOptions", () => {
         perInstallment: 4166,
       })
     })
+
+    it("takes each installment from the split it is given", () => {
+      const split = (total: number, count: number) => [
+        total - 1,
+        ...Array(count - 1).fill(1),
+      ]
+      const card = buildPaymentOptions(25000, {
+        cardEnabled: true,
+        splitInstallments: split,
+      })[6]
+
+      expect(card).toMatchObject({ perInstallment: 24999, total: 25000 })
+    })
   })
 
   describe("with card payments off", () => {
     it("offers Pix alone, at the full event price", () => {
-      expect(buildPaymentOptions(25000, { cardEnabled: false })).toEqual([
+      expect(
+        buildPaymentOptions(25000, {
+          cardEnabled: false,
+          splitInstallments,
+        }),
+      ).toEqual([
         {
           id: "pix",
           method: "pix",
@@ -90,13 +113,19 @@ describe("buildPaymentOptions", () => {
 
 describe("findPaymentOption", () => {
   it("returns the option for an id and null for an unknown one", () => {
-    const options = buildPaymentOptions(22000, { cardEnabled: true })
+    const options = buildPaymentOptions(22000, {
+      cardEnabled: true,
+      splitInstallments,
+    })
     expect(findPaymentOption(options, "card_2")?.installmentCount).toBe(2)
     expect(findPaymentOption(options, "card_9")).toBeNull()
   })
 
   it("finds no card option while card payments are off", () => {
-    const options = buildPaymentOptions(22000, { cardEnabled: false })
+    const options = buildPaymentOptions(22000, {
+      cardEnabled: false,
+      splitInstallments,
+    })
     expect(findPaymentOption(options, "card_1")).toBeNull()
     expect(findPaymentOption(options, "pix")?.total).toBe(22000)
   })
@@ -116,37 +145,5 @@ describe("pixPrice", () => {
 
   it("keeps a free spot free", () => {
     expect(pixPrice(0)).toBe(0)
-  })
-})
-
-describe("splitInstallments", () => {
-  it("charges a single installment as the whole total", () => {
-    expect(splitInstallments(22000, 1)).toEqual([22000])
-  })
-
-  it("splits evenly when the total divides", () => {
-    expect(splitInstallments(22000, 4)).toEqual([5500, 5500, 5500, 5500])
-  })
-
-  // Asaas truncates each installment and puts the difference on the last:
-  // R$ 350,00 in 12x is 11 × 29,16 + 29,24 in their own example.
-  it("puts the remainder on the last installment, the way Asaas does", () => {
-    expect(splitInstallments(25000, 6)).toEqual([
-      4166, 4166, 4166, 4166, 4166, 4170,
-    ])
-    expect(splitInstallments(35000, 12)).toEqual([
-      ...Array(11).fill(2916),
-      2924,
-    ])
-  })
-
-  it("always sums to the total", () => {
-    for (const total of [1, 999, 12345, 22000, 4645]) {
-      for (let n = 1; n <= MAX_INSTALLMENTS; n++) {
-        const installments = splitInstallments(total, n)
-        expect(installments).toHaveLength(n)
-        expect(installments.reduce((a, b) => a + b, 0)).toBe(total)
-      }
-    }
   })
 })

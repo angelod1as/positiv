@@ -5,6 +5,7 @@ import { paymentsCopy } from "~/copy/payments"
 import paths from "~/lib/paths"
 import { paymentLogger as logger } from "./payment-logger.server"
 import { renderPaymentMessage } from "./payment-message"
+import { paymentProvider } from "./payment-provider.server"
 import type { PaymentRow } from "./payment-totals.server"
 import { buildPaymentOptions } from "./pricing"
 
@@ -57,6 +58,7 @@ function paymentMessageValues(
 ) {
   const options = buildPaymentOptions(active.base_amount, {
     cardEnabled: cardPaymentsEnabled,
+    splitInstallments: paymentProvider().splitInstallments,
   })
 
   return {

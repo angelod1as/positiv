@@ -220,7 +220,8 @@ pnpm asaas:smoke
 It opens a PIX charge and a card 6x charge for R$ 250, confirms them, and prints
 each installment Asaas charged next to what the payment page shows. It exits
 non-zero when they differ: R$ 250 in 6x does not divide, so it checks that Asaas
-puts the remainder on the last installment, as `splitInstallments` assumes.
+puts the remainder on the last installment, as the Asaas connector's
+`splitInstallments` assumes.
 
 The tunnel and webhook from above are optional. With them in place the script
 also waits for each confirmation to reach `payment_webhook_events`, and fails if
