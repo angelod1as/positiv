@@ -12,6 +12,21 @@ import {
   action as paymentAction,
   loader as paymentLoader,
 } from "~/pages/payment/payment-page"
+import { action as eventDemographicsAction } from "~/pages/api/admin/event-demographics"
+import { action as eventStatusAction } from "~/pages/api/admin/event-status"
+import { loader as createEditEventLoader } from "~/pages/admin/events/create-edit-event"
+import {
+  action as viewEventAction,
+  loader as viewEventLoader,
+} from "~/pages/admin/events/view-event-page/view-event-page"
+import {
+  action as viewEventParticipantAction,
+  loader as viewEventParticipantLoader,
+} from "~/pages/admin/events/view-event-participant/view-event-participant"
+import {
+  action as viewProfileAction,
+  loader as viewProfileLoader,
+} from "~/pages/admin/participants/view-profile-page"
 import { loader as paymentThanksLoader } from "~/pages/payment/payment-thanks-page"
 
 const { dbAccess } = vi.hoisted(() => ({ dbAccess: vi.fn() }))
@@ -97,6 +112,51 @@ const cases: { route: string; handler: Handler; params: object }[] = [
     route: "loader /pagamento/:paymentId/obrigado",
     handler: paymentThanksLoader,
     params: { paymentId: NOT_A_UUID },
+  },
+  {
+    route: "loader /admin/eventos/:id",
+    handler: viewEventLoader,
+    params: { id: NOT_A_UUID },
+  },
+  {
+    route: "action /admin/eventos/:id",
+    handler: viewEventAction,
+    params: { id: NOT_A_UUID },
+  },
+  {
+    route: "loader /admin/eventos/novo/:id",
+    handler: createEditEventLoader,
+    params: { id: NOT_A_UUID },
+  },
+  {
+    route: "loader /admin/eventos/:eventId/participantes/:profileId",
+    handler: viewEventParticipantLoader,
+    params: { eventId: NOT_A_UUID, profileId: UUID },
+  },
+  {
+    route: "action /admin/eventos/:eventId/participantes/:profileId",
+    handler: viewEventParticipantAction,
+    params: { eventId: UUID, profileId: NOT_A_UUID },
+  },
+  {
+    route: "loader /admin/participantes/:profileId",
+    handler: viewProfileLoader,
+    params: { profileId: NOT_A_UUID },
+  },
+  {
+    route: "action /admin/participantes/:profileId",
+    handler: viewProfileAction,
+    params: { profileId: NOT_A_UUID },
+  },
+  {
+    route: "action /api/admin/event-status/:id",
+    handler: eventStatusAction,
+    params: { id: NOT_A_UUID },
+  },
+  {
+    route: "action /api/admin/event-demographics/:id",
+    handler: eventDemographicsAction,
+    params: { id: NOT_A_UUID },
   },
 ]
 

@@ -50,11 +50,11 @@ vi.mock("~/business/payment/payment-offer.server", () => ({
   resendPaymentOffer: vi.fn(),
 }))
 
-const params = { id: "event-1" }
+const params = { id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" }
 
 const runAction = (fields: Record<string, string>) =>
   action({
-    request: new Request("http://localhost/admin/eventos/event-1", {
+    request: new Request("http://localhost/admin/eventos/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams(fields).toString(),

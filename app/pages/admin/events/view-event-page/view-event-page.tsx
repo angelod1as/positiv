@@ -37,6 +37,7 @@ import { adminEventsCopy } from "~/copy/admin/events"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { appOrigin } from "~/lib/helpers/app-origin"
 import { logger } from "~/lib/logger/logger.server"
+import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
 import type { ComposableFetcherData } from "~types/database/entities.types"
 import type { Route } from "./+types/view-event-page"
@@ -48,6 +49,8 @@ const {
 
 /** ACTION */
 export async function action({ request, params }: Route.ActionArgs) {
+  assertUuidParams(params.id)
+
   const context = await getAdminContext(request, params)
 
   const formData = await request.formData()
@@ -114,6 +117,8 @@ async function loadParticipants(eventId: string) {
 
 /** LOADER */
 export async function loader({ params }: Route.LoaderArgs) {
+  assertUuidParams(params.id)
+
   const eventId = params.id
   if (!eventId) {
     throw await redirectWithError(

@@ -53,13 +53,13 @@ vi.mock("~/business/payment/payment-offer.server", () => ({
 }))
 
 const buildRequest = (fields: Record<string, string>) =>
-  new Request("http://localhost/admin/eventos/event-1/participantes/profile-1", {
+  new Request("http://localhost/admin/eventos/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/participantes/7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams(fields).toString(),
   })
 
-const params = { eventId: "event-1", profileId: "profile-1" }
+const params = { eventId: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c", profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f" }
 
 const runAction = (fields: Record<string, string>) =>
   action({ request: buildRequest(fields), params } as Parameters<
@@ -69,12 +69,12 @@ const runAction = (fields: Record<string, string>) =>
 const INTENTS = [
   {
     intent: "update-profile-approval-status",
-    fields: { profile_id: "profile-1", approved_to_attend: "approved" },
+    fields: { profile_id: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f", approved_to_attend: "approved" },
     mutation: updateProfileApprovalStatus,
   },
   {
     intent: "update-profile-admin-notes",
-    fields: { profile_id: "profile-1", admin_notes: "a note" },
+    fields: { profile_id: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f", admin_notes: "a note" },
     mutation: updateProfileAdminNotes,
   },
   {
