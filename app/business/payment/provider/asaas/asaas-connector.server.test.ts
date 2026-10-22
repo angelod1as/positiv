@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { MAX_INSTALLMENTS } from "~/business/payment/pricing"
 import { paymentsCopy } from "~/copy/payments"
 import {
   AsaasError,
@@ -297,7 +298,7 @@ describe("asaasConnector", () => {
 
     it("always sums to the total", () => {
       for (const total of [1, 999, 12345, 22000, 4645]) {
-        for (let n = 1; n <= 6; n++) {
+        for (let n = 1; n <= MAX_INSTALLMENTS; n++) {
           const installments = asaasConnector.splitInstallments(total, n)
           expect(installments).toHaveLength(n)
           expect(installments.reduce((a, b) => a + b, 0)).toBe(total)
