@@ -190,7 +190,7 @@ describe("BasicDataPage", () => {
       // account is the only thing that can say someone is an admin.
       draw({
         profile: null,
-        orphanedProfile: { ...filledProfile },
+        orphanedProfile: { ...filledProfile, permissions: ["admin.panel"] },
       })
 
       await save()
