@@ -74,13 +74,23 @@ describe("PaymentPage", () => {
     ).toHaveAccessibleDescription(/10% de desconto sobre R\$\s?250,00/)
 
     expect(
-      screen.getByRole("radio", { name: /^Cartão de crédito — 6x de R\$\s?41,66 R\$\s?250,00$/ }),
+      screen.getByRole("radio", { name: /^Cartão de crédito — 6x de R\$\s?41,66\* R\$\s?250,00$/ }),
     ).toHaveAccessibleDescription("")
     expect(screen.queryByText(/juros|última parcela/i)).not.toBeInTheDocument()
 
     expect(
       screen.getByRole("radio", { name: /^Cartão de crédito — à vista R\$\s?250,00$/ }),
     ).toHaveAccessibleDescription("")
+  })
+
+  it("warns that an installment may move by a cent at checkout", () => {
+    renderPage(ready)
+
+    expect(
+      screen.getByText(
+        "*O valor das parcelas pode variar em um centavo, para mais ou para menos, no site de pagamento.",
+      ),
+    ).toBeInTheDocument()
   })
 
   it("offers Pix alone while card payments are off", () => {
@@ -96,6 +106,7 @@ describe("PaymentPage", () => {
     expect(
       screen.getByRole("radio", { name: /^Pix R\$\s?250,00$/ }),
     ).toHaveAccessibleDescription("")
+    expect(screen.queryByText(/valor das parcelas/)).not.toBeInTheDocument()
   })
 
   it("lists every option with its price and defaults to Pix", () => {

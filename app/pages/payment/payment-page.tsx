@@ -269,6 +269,11 @@ const Options = ({
             )
           })}
         </RadioGroup>
+        {data.options.some((option) => (option.installmentCount ?? 1) > 1) && (
+          <p className="text-muted-foreground text-sm">
+            {page.installmentsNote}
+          </p>
+        )}
         <Copy>{page.dueAt(formatDateTime(data.dueAt).full ?? "")}</Copy>
       </CardContent>
       <CardFooter className="pt-6">

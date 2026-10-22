@@ -24,7 +24,7 @@ export const paymentsCopy = {
     title: (option: PaymentOption) => {
       if (option.method === "pix") return "Pix"
       if (option.installmentCount === 1) return "Cartão de crédito — à vista"
-      return `Cartão de crédito — ${option.installmentCount}x de ${formatCurrency(option.perInstallment)}`
+      return `Cartão de crédito — ${option.installmentCount}x de ${formatCurrency(option.perInstallment)}*`
     },
     // Only a discounted Pix says anything more; a card's title already does.
     breakdown: (baseAmount: number, option: PaymentOption) =>
@@ -56,6 +56,9 @@ export const paymentsCopy = {
     priceIntro: (baseAmount: number) =>
       `O valor do evento é ${formatCurrency(baseAmount)}.`,
     pay: "Pagar",
+    // The footnote to the asterisk on a per-installment figure.
+    installmentsNote:
+      "*O valor das parcelas pode variar em um centavo, para mais ou para menos, no site de pagamento.",
     dueAt: (date: string) => `Este link vale até ${date}.`,
     paidTitle: "Pagamento confirmado",
     paidBody: (amount: string, date: string) =>

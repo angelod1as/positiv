@@ -61,8 +61,13 @@ describe("paymentsCopy.options.title", () => {
     expect(paymentsCopy.options.title(cardOnce)).toBe(
       "Cartão de crédito — à vista",
     )
+  })
+
+  // The provider may round each installment its own way, so the figure is
+  // flagged and the footnote says by how much it can move.
+  it("flags a per-installment figure with an asterisk", () => {
     expect(paymentsCopy.options.title(cardSixTimes)).toBe(
-      "Cartão de crédito — 6x de R$ 41,66",
+      "Cartão de crédito — 6x de R$ 41,66*",
     )
   })
 })
