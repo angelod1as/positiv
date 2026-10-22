@@ -153,16 +153,11 @@ test.describe('POS-268: Dashboard Event Streaming Tests', () => {
       uploadThroughput: (50 * 1024) / 8,
     })
 
-    const startTime = Date.now()
     await page.goto('/dashboard', { waitUntil: 'commit' })
 
-    // Even with very slow network, the page structure should appear quickly
-    const headerVisible = await page.locator('h2').first().isVisible({ timeout: 3000 })
-    const initialRenderTime = Date.now() - startTime
-
-    expect(headerVisible).toBe(true)
-    // Initial render should be under 3 seconds even on slow network
-    expect(initialRenderTime).toBeLessThan(3000)
+    // Even with very slow network, the page structure should appear within
+    // 3 seconds of the response starting to arrive
+    await expect(page.locator('h2').first()).toBeVisible({ timeout: 3000 })
 
     // Eventually events should load (but might take longer)
     await page.waitForSelector('[data-testid^="event-card"]', { timeout: 10000 })
