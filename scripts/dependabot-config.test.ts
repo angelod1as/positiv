@@ -54,6 +54,14 @@ describe("Dependabot config", () => {
     expect(npm).toMatch(/applies-to: security-updates/)
   })
 
+  // Ungrouped majors, one pull request each, could fill every open slot and
+  // starve the minor and patch group.
+  it("batches npm major updates into a group of their own", () => {
+    expect(updateBlock("npm")).toMatch(
+      /applies-to: version-updates\n\s+update-types:\n\s+- major\n/,
+    )
+  })
+
   it("keeps the Docker base image on Node 24 until a major move is chosen", () => {
     expect(updateBlock("docker")).toMatch(
       /- dependency-name: node\n\s+update-types:\n\s+- version-update:semver-major/,

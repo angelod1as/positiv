@@ -15,6 +15,10 @@ updates:
         update-types:
           - minor
           - patch
+      npm-major:
+        applies-to: version-updates
+        update-types:
+          - major
       npm-security:
         applies-to: security-updates
         patterns:
