@@ -142,16 +142,47 @@ describe("cancelApplicationToEvent", () => {
     expect(deleteAsaasPayment).toHaveBeenCalledWith(asaasPaymentId)
   })
 
-  it("leaves a paid charge alone -- a refund is a separate decision", async () => {
+  it("refuses to withdraw a paid application and leaves it untouched", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
       amount: 22000,
       base_amount: 22000,
     })
 
-    await cancelApplicationToEvent({ eventId, profileId })
+    const result = await cancelApplicationToEvent({
+      eventId,
+      profileId,
+      reason: "Fiquei doente",
+    })
 
+    expect(result.success).toBe(false)
+    expect(
+      await kysely
+        .selectFrom("event_participants")
+        .select(["is_user_applied", "cancellation_date", "cancellation_reason"])
+        .where("id", "=", participantId)
+        .executeTakeFirstOrThrow(),
+    ).toEqual({
+      is_user_applied: true,
+      cancellation_date: null,
+      cancellation_reason: null,
+    })
     expect(await statusOf(payment.id)).toBe("paid")
+  })
+
+  it("withdraws an application whose payment was fully refunded", async () => {
+    await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      status: "refunded",
+      amount: 22000,
+      base_amount: 22000,
+      refund_amount: 22000,
+      refunded_at: new Date().toISOString(),
+    })
+
+    const result = await cancelApplicationToEvent({ eventId, profileId })
+
+    expect(result.success).toBe(true)
   })
 
   it("withdraws the application even when Asaas refuses the delete", async () => {
@@ -299,12 +330,11 @@ describe("cancelApplicationToEvent", () => {
         phone: "11987654321",
         applicationStatus: "talking",
         reason: "Fiquei doente",
-        hasPaid: false,
       })
       expect(Number.isNaN(Date.parse(cancellation.cancelledAt))).toBe(false)
     })
 
-    it("flags a registration with a confirmed payment", async () => {
+    it("is not sent when a paid application is refused", async () => {
       await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
         amount: 22000,
@@ -313,12 +343,10 @@ describe("cancelApplicationToEvent", () => {
 
       await cancelApplicationToEvent({ eventId, profileId })
 
-      expect(notifyParticipantCancellation).toHaveBeenCalledWith(
-        expect.objectContaining({ hasPaid: true, reason: null }),
-      )
+      expect(notifyParticipantCancellation).not.toHaveBeenCalled()
     })
 
-    it("does not flag a charge that was never paid", async () => {
+    it("is sent when the open charge was never paid", async () => {
       await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
         kind: "online",
@@ -330,9 +358,7 @@ describe("cancelApplicationToEvent", () => {
 
       await cancelApplicationToEvent({ eventId, profileId })
 
-      expect(notifyParticipantCancellation).toHaveBeenCalledWith(
-        expect.objectContaining({ hasPaid: false }),
-      )
+      expect(notifyParticipantCancellation).toHaveBeenCalledTimes(1)
     })
 
     it("never fails the cancellation when the notice fails", async () => {
@@ -354,8 +380,9 @@ describe("cancelApplicationToEvent", () => {
       await cancelApplicationToEvent({ eventId, profileId })
       notifyParticipantCancellation.mockClear()
 
-      await cancelApplicationToEvent({ eventId, profileId })
+      const result = await cancelApplicationToEvent({ eventId, profileId })
 
+      expect(result.success).toBe(true)
       expect(notifyParticipantCancellation).not.toHaveBeenCalled()
     })
 
@@ -418,7 +445,7 @@ describe("cancelApplicationToEvent", () => {
       expect(await statusOf(payment.id)).toBe("cancelled")
     })
 
-    it("withdraws a paid application and leaves the charge for a refund", async () => {
+    it("refuses to withdraw a paid application", async () => {
       const payment = await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
         amount: 22000,
@@ -427,9 +454,9 @@ describe("cancelApplicationToEvent", () => {
 
       const result = await cancelApplicationToEvent({ eventId, profileId })
 
-      expect(result.success).toBe(true)
+      expect(result.success).toBe(false)
       expect(await appliedAndEventStatus()).toEqual({
-        is_user_applied: false,
+        is_user_applied: true,
         event_status: "Registration Closed",
       })
       expect(await statusOf(payment.id)).toBe("paid")

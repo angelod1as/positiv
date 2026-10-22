@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest"
 import userEvent from "@testing-library/user-event"
 import { render, screen } from "~/test/test-utils"
 import { eventCardCopy } from "~/copy/events"
+import { POSITIV_WHATSAPP } from "~/lib/constants/constants"
 import { EventCardFooter } from "./event-card-footer"
 
 const { mockSubmit, mockTrack } = vi.hoisted(() => ({
@@ -317,6 +318,70 @@ describe("EventCardFooter", () => {
 
       expect(
         screen.queryByRole("link", { name: eventCardCopy.payment.pay }),
+      ).not.toBeInTheDocument()
+    })
+  })
+
+  describe("cancelling once paid", () => {
+    const { cancel, paidCancel } = eventCardCopy
+
+    const renderPaid = (
+      props: Partial<React.ComponentProps<typeof EventCardFooter>> = {},
+    ) =>
+      render(
+        <EventCardFooter
+          eventId="test-event-id"
+          eventTitle="Edição BDSM"
+          event_status="Registration Open"
+          googleLink=""
+          is_applied={true}
+          has_paid={true}
+          dataTestId="test-footer"
+          {...props}
+        />,
+      )
+
+    it.each(["Registration Open", "Registration Closed"] as const)(
+      "sends the participant to WhatsApp instead of cancelling (%s)",
+      (event_status) => {
+        renderPaid({ event_status })
+
+        const whatsapp = screen.getByRole("link", { name: paidCancel.trigger })
+        expect(whatsapp).toHaveAttribute(
+          "href",
+          `https://wa.me/${POSITIV_WHATSAPP}?text=${encodeURIComponent(
+            paidCancel.whatsappMessage("Edição BDSM"),
+          )}`,
+        )
+        expect(whatsapp).toHaveAttribute("target", "_blank")
+        expect(screen.getByText(paidCancel.hint)).toBeInTheDocument()
+        expect(
+          screen.queryByRole("button", { name: cancel.trigger }),
+        ).not.toBeInTheDocument()
+      },
+    )
+
+    it("leaves the event out of the message when it has no title", () => {
+      renderPaid({ eventTitle: null })
+
+      expect(
+        screen.getByRole("link", { name: paidCancel.trigger }),
+      ).toHaveAttribute(
+        "href",
+        `https://wa.me/${POSITIV_WHATSAPP}?text=${encodeURIComponent(
+          "Oi! Paguei minha inscrição em um evento e preciso cancelar.",
+        )}`,
+      )
+    })
+
+    it("keeps the cancel button for whoever has not paid", () => {
+      renderPaid({ has_paid: false, active_payment_id: "pay-1" })
+
+      expect(
+        screen.getByRole("button", { name: cancel.trigger }),
+      ).toBeInTheDocument()
+      expect(
+        screen.queryByRole("link", { name: paidCancel.trigger }),
       ).not.toBeInTheDocument()
     })
   })

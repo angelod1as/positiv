@@ -21,7 +21,6 @@ export interface ParticipantCancellation {
   applicationStatus: ParticipantApplicationStatus
   cancelledAt: string
   reason: string | null
-  hasPaid: boolean
 }
 
 export async function findParticipantCancellation(
@@ -31,11 +30,6 @@ export async function findParticipantCancellation(
     .selectFrom("event_participants as ep")
     .innerJoin("events as e", "e.id", "ep.event_id")
     .innerJoin("profiles as p", "p.id", "ep.profile_id")
-    .leftJoin(
-      "event_participant_payments as epp",
-      "epp.event_participant_id",
-      "ep.id",
-    )
     .select([
       "e.id as eventId",
       "e.title as eventTitle",
@@ -46,7 +40,6 @@ export async function findParticipantCancellation(
       "ep.application_status as applicationStatus",
       "ep.cancellation_date as cancelledAt",
       "ep.cancellation_reason as reason",
-      "epp.has_paid as hasPaid",
     ])
     .where("ep.id", "=", eventParticipantId)
     .executeTakeFirst()
@@ -58,7 +51,6 @@ export async function findParticipantCancellation(
     eventTitle: row.eventTitle ?? "",
     phone: row.phone === null ? null : String(row.phone),
     cancelledAt: row.cancelledAt,
-    hasPaid: row.hasPaid ?? false,
   }
 }
 
@@ -84,7 +76,6 @@ function buildMessage(cancellation: ParticipantCancellation): string {
     ),
     copy.cancelledAt(date, time),
     ...(cancellation.reason ? [copy.reason(cancellation.reason)] : []),
-    ...(cancellation.hasPaid ? [copy.paid] : []),
     "",
     `${ENV.APP_URL}${paths.admin.events.ADMIN_VIEW_EVENT(cancellation.eventId)}`,
   ]
