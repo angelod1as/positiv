@@ -330,7 +330,6 @@ describe("cancelApplicationToEvent", () => {
         phone: "11987654321",
         applicationStatus: "talking",
         reason: "Fiquei doente",
-        hasPaid: false,
       })
       expect(Number.isNaN(Date.parse(cancellation.cancelledAt))).toBe(false)
     })
@@ -347,7 +346,7 @@ describe("cancelApplicationToEvent", () => {
       expect(notifyParticipantCancellation).not.toHaveBeenCalled()
     })
 
-    it("does not flag a charge that was never paid", async () => {
+    it("is sent when the open charge was never paid", async () => {
       await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
         kind: "online",
@@ -359,9 +358,7 @@ describe("cancelApplicationToEvent", () => {
 
       await cancelApplicationToEvent({ eventId, profileId })
 
-      expect(notifyParticipantCancellation).toHaveBeenCalledWith(
-        expect.objectContaining({ hasPaid: false }),
-      )
+      expect(notifyParticipantCancellation).toHaveBeenCalledTimes(1)
     })
 
     it("never fails the cancellation when the notice fails", async () => {

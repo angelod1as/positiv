@@ -107,7 +107,6 @@ export const participantCancellationAlertCopy = {
   cancelledAt: (date: string, time: string) =>
     `Cancelada em: ${date} às ${time}`,
   reason: (reason: string) => `Motivo: ${reason}`,
-  paid: "💸 Pago — reembolso pendente no Asaas",
 } as const
 
 export const listmonkDiagnosticCopy = {

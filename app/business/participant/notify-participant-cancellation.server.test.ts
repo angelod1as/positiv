@@ -20,7 +20,6 @@ const cancellation = {
   applicationStatus: "talking" as const,
   cancelledAt: "2026-10-21T22:30:00.000Z",
   reason: null,
-  hasPaid: false,
 }
 
 const getSentMessage = (fetchMock: ReturnType<typeof vi.fn>) => {
@@ -150,30 +149,6 @@ describe("notifyParticipantCancellation", () => {
     )(cancellation)
 
     expect(getSentMessage(fetchMock).text).not.toContain("Motivo")
-  })
-
-  it("warns that a refund is pending when the registration was paid", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true })
-    vi.stubGlobal("fetch", fetchMock)
-
-    await (
-      await loadNotifier()
-    )({ ...cancellation, hasPaid: true })
-
-    expect(getSentMessage(fetchMock).text).toContain(
-      "Pago — reembolso pendente no Asaas",
-    )
-  })
-
-  it("says nothing about a refund when nothing was paid", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true })
-    vi.stubGlobal("fetch", fetchMock)
-
-    await (
-      await loadNotifier()
-    )(cancellation)
-
-    expect(getSentMessage(fetchMock).text).not.toContain("reembolso")
   })
 
   it("sends even with the technical alerts switched off", async () => {
