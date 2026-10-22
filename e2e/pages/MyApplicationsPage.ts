@@ -26,6 +26,7 @@ export class MyApplicationsPage extends BasePage {
   async goto(): Promise<void> {
     await this.page.goto('/dashboard')
     await this.page.waitForLoadState('networkidle')
+    await this.waitForHydration()
   }
 
   async getAppliedEvents(): Promise<Locator[]> {

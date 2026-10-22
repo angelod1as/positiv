@@ -24,6 +24,7 @@ export class AdminDashboardPage extends BasePage {
 
   async navigate(): Promise<void> {
     await this.page.goto("/admin")
+    await this.waitForHydration()
 
     // The dashboard streams its data in, and what says it arrived is the grid
     // having drawn something. The page's own text cannot say so: AG Grid keeps

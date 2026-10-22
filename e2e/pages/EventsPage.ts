@@ -22,6 +22,7 @@ export class EventsPage extends BasePage {
     // Check if we're already on dashboard
     if (!this.page.url().includes('/dashboard')) {
       await this.page.goto('/dashboard', { waitUntil: 'networkidle' })
+      await this.waitForHydration()
     }
     
     // Ensure page is fully loaded

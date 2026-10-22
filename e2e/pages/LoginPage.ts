@@ -46,6 +46,7 @@ export class LoginPage extends BasePage {
   async goto(): Promise<void> {
     await this.page.goto(this.url)
     await this.page.waitForLoadState('domcontentloaded')
+    await this.waitForHydration()
   }
   
   async login(email: string, password: string): Promise<void> {
