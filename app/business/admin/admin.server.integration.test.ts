@@ -1147,6 +1147,9 @@ describe("getProfilesWithExtraDataById - Event Count and Last Event - Integratio
       expect(participant).toBeDefined()
       expect(participant?.attended_events_count).toBe(1)
       expect(participant?.last_attended_event_title).toBe("Previous Event")
+      expect(new Date(participant?.last_attended_event_date ?? "").getTime()).toBe(
+        new Date(previousEvent.time_event_start ?? "").getTime()
+      )
       expect(participant?.last_attended_event_id).toBe(previousEvent.id)
     }
   })
@@ -1428,6 +1431,56 @@ describe("Computed fields: last_attended_events_count - Integration Tests", () =
     if (result.success) {
       const participant = result.data.find(p => p.profile_id === profile.id)
       // Current event excluded: only 1 completed event in pool, attended it
+      expect(participant?.last_attended_events_count).toBe(1)
+    }
+  })
+
+  it("should keep the current event from taking a slot in the last 6 pool (event-scoped)", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-last6-current-takes-no-slot@example.com",
+      full_name: "Test Last 6 Current Takes No Slot"
+    })
+
+    const previousEvents = []
+    for (let i = 0; i < 6; i++) {
+      previousEvents.push(
+        await createTestEvent(tracker, kysely, {
+          title: `Previous Event ${i}`,
+          event_status: "Completed",
+          time_event_start: new Date(Date.now() - (2 + i) * 24 * 60 * 60 * 1000).toISOString()
+        })
+      )
+    }
+
+    const currentEvent = await createTestEvent(tracker, kysely, {
+      title: "Current Newest Event",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    // The oldest of the six stays in the pool only while the current event
+    // does not take a slot in it
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: previousEvents[5].id,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: currentEvent.id,
+      is_user_applied: true,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    const result = await getProfilesWithExtraDataById({ eventId: currentEvent.id })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      const participant = result.data.find(p => p.profile_id === profile.id)
       expect(participant?.last_attended_events_count).toBe(1)
     }
   })
