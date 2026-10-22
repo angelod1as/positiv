@@ -37,7 +37,9 @@ describe("pre-push hook", () => {
 
   it("still refuses pushes from a protected branch", () => {
     expect(hook).toContain('PROTECTED_BRANCHES="^(master|main)"')
-    expect(hook).toContain("exit 1")
+    expect(hook).toMatch(
+      /if \[\[ "\$BRANCH" =~ \$PROTECTED_BRANCHES \]\]\nthen\n(?:.*\n)*? +exit 1\nfi/,
+    )
   })
 
   it("still checks for deleted TODOs", () => {

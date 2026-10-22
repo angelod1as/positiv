@@ -24,6 +24,18 @@ function jobBlock(name: string): string {
   return nextJob === -1 ? rest : rest.slice(0, nextJob + 1)
 }
 
+function stepBlock(jobName: string, stepName: string): string {
+  const step = jobBlock(jobName).match(
+    new RegExp(`- name: ${stepName}\\n((?: {8}.+\\n)+)`),
+  )?.[1]
+
+  if (!step) {
+    throw new Error(`no body found for step "${stepName}" in job "${jobName}"`)
+  }
+
+  return step
+}
+
 function runCommand(stepName: string): string {
   const step = workflow.match(
     new RegExp(`- name: ${stepName}\\n(?: +[a-z-]+:.*\\n)*? +run: (.+)`),
@@ -77,26 +89,20 @@ describe("deploy-and-test workflow", () => {
   })
 
   it("lets a red integration suite fail the job", () => {
-    const step = jobBlock("e2e-test").match(
-      /- name: Run integration tests\n((?: {8}.+\n)+)/,
-    )?.[1] ?? ""
+    const step = stepBlock("e2e-test", "Run integration tests")
 
     expect(step).not.toContain("continue-on-error")
     expect(step).toContain("SUPABASE_CONNECT_URL: ${{ steps.supabase-creds.outputs.db_url }}")
   })
 
   it("gives the integration suite the APP_URL a developer's .env supplies", () => {
-    const step = jobBlock("e2e-test").match(
-      /- name: Run integration tests\n((?: {8}.+\n)+)/,
-    )?.[1] ?? ""
+    const step = stepBlock("e2e-test", "Run integration tests")
 
     expect(step).toMatch(/APP_URL: http:\/\/localhost:\d+/)
   })
 
   it("never hands the integration suite Listmonk credentials", () => {
-    const step = jobBlock("e2e-test").match(
-      /- name: Run integration tests\n((?: {8}.+\n)+)/,
-    )?.[1] ?? ""
+    const step = stepBlock("e2e-test", "Run integration tests")
 
     expect(step).not.toContain("LISTMONK")
   })
