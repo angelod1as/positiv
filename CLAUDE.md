@@ -274,7 +274,9 @@ explicit yes.
 
 - ⁠A task is not done if the linter is not passing for the whole project
 - ⁠A task is not done if the tests are not green for the whole project — unit
-  and lint locally, integration and E2E in the PR's CI
+  and lint locally, integration and E2E in the PR's CI. That CI run is the
+  merge gate for the database suites: running them less often locally never
+  means skipping them
 - ⁠A task is not done if it has new behavior without tests to ensure the new behavior
 
 ## Commit Guidelines
