@@ -380,8 +380,9 @@ describe("cancelApplicationToEvent", () => {
       await cancelApplicationToEvent({ eventId, profileId })
       notifyParticipantCancellation.mockClear()
 
-      await cancelApplicationToEvent({ eventId, profileId })
+      const result = await cancelApplicationToEvent({ eventId, profileId })
 
+      expect(result.success).toBe(true)
       expect(notifyParticipantCancellation).not.toHaveBeenCalled()
     })
 
