@@ -30,7 +30,8 @@ lock, since it reads and writes the same database.
 Both suites run in CI on every pull request, and pushing never takes the lock.
 Run them locally only when the change reaches them — E2E when it touches
 `e2e/`, integration when it touches a migration, an integration test or server
-code that reaches the database. The lock is for those local runs.
+code that reaches the database (anything that queries through Kysely or
+supabase-js). The lock is for those local runs.
 
 **Always start the suite with `pnpm test:e2e`.** Calling `playwright test`
 directly skips the lock, and two suites at once corrupt each other's data.

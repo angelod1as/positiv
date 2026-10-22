@@ -368,7 +368,8 @@ database and a port for all of it.
    The PR's CI runs both on every push, and that run is the check. Locally:
    - `pnpm test:e2e` only when the change touches `e2e/`.
    - `pnpm test:integration` only when the change touches a migration, an
-     integration test or server code that reaches the database.
+     integration test or server code that reaches the database — anything
+     that queries through Kysely or supabase-js.
    - Otherwise neither — open the PR and let CI run them.
 
    When you do run E2E, run it once, as the last step: code written, unit
