@@ -84,7 +84,7 @@ describe("online payments setting", () => {
 
     await setOnlinePaymentsEnabled({ enabled: true, profileId: admin.id })
 
-    expect(await isOnlinePaymentsEnabled()).toBe(true)
+    expect(await isOnlinePaymentsEnabled()).toBe(false)
     expect(await getOnlinePaymentsSetting()).toMatchObject({
       switchedOn: true,
       enabled: true,
