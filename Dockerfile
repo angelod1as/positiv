@@ -1,16 +1,16 @@
-FROM node:24-alpine AS development-dependencies-env
+FROM node:24.22.1-alpine AS development-dependencies-env
 RUN corepack enable && corepack prepare pnpm@11.22.0 --activate
 COPY . /app
 WORKDIR /app
 RUN pnpm install --frozen-lockfile
 
-FROM node:24-alpine AS production-dependencies-env
+FROM node:24.22.1-alpine AS production-dependencies-env
 RUN corepack enable && corepack prepare pnpm@11.22.0 --activate
 COPY ./package.json pnpm-lock.yaml /app/
 WORKDIR /app
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 
-FROM node:24-alpine AS build-env
+FROM node:24.22.1-alpine AS build-env
 RUN corepack enable && corepack prepare pnpm@11.22.0 --activate
 
 # Public config is inlined into the client bundle, so it has to be present
@@ -38,7 +38,7 @@ COPY --from=development-dependencies-env /app/node_modules /app/node_modules
 WORKDIR /app
 RUN pnpm run build
 
-FROM node:24-alpine
+FROM node:24.22.1-alpine
 RUN corepack enable && corepack prepare pnpm@11.22.0 --activate
 
 # This image is a production artifact, so it says so itself rather than relying
