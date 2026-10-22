@@ -155,6 +155,9 @@ describe("docker build check", () => {
   it("passes exactly the build args the Dockerfile declares", () => {
     const declared = [...dockerfile.matchAll(/^ARG (\w+)/gm)].map((m) => m[1])
     const args = jobBlock("docker-build").match(/build-args: \|\n((?: {12}.+\n)+)/)?.[1] ?? ""
+
+    expect(args, "no build-args block indented under the build step").not.toBe("")
+
     const passed = args
       .trim()
       .split("\n")
