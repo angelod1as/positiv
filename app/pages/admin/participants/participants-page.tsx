@@ -25,7 +25,8 @@ export function meta({}: Route.MetaArgs) {
   return createMetaArray(metaCopy.adminParticipants.title)
 }
 
-export async function loader() {
+export async function loader({ request, params }: Route.LoaderArgs) {
+  const { currentProfile } = await getAdminContext(request, params)
   const result = await getAllProfiles()
   if (!result.success) {
     return redirectWithError(
@@ -33,7 +34,10 @@ export async function loader() {
       adminParticipantsCopy.list.loadFailed,
     )
   }
-  return { profiles: result.data }
+  return {
+    profiles: result.data,
+    canManageNewsletter: can(currentProfile, PERMISSIONS.NEWSLETTER_MANAGE),
+  }
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -65,7 +69,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 const ParticipantsPage = () => {
-  const { profiles } = useLoaderData<typeof loader>()
+  const { profiles, canManageNewsletter } = useLoaderData<typeof loader>()
 
   return (
     <>
@@ -73,7 +77,7 @@ const ParticipantsPage = () => {
         <h1 className="text-2xl font-bold">
           {adminParticipantsCopy.list.title}
         </h1>
-        <SyncVeteransListButton />
+        {canManageNewsletter && <SyncVeteransListButton />}
       </div>
       <AllParticipantsTable profiles={profiles} />
     </>
