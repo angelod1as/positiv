@@ -6,10 +6,14 @@ import {
   getAllProfiles,
   updateProfileAdminNotes,
 } from "~/business/admin/admin.server"
+import { can, PERMISSIONS } from "~/business/auth/permissions"
+import { syncVeteransListmonkList } from "~/business/newsletter/veterans-list.server"
+import { SyncVeteransListButton } from "~/components/pages/admin/participants/sync-veterans-list-button"
 import { AllParticipantsTable } from "~/components/organisms/tables/admin/all-participants-table"
 import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { metaCopy } from "~/copy/meta"
 import { createMetaArray } from "~/lib/helpers/meta"
+import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/participants-page"
 
@@ -21,7 +25,8 @@ export function meta({}: Route.MetaArgs) {
   return createMetaArray(metaCopy.adminParticipants.title)
 }
 
-export async function loader() {
+export async function loader({ request, params }: Route.LoaderArgs) {
+  const { currentProfile } = await getAdminContext(request, params)
   const result = await getAllProfiles()
   if (!result.success) {
     return redirectWithError(
@@ -29,11 +34,14 @@ export async function loader() {
       adminParticipantsCopy.list.loadFailed,
     )
   }
-  return { profiles: result.data }
+  return {
+    profiles: result.data,
+    canManageNewsletter: can(currentProfile, PERMISSIONS.NEWSLETTER_MANAGE),
+  }
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
-  await getAdminContext(request, params)
+  const { currentProfile } = await getAdminContext(request, params)
 
   const formData = await request.formData()
   const intent = formData.get("intent")
@@ -43,17 +51,34 @@ export async function action({ request, params }: ActionFunctionArgs) {
     return result
   }
 
+  if (intent === "sync-veterans-list") {
+    if (!can(currentProfile, PERMISSIONS.NEWSLETTER_MANAGE)) {
+      return { intent, error: adminParticipantsCopy.veteransSync.forbidden }
+    }
+    const result = await syncVeteransListmonkList()
+    if (!result.success) {
+      logger.error("Failed to sync the Veterans Listmonk list", {
+        errors: result.errors,
+      })
+      return { intent, error: adminParticipantsCopy.veteransSync.failed }
+    }
+    return { intent, result: result.data }
+  }
+
   return null
 }
 
 const ParticipantsPage = () => {
-  const { profiles } = useLoaderData<typeof loader>()
+  const { profiles, canManageNewsletter } = useLoaderData<typeof loader>()
 
   return (
     <>
-      <h1 className="text-2xl font-bold mb-4">
-        {adminParticipantsCopy.list.title}
-      </h1>
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <h1 className="text-2xl font-bold">
+          {adminParticipantsCopy.list.title}
+        </h1>
+        {canManageNewsletter && <SyncVeteransListButton />}
+      </div>
       <AllParticipantsTable profiles={profiles} />
     </>
   )

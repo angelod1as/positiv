@@ -24,6 +24,26 @@ describe("ParticipantsPage", () => {
     ).toBeInTheDocument()
   })
 
+  it("should show the veterans sync button to an admin who manages the newsletter", () => {
+    mockUseLoaderData.mockReturnValue({ profiles: [], canManageNewsletter: true })
+
+    renderWithDataRouter(<ParticipantsPage />)
+
+    expect(
+      screen.getByRole("button", { name: "Sincronizar lista de veteranos" }),
+    ).toBeInTheDocument()
+  })
+
+  it("should hide the veterans sync button from an admin who does not manage the newsletter", () => {
+    mockUseLoaderData.mockReturnValue({ profiles: [], canManageNewsletter: false })
+
+    renderWithDataRouter(<ParticipantsPage />)
+
+    expect(
+      screen.queryByRole("button", { name: "Sincronizar lista de veteranos" }),
+    ).not.toBeInTheDocument()
+  })
+
   it("should render AllParticipantsTable with profiles data", async () => {
     mockUseLoaderData.mockReturnValue({
       profiles: [
