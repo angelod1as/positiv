@@ -11,7 +11,8 @@ export function SyncVeteransListButton() {
     error?: string
   }>()
   const isSubmitting = fetcher.state !== "idle"
-  const result = fetcher.data?.result
+  const data = isSubmitting ? undefined : fetcher.data
+  const result = data?.result
 
   return (
     <div className="flex flex-col items-end gap-1">
@@ -29,9 +30,9 @@ export function SyncVeteransListButton() {
           {copy.result(result.added, result.removed, result.total)}
         </p>
       )}
-      {fetcher.data?.error && (
+      {data?.error && (
         <p role="alert" className="text-sm text-destructive">
-          {fetcher.data.error}
+          {data.error}
         </p>
       )}
     </div>

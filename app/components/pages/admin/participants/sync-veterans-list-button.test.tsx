@@ -50,6 +50,30 @@ describe("SyncVeteransListButton", () => {
     ).toBeDisabled()
   })
 
+  it("hides the previous result while a new sync runs", () => {
+    fetcher.state = "submitting"
+    fetcher.data = {
+      intent: "sync-veterans-list",
+      result: { added: 3, removed: 1, total: 12 },
+    }
+
+    render(<SyncVeteransListButton />)
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument()
+  })
+
+  it("hides the previous error while a new sync runs", () => {
+    fetcher.state = "submitting"
+    fetcher.data = {
+      intent: "sync-veterans-list",
+      error: "Erro ao sincronizar a lista de veteranos. Tente novamente.",
+    }
+
+    render(<SyncVeteransListButton />)
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  })
+
   it("shows how many were added, removed and are on the list", () => {
     fetcher.data = {
       intent: "sync-veterans-list",
