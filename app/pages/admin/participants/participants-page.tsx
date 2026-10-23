@@ -8,6 +8,7 @@ import {
 } from "~/business/admin/admin.server"
 import { can, PERMISSIONS } from "~/business/auth/permissions"
 import { syncVeteransListmonkList } from "~/business/newsletter/veterans-list.server"
+import { SyncVeteransListButton } from "~/components/pages/admin/participants/sync-veterans-list-button"
 import { AllParticipantsTable } from "~/components/organisms/tables/admin/all-participants-table"
 import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { metaCopy } from "~/copy/meta"
@@ -68,9 +69,12 @@ const ParticipantsPage = () => {
 
   return (
     <>
-      <h1 className="text-2xl font-bold mb-4">
-        {adminParticipantsCopy.list.title}
-      </h1>
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <h1 className="text-2xl font-bold">
+          {adminParticipantsCopy.list.title}
+        </h1>
+        <SyncVeteransListButton />
+      </div>
       <AllParticipantsTable profiles={profiles} />
     </>
   )
