@@ -163,6 +163,7 @@ export const getListSubscribers = composable(
     let page = 1
     const perPage = 100
     let hasMore = true
+    let reportedTotal = 0
     const statusCondition =
       membership === "unsubscribed"
         ? "status = 'unsubscribed'"
@@ -192,9 +193,16 @@ export const getListSubscribers = composable(
       const data = (await response.json()) as ListSubscribersResponse
       const results = data.data.results || []
       allSubscribers.push(...results)
+      reportedTotal = data.data.total ?? 0
 
       hasMore = results.length === perPage
       page++
+    }
+
+    if (allSubscribers.length < reportedTotal) {
+      throw new Error(
+        `Incomplete read of list ${listId}: got ${allSubscribers.length} of ${reportedTotal} subscribers`,
+      )
     }
 
     return allSubscribers

@@ -359,6 +359,48 @@ describe("getListSubscribers", () => {
     )
   })
 
+  const page = (ids: number[], total: number) =>
+    ({
+      ok: true,
+      json: async () => ({
+        data: {
+          results: ids.map((id) => ({
+            id,
+            email: `s${id}@example.com`,
+            name: `s${id}`,
+            status: "enabled",
+          })),
+          total,
+          page: 1,
+          per_page: 100,
+        },
+      }),
+    }) as Response
+
+  const range = (from: number, count: number) =>
+    Array.from({ length: count }, (_, i) => from + i)
+
+  it("should read every page until Listmonk's total is reached", async () => {
+    fetchSpy
+      .mockResolvedValueOnce(page(range(1, 100), 150))
+      .mockResolvedValueOnce(page(range(101, 50), 150))
+
+    const result = await getListSubscribers(141)
+
+    expect(result.success).toBe(true)
+    expect(result.success && result.data).toHaveLength(150)
+  })
+
+  it("should fail when the pages return fewer subscribers than Listmonk's total", async () => {
+    fetchSpy
+      .mockResolvedValueOnce(page(range(1, 100), 250))
+      .mockResolvedValueOnce(page(range(101, 50), 250))
+
+    const result = await getListSubscribers(141)
+
+    expect(result.success).toBe(false)
+  })
+
   it("should read only unsubscribed memberships when asked", async () => {
     await getListSubscribers(141, "unsubscribed")
 
