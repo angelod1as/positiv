@@ -6,10 +6,13 @@ import {
   getAllProfiles,
   updateProfileAdminNotes,
 } from "~/business/admin/admin.server"
+import { can, PERMISSIONS } from "~/business/auth/permissions"
+import { syncVeteransListmonkList } from "~/business/newsletter/veterans-list.server"
 import { AllParticipantsTable } from "~/components/organisms/tables/admin/all-participants-table"
 import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { metaCopy } from "~/copy/meta"
 import { createMetaArray } from "~/lib/helpers/meta"
+import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/participants-page"
 
@@ -33,7 +36,7 @@ export async function loader() {
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
-  await getAdminContext(request, params)
+  const { currentProfile } = await getAdminContext(request, params)
 
   const formData = await request.formData()
   const intent = formData.get("intent")
@@ -41,6 +44,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
   if (intent === "update-profile-admin-notes") {
     const result = await updateProfileAdminNotes(Object.fromEntries(formData))
     return result
+  }
+
+  if (intent === "sync-veterans-list") {
+    if (!can(currentProfile, PERMISSIONS.NEWSLETTER_MANAGE)) {
+      return { intent, error: adminParticipantsCopy.veteransSync.forbidden }
+    }
+    const result = await syncVeteransListmonkList()
+    if (!result.success) {
+      logger.error("Failed to sync the Veterans Listmonk list", {
+        errors: result.errors,
+      })
+      return { intent, error: adminParticipantsCopy.veteransSync.failed }
+    }
+    return { intent, result: result.data }
   }
 
   return null
