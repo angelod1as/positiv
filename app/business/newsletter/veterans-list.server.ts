@@ -9,12 +9,7 @@ import {
   removeSubscribersFromListBulk,
 } from "./listmonk-client.server"
 import { getListSubscribers } from "./listmonk-lists.server"
-
-export interface VeteransSyncResult {
-  added: number
-  removed: number
-  total: number
-}
+import type { VeteransSyncResult } from "./veterans-list.types"
 
 export async function getConsentedVeteranEmails(): Promise<string[]> {
   const rows = await kyselyDb

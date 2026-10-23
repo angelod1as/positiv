@@ -1,4 +1,5 @@
 import { useFetcher } from "react-router"
+import type { VeteransSyncResult } from "~/business/newsletter/veterans-list.types"
 import { Button } from "~/components/ui/button"
 import { adminParticipantsCopy } from "~/copy/admin/participants"
 
@@ -7,7 +8,7 @@ const copy = adminParticipantsCopy.veteransSync
 export function SyncVeteransListButton() {
   const fetcher = useFetcher<{
     intent: string
-    result?: { added: number; removed: number; total: number }
+    result?: VeteransSyncResult
     error?: string
   }>()
   const isSubmitting = fetcher.state !== "idle"
