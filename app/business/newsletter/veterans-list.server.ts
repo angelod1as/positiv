@@ -29,8 +29,11 @@ export async function getConsentedVeteranEmails(): Promise<string[]> {
   return rows.map((row) => row.email)
 }
 
-async function getActiveListSubscribers(listId: number) {
-  const result = await getListSubscribers(listId)
+async function readListSubscribers(
+  listId: number,
+  membership: "active" | "unsubscribed" = "active",
+) {
+  const result = await getListSubscribers(listId, membership)
   if (!result.success) {
     throw new Error(
       result.errors[0]?.message ?? `Failed to read Listmonk list ${listId}`,
@@ -47,21 +50,27 @@ export const syncVeteransListmonkList = composable(
       ),
     )
 
-    const registered = await getActiveListSubscribers(
+    const registered = await readListSubscribers(
       LISTMONK_REGISTERED_LIST_ID,
+    )
+    const optedOutIds = new Set(
+      (
+        await readListSubscribers(LISTMONK_VETERANS_LIST_ID, "unsubscribed")
+      ).map((subscriber) => subscriber.id),
     )
     const eligibleIds = new Set(
       registered
         .filter(
           (subscriber) =>
             subscriber.status !== "blocklisted" &&
+            !optedOutIds.has(subscriber.id) &&
             veteranEmails.has(subscriber.email.trim().toLowerCase()),
         )
         .map((subscriber) => subscriber.id),
     )
 
     const currentIds = new Set(
-      (await getActiveListSubscribers(LISTMONK_VETERANS_LIST_ID)).map(
+      (await readListSubscribers(LISTMONK_VETERANS_LIST_ID)).map(
         (subscriber) => subscriber.id,
       ),
     )

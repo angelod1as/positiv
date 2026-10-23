@@ -7,7 +7,12 @@ import {
   afterEach,
   type MockInstance,
 } from "vitest"
-import { createList, deleteList, getListById } from "./listmonk-lists.server"
+import {
+  createList,
+  deleteList,
+  getListById,
+  getListSubscribers,
+} from "./listmonk-lists.server"
 
 vi.mock("varlock/env", () => ({
   ENV: {
@@ -323,5 +328,42 @@ describe("getListById", () => {
     const result = await getListById(123)
 
     expect(result.success).toBe(false)
+  })
+})
+
+describe("getListSubscribers", () => {
+  let fetchSpy: MockInstance
+
+  beforeEach(() => {
+    fetchSpy = vi.spyOn(global, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: { results: [], total: 0, page: 1, per_page: 100 },
+      }),
+    } as Response)
+  })
+
+  afterEach(() => {
+    fetchSpy.mockRestore()
+    vi.clearAllMocks()
+  })
+
+  const requestedQuery = () =>
+    decodeURIComponent(String(fetchSpy.mock.calls[0][0]))
+
+  it("should read active memberships by default", async () => {
+    await getListSubscribers(141)
+
+    expect(requestedQuery()).toContain(
+      "WHERE list_id = 141 AND status != 'unsubscribed'",
+    )
+  })
+
+  it("should read only unsubscribed memberships when asked", async () => {
+    await getListSubscribers(141, "unsubscribed")
+
+    expect(requestedQuery()).toContain(
+      "WHERE list_id = 141 AND status = 'unsubscribed'",
+    )
   })
 })

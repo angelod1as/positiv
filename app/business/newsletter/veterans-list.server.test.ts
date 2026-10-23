@@ -56,6 +56,7 @@ function createFakeListmonk(subscribers: FakeSubscriber[]) {
 
     if (method === "GET" && url.includes("/api/subscribers?query=")) {
       const listId = Number(url.match(/list_id = (\d+)/)?.[1])
+      const wantsUnsubscribed = url.includes("status = 'unsubscribed'")
       const page = Number(url.match(/[?&]page=(\d+)/)?.[1] ?? 1)
       const results =
         page > 1
@@ -63,7 +64,10 @@ function createFakeListmonk(subscribers: FakeSubscriber[]) {
           : subscribers
               .filter((s) => {
                 const membership = s.lists.get(listId)
-                return membership && membership !== "unsubscribed"
+                if (!membership) return false
+                return wantsUnsubscribed
+                  ? membership === "unsubscribed"
+                  : membership !== "unsubscribed"
               })
               .map(({ id, email, status }) => ({
                 id,
@@ -182,6 +186,29 @@ describe("syncVeteransListmonkList", () => {
 
     expect(result).toMatchObject({ success: true, data: { added: 0, removed: 0, total: 0 } })
     expect(gone.lists.has(LISTMONK_VETERANS_LIST_ID)).toBe(false)
+  })
+
+  it("should never re-add a veteran who unsubscribed from the Veterans list", async () => {
+    givenConsentedVeterans(["opted-out@example.com"])
+    const optedOut = subscriber(1, "opted-out@example.com", [
+      ...onRegisteredList,
+      [LISTMONK_VETERANS_LIST_ID, "unsubscribed"],
+    ])
+    givenListmonk([optedOut])
+
+    const first = await syncVeteransListmonkList()
+    const second = await syncVeteransListmonkList()
+
+    expect(first).toMatchObject({
+      success: true,
+      data: { added: 0, removed: 0, total: 0 },
+    })
+    expect(second).toMatchObject({
+      success: true,
+      data: { added: 0, removed: 0, total: 0 },
+    })
+    expect(writeCalls(fetchSpy)).toHaveLength(0)
+    expect(optedOut.lists.get(LISTMONK_VETERANS_LIST_ID)).toBe("unsubscribed")
   })
 
   it("should never create a subscriber for a veteran missing from Listmonk", async () => {
