@@ -218,6 +218,23 @@ describe("syncVeteransListmonkList", () => {
     expect(withdrew.lists.has(LISTMONK_VETERANS_LIST_ID)).toBe(false)
   })
 
+  it("should remove everyone no longer eligible in a single Listmonk call", async () => {
+    givenConsentedVeterans([])
+    givenListmonk([
+      subscriber(1, "a@example.com", [[LISTMONK_VETERANS_LIST_ID, "confirmed"]]),
+      subscriber(2, "b@example.com", [[LISTMONK_VETERANS_LIST_ID, "confirmed"]]),
+      subscriber(3, "c@example.com", [[LISTMONK_VETERANS_LIST_ID, "confirmed"]]),
+    ])
+
+    const result = await syncVeteransListmonkList()
+
+    expect(result).toMatchObject({
+      success: true,
+      data: { added: 0, removed: 3, total: 0 },
+    })
+    expect(writeCalls(fetchSpy)).toHaveLength(1)
+  })
+
   it("should change nothing when run a second time", async () => {
     givenConsentedVeterans(["new@example.com", "kept@example.com"])
     givenListmonk([

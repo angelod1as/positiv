@@ -159,6 +159,41 @@ export const addSubscribersToListBulk = composable(
   }
 )
 
+export const removeSubscribersFromListBulk = composable(
+  async (subscriberIds: number[], listId: number): Promise<void> => {
+    if (ENV.E2E_MODE) {
+      return
+    }
+
+    const validIds = Array.from(
+      new Set(subscriberIds.filter((id) => Number.isInteger(id) && id > 0))
+    )
+
+    if (validIds.length === 0) {
+      return
+    }
+
+    const { listmonkApiUrl, headers } = getListmonkConfig()
+
+    const response = await fetch(`${listmonkApiUrl}/api/subscribers/lists`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({
+        ids: validIds,
+        action: "remove",
+        target_list_ids: [listId],
+      }),
+    })
+
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => "Unable to read error body")
+      throw new Error(
+        `Failed to remove subscribers from list: ${response.status} ${response.statusText}. Response: ${errorBody}`
+      )
+    }
+  }
+)
+
 export async function removeSubscriberFromList(
   subscriberId: number,
   listId: number

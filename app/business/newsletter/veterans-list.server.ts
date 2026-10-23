@@ -6,7 +6,7 @@ import {
 } from "~/lib/constants/constants"
 import {
   addSubscribersToListBulk,
-  removeSubscriberFromList,
+  removeSubscribersFromListBulk,
 } from "./listmonk-client.server"
 import { getListSubscribers } from "./listmonk-lists.server"
 
@@ -81,8 +81,17 @@ export const syncVeteransListmonkList = composable(
       }
     }
 
-    for (const id of toRemove) {
-      await removeSubscriberFromList(id, LISTMONK_VETERANS_LIST_ID)
+    if (toRemove.length > 0) {
+      const removeResult = await removeSubscribersFromListBulk(
+        toRemove,
+        LISTMONK_VETERANS_LIST_ID,
+      )
+      if (!removeResult.success) {
+        throw new Error(
+          removeResult.errors[0]?.message ??
+            "Failed to remove veterans from the list",
+        )
+      }
     }
 
     return {
