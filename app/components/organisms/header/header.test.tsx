@@ -129,6 +129,21 @@ describe("Header", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
   })
 
+  it("closes the menu on Escape and hands focus back to its button", async () => {
+    renderHeader()
+    const menuButton = screen.getByRole("button", { name: headerCopy.openMenu })
+
+    await openMenu()
+    expect(screen.getByRole("dialog")).toContainElement(
+      document.activeElement as HTMLElement,
+    )
+
+    await userEvent.keyboard("{Escape}")
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    expect(menuButton).toHaveFocus()
+  })
+
   it("renders no Navigation and no menu without links", () => {
     renderHeader([])
 
