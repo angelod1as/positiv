@@ -1,0 +1,55 @@
+version: 2
+updates:
+  # pnpm uses the npm ecosystem. The single pnpm-lock.yaml at the root covers
+  # studio/ through pnpm-workspace.yaml, so one entry handles both packages.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: America/Sao_Paulo
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-and-patch:
+        applies-to: version-updates
+        update-types:
+          - minor
+          - patch
+      npm-major:
+        applies-to: version-updates
+        update-types:
+          - major
+      npm-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: America/Sao_Paulo
+    open-pull-requests-limit: 3
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # The Dockerfile pins an exact node:24.x.y-alpine tag; this keeps it on the
+  # newest 24.x. Moving to the next LTS major is a decision, not a weekly bump.
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: America/Sao_Paulo
+    open-pull-requests-limit: 2
+    groups:
+      docker:
+        patterns:
+          - "*"
+    ignore:
+      - dependency-name: node
+        update-types:
+          - version-update:semver-major

@@ -49,7 +49,7 @@ Here are the links for each of the technologies:
 
 ### Prerequisites
 
-- Node.js (latest LTS version recommended)
+- Node.js 24, 24.22.1 or newer (see `.nvmrc`)
 - pnpm package manager
 - Supabase account and project (see the [Setting Up Local Supabase](#setting-up-local-supabase) chapter)
 
