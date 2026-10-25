@@ -24,8 +24,16 @@ const post = (body: unknown) =>
     body: typeof body === "string" ? body : JSON.stringify(body),
   })
 
-const run = (body: unknown) =>
-  action({ request: post(body), params: {}, context: {} as never })
+const run = (body: unknown) => {
+  const request = post(body)
+  return action({
+    request,
+    url: new URL(request.url),
+    pattern: "/api/account/mudar-senha",
+    params: {},
+    context: {} as never,
+  })
+}
 
 describe("change password commit route", () => {
   beforeEach(() => {

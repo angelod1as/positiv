@@ -54,7 +54,13 @@ describe("basic-data-page loader", () => {
         isProdInDev: false,
       })
 
-      const result = await loader({ request: mockRequest, params: mockParams, context: {} })
+      const result = await loader({
+        request: mockRequest,
+        url: new URL(mockRequest.url),
+        pattern: "/conta/dados-basicos",
+        params: mockParams,
+        context: {},
+      })
       
       expect(result).toEqual({
         profile: null,
@@ -111,7 +117,13 @@ describe("basic-data-page loader", () => {
         isProdInDev: false,
       })
 
-      const result = await loader({ request: mockRequest, params: mockParams, context: {} })
+      const result = await loader({
+        request: mockRequest,
+        url: new URL(mockRequest.url),
+        pattern: "/conta/dados-basicos",
+        params: mockParams,
+        context: {},
+      })
       
       expect(result).toEqual({
         profile: currentProfile,
@@ -149,7 +161,13 @@ describe("basic-data-page loader", () => {
         isProdInDev: false,
       })
 
-      const result = await loader({ request: mockRequest, params: mockParams, context: {} })
+      const result = await loader({
+        request: mockRequest,
+        url: new URL(mockRequest.url),
+        pattern: "/conta/dados-basicos",
+        params: mockParams,
+        context: {},
+      })
       
       expect(result).toEqual({
         profile: null,
@@ -193,7 +211,13 @@ describe("basic-data-page loader", () => {
         isProdInDev: false,
       })
 
-      const result = await loader({ request: mockRequest, params: mockParams, context: {} })
+      const result = await loader({
+        request: mockRequest,
+        url: new URL(mockRequest.url),
+        pattern: "/conta/dados-basicos",
+        params: mockParams,
+        context: {},
+      })
       
       expect(result).toEqual({
         profile: null,

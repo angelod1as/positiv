@@ -24,8 +24,16 @@ const post = (body: unknown, headers: Record<string, string> = {}) =>
     body: typeof body === "string" ? body : JSON.stringify(body),
   })
 
-const run = (body: unknown, headers?: Record<string, string>) =>
-  action({ request: post(body, headers), params: {}, context: {} as never })
+const run = (body: unknown, headers?: Record<string, string>) => {
+  const request = post(body, headers)
+  return action({
+    request,
+    url: new URL(request.url),
+    pattern: "/api/auth/login",
+    params: {},
+    context: {} as never,
+  })
+}
 
 describe("login commit route", () => {
   beforeEach(() => {

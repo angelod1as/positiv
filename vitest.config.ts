@@ -7,7 +7,6 @@ import { defineConfig } from "vitest/config"
 // Local development gets limited workers to save memory (~8GB instead of 12GB+)
 const isCI = process.env.CI === "true"
 const defaultMaxForks = isCI ? undefined : 2
-const defaultMinForks = isCI ? undefined : 1
 
 export default defineConfig({
   plugins: [react(), tsconfigPaths()],
@@ -16,18 +15,12 @@ export default defineConfig({
     globals: true,
     setupFiles: "./app/test/setup.ts",
     pool: "forks",
-    poolOptions: {
-      forks: {
-        minForks: process.env.VITEST_MIN_FORKS
-          ? Number(process.env.VITEST_MIN_FORKS)
-          : defaultMinForks,
-        maxForks: process.env.VITEST_MAX_FORKS
-          ? Number(process.env.VITEST_MAX_FORKS)
-          : defaultMaxForks,
-        isolate: true,
-      },
-    },
+    maxWorkers: process.env.VITEST_MAX_FORKS
+      ? Number(process.env.VITEST_MAX_FORKS)
+      : defaultMaxForks,
+    isolate: true,
     coverage: {
+      include: ["app/**/*.{ts,tsx}"],
       reporter: ["text", "json", "html"],
       exclude: [
         "node_modules/",

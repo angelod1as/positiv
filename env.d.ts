@@ -380,14 +380,8 @@ export type CoercedEnvSchema = {
   LINEAR_TEAM_ID?: string;
   
   /**
-   * **VITEST_MIN_FORKS**  
-   * Vitest worker limits. Unset means "let vitest decide".  
-   * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M26%2012h-4v2h4v2h-3v2h3v2h-4v2h4a2.003%202.003%200%200%200%202-2v-6a2%202%200%200%200-2-2m-7%2010h-6v-4a2%202%200%200%201%202-2h2v-2h-4v-2h4a2%202%200%200%201%202%202v2a2%202%200%200%201-2%202h-2v2h4ZM8%2020v-8H6v1H4v2h2v5H4v2h6v-2z%22%2F%3E%3C%2Fsvg%3E)   
-   */
-  VITEST_MIN_FORKS?: number;
-  
-  /**
    * **VITEST_MAX_FORKS**  
+   * Vitest worker limit. Unset means "let vitest decide".  
    * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M26%2012h-4v2h4v2h-3v2h3v2h-4v2h4a2.003%202.003%200%200%200%202-2v-6a2%202%200%200%200-2-2m-7%2010h-6v-4a2%202%200%200%201%202-2h2v-2h-4v-2h4a2%202%200%200%201%202%202v2a2%202%200%200%201-2%202h-2v2h4ZM8%2020v-8H6v1H4v2h2v5H4v2h6v-2z%22%2F%3E%3C%2Fsvg%3E)   
    */
   VITEST_MAX_FORKS?: number;
@@ -488,11 +482,11 @@ export type CoercedEnvSchema = {
   
 };
 
-type _CoercedEnvSchema_b2117812 = CoercedEnvSchema;
+type _CoercedEnvSchema_71a84a7b = CoercedEnvSchema;
 
 declare module 'varlock/env' {
-  export interface TypedEnvSchema extends Readonly<_CoercedEnvSchema_b2117812> {}
-  export interface PublicTypedEnvSchema extends Readonly<Pick<_CoercedEnvSchema_b2117812, 'APP_ENV' | 'NODE_ENV' | 'CI' | 'IS_PROD_IN_DEV' | 'IS_PROD' | 'APP_URL' | 'VITE_APP_DOMAIN' | 'VITE_SUPABASE_URL' | 'VITE_SUPABASE_ANON_KEY' | 'SUPABASE_PROJECT_ID' | 'SUPABASE_URL' | 'VITE_TURNSTILE_SITE_KEY' | 'IAM_USER_NAME' | 'LISTMONK_API_URL' | 'SANITY_PROJECT_ID' | 'SANITY_DATASET' | 'SANITY_API_HOST' | 'SANITY_STUDIO_URL' | 'VITE_GTM_ID' | 'VITE_UMAMI_WEBSITE_ID' | 'VITE_UMAMI_URL' | 'TELEGRAM_ALERTS_ENABLED' | 'TELEGRAM_CHAT_ID' | 'TELEGRAM_EDITOR_CHAT_ID' | 'ASAAS_API_URL' | 'TEST_USER_ADMIN_EMAIL' | 'E2E_MODE' | 'STRICT_CLEANUP' | 'LINEAR_TEAM_ID' | 'VITEST_MIN_FORKS' | 'VITEST_MAX_FORKS' | 'VPS_USER' | 'VPS_BACKUP_PATH' | 'TELEGRAM_TO'>> {}
+  export interface TypedEnvSchema extends Readonly<_CoercedEnvSchema_71a84a7b> {}
+  export interface PublicTypedEnvSchema extends Readonly<Pick<_CoercedEnvSchema_71a84a7b, 'APP_ENV' | 'NODE_ENV' | 'CI' | 'IS_PROD_IN_DEV' | 'IS_PROD' | 'APP_URL' | 'VITE_APP_DOMAIN' | 'VITE_SUPABASE_URL' | 'VITE_SUPABASE_ANON_KEY' | 'SUPABASE_PROJECT_ID' | 'SUPABASE_URL' | 'VITE_TURNSTILE_SITE_KEY' | 'IAM_USER_NAME' | 'LISTMONK_API_URL' | 'SANITY_PROJECT_ID' | 'SANITY_DATASET' | 'SANITY_API_HOST' | 'SANITY_STUDIO_URL' | 'VITE_GTM_ID' | 'VITE_UMAMI_WEBSITE_ID' | 'VITE_UMAMI_URL' | 'TELEGRAM_ALERTS_ENABLED' | 'TELEGRAM_CHAT_ID' | 'TELEGRAM_EDITOR_CHAT_ID' | 'ASAAS_API_URL' | 'TEST_USER_ADMIN_EMAIL' | 'E2E_MODE' | 'STRICT_CLEANUP' | 'LINEAR_TEAM_ID' | 'VITEST_MAX_FORKS' | 'VPS_USER' | 'VPS_BACKUP_PATH' | 'TELEGRAM_TO'>> {}
 }
 
 
@@ -502,11 +496,11 @@ export type EnvSchemaAsStrings = {
       : (CoercedEnvSchema[Property] extends boolean ? ('true' | 'false') : string)
 };
 
-type _EnvSchemaAsStrings_b2117812 = EnvSchemaAsStrings;
+type _EnvSchemaAsStrings_71a84a7b = EnvSchemaAsStrings;
 declare global {
 
   // add types for global process.env
   namespace NodeJS {
-    interface ProcessEnv extends _EnvSchemaAsStrings_b2117812 {}
+    interface ProcessEnv extends _EnvSchemaAsStrings_71a84a7b {}
   }
 }

@@ -83,6 +83,8 @@ describe("Login Page Loader", () => {
 
     const result = await loader({
       request: mockRequest,
+      url: new URL(mockRequest.url),
+      pattern: "/entrar",
       params: mockParams,
       context: {},
     })
@@ -119,7 +121,13 @@ describe("Login Page Loader", () => {
     })
 
     await expect(
-      loader({ request: mockRequest, params: mockParams, context: {} }),
+      loader({
+        request: mockRequest,
+        url: new URL(mockRequest.url),
+        pattern: "/entrar",
+        params: mockParams,
+        context: {},
+      }),
     ).rejects.toThrow()
 
     expect(redirect).toHaveBeenCalledWith("/dashboard", {
@@ -158,7 +166,13 @@ describe("Login Page Loader", () => {
     })
 
     await expect(
-      loader({ request: mockRequest, params: mockParams, context: {} }),
+      loader({
+        request: mockRequest,
+        url: new URL(mockRequest.url),
+        pattern: "/entrar",
+        params: mockParams,
+        context: {},
+      }),
     ).rejects.toThrow()
 
     expect(redirect).toHaveBeenCalledWith("/admin", {
@@ -197,7 +211,13 @@ describe("Login Page Loader", () => {
     })
 
     await expect(
-      loader({ request: mockRequest, params: mockParams, context: {} }),
+      loader({
+        request: mockRequest,
+        url: new URL(mockRequest.url),
+        pattern: "/entrar",
+        params: mockParams,
+        context: {},
+      }),
     ).rejects.toThrow()
 
     expect(redirect).toHaveBeenCalledWith("/dashboard", {
@@ -216,7 +236,13 @@ describe("Login Page Loader", () => {
     })
 
     await expect(
-      loader({ request: mockRequest, params: mockParams, context: {} }),
+      loader({
+        request: mockRequest,
+        url: new URL(mockRequest.url),
+        pattern: "/entrar",
+        params: mockParams,
+        context: {},
+      }),
     ).rejects.toThrow()
 
     expect(redirect).toHaveBeenCalledWith("/dashboard", {

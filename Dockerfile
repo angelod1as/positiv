@@ -6,7 +6,7 @@ RUN pnpm install --frozen-lockfile
 
 FROM node:24.22.1-alpine AS production-dependencies-env
 RUN corepack enable && corepack prepare pnpm@11.22.0 --activate
-COPY ./package.json pnpm-lock.yaml /app/
+COPY ./package.json pnpm-lock.yaml pnpm-workspace.yaml /app/
 WORKDIR /app
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 

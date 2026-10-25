@@ -36,8 +36,6 @@ export function getEmailTransport() {
 
     return nodemailer.createTransport({
       SES: { sesClient, SendEmailCommand },
-      sendingRate: 1, // max 1 messages/second — dunno if it works
-      maxConnections: 1,
     })
   }
 

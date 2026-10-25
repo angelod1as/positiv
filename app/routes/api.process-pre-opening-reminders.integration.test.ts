@@ -84,6 +84,8 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
 
       const response = await action({
         request,
+        url: new URL(request.url),
+        pattern: "/api/process-pre-opening-reminders",
         params: {},
         context: {},
       })
@@ -103,6 +105,8 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
 
       const response = await action({
         request,
+        url: new URL(request.url),
+        pattern: "/api/process-pre-opening-reminders",
         params: {},
         context: {},
       })
@@ -122,6 +126,8 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
 
       const response = await action({
         request,
+        url: new URL(request.url),
+        pattern: "/api/process-pre-opening-reminders",
         params: {},
         context: {},
       })
@@ -141,6 +147,8 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
 
       const response = await action({
         request,
+        url: new URL(request.url),
+        pattern: "/api/process-pre-opening-reminders",
         params: {},
         context: {},
       })
@@ -162,6 +170,8 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
 
       const response = await action({
         request,
+        url: new URL(request.url),
+        pattern: "/api/process-pre-opening-reminders",
         params: {},
         context: {},
       })
@@ -187,6 +197,8 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
 
       const response = await action({
         request,
+        url: new URL(request.url),
+        pattern: "/api/process-pre-opening-reminders",
         params: {},
         context: {},
       })
@@ -242,6 +254,8 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
 
       const response = await action({
         request,
+        url: new URL(request.url),
+        pattern: "/api/process-pre-opening-reminders",
         params: {},
         context: {},
       })
@@ -300,6 +314,8 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
 
       const response = await action({
         request,
+        url: new URL(request.url),
+        pattern: "/api/process-pre-opening-reminders",
         params: {},
         context: {},
       })
@@ -346,6 +362,8 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
 
       const response = await action({
         request,
+        url: new URL(request.url),
+        pattern: "/api/process-pre-opening-reminders",
         params: {},
         context: {},
       })
@@ -387,6 +405,8 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
 
       const response = await action({
         request,
+        url: new URL(request.url),
+        pattern: "/api/process-pre-opening-reminders",
         params: {},
         context: {},
       })
@@ -438,6 +458,8 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
 
       const response = await action({
         request,
+        url: new URL(request.url),
+        pattern: "/api/process-pre-opening-reminders",
         params: {},
         context: {},
       })
@@ -465,6 +487,8 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
 
       const response = await action({
         request,
+        url: new URL(request.url),
+        pattern: "/api/process-pre-opening-reminders",
         params: {},
         context: {},
       })
@@ -489,6 +513,8 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
 
       const response = await action({
         request,
+        url: new URL(request.url),
+        pattern: "/api/process-pre-opening-reminders",
         params: {},
         context: {},
       })

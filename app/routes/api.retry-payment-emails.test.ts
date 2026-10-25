@@ -20,7 +20,13 @@ const SECRET = "test-secret-123"
 const URL = "http://localhost:5173/api/retry-payment-emails"
 
 const call = (init: RequestInit) =>
-  action({ request: new Request(URL, init), params: {}, context: {} })
+  action({
+    request: new Request(URL, init),
+    url: new globalThis.URL(URL),
+    pattern: "/api/retry-payment-emails",
+    params: {},
+    context: {},
+  })
 
 describe("api.retry-payment-emails", () => {
   beforeEach(() => {

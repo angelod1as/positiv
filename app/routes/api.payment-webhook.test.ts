@@ -44,6 +44,8 @@ function post(body: unknown, token?: string) {
       },
       body: JSON.stringify(body),
     }),
+    url: new URL("http://localhost/api/payment/webhook"),
+    pattern: "/api/payment/webhook",
     params: {},
     context: {} as never,
   })
@@ -160,6 +162,8 @@ describe("POST /api/payment/webhook", () => {
         },
         body: "{not json",
       }),
+      url: new URL("http://localhost/api/payment/webhook"),
+      pattern: "/api/payment/webhook",
       params: {},
       context: {} as never,
     })
