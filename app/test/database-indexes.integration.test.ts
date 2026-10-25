@@ -113,6 +113,7 @@ describe("Database Indexes - Integration Tests", () => {
           "idx_event_participants_profile_attendance",
           "idx_event_participants_profile_history",
           "idx_event_participants_event_id",
+          "idx_event_participants_event_id_is_user_applied",
           "idx_event_participants_profile_id",
           "idx_event_participants_profile_id_event_id"
         ]
@@ -196,6 +197,7 @@ describe("Database Indexes - Integration Tests", () => {
           "idx_event_participants_profile_event_applied",
           "idx_event_participants_profile_attendance",
           "idx_event_participants_event_id",
+          "idx_event_participants_event_id_is_user_applied",
           "idx_event_participants_profile_id",
           "idx_event_participants_profile_id_event_id"
         ]

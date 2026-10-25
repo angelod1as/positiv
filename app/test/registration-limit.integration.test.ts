@@ -317,7 +317,7 @@ describe("Registration Limit - Integration Tests", () => {
     expect(eventAfter.event_status).toBe("Registration Open")
   })
 
-  describe("configurable limit that leaves cis het men out of the count", () => {
+  describe("configurable limit that leaves cis het men and staff out of the count", () => {
     const CIS_MAN = GENDERS[0]
     const HETERO = ORIENTATIONS[4]
     let originalLimit: number
@@ -353,6 +353,7 @@ describe("Registration Limit - Integration Tests", () => {
     const apply = async (
       eventId: string,
       profile: { gender?: string[] | null; orientation?: string[] | null } = {},
+      spotType: "regular" | "staff" = "regular",
     ) => {
       const created = await createTestProfile(tracker, kysely, {
         user_id: null,
@@ -368,6 +369,7 @@ describe("Registration Limit - Integration Tests", () => {
           is_user_applied: true,
           application_status: "finalised",
           attendance_status: "pending",
+          spot_type: spotType,
         })
         .execute()
     }
@@ -398,6 +400,21 @@ describe("Registration Limit - Integration Tests", () => {
       await apply(event.id)
       for (let i = 0; i < 5; i++) {
         await apply(event.id, { gender: [CIS_MAN], orientation: [HETERO] })
+      }
+      expect(await statusOf(event.id)).toBe("Registration Open")
+
+      await apply(event.id)
+      expect(await statusOf(event.id)).toBe("Registration Closed")
+    })
+
+    it("lets staff apply without counting them toward the limit", async () => {
+      await setLimit(3)
+      const event = await openEvent()
+
+      await apply(event.id)
+      await apply(event.id)
+      for (let i = 0; i < 5; i++) {
+        await apply(event.id, {}, "staff")
       }
       expect(await statusOf(event.id)).toBe("Registration Open")
 

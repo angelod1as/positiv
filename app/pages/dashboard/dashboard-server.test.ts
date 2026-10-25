@@ -48,8 +48,15 @@ const mockIsCardPaymentsEnabled = vi.mocked(isCardPaymentsEnabled)
 const mockTrackServerEvent = vi.mocked(trackServerEvent)
 const mockGetNextEvents = vi.mocked(getNextEvents)
 
-const ADMIN = [PERMISSIONS.ADMIN_PANEL, PERMISSIONS.EVENTS_APPLY_DIRECT]
-const STAFF = [PERMISSIONS.EVENTS_APPLY_DIRECT]
+const ADMIN = [
+  PERMISSIONS.ADMIN_PANEL,
+  PERMISSIONS.EVENTS_APPLY_DIRECT,
+  PERMISSIONS.EVENTS_APPLY_AS_STAFF,
+]
+const STAFF = [
+  PERMISSIONS.EVENTS_APPLY_DIRECT,
+  PERMISSIONS.EVENTS_APPLY_AS_STAFF,
+]
 const USER: string[] = []
 
 const contextFor = (permissions: string[]) =>
@@ -264,6 +271,16 @@ describe("dashboard loader", () => {
 
   it("tells the page that anyone else may not", async () => {
     await expect(load(USER)).resolves.toMatchObject({ canApplyDirectly: false })
+  })
+
+  it.each([
+    ["an admin", ADMIN, true],
+    ["a staff", STAFF, true],
+    ["anyone else", USER, false],
+  ])("tells the page whether %s applies as staff", async (_, permissions, expected) => {
+    await expect(load(permissions)).resolves.toMatchObject({
+      appliesAsStaff: expected,
+    })
   })
 
   it("passes the card-payments flag through to the page", async () => {

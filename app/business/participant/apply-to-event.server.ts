@@ -1,4 +1,5 @@
 import { applySchema } from "composable-functions"
+import { can, PERMISSIONS } from "~/business/auth/permissions"
 import { participantCopy } from "~/copy/participant"
 import { dateToString } from "~/lib/helpers/date-to-string"
 import { applyToEventInputSchema, userContextSchema } from "../common"
@@ -30,21 +31,25 @@ export const applyToEvent = applySchema(
     throw new Error(participantCopy.application.eventNotFound)
   }
 
-  // A closed event still lets in whoever holds an invite for it. The invite is
-  // read against the signed-in profile, so the link is worthless to anybody
-  // else who is handed it.
+  const appliesAsStaff = can(currentProfile, PERMISSIONS.EVENTS_APPLY_AS_STAFF)
+
+  // A closed event still lets in staff, who are outside the limit that closed
+  // it, and whoever holds an invite for it. The invite is read against the
+  // signed-in profile, so the link is worthless to anybody else who is handed
+  // it.
   //
   // Read here and acted on below, outside any transaction: an admin revoking
   // the invite in between still lets this one application through. Accepted
   // rather than solved, because the read is Kysely and the write below is the
   // supabase client -- two connections, so no transaction can cover both. See
   // POS-537.
-  const isClosed = event.event_status === "Registration Closed"
-  const invite = isClosed
+  const needsInvite =
+    event.event_status === "Registration Closed" && !appliesAsStaff
+  const invite = needsInvite
     ? await findValidInvite(eventId, profileId)
     : undefined
 
-  if (isClosed && !invite) {
+  if (needsInvite && !invite) {
     throw new Error(participantCopy.application.registrationClosed)
   }
 
@@ -63,6 +68,7 @@ export const applyToEvent = applySchema(
     ...values, // Supabase sanitizes automatically
     is_user_applied: true,
     cancellation_reason: null,
+    ...(appliesAsStaff && { spot_type: "staff" as const }),
   })
 
   if (error) {

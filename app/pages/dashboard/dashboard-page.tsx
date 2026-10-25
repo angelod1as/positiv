@@ -72,6 +72,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     events,
     hasEverApplied: everApplied,
     canApplyDirectly: can(currentProfile, PERMISSIONS.EVENTS_APPLY_DIRECT),
+    appliesAsStaff: can(currentProfile, PERMISSIONS.EVENTS_APPLY_AS_STAFF),
     cardPaymentsEnabled,
   }
 }
@@ -143,8 +144,15 @@ export const EventsContent: FC<{
   events: Event[]
   hasEverApplied: boolean
   canApplyDirectly?: boolean
+  appliesAsStaff?: boolean
   cardPaymentsEnabled?: boolean
-}> = ({ events, hasEverApplied, canApplyDirectly, cardPaymentsEnabled }) => {
+}> = ({
+  events,
+  hasEverApplied,
+  canApplyDirectly,
+  appliesAsStaff,
+  cardPaymentsEnabled,
+}) => {
   const { applied, available } = splitEvents(events)
 
   return (
@@ -184,6 +192,7 @@ export const EventsContent: FC<{
                 key={event.id}
                 event={event}
                 directApply={canApplyDirectly}
+                appliesAsStaff={appliesAsStaff}
                 cardPaymentsEnabled={cardPaymentsEnabled}
               />
             ))}
@@ -205,6 +214,7 @@ const DashboardPage = ({ loaderData }: Route.ComponentProps) => {
             events={events}
             hasEverApplied={loaderData.hasEverApplied}
             canApplyDirectly={loaderData.canApplyDirectly}
+            appliesAsStaff={loaderData.appliesAsStaff}
             cardPaymentsEnabled={loaderData.cardPaymentsEnabled}
           />
         )}

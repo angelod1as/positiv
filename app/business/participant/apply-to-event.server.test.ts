@@ -22,6 +22,7 @@ vi.mock("./event-invite.server", () => ({
 
 import { sendApplicationMail } from "./send-application-mail.server"
 import { db } from "~/lib/supabase/db.server"
+import { findValidInvite } from "./event-invite.server"
 
 describe("applyToEvent", () => {
   let mockFrom: Mock
@@ -219,6 +220,58 @@ describe("applyToEvent", () => {
     })
   })
 
+  describe("spot type", () => {
+    beforeEach(() => {
+      const mockExecuteTakeFirst = vi.fn().mockResolvedValue(mockEvent)
+      const mockWhere = vi.fn(() => ({
+        executeTakeFirst: mockExecuteTakeFirst,
+      }))
+      const mockSelectAll = vi.fn(() => ({
+        where: mockWhere,
+      }))
+      vi.mocked(db.selectFrom).mockReturnValue({
+        selectAll: mockSelectAll,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any)
+
+      mockSingle.mockResolvedValueOnce({ data: null, error: null })
+      vi.mocked(sendApplicationMail).mockResolvedValue({ emailSent: true })
+    })
+
+    const contextWith = (permissions: string[]) => {
+      const context = createContext()
+      return {
+        ...context,
+        currentProfile: { ...context.currentProfile, permissions },
+      }
+    }
+
+    it("writes a staff spot for whoever may apply as staff", async () => {
+      await applyToEvent(validValues, contextWith(["events.apply_as_staff"]))
+
+      expect(mockUpsert.mock.calls[0][0]).toMatchObject({
+        spot_type: "staff",
+      })
+    })
+
+    // The column defaults to regular, and a returning applicant keeps the spot
+    // an admin gave them.
+    it("leaves the spot type alone for everybody else", async () => {
+      await applyToEvent(validValues, contextWith(["events.apply_direct"]))
+
+      expect(mockUpsert.mock.calls[0][0]).not.toHaveProperty("spot_type")
+    })
+
+    it("ignores a spot type sent along with the answers", async () => {
+      await applyToEvent(
+        { ...validValues, spot_type: "staff" } as typeof validValues,
+        contextWith([]),
+      )
+
+      expect(mockUpsert.mock.calls[0][0]).not.toHaveProperty("spot_type")
+    })
+  })
+
   describe("registration closed scenarios", () => {
     beforeEach(() => {
       vi.clearAllMocks()
@@ -254,6 +307,35 @@ describe("applyToEvent", () => {
       expect(db.selectFrom).toHaveBeenCalledWith("events")
       expect(mockSelectAll).toHaveBeenCalled()
       expect(mockWhere).toHaveBeenCalledWith("id", "=", "event-123")
+    })
+
+    it("lets whoever may apply as staff in without an invite", async () => {
+      const mockExecuteTakeFirst = vi.fn().mockResolvedValue({
+        ...mockEvent,
+        event_status: "Registration Closed",
+      })
+      vi.mocked(db.selectFrom).mockReturnValue({
+        selectAll: vi.fn(() => ({
+          where: vi.fn(() => ({ executeTakeFirst: mockExecuteTakeFirst })),
+        })),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any)
+      mockSingle.mockResolvedValueOnce({ data: null, error: null })
+
+      const context = createContext()
+      const result = await applyToEvent(validValues, {
+        ...context,
+        currentProfile: {
+          ...context.currentProfile,
+          permissions: ["events.apply_as_staff"],
+        },
+      })
+
+      expect(result.success).toBe(true)
+      expect(findValidInvite).not.toHaveBeenCalled()
+      expect(mockUpsert.mock.calls[0][0]).toMatchObject({
+        spot_type: "staff",
+      })
     })
 
     it("should return error when event does not exist", async () => {
