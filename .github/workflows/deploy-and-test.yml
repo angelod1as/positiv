@@ -18,6 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
       - uses: supabase/setup-cli@v3
         with:
           version: 2.117.0
@@ -137,6 +141,10 @@ jobs:
       - uses: actions/checkout@v7
 
       # Setup Supabase CLI and start local instance
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
       - uses: supabase/setup-cli@v3
         with:
           version: 2.117.0
