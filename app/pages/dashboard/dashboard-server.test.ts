@@ -38,6 +38,7 @@ import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
 import { getNextEvents } from "../page/fetch/get-next-events"
 import { action, loader } from "./dashboard-page"
 import { PERMISSIONS } from "~/business/auth/permissions"
+import { dashboardCopy } from "~/copy/dashboard"
 
 const mockGetContext = vi.mocked(getContext)
 const mockGetUserContext = vi.mocked(getUserContext)
@@ -117,6 +118,21 @@ describe("dashboard action — cancellation", () => {
       profileId: "profile-123",
       reason: undefined,
     })
+  })
+
+  it("fails without recording a cancellation when it is refused", async () => {
+    mockCancelApplicationToEvent.mockResolvedValue({
+      success: false,
+      errors: [
+        new Error("A paid registration cannot be cancelled by the participant"),
+      ],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)
+
+    await expect(
+      run({ fetchId: "handleConfirmCancel", eventId: "event-123" }),
+    ).rejects.toThrow(dashboardCopy.cancelFailed)
+    expect(mockTrackServerEvent).not.toHaveBeenCalled()
   })
 })
 

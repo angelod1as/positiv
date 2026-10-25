@@ -244,6 +244,14 @@ export const eventCardCopy = {
     confirmLabel: "😢 Cancelar",
     cancelLabel: "🎉 Voltar",
   },
+  paidCancel: {
+    hint: "Seu pagamento já foi confirmado, então o cancelamento é feito com a nossa equipe.",
+    trigger: "Cancelar pelo WhatsApp",
+    whatsappMessage: (eventTitle?: string | null) =>
+      eventTitle
+        ? `Oi! Paguei minha inscrição no evento "${eventTitle}" e preciso cancelar.`
+        : "Oi! Paguei minha inscrição em um evento e preciso cancelar.",
+  },
   payment: {
     pending: "Pagamento pendente",
     paid: "Pago",
