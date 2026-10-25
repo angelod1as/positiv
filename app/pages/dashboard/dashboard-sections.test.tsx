@@ -23,6 +23,7 @@ const renderContent = (props: {
   events: Event[]
   hasEverApplied: boolean
   canApplyDirectly?: boolean
+  appliesAsStaff?: boolean
   cardPaymentsEnabled?: boolean
 }) => {
   const router = createMemoryRouter(
@@ -34,6 +35,7 @@ const renderContent = (props: {
             events={props.events}
             hasEverApplied={props.hasEverApplied}
             canApplyDirectly={props.canApplyDirectly}
+            appliesAsStaff={props.appliesAsStaff}
             cardPaymentsEnabled={props.cardPaymentsEnabled}
           />
         ),
@@ -158,5 +160,33 @@ describe("EventsContent — direct application", () => {
     expect(
       screen.queryByText("Candidatura direta"),
     ).not.toBeInTheDocument()
+  })
+})
+
+describe("EventsContent — staff", () => {
+  const closedEvent = makeEvent({
+    id: "closed-event",
+    event_status: "Registration Closed",
+  })
+
+  it("offers a closed event to whoever applies as staff", () => {
+    renderContent({
+      events: [closedEvent],
+      hasEverApplied: true,
+      appliesAsStaff: true,
+    })
+
+    expect(screen.getByText(/Me candidatar/i)).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: /Candidaturas encerradas/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("keeps a closed event closed to anyone else", () => {
+    renderContent({ events: [closedEvent], hasEverApplied: true })
+
+    expect(
+      screen.getByRole("button", { name: /Candidaturas encerradas/i }),
+    ).toBeDisabled()
   })
 })

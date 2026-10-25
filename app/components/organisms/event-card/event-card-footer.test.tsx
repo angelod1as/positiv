@@ -202,6 +202,41 @@ describe("EventCardFooter", () => {
     })
   })
 
+  describe("when the person applies as staff", () => {
+    const renderClosed = (
+      props: Partial<React.ComponentProps<typeof EventCardFooter>> = {},
+    ) =>
+      render(
+        <EventCardFooter
+          eventId="test-event-id"
+          event_status="Registration Closed"
+          googleLink=""
+          is_applied={false}
+          dataTestId="test-footer"
+          appliesAsStaff={true}
+          {...props}
+        />,
+      )
+
+    it("offers the application after registrations close", () => {
+      renderClosed()
+
+      expect(screen.getByText(/Me candidatar/i)).toHaveAttribute(
+        "href",
+        "/dashboard/test-event-id",
+      )
+      expect(
+        screen.queryByText(/Candidaturas encerradas/i),
+      ).not.toBeInTheDocument()
+    })
+
+    it("keeps the direct application after registrations close", () => {
+      renderClosed({ directApply: true })
+
+      expect(screen.getByText("Candidatura direta")).toBeInTheDocument()
+    })
+  })
+
   describe("when directApply is true", () => {
     const renderFooter = (
       props: Partial<React.ComponentProps<typeof EventCardFooter>> = {},

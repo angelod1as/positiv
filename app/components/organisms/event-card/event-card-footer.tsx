@@ -43,6 +43,11 @@ type EventCardFooterProps = {
    * application buttons altogether.
    */
   directApply?: boolean
+  /**
+   * Whether this person applies as staff, who are outside the limit that
+   * closes registrations.
+   */
+  appliesAsStaff?: boolean
 }
 export const EventCardFooter: FC<EventCardFooterProps> = ({
   is_applied,
@@ -54,6 +59,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
   dataTestId,
   isAdmin,
   directApply,
+  appliesAsStaff,
 }) => {
   const fetcher = useFetcher()
   const prefetchStrategy = useSmartPrefetch()
@@ -194,10 +200,10 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
     )
   }
 
-  // A closed event still opens for whoever holds an invite to it. What the
-  // server does with the application is decided against the database; this only
-  // spares the invited person a dead button.
-  if (isClosed && !is_invited) {
+  // A closed event still opens for staff and for whoever holds an invite to it.
+  // What the server does with the application is decided against the database;
+  // this only spares them a dead button.
+  if (isClosed && !is_invited && !appliesAsStaff) {
     return (
       <Button data-testid={dataTestId} disabled={true}>
         {eventCardCopy.closed}
@@ -205,7 +211,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
     )
   }
 
-  if (isClosed && is_invited) {
+  if (isClosed && is_invited && !appliesAsStaff) {
     return (
       <Button
         data-testid={dataTestId}
@@ -217,7 +223,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
     )
   }
 
-  if (isOpen) {
+  if (isOpen || (isClosed && appliesAsStaff)) {
     return (
       <div className="flex flex-col sm:flex-row gap-4 w-full">
         <Button
