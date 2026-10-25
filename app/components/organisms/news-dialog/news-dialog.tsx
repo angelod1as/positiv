@@ -11,10 +11,12 @@ export const NewsDialog = ({
   isThereAnyNews,
   isHeader,
   currentProfile,
+  label,
 }: {
   isThereAnyNews: boolean
   isHeader?: boolean
   currentProfile?: ProfileWithRoles | null
+  label?: string
 }) => {
   const fetcher = useFetcher()
   const isAdmin = can(currentProfile, PERMISSIONS.ADMIN_PANEL)
@@ -44,8 +46,12 @@ export const NewsDialog = ({
     >
       {isHeader ? (
         shouldShowBell && (
-          <ConfirmDialog.Trigger variant="ghost">
+          <ConfirmDialog.Trigger
+            variant="ghost"
+            className={label ? "justify-start" : undefined}
+          >
             <BellDotIcon />
+            {label}
           </ConfirmDialog.Trigger>
         )
       ) : (

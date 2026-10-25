@@ -13,6 +13,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "~/components/ui/sheet"
+import { Separator } from "~/components/ui/separator"
 import { headerCopy } from "~/copy/layout"
 import paths from "~/lib/paths"
 import type { PortableText } from "~/business/cms/content.schema"
@@ -78,6 +79,9 @@ export const Header: FC<HeaderProps> = ({
     : userEmail || undefined
   const canEnterAdminPanel = can(profile, PERMISSIONS.ADMIN_PANEL)
   const showButtons = profile || userEmail
+  const platformInMenu = showButton && !!showButtons
+  const hasNavigation = navigation.length > 0
+  const closeMenu = () => setIsMenuOpen(false)
 
   return (
     <>
@@ -102,11 +106,12 @@ export const Header: FC<HeaderProps> = ({
             </Link>
           </div>
           <div className="flex items-center space-x-2">
-            {navigation.length > 0 && (
+            {(hasNavigation || platformInMenu) && (
               <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
                 <SheetTrigger asChild>
                   <Button
                     variant="outline"
+                    className={hasNavigation ? undefined : "sm:hidden"}
                     aria-label={headerCopy.openMenu}
                   >
                     <MenuIcon />
@@ -116,30 +121,80 @@ export const Header: FC<HeaderProps> = ({
                   <SheetHeader>
                     <SheetTitle>{headerCopy.menuTitle}</SheetTitle>
                   </SheetHeader>
-                  <nav aria-label={headerCopy.navigationLabel}>
-                    <ul className="flex flex-col gap-4 px-4">
-                      {navigation.map((link) => (
-                        <li key={link._key}>
-                          <ContentLink
-                            href={link.href}
-                            className="no-underline hover:underline"
-                            onClick={() => setIsMenuOpen(false)}
-                            aria-current={
-                              link.href === pathname ? "page" : undefined
-                            }
-                          >
-                            {link.label}
-                          </ContentLink>
-                        </li>
-                      ))}
-                    </ul>
-                  </nav>
+                  {platformInMenu && (
+                    <div className="flex flex-col gap-2 px-1 sm:hidden">
+                      {!!displayName && (
+                        <p className="px-3">{headerCopy.greeting(displayName)}</p>
+                      )}
+                      <NewsDialog
+                        isThereAnyNews={isThereAnyNews}
+                        isHeader={true}
+                        currentProfile={profile}
+                        label={headerCopy.news}
+                      />
+                      <Button
+                        variant="ghost"
+                        className="justify-start"
+                        to={DASHBOARD}
+                        linkProps={{ onClick: closeMenu }}
+                      >
+                        <CalendarIcon />
+                        {headerCopy.dashboardTitle}
+                      </Button>
+                      {canEnterAdminPanel && (
+                        <Button
+                          variant="ghost"
+                          className="justify-start"
+                          to={ADMIN_DASHBOARD}
+                          linkProps={{ onClick: closeMenu }}
+                        >
+                          <Table2Icon />
+                          {headerCopy.adminTitle}
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        className="justify-start"
+                        to={ACCOUNT}
+                        linkProps={{ onClick: closeMenu }}
+                      >
+                        <UserIcon />
+                        {headerCopy.accountTitle}
+                      </Button>
+                    </div>
+                  )}
+                  {platformInMenu && hasNavigation && (
+                    <Separator
+                      decorative={false}
+                      className="mx-4 data-[orientation=horizontal]:w-auto sm:hidden"
+                    />
+                  )}
+                  {hasNavigation && (
+                    <nav aria-label={headerCopy.navigationLabel}>
+                      <ul className="flex flex-col gap-4 px-4">
+                        {navigation.map((link) => (
+                          <li key={link._key}>
+                            <ContentLink
+                              href={link.href}
+                              className="no-underline hover:underline"
+                              onClick={() => setIsMenuOpen(false)}
+                              aria-current={
+                                link.href === pathname ? "page" : undefined
+                              }
+                            >
+                              {link.label}
+                            </ContentLink>
+                          </li>
+                        ))}
+                      </ul>
+                    </nav>
+                  )}
                 </SheetContent>
               </Sheet>
             )}
             {showButton &&
               (showButtons ? (
-                <div className="flex items-center space-x-2">
+                <div className="hidden sm:flex items-center space-x-2">
                   {!!displayName && (
                     <p className="hidden sm:block">{headerCopy.greeting(displayName)}</p>
                   )}
