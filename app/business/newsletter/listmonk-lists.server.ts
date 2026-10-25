@@ -149,7 +149,10 @@ interface ListSubscribersResponse {
 }
 
 export const getListSubscribers = composable(
-  async (listId: number): Promise<ListSubscriber[]> => {
+  async (
+    listId: number,
+    membership: "active" | "unsubscribed" = "active",
+  ): Promise<ListSubscriber[]> => {
     if (ENV.E2E_MODE) {
       return []
     }
@@ -160,10 +163,15 @@ export const getListSubscribers = composable(
     let page = 1
     const perPage = 100
     let hasMore = true
+    let reportedTotal = 0
+    const statusCondition =
+      membership === "unsubscribed"
+        ? "status = 'unsubscribed'"
+        : "status != 'unsubscribed'"
 
     while (hasMore) {
       const query = encodeURIComponent(
-        `subscribers.id IN (SELECT subscriber_id FROM subscriber_lists WHERE list_id = ${listId} AND status != 'unsubscribed')`
+        `subscribers.id IN (SELECT subscriber_id FROM subscriber_lists WHERE list_id = ${listId} AND ${statusCondition})`
       )
       const response = await fetch(
         `${listmonkApiUrl}/api/subscribers?query=${query}&page=${page}&per_page=${perPage}`,
@@ -185,9 +193,16 @@ export const getListSubscribers = composable(
       const data = (await response.json()) as ListSubscribersResponse
       const results = data.data.results || []
       allSubscribers.push(...results)
+      reportedTotal = data.data.total ?? 0
 
       hasMore = results.length === perPage
       page++
+    }
+
+    if (allSubscribers.length < reportedTotal) {
+      throw new Error(
+        `Incomplete read of list ${listId}: got ${allSubscribers.length} of ${reportedTotal} subscribers`,
+      )
     }
 
     return allSubscribers

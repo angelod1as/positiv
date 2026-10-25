@@ -3,6 +3,14 @@ export const adminParticipantsCopy = {
     title: "Perfis",
     loadFailed: "Erro ao carregar perfis. Tente novamente.",
   },
+  veteransSync: {
+    button: "Sincronizar lista de veteranos",
+    syncing: "Sincronizando...",
+    result: (added: number, removed: number, total: number) =>
+      `Lista de veteranos sincronizada: ${added} adicionades, ${removed} removides, ${total} na lista`,
+    forbidden: "Você não tem permissão para sincronizar a lista de veteranos",
+    failed: "Erro ao sincronizar a lista de veteranos. Tente novamente.",
+  },
   viewProfile: {
     profileNotFound: "Perfil não encontrado",
     profileMissing: "Perfil não encontrado ou não existe.",

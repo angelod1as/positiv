@@ -7,7 +7,12 @@ import {
   afterEach,
   type MockInstance,
 } from "vitest"
-import { createList, deleteList, getListById } from "./listmonk-lists.server"
+import {
+  createList,
+  deleteList,
+  getListById,
+  getListSubscribers,
+} from "./listmonk-lists.server"
 
 vi.mock("varlock/env", () => ({
   ENV: {
@@ -323,5 +328,84 @@ describe("getListById", () => {
     const result = await getListById(123)
 
     expect(result.success).toBe(false)
+  })
+})
+
+describe("getListSubscribers", () => {
+  let fetchSpy: MockInstance
+
+  beforeEach(() => {
+    fetchSpy = vi.spyOn(global, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: { results: [], total: 0, page: 1, per_page: 100 },
+      }),
+    } as Response)
+  })
+
+  afterEach(() => {
+    fetchSpy.mockRestore()
+    vi.clearAllMocks()
+  })
+
+  const requestedQuery = () =>
+    decodeURIComponent(String(fetchSpy.mock.calls[0][0]))
+
+  it("should read active memberships by default", async () => {
+    await getListSubscribers(141)
+
+    expect(requestedQuery()).toContain(
+      "WHERE list_id = 141 AND status != 'unsubscribed'",
+    )
+  })
+
+  const page = (ids: number[], total: number) =>
+    ({
+      ok: true,
+      json: async () => ({
+        data: {
+          results: ids.map((id) => ({
+            id,
+            email: `s${id}@example.com`,
+            name: `s${id}`,
+            status: "enabled",
+          })),
+          total,
+          page: 1,
+          per_page: 100,
+        },
+      }),
+    }) as Response
+
+  const range = (from: number, count: number) =>
+    Array.from({ length: count }, (_, i) => from + i)
+
+  it("should read every page until Listmonk's total is reached", async () => {
+    fetchSpy
+      .mockResolvedValueOnce(page(range(1, 100), 150))
+      .mockResolvedValueOnce(page(range(101, 50), 150))
+
+    const result = await getListSubscribers(141)
+
+    expect(result.success).toBe(true)
+    expect(result.success && result.data).toHaveLength(150)
+  })
+
+  it("should fail when the pages return fewer subscribers than Listmonk's total", async () => {
+    fetchSpy
+      .mockResolvedValueOnce(page(range(1, 100), 250))
+      .mockResolvedValueOnce(page(range(101, 50), 250))
+
+    const result = await getListSubscribers(141)
+
+    expect(result.success).toBe(false)
+  })
+
+  it("should read only unsubscribed memberships when asked", async () => {
+    await getListSubscribers(141, "unsubscribed")
+
+    expect(requestedQuery()).toContain(
+      "WHERE list_id = 141 AND status = 'unsubscribed'",
+    )
   })
 })

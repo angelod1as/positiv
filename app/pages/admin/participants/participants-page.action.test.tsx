@@ -3,12 +3,18 @@ import {
   getAdminContext,
   updateProfileAdminNotes,
 } from "~/business/admin/admin.server"
+import { syncVeteransListmonkList } from "~/business/newsletter/veterans-list.server"
+import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { action } from "./participants-page"
 
 vi.mock("~/business/admin/admin.server", () => ({
   getAdminContext: vi.fn(),
   getAllProfiles: vi.fn(),
   updateProfileAdminNotes: vi.fn(),
+}))
+
+vi.mock("~/business/newsletter/veterans-list.server", () => ({
+  syncVeteransListmonkList: vi.fn(),
 }))
 
 const buildRequest = (fields: Record<string, string>) =>
@@ -55,5 +61,62 @@ describe("ParticipantsPage action", () => {
 
     expect(getAdminContext).toHaveBeenCalledTimes(1)
     expect(updateProfileAdminNotes).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("ParticipantsPage action - sync veterans list", () => {
+  const syncFields = { intent: "sync-veterans-list" }
+
+  const givenAdminWith = (permissions: string[]) =>
+    vi.mocked(getAdminContext).mockResolvedValue({
+      currentProfile: { permissions },
+    } as unknown as Awaited<ReturnType<typeof getAdminContext>>)
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it("should refuse an admin without the newsletter permission", async () => {
+    givenAdminWith(["admin.panel"])
+
+    const result = await runAction(syncFields)
+
+    expect(result).toEqual({
+      intent: "sync-veterans-list",
+      error: adminParticipantsCopy.veteransSync.forbidden,
+    })
+    expect(syncVeteransListmonkList).not.toHaveBeenCalled()
+  })
+
+  it("should return the sync counts to an admin with the newsletter permission", async () => {
+    givenAdminWith(["admin.panel", "newsletter.manage"])
+    vi.mocked(syncVeteransListmonkList).mockResolvedValue({
+      success: true,
+      data: { added: 3, removed: 1, total: 12 },
+      errors: [],
+    })
+
+    const result = await runAction(syncFields)
+
+    expect(syncVeteransListmonkList).toHaveBeenCalledTimes(1)
+    expect(result).toEqual({
+      intent: "sync-veterans-list",
+      result: { added: 3, removed: 1, total: 12 },
+    })
+  })
+
+  it("should return an error when the sync fails", async () => {
+    givenAdminWith(["admin.panel", "newsletter.manage"])
+    vi.mocked(syncVeteransListmonkList).mockResolvedValue({
+      success: false,
+      errors: [new Error("Listmonk is down")],
+    })
+
+    const result = await runAction(syncFields)
+
+    expect(result).toEqual({
+      intent: "sync-veterans-list",
+      error: adminParticipantsCopy.veteransSync.failed,
+    })
   })
 })

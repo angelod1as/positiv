@@ -4,6 +4,7 @@ import {
   testConnection,
   addSubscriber,
   addSubscribersToListBulk,
+  removeSubscribersFromListBulk,
   removeSubscriber,
   createCampaign,
   updateCampaignStatus,
@@ -606,6 +607,65 @@ describe("addSubscribersToListBulk", () => {
     const result = await addSubscribersToListBulk([1, 2, 3], 10)
 
     expect(result.success).toBe(false)
+  })
+})
+
+describe("removeSubscribersFromListBulk", () => {
+  let fetchSpy: MockInstance
+
+  beforeEach(() => {
+    fetchSpy = vi.spyOn(global, "fetch")
+  })
+
+  afterEach(() => {
+    fetchSpy.mockRestore()
+    vi.clearAllMocks()
+  })
+
+  it("should remove multiple subscribers from a list in a single API call", async () => {
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: true }),
+    } as Response)
+
+    const result = await removeSubscribersFromListBulk([1, 2, 2, -1, 3], 10)
+
+    expect(result.success).toBe(true)
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://listmonk.test/api/subscribers/lists",
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({
+          ids: [1, 2, 3],
+          action: "remove",
+          target_list_ids: [10],
+        }),
+      })
+    )
+  })
+
+  it("should make no API call when there is no one to remove", async () => {
+    const result = await removeSubscribersFromListBulk([], 10)
+
+    expect(result.success).toBe(true)
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it("should fail when API returns error", async () => {
+    fetchSpy.mockResolvedValue({
+      ok: false,
+      status: 400,
+      statusText: "Bad Request",
+      text: async () => "Invalid subscriber IDs",
+    } as Response)
+
+    const result = await removeSubscribersFromListBulk([1, 2, 3], 10)
+
+    expect(result.success).toBe(false)
+    expect(result.errors?.[0]?.message).toContain(
+      "Failed to remove subscribers from list"
+    )
   })
 })
 
