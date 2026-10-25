@@ -17,14 +17,8 @@ export default defineConfig({
     include: ['app/**/*.integration.test.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     // Integration tests should run sequentially to avoid database conflicts
     pool: 'forks',
-    poolOptions: {
-      threads: {
-        singleThread: true
-      },
-      forks: {
-        singleFork: true
-      }
-    },
+    maxWorkers: 1,
+    fileParallelism: false,
     // Longer timeout for database operations
     testTimeout: 30000,
     hookTimeout: 30000,

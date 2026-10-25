@@ -1,5 +1,13 @@
 import type { ColDef, GridApi } from "ag-grid-community"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  type MockInstance,
+  vi,
+} from "vitest"
 import { act, render, screen, waitFor } from "~/test/test-utils"
 import { BaseMultiSelectFilter } from "../filters/base-multi-select-filter"
 import { AGDataTable } from "./ag-data-table"
@@ -58,7 +66,7 @@ const columnDefs: ColDef<Row>[] = [
   },
 ]
 
-const agGridMessages = (spy: ReturnType<typeof vi.spyOn>) =>
+const agGridMessages = (spy: MockInstance<(...args: unknown[]) => void>) =>
   spy.mock.calls
     .map((args) => args.map(String).join(" "))
     .filter((message) => message.includes("AG Grid"))

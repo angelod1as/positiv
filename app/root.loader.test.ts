@@ -241,7 +241,7 @@ describe("root loader", () => {
 
     it("starts the draft read without waiting for the session", async () => {
       isDraftModeEnabled.mockResolvedValue(true)
-      type Context = Awaited<ReturnType<typeof mockGetContext>>
+      type Context = Record<string, unknown>
       let resolveContext: (context: Context) => void = () => {}
       mockGetContext.mockReturnValue(
         new Promise<Context>((resolve) => {
