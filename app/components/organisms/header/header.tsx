@@ -119,7 +119,7 @@ export const Header: FC<HeaderProps> = ({
                 </SheetTrigger>
                 <SheetContent aria-describedby={undefined}>
                   <SheetHeader>
-                    <SheetTitle>{headerCopy.menuTitle}</SheetTitle>
+                    <SheetTitle className="sr-only">{headerCopy.menuTitle}</SheetTitle>
                   </SheetHeader>
                   {platformInMenu && (
                     <div className="flex flex-col gap-2 px-1 sm:hidden">
