@@ -219,6 +219,58 @@ describe("applyToEvent", () => {
     })
   })
 
+  describe("spot type", () => {
+    beforeEach(() => {
+      const mockExecuteTakeFirst = vi.fn().mockResolvedValue(mockEvent)
+      const mockWhere = vi.fn(() => ({
+        executeTakeFirst: mockExecuteTakeFirst,
+      }))
+      const mockSelectAll = vi.fn(() => ({
+        where: mockWhere,
+      }))
+      vi.mocked(db.selectFrom).mockReturnValue({
+        selectAll: mockSelectAll,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any)
+
+      mockSingle.mockResolvedValueOnce({ data: null, error: null })
+      vi.mocked(sendApplicationMail).mockResolvedValue({ emailSent: true })
+    })
+
+    const contextWith = (permissions: string[]) => {
+      const context = createContext()
+      return {
+        ...context,
+        currentProfile: { ...context.currentProfile, permissions },
+      }
+    }
+
+    it("writes a staff spot for whoever may apply as staff", async () => {
+      await applyToEvent(validValues, contextWith(["events.apply_as_staff"]))
+
+      expect(mockUpsert.mock.calls[0][0]).toMatchObject({
+        spot_type: "staff",
+      })
+    })
+
+    // The column defaults to regular, and a returning applicant keeps the spot
+    // an admin gave them.
+    it("leaves the spot type alone for everybody else", async () => {
+      await applyToEvent(validValues, contextWith(["events.apply_direct"]))
+
+      expect(mockUpsert.mock.calls[0][0]).not.toHaveProperty("spot_type")
+    })
+
+    it("ignores a spot type sent along with the answers", async () => {
+      await applyToEvent(
+        { ...validValues, spot_type: "staff" } as typeof validValues,
+        contextWith([]),
+      )
+
+      expect(mockUpsert.mock.calls[0][0]).not.toHaveProperty("spot_type")
+    })
+  })
+
   describe("registration closed scenarios", () => {
     beforeEach(() => {
       vi.clearAllMocks()

@@ -1,4 +1,5 @@
 import { applySchema } from "composable-functions"
+import { can, PERMISSIONS } from "~/business/auth/permissions"
 import { participantCopy } from "~/copy/participant"
 import { dateToString } from "~/lib/helpers/date-to-string"
 import { applyToEventInputSchema, userContextSchema } from "../common"
@@ -63,6 +64,9 @@ export const applyToEvent = applySchema(
     ...values, // Supabase sanitizes automatically
     is_user_applied: true,
     cancellation_reason: null,
+    ...(can(currentProfile, PERMISSIONS.EVENTS_APPLY_AS_STAFF) && {
+      spot_type: "staff" as const,
+    }),
   })
 
   if (error) {
