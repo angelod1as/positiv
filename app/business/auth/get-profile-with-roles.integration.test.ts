@@ -89,7 +89,7 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
     expect(data.full_name).toBeDefined()
   })
 
-  it("should return roles=['staff'] and only the direct application for a staff", async () => {
+  it("should return roles=['staff'] and the staff permissions for a staff", async () => {
     await kysely
       .insertInto("user_roles")
       .values({
@@ -107,7 +107,10 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
     expect(result.rows).toHaveLength(1)
     const data = result.rows[0]
     expect(data.roles).toEqual(["staff"])
-    expect(data.permissions).toEqual(["events.apply_direct"])
+    expect(data.permissions).toEqual([
+      "events.apply_as_staff",
+      "events.apply_direct",
+    ])
   })
 
   it("should return every role sorted and the union of their permissions", async () => {
@@ -137,6 +140,7 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
     expect(data.roles).toEqual(["admin", "staff"])
     expect(data.permissions).toEqual([
       "admin.panel",
+      "events.apply_as_staff",
       "events.apply_direct",
       "events.manage",
       "newsletter.manage",

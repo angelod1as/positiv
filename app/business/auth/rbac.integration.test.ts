@@ -82,7 +82,7 @@ describe("RBAC - Integration Tests", () => {
   })
 
   describe("role_permissions", () => {
-    it("maps admin to every permission and staff to the direct application only", async () => {
+    it("maps admin to every permission and staff to the direct application and the staff spot", async () => {
       const { rows } = await sql<{ role: string; permission: string }>`
         SELECT role::text, permission::text
         FROM public.role_permissions
@@ -96,7 +96,10 @@ describe("RBAC - Integration Tests", () => {
           .sort()
 
       expect(byRole(ROLES.ADMIN)).toEqual([...ALL_PERMISSIONS].sort())
-      expect(byRole(ROLES.STAFF)).toEqual(["events.apply_direct"])
+      expect(byRole(ROLES.STAFF)).toEqual([
+        "events.apply_as_staff",
+        "events.apply_direct",
+      ])
     })
 
     it("is not readable by an authenticated user", async () => {
@@ -136,12 +139,13 @@ describe("RBAC - Integration Tests", () => {
     )
 
     it.each(ALL_PERMISSIONS)(
-      "is true for a staff only on events.apply_direct (%s)",
+      "is true for a staff only on events.apply_direct and events.apply_as_staff (%s)",
       async (permission) => {
         const { userId } = await createUser(ROLES.STAFF)
 
         expect(await authorize(userId, permission)).toBe(
-          permission === "events.apply_direct",
+          permission === "events.apply_direct" ||
+            permission === "events.apply_as_staff",
         )
       },
     )
