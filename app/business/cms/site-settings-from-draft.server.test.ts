@@ -22,6 +22,16 @@ describe("siteSettingsFromDraft", () => {
     expect(loadSiteSettings).not.toHaveBeenCalled()
   })
 
+  it("treats a missing draft Site Settings document as no Site Settings", async () => {
+    const result = await siteSettingsFromDraft({})
+
+    expect(result).toEqual({
+      siteSettings: null,
+      editorialSystemUnavailable: false,
+    })
+    expect(loadSiteSettings).not.toHaveBeenCalled()
+  })
+
   it("degrades to the published snapshot when the draft Site Settings cannot be resolved", async () => {
     const published = { siteSettings: null, editorialSystemUnavailable: false }
     loadSiteSettings.mockResolvedValue(published)

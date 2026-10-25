@@ -24,9 +24,9 @@ type SiteClient = {
 }
 
 const responseSchema = zod.object({
-  pages: zod.unknown(),
-  siteSettings: zod.unknown(),
-  paymentMessages: zod.unknown(),
+  pages: zod.unknown().optional(),
+  siteSettings: zod.unknown().optional(),
+  paymentMessages: zod.unknown().optional(),
 })
 
 export async function getSiteSnapshot(
