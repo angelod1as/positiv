@@ -19,12 +19,13 @@ const notice = (page: Page) =>
   page.getByRole('alert').filter({ hasText: NOTICE_TEXT })
 
 test.describe('Site Settings from Sanity', () => {
-  test('the header Navigation resolves a link to its Page and navigates', async ({
+  test('the header Navigation resolves a link to its Page and navigates from the menu', async ({
     page,
   }) => {
     const sitePage = new SitePage(page)
 
     await sitePage.goto('/')
+    await page.getByRole('button', { name: headerCopy.openMenu }).click()
 
     const link = sitePage
       .navigation(headerCopy.navigationLabel)
@@ -35,7 +36,7 @@ test.describe('Site Settings from Sanity', () => {
     await expect(page).toHaveURL(new RegExp(`${PAGE_LINK_ADDRESS}$`))
   })
 
-  test('the Navigation moves into a menu on a small screen', async ({ page }) => {
+  test('the Navigation stays in the menu on a small screen', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     const sitePage = new SitePage(page)
 

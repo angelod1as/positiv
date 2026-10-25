@@ -103,35 +103,20 @@ export const Header: FC<HeaderProps> = ({
           </div>
           <div className="flex items-center space-x-2">
             {navigation.length > 0 && (
-              <>
-                <nav
-                  aria-label={headerCopy.navigationLabel}
-                  className="hidden md:flex items-center gap-4 pr-2"
-                >
-                  {navigation.map((link) => (
-                    <ContentLink
-                      key={link._key}
-                      href={link.href}
-                      className="no-underline hover:underline"
-                    >
-                      {link.label}
-                    </ContentLink>
-                  ))}
-                </nav>
-                <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-                  <SheetTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="md:hidden"
-                      aria-label={headerCopy.openMenu}
-                    >
-                      <MenuIcon />
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent aria-describedby={undefined}>
-                    <SheetHeader>
-                      <SheetTitle>{headerCopy.menuTitle}</SheetTitle>
-                    </SheetHeader>
+              <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="outline"
+                    aria-label={headerCopy.openMenu}
+                  >
+                    <MenuIcon />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent aria-describedby={undefined}>
+                  <SheetHeader>
+                    <SheetTitle>{headerCopy.menuTitle}</SheetTitle>
+                  </SheetHeader>
+                  <nav aria-label={headerCopy.navigationLabel}>
                     <ul className="flex flex-col gap-4 px-4">
                       {navigation.map((link) => (
                         <li key={link._key}>
@@ -145,9 +130,9 @@ export const Header: FC<HeaderProps> = ({
                         </li>
                       ))}
                     </ul>
-                  </SheetContent>
-                </Sheet>
-              </>
+                  </nav>
+                </SheetContent>
+              </Sheet>
             )}
             {showButton &&
               (showButtons ? (
