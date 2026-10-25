@@ -304,6 +304,33 @@ describe("syncVeteransListmonkList", () => {
     expect(writeCalls(fetchSpy)).toHaveLength(0)
   })
 
+  it("should report a failure when the removal fails after the additions went through", async () => {
+    givenConsentedVeterans(["new@example.com"])
+    const newcomer = subscriber(1, "new@example.com", onRegisteredList)
+    const stale = subscriber(2, "stale@example.com", [
+      ...onRegisteredList,
+      [LISTMONK_VETERANS_LIST_ID, "confirmed"],
+    ])
+    const fakeListmonk = createFakeListmonk([newcomer, stale])
+    fetchSpy.mockImplementation(async (input, init) => {
+      if (String(init?.body).includes('"action":"remove"')) {
+        return {
+          ok: false,
+          status: 500,
+          statusText: "Internal Server Error",
+          text: async () => "boom",
+        } as Response
+      }
+      return fakeListmonk(input, init)
+    })
+
+    const result = await syncVeteransListmonkList()
+
+    expect(result.success).toBe(false)
+    expect(newcomer.lists.get(LISTMONK_VETERANS_LIST_ID)).toBe("confirmed")
+    expect(stale.lists.get(LISTMONK_VETERANS_LIST_ID)).toBe("confirmed")
+  })
+
   it("should fail when Listmonk cannot be read", async () => {
     givenConsentedVeterans(["vet@example.com"])
     fetchSpy.mockResolvedValue({
