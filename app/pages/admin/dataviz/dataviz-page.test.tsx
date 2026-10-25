@@ -25,7 +25,13 @@ vi.mock("~/business/admin/dataviz/growth-retention.server", () => ({
 }))
 
 function makeRequest(url = "http://localhost/admin/numeros") {
-  return { request: new Request(url), params: {}, context: {} }
+  return {
+    request: new Request(url),
+    url: new URL(url),
+    pattern: "/admin/numeros",
+    params: {},
+    context: {},
+  }
 }
 
 describe("Numeros Page - Loader", () => {

@@ -40,6 +40,7 @@ describe("useRootData", () => {
         pathname: "/",
         params: {},
         data: mockRootData,
+        loaderData: mockRootData,
         handle: undefined,
       },
     ])
@@ -62,6 +63,7 @@ describe("useRootData", () => {
         pathname: "/",
         params: {},
         data: mockRootData,
+        loaderData: mockRootData,
         handle: undefined,
       },
     ])
@@ -86,6 +88,7 @@ describe("useRootData", () => {
         pathname: "/",
         params: {},
         data: undefined,
+        loaderData: undefined,
         handle: undefined,
       },
     ])
