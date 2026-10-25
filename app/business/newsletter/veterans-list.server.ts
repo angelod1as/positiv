@@ -26,7 +26,7 @@ export async function getConsentedVeteranEmails(): Promise<string[]> {
 
 async function readListSubscribers(
   listId: number,
-  membership: "active" | "unsubscribed" = "active",
+  membership?: "active" | "unsubscribed",
 ) {
   const result = await getListSubscribers(listId, membership)
   if (!result.success) {
