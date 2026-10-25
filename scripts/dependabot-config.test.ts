@@ -41,24 +41,33 @@ describe("Dependabot config", () => {
     },
   )
 
-  // One pnpm-lock.yaml at the root covers studio/ through pnpm-workspace.yaml;
-  // a second entry for studio/ would race the first over the same lockfile.
-  it("covers the pnpm workspace through its single root lockfile", () => {
-    expect(config().match(/package-ecosystem: npm/g)).toHaveLength(1)
+  // One pnpm-lock.yaml at the root covers studio/ through pnpm-workspace.yaml,
+  // so the root entry updates both packages. GitHub still raises alerts against
+  // studio/package.json, and left alone it opens a second pull request for the
+  // same dependency over the same lockfile -- the studio entry exists only to
+  // switch that off.
+  it("updates the pnpm workspace only through its single root lockfile", () => {
+    const text = config()
+    const studio = text.slice(text.indexOf('    directory: "/studio"\n'))
+
+    expect(text.match(/package-ecosystem: npm/g)).toHaveLength(2)
+    expect(studio).toMatch(/^ {4}open-pull-requests-limit: 0$/m)
+    expect(studio).toMatch(/^ {4}ignore:\n {6}- dependency-name: "\*"\n(?! {8})/m)
   })
 
-  it("batches npm minor and patch updates, and security updates, into groups", () => {
+  it("batches npm security updates, and version updates in small groups with catch-alls last", () => {
     const npm = updateBlock("npm")
 
-    expect(npm).toMatch(/applies-to: version-updates\n\s+update-types:\n\s+- minor\n\s+- patch/)
-    expect(npm).toMatch(/applies-to: security-updates/)
+    expect(npm).toMatch(/applies-to: security-updates\n\s+patterns:\n\s+- "\*"/)
+    expect(npm).toMatch(
+      /npm-production:\n\s+dependency-type: production\n\s+npm-development:\n\s+dependency-type: development\n\n/,
+    )
   })
 
-  // Ungrouped majors, one pull request each, could fill every open slot and
-  // starve the minor and patch group.
-  it("batches npm major updates into a group of their own", () => {
+  // A major needs code changes and a decision, not a weekly bump.
+  it("leaves npm majors out of version updates", () => {
     expect(updateBlock("npm")).toMatch(
-      /applies-to: version-updates\n\s+update-types:\n\s+- major\n/,
+      /ignore:\n\s+- dependency-name: "\*"\n\s+update-types:\n\s+- version-update:semver-major\n/,
     )
   })
 
