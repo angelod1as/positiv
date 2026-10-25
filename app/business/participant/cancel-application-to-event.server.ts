@@ -36,8 +36,8 @@ export const cancelApplicationToEvent = composable(
       .where("event_id", "=", eventId)
       .where("profile_id", "=", profileId)
       .where("is_user_applied", "=", true)
-      // Checked in the update itself, so a payment confirmed mid-request
-      // cannot slip through.
+      // Checked in the update itself, so a payment confirmed mid-request has
+      // only this statement's window to slip through.
       .where(({ not, exists, selectFrom }) =>
         not(
           exists(
