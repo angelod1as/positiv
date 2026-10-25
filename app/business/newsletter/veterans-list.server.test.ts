@@ -246,20 +246,39 @@ describe("syncVeteransListmonkList", () => {
   })
 
   it("should remove everyone no longer eligible in a single Listmonk call", async () => {
-    givenConsentedVeterans([])
+    givenConsentedVeterans(["kept@example.com"])
     givenListmonk([
-      subscriber(1, "a@example.com", [[LISTMONK_VETERANS_LIST_ID, "confirmed"]]),
-      subscriber(2, "b@example.com", [[LISTMONK_VETERANS_LIST_ID, "confirmed"]]),
-      subscriber(3, "c@example.com", [[LISTMONK_VETERANS_LIST_ID, "confirmed"]]),
+      subscriber(1, "kept@example.com", [
+        ...onRegisteredList,
+        [LISTMONK_VETERANS_LIST_ID, "confirmed"],
+      ]),
+      subscriber(2, "a@example.com", [[LISTMONK_VETERANS_LIST_ID, "confirmed"]]),
+      subscriber(3, "b@example.com", [[LISTMONK_VETERANS_LIST_ID, "confirmed"]]),
+      subscriber(4, "c@example.com", [[LISTMONK_VETERANS_LIST_ID, "confirmed"]]),
     ])
 
     const result = await syncVeteransListmonkList()
 
     expect(result).toMatchObject({
       success: true,
-      data: { added: 0, removed: 3, total: 0 },
+      data: { added: 0, removed: 3, total: 1 },
     })
     expect(writeCalls(fetchSpy)).toHaveLength(1)
+  })
+
+  it("should refuse to empty a populated Veterans list when no one is eligible", async () => {
+    givenConsentedVeterans([])
+    const member = subscriber(1, "member@example.com", [
+      ...onRegisteredList,
+      [LISTMONK_VETERANS_LIST_ID, "confirmed"],
+    ])
+    givenListmonk([member])
+
+    const result = await syncVeteransListmonkList()
+
+    expect(result.success).toBe(false)
+    expect(writeCalls(fetchSpy)).toHaveLength(0)
+    expect(member.lists.get(LISTMONK_VETERANS_LIST_ID)).toBe("confirmed")
   })
 
   it("should change nothing when run a second time", async () => {

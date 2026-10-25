@@ -70,6 +70,12 @@ export const syncVeteransListmonkList = composable(
       ),
     )
 
+    if (eligibleIds.size === 0 && currentIds.size > 0) {
+      throw new Error(
+        `Refusing to empty the Veterans list: no one is eligible but it has ${currentIds.size} members`,
+      )
+    }
+
     const toAdd = [...eligibleIds].filter((id) => !currentIds.has(id))
     const toRemove = [...currentIds].filter((id) => !eligibleIds.has(id))
 
