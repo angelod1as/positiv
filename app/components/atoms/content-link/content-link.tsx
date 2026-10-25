@@ -6,6 +6,7 @@ type ContentLinkProps = {
   children?: ReactNode
   className?: string
   onClick?: () => void
+  "aria-current"?: "page"
 }
 
 export const ContentLink = ({
@@ -13,9 +14,15 @@ export const ContentLink = ({
   children,
   className,
   onClick,
+  "aria-current": ariaCurrent,
 }: ContentLinkProps): ReactNode =>
   href?.startsWith("/") ? (
-    <Link to={href} className={className} onClick={onClick}>
+    <Link
+      to={href}
+      className={className}
+      onClick={onClick}
+      aria-current={ariaCurrent}
+    >
       {children}
     </Link>
   ) : (

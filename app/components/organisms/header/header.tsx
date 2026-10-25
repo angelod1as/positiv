@@ -124,6 +124,9 @@ export const Header: FC<HeaderProps> = ({
                             href={link.href}
                             className="no-underline hover:underline"
                             onClick={() => setIsMenuOpen(false)}
+                            aria-current={
+                              link.href === pathname ? "page" : undefined
+                            }
                           >
                             {link.label}
                           </ContentLink>

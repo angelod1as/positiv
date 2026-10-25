@@ -144,6 +144,28 @@ describe("Header", () => {
     expect(menuButton).toHaveFocus()
   })
 
+  it("marks the current page in the menu", async () => {
+    render(
+      <Header profile={null} isThereAnyNews={false} navigation={navigation} />,
+      {
+        wrapper: ({ children }: { children: ReactNode }) => (
+          <MemoryRouter initialEntries={["/sobre"]}>{children}</MemoryRouter>
+        ),
+      },
+    )
+
+    await openMenu()
+
+    const menu = screen.getByRole("dialog")
+    expect(within(menu).getByRole("link", { name: "Sobre" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    )
+    expect(
+      within(menu).getByRole("link", { name: "Instagram" }),
+    ).not.toHaveAttribute("aria-current")
+  })
+
   it("renders no Navigation and no menu without links", () => {
     renderHeader([])
 
