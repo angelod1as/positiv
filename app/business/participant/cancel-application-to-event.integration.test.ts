@@ -170,6 +170,29 @@ describe("cancelApplicationToEvent", () => {
     expect(await statusOf(payment.id)).toBe("paid")
   })
 
+  it("refuses to withdraw an application whose payment was partially refunded", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      status: "partially_refunded",
+      amount: 22000,
+      base_amount: 22000,
+      refund_amount: 11000,
+      refunded_at: new Date().toISOString(),
+    })
+
+    const result = await cancelApplicationToEvent({ eventId, profileId })
+
+    expect(result.success).toBe(false)
+    expect(
+      await kysely
+        .selectFrom("event_participants")
+        .select("is_user_applied")
+        .where("id", "=", participantId)
+        .executeTakeFirstOrThrow(),
+    ).toEqual({ is_user_applied: true })
+    expect(await statusOf(payment.id)).toBe("partially_refunded")
+  })
+
   it("withdraws an application whose payment was fully refunded", async () => {
     await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
