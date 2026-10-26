@@ -13,23 +13,25 @@ const {
 type CurrentUser = z.infer<typeof contextSchema>["currentUser"]
 type CurrentProfile = z.infer<typeof contextSchema>["currentProfile"]
 
-export function requireUser(currentUser: CurrentUser): NonNullable<CurrentUser> {
+export async function requireUser(
+  currentUser: CurrentUser,
+): Promise<NonNullable<CurrentUser>> {
   if (!currentUser) {
-    throw redirectWithError(LOGIN, errorsCopy.auth.loginRequired)
+    throw await redirectWithError(LOGIN, errorsCopy.auth.loginRequired)
   }
   return currentUser
 }
 
-export function requirePermission(
+export async function requirePermission(
   currentProfile: CurrentProfile,
   permission: Permission,
-): NonNullable<CurrentProfile> {
+): Promise<NonNullable<CurrentProfile>> {
   if (!currentProfile) {
-    throw redirectWithError(LOGIN, errorsCopy.auth.loginRequired)
+    throw await redirectWithError(LOGIN, errorsCopy.auth.loginRequired)
   }
 
   if (!can(currentProfile, permission)) {
-    throw redirectWithError(DASHBOARD, errorsCopy.auth.permissionRequired)
+    throw await redirectWithError(DASHBOARD, errorsCopy.auth.permissionRequired)
   }
 
   return currentProfile
