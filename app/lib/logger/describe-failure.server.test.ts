@@ -17,6 +17,17 @@ function failureOf(error: unknown, request: Request, path: string) {
 
 describe("describeFailure", () => {
   describe("react-router's CSRF check", () => {
+    it.each(["PUT", "PATCH", "DELETE"])("checks a %s too", (method) => {
+      const request = new Request("http://positivparty.com/pagamento/abc", {
+        method,
+        headers: { origin: "https://positivparty.com" },
+      })
+
+      expect(
+        failureOf(new Error("Bad Request"), request, "/pagamento/abc").status,
+      ).toBe(400)
+    })
+
     it("names a mismatched Origin behind a bare Bad Request", () => {
       const request = post(
         "http://positivparty.com/pagamento/abc.data",
