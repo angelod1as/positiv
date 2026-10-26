@@ -76,4 +76,7 @@ WORKDIR /app
 HEALTHCHECK --interval=10s --timeout=5s --start-period=40s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT || 3000) + '/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
-CMD ["pnpm", "run", "start"]
+# The start script, without pnpm: `pnpm run` checks the dependencies first and,
+# finding the runtime node_modules out of step with the workspace, reinstalls
+# them at boot. scripts/production-start.test.ts keeps the two in step.
+CMD ["node_modules/.bin/varlock", "run", "--", "node_modules/.bin/react-router-serve", "./build/server/index.js"]
