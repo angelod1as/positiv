@@ -3,10 +3,15 @@ import type { ReactNode } from "react"
 import { MemoryRouter } from "react-router"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { portableTextSchema } from "~/business/cms/content.schema"
-import { headerCopy, noticeCopy } from "~/copy/layout"
+import { headerCopy, newsDialogCopy, noticeCopy } from "~/copy/layout"
 import { paragraph } from "~/test/page-documents"
 import { render, renderWithDataRouter, renderWithRouter, screen, within } from "~/test/test-utils"
 import { Header } from "./header"
+
+vi.mock("../news-dialog/news-utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../news-dialog/news-utils")>()),
+  hasVisibleNews: () => true,
+}))
 
 const navigation = [
   { _key: "sobre", label: "Sobre", href: "/sobre" },
@@ -47,11 +52,146 @@ describe("Header — the admin link", () => {
   })
 })
 
+describe("Header — the Platform in the menu on small screens", () => {
+  const admin = {
+    id: "profile-1",
+    email: "someone@example.com",
+    full_name: "Someone",
+    basic_data_filled: true,
+    created_at: "2024-01-01T00:00:00Z",
+    permissions: ["admin.panel"],
+  }
+
+  const renderLoggedIn = ({
+    links = navigation,
+    isThereAnyNews = false,
+  }: { links?: typeof navigation; isThereAnyNews?: boolean } = {}) =>
+    renderWithDataRouter(
+      <Header
+        profile={admin}
+        isThereAnyNews={isThereAnyNews}
+        navigation={links}
+      />,
+    )
+
+  const openMenu = () =>
+    userEvent.click(screen.getByRole("button", { name: headerCopy.openMenu }))
+
+  it("lists the Platform's links, a divider, then the Navigation", async () => {
+    renderLoggedIn()
+
+    await openMenu()
+
+    const menu = screen.getByRole("dialog", { name: headerCopy.menuTitle })
+    expect(within(menu).getByText(headerCopy.greeting("Someone"))).toBeInTheDocument()
+    const platform = [
+      headerCopy.dashboardTitle,
+      headerCopy.adminTitle,
+      headerCopy.accountTitle,
+    ].map((name) => within(menu).getByRole("link", { name }))
+    expect(platform[0]).toHaveAttribute("href", "/dashboard")
+    const divider = within(menu).getByRole("separator")
+    const nav = within(menu).getByRole("navigation", {
+      name: headerCopy.navigationLabel,
+    })
+    const follows = (a: Element, b: Element) =>
+      !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(follows(platform[0], platform[1])).toBe(true)
+    expect(follows(platform[1], platform[2])).toBe(true)
+    expect(follows(platform[2], divider)).toBe(true)
+    expect(follows(divider, nav)).toBe(true)
+  })
+
+  it("keeps the menu for the Platform when there is no Navigation", async () => {
+    renderLoggedIn({ links: [] })
+
+    await openMenu()
+
+    const menu = screen.getByRole("dialog")
+    expect(
+      within(menu).getByRole("link", { name: headerCopy.accountTitle }),
+    ).toBeInTheDocument()
+    expect(within(menu).queryByRole("separator")).not.toBeInTheDocument()
+    expect(within(menu).queryByRole("navigation")).not.toBeInTheDocument()
+  })
+
+  it("lists the Platform for a visitor known only by email", async () => {
+    renderWithDataRouter(
+      <Header
+        profile={null}
+        userEmail="someone@example.com"
+        isThereAnyNews={false}
+        navigation={navigation}
+      />,
+    )
+
+    await openMenu()
+
+    const menu = screen.getByRole("dialog")
+    expect(
+      within(menu).getByText(headerCopy.greeting("someone@example.com")),
+    ).toBeInTheDocument()
+    expect(
+      within(menu).getByRole("link", { name: headerCopy.dashboardTitle }),
+    ).toBeInTheDocument()
+    expect(
+      within(menu).getByRole("link", { name: headerCopy.accountTitle }),
+    ).toBeInTheDocument()
+    expect(
+      within(menu).queryByRole("link", { name: headerCopy.adminTitle }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("closes the menu once a Platform link in it is followed", async () => {
+    renderLoggedIn()
+
+    await openMenu()
+    await userEvent.click(
+      within(screen.getByRole("dialog")).getByRole("link", {
+        name: headerCopy.dashboardTitle,
+      }),
+    )
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+  })
+
+  it("opens the news from the menu", async () => {
+    renderLoggedIn({ isThereAnyNews: true })
+
+    await openMenu()
+    await userEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: headerCopy.news,
+      }),
+    )
+
+    expect(
+      screen.getByRole("alertdialog", { name: newsDialogCopy.title }),
+    ).toBeInTheDocument()
+  })
+})
+
 describe("Header", () => {
-  it("renders the Navigation links in order", () => {
+  const openMenu = () =>
+    userEvent.click(screen.getByRole("button", { name: headerCopy.openMenu }))
+
+  it("keeps the Navigation behind the menu button at every width", () => {
     renderHeader()
 
-    const nav = screen.getByRole("navigation", {
+    expect(
+      screen.getByRole("button", { name: headerCopy.openMenu }),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole("navigation")).not.toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: "Sobre" })).not.toBeInTheDocument()
+  })
+
+  it("lists the Navigation links in order in the menu", async () => {
+    renderHeader()
+
+    await openMenu()
+
+    const menu = screen.getByRole("dialog", { name: headerCopy.menuTitle })
+    const nav = within(menu).getByRole("navigation", {
       name: headerCopy.navigationLabel,
     })
     const links = within(nav).getAllByRole("link")
@@ -62,42 +202,27 @@ describe("Header", () => {
     expect(links[0]).toHaveAttribute("href", "/sobre")
   })
 
-  it("opens a link to another site in a new tab", () => {
+  it("opens a link to another site in a new tab", async () => {
     renderHeader()
 
-    const nav = screen.getByRole("navigation", {
-      name: headerCopy.navigationLabel,
-    })
+    await openMenu()
+
     expect(
-      within(nav).getByRole("link", { name: "Instagram" }),
+      within(screen.getByRole("dialog")).getByRole("link", {
+        name: "Instagram",
+      }),
     ).toHaveAttribute("target", "_blank")
   })
 
-  it("keeps the Platform's login button after the Navigation", () => {
+  it("keeps the Platform's login button outside the menu, after its button", () => {
     renderHeader()
 
-    const nav = screen.getByRole("navigation", {
-      name: headerCopy.navigationLabel,
-    })
+    const menuButton = screen.getByRole("button", { name: headerCopy.openMenu })
     const login = screen.getByRole("link", { name: headerCopy.login })
     expect(
-      nav.compareDocumentPosition(login) & Node.DOCUMENT_POSITION_FOLLOWING,
+      menuButton.compareDocumentPosition(login) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy()
-  })
-
-  it("lists the Navigation in a menu on small screens", async () => {
-    renderHeader()
-
-    await userEvent.click(
-      screen.getByRole("button", { name: headerCopy.openMenu }),
-    )
-
-    const menu = screen.getByRole("dialog", { name: headerCopy.menuTitle })
-    expect(
-      within(menu)
-        .getAllByRole("link")
-        .map((link) => link.textContent),
-    ).toEqual(["Sobre", "Instagram"])
   })
 
   it("closes the menu once a link in it is followed", async () => {
@@ -126,6 +251,43 @@ describe("Header", () => {
     )
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+  })
+
+  it("closes the menu on Escape and hands focus back to its button", async () => {
+    renderHeader()
+    const menuButton = screen.getByRole("button", { name: headerCopy.openMenu })
+
+    await openMenu()
+    expect(screen.getByRole("dialog")).toContainElement(
+      document.activeElement as HTMLElement,
+    )
+
+    await userEvent.keyboard("{Escape}")
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    expect(menuButton).toHaveFocus()
+  })
+
+  it("marks the current page in the menu", async () => {
+    render(
+      <Header profile={null} isThereAnyNews={false} navigation={navigation} />,
+      {
+        wrapper: ({ children }: { children: ReactNode }) => (
+          <MemoryRouter initialEntries={["/sobre"]}>{children}</MemoryRouter>
+        ),
+      },
+    )
+
+    await openMenu()
+
+    const menu = screen.getByRole("dialog")
+    expect(within(menu).getByRole("link", { name: "Sobre" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    )
+    expect(
+      within(menu).getByRole("link", { name: "Instagram" }),
+    ).not.toHaveAttribute("aria-current")
   })
 
   it("renders no Navigation and no menu without links", () => {

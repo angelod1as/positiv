@@ -9,6 +9,7 @@ export const headerCopy = {
   navigationLabel: "Navegação principal",
   openMenu: "Abrir menu",
   menuTitle: "Menu",
+  news: "Novidades",
 } as const
 
 export const footerCopy = {

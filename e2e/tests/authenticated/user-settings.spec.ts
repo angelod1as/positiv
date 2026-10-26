@@ -1,11 +1,19 @@
 import { test, expect } from '@playwright/test'
+import { headerCopy } from '../../../app/copy/layout'
 
 test.describe('POS-192: User Settings and Profile Management', () => {
   test('Can navigate to account settings', async ({ page }) => {
-    // Go to account page
-    await page.goto('/conta')
+    // On a small screen the Platform's links live in the header menu
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/')
+
+    await page.getByRole('button', { name: headerCopy.openMenu }).click()
+    const menu = page.getByRole('dialog', { name: headerCopy.menuTitle })
+    await menu.getByRole('link', { name: headerCopy.accountTitle }).click()
+
     await expect(page).toHaveURL('/conta')
-    
+    await expect(menu).toBeHidden()
+
     // Verify main buttons are visible
     await expect(page.getByRole('link', { name: 'Mudar senha' })).toBeVisible()
     await expect(page.getByRole('link', { name: /dados básicos/i })).toBeVisible()
