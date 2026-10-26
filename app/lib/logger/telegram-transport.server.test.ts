@@ -529,6 +529,48 @@ describe("TelegramTransport", () => {
       expect(text).toContain("where: app/business/events.server.ts:42")
     })
 
+    describe("a stack that points only into node_modules", () => {
+      const frameworkStack = [
+        "Error: Bad Request",
+        `    at singleFetchAction (${cwd}/node_modules/react-router/dist/development/chunk-H4DAEOV7.mjs:867:31)`,
+        "    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)",
+      ].join("\n")
+
+      it("says there is no app frame", async () => {
+        const text = await send({
+          error: { name: "Error", message: "Bad Request", stack: frameworkStack },
+        })
+
+        expect(text).toContain("\nwhere: no app frame (framework)\n")
+      })
+
+      it("leaves the stack out of the preformatted block", async () => {
+        const text = await send({
+          error: { name: "Error", message: "Bad Request", stack: frameworkStack },
+        })
+
+        const [, pre] = text.split("<pre>")
+        expect(pre).toContain('"message": "Bad Request"')
+        expect(pre).not.toContain("chunk-H4DAEOV7")
+      })
+
+      it("leaves it out of a cause too, keeping an app stack", async () => {
+        const text = await send({
+          error: {
+            name: "Error",
+            message: "outer",
+            stack,
+            cause: { name: "Error", message: "inner", stack: frameworkStack },
+          },
+        })
+
+        const [, pre] = text.split("<pre>")
+        expect(pre).toContain("events.server.ts:42")
+        expect(pre).toContain('"message": "inner"')
+        expect(pre).not.toContain("chunk-H4DAEOV7")
+      })
+    })
+
     it("keeps the context and a valid message when everything is long", async () => {
       const text = await send({
         message: "m".repeat(5000),

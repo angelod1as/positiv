@@ -52,6 +52,7 @@ function safeStringify(value: unknown): string {
 const MAX_CONTEXT_LINE_LENGTH = 300
 const MAX_LABEL_LENGTH = 100
 const WHERE_FRAMES = 3
+const MAX_CAUSE_DEPTH = 5
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null
@@ -90,7 +91,30 @@ function where(error: unknown): string | null {
   }
   if (!isRecord(current) || typeof current.stack !== "string") return null
   const frames = appFrames(current.stack).slice(0, WHERE_FRAMES)
-  return frames.length > 0 ? `where: ${frames.join(" ← ")}` : null
+  return frames.length > 0
+    ? `where: ${frames.join(" ← ")}`
+    : "where: no app frame (framework)"
+}
+
+// A stack that points only into node_modules is noise in a chat message; the
+// console line keeps it.
+function withoutFrameworkStack(value: unknown, depth = 0): unknown {
+  if (!isRecord(value) || Array.isArray(value)) return value
+  if (!("stack" in value) && !("cause" in value)) return value
+  const copy: Record<string, unknown> = {}
+  for (const [key, item] of Object.entries(value)) {
+    if (
+      key === "stack" &&
+      typeof item === "string" &&
+      appFrames(item).length === 0
+    )
+      continue
+    copy[key] =
+      key === "cause" && depth < MAX_CAUSE_DEPTH
+        ? withoutFrameworkStack(item, depth + 1)
+        : item
+  }
+  return copy
 }
 
 export class TelegramTransport extends TransportStream {
@@ -184,9 +208,12 @@ export class TelegramTransport extends TransportStream {
       if (skipKeys.has(key)) continue
       const value = info[key]
       if (value instanceof Error) {
-        metadata[key] = { message: value.message, stack: value.stack }
+        metadata[key] = withoutFrameworkStack({
+          message: value.message,
+          stack: value.stack,
+        })
       } else {
-        metadata[key] = value
+        metadata[key] = withoutFrameworkStack(value)
       }
     }
 
