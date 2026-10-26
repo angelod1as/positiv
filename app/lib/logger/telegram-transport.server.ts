@@ -1,4 +1,5 @@
 import TransportStream from "winston-transport"
+import { appFrames } from "./stack-frames.server"
 
 interface TelegramTransportOptions extends TransportStream.TransportStreamOptions {
   botToken: string
@@ -82,24 +83,13 @@ function describeRequest(request: unknown): string | null {
   return `${parts.join(" ")}${userAgent}`
 }
 
-// The first frames in the app's own code say where an error came from; the
-// frames in node_modules and node: internals around them do not.
 function where(error: unknown): string | null {
   let current = error
   while (isRecord(current) && typeof current.stack !== "string") {
     current = current.cause
   }
   if (!isRecord(current) || typeof current.stack !== "string") return null
-  const cwd = `${process.cwd()}/`
-  const frames: string[] = []
-  for (const line of current.stack.split("\n")) {
-    const match = /^\s*at (?:.*? \()?(.+?):(\d+):\d+\)?$/.exec(line)
-    if (!match) continue
-    const file = match[1].replace(/^file:\/\//, "")
-    if (file.startsWith("node:") || file.includes("/node_modules/")) continue
-    frames.push(`${file.startsWith(cwd) ? file.slice(cwd.length) : file}:${match[2]}`)
-    if (frames.length === WHERE_FRAMES) break
-  }
+  const frames = appFrames(current.stack).slice(0, WHERE_FRAMES)
   return frames.length > 0 ? `where: ${frames.join(" ← ")}` : null
 }
 
