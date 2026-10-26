@@ -54,6 +54,7 @@ const MAX_LABEL_LENGTH = 100
 const WHERE_FRAMES = 3
 const BURST_WINDOW_MS = 5 * 60_000
 const EDIT_DELAY_MS = 10_000
+const MAX_EDIT_WAIT_MS = 60_000
 const MAX_CAUSE_DEPTH = 5
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -126,6 +127,7 @@ interface Burst {
   render: (repetition: string) => string
   messageId?: number
   timer?: ReturnType<typeof setTimeout>
+  editBy?: number
 }
 
 function routePattern(request: Record<string, unknown>): string | null {
@@ -221,19 +223,31 @@ export class TelegramTransport extends TransportStream {
   }
 
   // One alert per burst: the repeats are counted into the first message once
-  // they stop, or sent as a new one when the first never got an id back.
+  // they pause, or at least every minute while they do not, and sent as a new
+  // one when the first never got an id back or can no longer be edited.
   private scheduleEdit(burst: Burst): void {
+    const now = Date.now()
+    burst.editBy ??= now + MAX_EDIT_WAIT_MS
     clearTimeout(burst.timer)
-    burst.timer = setTimeout(() => {
-      const text = burst.render(repeatLine(burst))
-      if (burst.messageId === undefined) {
-        void this.send(burst, text)
-        return
-      }
-      this.call("editMessageText", { message_id: burst.messageId, text }).catch(
-        () => {},
-      )
-    }, EDIT_DELAY_MS)
+    burst.timer = setTimeout(
+      () => {
+        burst.editBy = undefined
+        const text = burst.render(repeatLine(burst))
+        if (burst.messageId === undefined) {
+          void this.send(burst, text)
+          return
+        }
+        this.call("editMessageText", { message_id: burst.messageId, text })
+          .then((response) => (response.ok ? response.json() : null))
+          .then((response: unknown) => {
+            if (isRecord(response) && response.ok === true) return
+            burst.messageId = undefined
+            return this.send(burst, text)
+          })
+          .catch(() => {})
+      },
+      Math.min(EDIT_DELAY_MS, burst.editBy - now),
+    )
     burst.timer.unref?.()
   }
 

@@ -530,6 +530,30 @@ describe("TelegramTransport", () => {
       expect(calls("editMessageText")).toHaveLength(0)
     })
 
+    it("shows the count during a storm that never pauses", async () => {
+      for (let i = 0; i < 14; i++) {
+        await log(unhandled(`pay-${i}`))
+        await vi.advanceTimersByTimeAsync(5_000)
+      }
+
+      expect(calls("editMessageText").length).toBeGreaterThan(0)
+    })
+
+    it.each([
+      ["Telegram refuses it", { ok: true, json: async () => ({ ok: false }) }],
+      ["the request fails", { ok: false, json: async () => ({ ok: false }) }],
+    ])("sends the count as a new alert when %s", async (_, refusal) => {
+      fetchSpy.mockImplementation(async (url: string) =>
+        url.endsWith("/editMessageText") ? refusal : { ok: true, json: async () => SENT },
+      )
+
+      await burst(3, 1_000)
+
+      const sent = calls("sendMessage")
+      expect(sent).toHaveLength(2)
+      expect(sent[1].text).toContain("<b>🔁 Repeated 3× in 2s")
+    })
+
     it("does not spend the rate limit on repeats", async () => {
       for (let i = 0; i < 10; i++) await log(unhandled(`pay-${i}`))
       for (let i = 0; i < 4; i++) await log(unhandled("pay-1", `other-${i}`))
