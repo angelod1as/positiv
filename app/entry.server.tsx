@@ -17,13 +17,13 @@ import { requestFacts } from "~/lib/logger/request-facts.server"
 import { appFrames } from "~/lib/logger/stack-frames.server"
 import { applyDraftCacheControl } from "./business/cms/draft-mode.server"
 
-// The react-router 7.6.3 framework default (npx react-router reveal), with two
+// The react-router 7.18.4 framework default (npx react-router reveal), with two
 // additions: applyDraftCacheControl on both the document response
 // (handleRequest) and the client-navigation data responses
 // (handleDataRequest), so a draft render is never cached and served to a
 // visitor; and handleError, so unhandled server errors reach the logger (and
-// Telegram), skipping 4xx route responses. Re-reveal and re-diff when
-// upgrading react-router.
+// Telegram) in plain language, skipping 4xx route responses. Re-reveal and
+// re-diff when upgrading react-router.
 export const streamTimeout = 5_000
 
 export const handleError: HandleErrorFunction = (
@@ -69,6 +69,14 @@ export default async function handleRequest(
 ) {
   await applyDraftCacheControl(request, responseHeaders)
 
+  // https://httpwg.org/specs/rfc9110.html#HEAD
+  if (request.method.toUpperCase() === "HEAD") {
+    return new Response(null, {
+      status: responseStatusCode,
+      headers: responseHeaders,
+    })
+  }
+
   return new Promise((resolve, reject) => {
     let shellRendered = false
     const userAgent = request.headers.get("user-agent")
@@ -79,15 +87,30 @@ export default async function handleRequest(
         ? "onAllReady"
         : "onShellReady"
 
+    // Abort after streamTimeout so the rejected boundaries have time to flush.
+    let timeoutId: ReturnType<typeof setTimeout> | undefined = setTimeout(
+      () => abort(),
+      streamTimeout + 1000,
+    )
+
     const { pipe, abort } = renderToPipeableStream(
       <ServerRouter context={routerContext} url={request.url} />,
       {
         [readyOption]() {
           shellRendered = true
-          const body = new PassThrough()
+          const body = new PassThrough({
+            final(callback) {
+              // The pending timeout would keep this closure alive.
+              clearTimeout(timeoutId)
+              timeoutId = undefined
+              callback()
+            },
+          })
           const stream = createReadableStreamFromReadable(body)
 
           responseHeaders.set("Content-Type", "text/html")
+
+          pipe(body)
 
           resolve(
             new Response(stream, {
@@ -95,8 +118,6 @@ export default async function handleRequest(
               status: responseStatusCode,
             }),
           )
-
-          pipe(body)
         },
         onShellError(error: unknown) {
           reject(error)
@@ -111,7 +132,5 @@ export default async function handleRequest(
         },
       },
     )
-
-    setTimeout(abort, streamTimeout + 1000)
   })
 }

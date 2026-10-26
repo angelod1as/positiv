@@ -1,3 +1,4 @@
+import { renderToPipeableStream } from "react-dom/server"
 import { UNSAFE_ErrorResponseImpl as ErrorResponseImpl } from "react-router"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
@@ -13,8 +14,9 @@ vi.mock("~/lib/logger/logger.server", async (importOriginal) => ({
 }))
 
 vi.mock("react-dom/server", () => ({
+  // React calls onShellReady after renderToPipeableStream has returned.
   renderToPipeableStream: vi.fn((_node, options: Record<string, () => void>) => {
-    options.onShellReady?.()
+    queueMicrotask(() => options.onShellReady?.())
     return { pipe: vi.fn(), abort: vi.fn() }
   }),
 }))
@@ -215,6 +217,25 @@ describe("handleError", () => {
 })
 
 describe("handleRequest", () => {
+  it("answers a HEAD request without rendering", async () => {
+    vi.mocked(renderToPipeableStream).mockClear()
+    const request = new Request("http://localhost/", { method: "HEAD" })
+    const responseHeaders = new Headers({ "Cache-Control": "public" })
+
+    const response = (await handleRequest(
+      request,
+      200,
+      responseHeaders,
+      { isSpaMode: false } as never,
+      {} as never,
+    )) as Response
+
+    expect(renderToPipeableStream).not.toHaveBeenCalled()
+    expect(response.status).toBe(200)
+    expect(response.body).toBeNull()
+    expect(response.headers.get("Cache-Control")).toBe("public")
+  })
+
   it("applies the draft cache-control rule to the document response", async () => {
     applyDraftCacheControl.mockImplementation(
       async (_request: Request, headers: Headers) => {
