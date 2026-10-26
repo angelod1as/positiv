@@ -115,6 +115,33 @@ describe("Header — the Platform in the menu on small screens", () => {
     expect(within(menu).queryByRole("navigation")).not.toBeInTheDocument()
   })
 
+  it("lists the Platform for a visitor known only by email", async () => {
+    renderWithDataRouter(
+      <Header
+        profile={null}
+        userEmail="someone@example.com"
+        isThereAnyNews={false}
+        navigation={navigation}
+      />,
+    )
+
+    await openMenu()
+
+    const menu = screen.getByRole("dialog")
+    expect(
+      within(menu).getByText(headerCopy.greeting("someone@example.com")),
+    ).toBeInTheDocument()
+    expect(
+      within(menu).getByRole("link", { name: headerCopy.dashboardTitle }),
+    ).toBeInTheDocument()
+    expect(
+      within(menu).getByRole("link", { name: headerCopy.accountTitle }),
+    ).toBeInTheDocument()
+    expect(
+      within(menu).queryByRole("link", { name: headerCopy.adminTitle }),
+    ).not.toBeInTheDocument()
+  })
+
   it("closes the menu once a Platform link in it is followed", async () => {
     renderLoggedIn()
 
