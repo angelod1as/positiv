@@ -412,6 +412,144 @@ describe("TelegramTransport", () => {
     })
   })
 
+  describe("a burst of the same error", () => {
+    const SENT = { ok: true, result: { message_id: 77 } }
+
+    beforeEach(() => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date("2026-10-26T14:02:00.000Z"))
+      fetchSpy.mockResolvedValue({ ok: true, json: async () => SENT })
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    function unhandled(id: string, message = "Bad Request") {
+      return {
+        level: "error",
+        message: `POST /pagamento/${id} rejected with 400 before the action ran`,
+        category: "unhandled",
+        area: "pagamento",
+        request: { method: "POST", path: `/pagamento/${id}`, params: { id } },
+        error: { name: "Error", message },
+      }
+    }
+
+    function log(info: { level: string; message: string; [key: string]: unknown }) {
+      return new Promise<void>((resolve) => transport.log(info, resolve))
+    }
+
+    function calls(method: string) {
+      return fetchSpy.mock.calls
+        .filter(([url]) => String(url).endsWith(`/${method}`))
+        .map(([, options]) => JSON.parse(options.body))
+    }
+
+    async function burst(count: number, everyMs: number) {
+      for (let i = 0; i < count; i++) {
+        await log(unhandled(`pay-${i}`))
+        await vi.advanceTimersByTimeAsync(everyMs)
+      }
+      await vi.advanceTimersByTimeAsync(60_000)
+    }
+
+    it("sends one alert and edits the count into it", async () => {
+      await burst(6, 30_000)
+
+      expect(calls("sendMessage")).toHaveLength(1)
+      const edits = calls("editMessageText")
+      expect(edits.length).toBeGreaterThan(0)
+      for (const edit of edits) {
+        expect(edit).toMatchObject({
+          chat_id: CHAT_ID,
+          message_id: 77,
+          parse_mode: "HTML",
+        })
+      }
+      expect(edits.at(-1).text).toContain(
+        "rejected with 400 before the action ran",
+      )
+    })
+
+    it("puts the repetition in bold right under the header", async () => {
+      await burst(6, 30_000)
+
+      const [header, repetition] = calls("editMessageText")
+        .at(-1)
+        .text.split("\n")
+      expect(header).toBe("<b>[ERROR · unhandled · pagamento]</b>")
+      expect(repetition).toBe(
+        "<b>🔁 Repeated 6× in 3 min (last 11:04:30 BRT)</b>",
+      )
+    })
+
+    it("counts in seconds for a short burst", async () => {
+      await burst(3, 1_000)
+
+      expect(calls("editMessageText").at(-1).text).toContain(
+        "<b>🔁 Repeated 3× in 2s",
+      )
+    })
+
+    it("sends a different message as its own alert", async () => {
+      await log(unhandled("pay-1"))
+      await log(unhandled("pay-1", "Something else"))
+
+      expect(calls("sendMessage")).toHaveLength(2)
+    })
+
+    it("sends a different route as its own alert", async () => {
+      await log(unhandled("pay-1"))
+      await log({
+        ...unhandled("pay-1"),
+        request: { method: "POST", path: "/eventos/pay-1", params: { id: "pay-1" } },
+      })
+
+      expect(calls("sendMessage")).toHaveLength(2)
+    })
+
+    it("starts a new alert once the window has passed", async () => {
+      await log(unhandled("pay-1"))
+      await vi.advanceTimersByTimeAsync(5 * 60_000)
+      await log(unhandled("pay-2"))
+
+      expect(calls("sendMessage")).toHaveLength(2)
+      expect(calls("editMessageText")).toHaveLength(0)
+    })
+
+    it("sends the count as a new alert when the first one never got an id", async () => {
+      fetchSpy.mockResolvedValue({ ok: true, json: async () => ({ ok: false }) })
+
+      await burst(4, 1_000)
+
+      const sent = calls("sendMessage")
+      expect(sent).toHaveLength(2)
+      expect(sent[1].text).toContain("<b>🔁 Repeated 4× in 3s")
+      expect(sent[1].text).toContain("rejected with 400 before the action ran")
+      expect(calls("editMessageText")).toHaveLength(0)
+    })
+
+    it("does not spend the rate limit on repeats", async () => {
+      for (let i = 0; i < 10; i++) await log(unhandled(`pay-${i}`))
+      for (let i = 0; i < 4; i++) await log(unhandled("pay-1", `other-${i}`))
+
+      expect(calls("sendMessage")).toHaveLength(5)
+    })
+
+    it("keeps an edited alert within Telegram's limit", async () => {
+      const long = { ...unhandled("pay-1"), detail: "d".repeat(5000) }
+      await log(long)
+      await log(long)
+      await vi.advanceTimersByTimeAsync(60_000)
+
+      const [edit] = calls("editMessageText")
+      expect(edit.text.length).toBeLessThanOrEqual(4096)
+      expect(edit.text.match(/<pre>/g)).toHaveLength(1)
+      expect(edit.text.match(/<\/pre>/g)).toHaveLength(1)
+    })
+  })
+
   describe("alert context", () => {
     function send(info: Record<string, unknown>): Promise<string> {
       return new Promise((resolve) => {

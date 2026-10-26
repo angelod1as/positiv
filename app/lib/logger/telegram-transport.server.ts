@@ -52,6 +52,8 @@ function safeStringify(value: unknown): string {
 const MAX_CONTEXT_LINE_LENGTH = 300
 const MAX_LABEL_LENGTH = 100
 const WHERE_FRAMES = 3
+const BURST_WINDOW_MS = 5 * 60_000
+const EDIT_DELAY_MS = 10_000
 const MAX_CAUSE_DEPTH = 5
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -117,6 +119,61 @@ function withoutFrameworkStack(value: unknown, depth = 0): unknown {
   return copy
 }
 
+interface Burst {
+  count: number
+  firstAt: number
+  lastAt: number
+  render: (repetition: string) => string
+  messageId?: number
+  timer?: ReturnType<typeof setTimeout>
+}
+
+function routePattern(request: Record<string, unknown>): string | null {
+  if (typeof request.path !== "string") return null
+  const params = isRecord(request.params) ? request.params : {}
+  const names = new Map<string, string>()
+  for (const [name, value] of Object.entries(params)) {
+    if (typeof value === "string" && value.length > 0) names.set(value, name)
+  }
+  return request.path
+    .split("/")
+    .map((segment) => {
+      const name = names.get(segment)
+      return name === undefined ? segment : `:${name}`
+    })
+    .join("/")
+}
+
+// The same error on the same route, whatever the ids in its path, is one
+// burst: POS-666 sent six identical alerts in a few minutes.
+function burstKey(info: Record<string, unknown>): string {
+  const request = isRecord(info.request) ? info.request : {}
+  const error = isRecord(info.error) ? info.error : {}
+  return JSON.stringify([
+    info.level,
+    info.category,
+    request.method,
+    routePattern(request),
+    error.name,
+    typeof error.message === "string" ? error.message : info.message,
+  ])
+}
+
+function repeatLine(burst: Burst): string {
+  const seconds = Math.round((burst.lastAt - burst.firstAt) / 1000)
+  const span = seconds < 60 ? `${seconds}s` : `${Math.round(seconds / 60)} min`
+  const last = new Date(burst.lastAt).toLocaleTimeString("sv-SE", {
+    timeZone: "America/Sao_Paulo",
+  })
+  return `<b>🔁 Repeated ${burst.count}× in ${span} (last ${last} BRT)</b>\n`
+}
+
+function messageIdOf(response: unknown): number | undefined {
+  if (!isRecord(response) || !isRecord(response.result)) return undefined
+  const id = response.result.message_id
+  return typeof id === "number" ? id : undefined
+}
+
 export class TelegramTransport extends TransportStream {
   private botToken: string
   private chatId: string
@@ -124,6 +181,7 @@ export class TelegramTransport extends TransportStream {
   private maxTokens: number
   private refillRate: number
   private lastRefill: number
+  private bursts = new Map<string, Burst>()
 
   constructor(opts: TelegramTransportOptions) {
     super(opts)
@@ -145,10 +203,59 @@ export class TelegramTransport extends TransportStream {
     }
   }
 
+  private call(method: string, payload: Record<string, unknown>) {
+    return fetch(`https://api.telegram.org/bot${this.botToken}/${method}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: this.chatId, parse_mode: "HTML", ...payload }),
+    })
+  }
+
+  private send(burst: Burst, text: string): Promise<void> {
+    return this.call("sendMessage", { text })
+      .then((response) => response.json())
+      .then((response: unknown) => {
+        burst.messageId = messageIdOf(response) ?? burst.messageId
+      })
+      .catch(() => {})
+  }
+
+  // One alert per burst: the repeats are counted into the first message once
+  // they stop, or sent as a new one when the first never got an id back.
+  private scheduleEdit(burst: Burst): void {
+    clearTimeout(burst.timer)
+    burst.timer = setTimeout(() => {
+      const text = burst.render(repeatLine(burst))
+      if (burst.messageId === undefined) {
+        void this.send(burst, text)
+        return
+      }
+      this.call("editMessageText", { message_id: burst.messageId, text }).catch(
+        () => {},
+      )
+    }, EDIT_DELAY_MS)
+    burst.timer.unref?.()
+  }
+
   log(
     info: { level: string; message: string; [key: string]: unknown },
     callback: () => void,
   ): void {
+    const now = Date.now()
+    for (const [key, burst] of this.bursts) {
+      if (now - burst.firstAt >= BURST_WINDOW_MS) this.bursts.delete(key)
+    }
+    const key = burstKey(info)
+    const known = this.bursts.get(key)
+    if (known) {
+      known.count++
+      known.lastAt = now
+      this.scheduleEdit(known)
+      this.emit("logged", info)
+      callback()
+      return
+    }
+
     this.refillTokens()
 
     if (this.tokens <= 0) {
@@ -221,43 +328,40 @@ export class TelegramTransport extends TransportStream {
     // content is cut before the tags go around it: metadata first, down to a
     // floor that still identifies the alert, then the message, and never the
     // anchors. Below that floor the metadata block says nothing and is dropped.
-    const available =
-      MAX_MESSAGE_LENGTH - head.length - context.length - anchors.length
     const preTags = "\n<pre></pre>"
     const serialized =
       Object.keys(metadata).length > 0 ? safeStringify(metadata) : ""
-    const metadataFloor =
-      serialized.length > 0
-        ? preTags.length +
-          Math.min(escapeHtml(serialized).length, MIN_METADATA_LENGTH)
-        : 0
-    const keepsMetadata = serialized.length > 0 && available >= metadataFloor
+    // A burst's repeat line goes under the header, so the same budget is
+    // recomputed around it rather than reserved in every alert.
+    const render = (repetition: string) => {
+      const available =
+        MAX_MESSAGE_LENGTH -
+        head.length -
+        repetition.length -
+        context.length -
+        anchors.length
+      const metadataFloor =
+        serialized.length > 0
+          ? preTags.length +
+            Math.min(escapeHtml(serialized).length, MIN_METADATA_LENGTH)
+          : 0
+      const keepsMetadata = serialized.length > 0 && available >= metadataFloor
 
-    const message = escapeHtmlWithin(
-      String(info.message),
-      available - (keepsMetadata ? metadataFloor : 0),
-    )
-    const pre = keepsMetadata
-      ? `\n<pre>${escapeHtmlWithin(serialized, available - message.length - preTags.length)}</pre>`
-      : ""
-    const text = `${head}${message}${context}${anchors}${pre}`
+      const message = escapeHtmlWithin(
+        String(info.message),
+        available - (keepsMetadata ? metadataFloor : 0),
+      )
+      const pre = keepsMetadata
+        ? `\n<pre>${escapeHtmlWithin(serialized, available - message.length - preTags.length)}</pre>`
+        : ""
+      return `${head}${repetition}${message}${context}${anchors}${pre}`
+    }
+    const burst: Burst = { count: 1, firstAt: now, lastAt: now, render }
+    this.bursts.set(key, burst)
 
-    const url = `https://api.telegram.org/bot${this.botToken}/sendMessage`
-    const body = JSON.stringify({
-      chat_id: this.chatId,
-      parse_mode: "HTML",
-      text,
+    this.send(burst, render("")).finally(() => {
+      this.emit("logged", info)
+      callback()
     })
-
-    fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body,
-    })
-      .catch(() => {})
-      .finally(() => {
-        this.emit('logged', info)
-        callback()
-      })
   }
 }
