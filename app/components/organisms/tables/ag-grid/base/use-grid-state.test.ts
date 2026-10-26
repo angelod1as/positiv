@@ -208,6 +208,109 @@ describe("useGridState", () => {
       expect(mockLocalStorage.removeItem).not.toHaveBeenCalled()
       expect(result.current.isRestored).toBe(true)
     })
+
+    describe("with an auto-sized page", () => {
+      const storePage = (page: number) => {
+        mockLocalStorage.setItem(
+          "ag-grid-state-test-table",
+          JSON.stringify({
+            version: 1,
+            savedAt: Date.now(),
+            gridState: { pagination: { page } },
+          }),
+        )
+      }
+
+      const createPaginatedGridApi = ({
+        pageAfterRestore,
+        autoPageSize = true,
+      }: {
+        pageAfterRestore: number
+        autoPageSize?: boolean
+      }) => {
+        const listeners: Array<(event: { newPageSize?: boolean }) => void> =
+          []
+        const api = {
+          ...createMockGridApi(),
+          getGridOption: vi.fn((option: string) =>
+            option === "paginationAutoPageSize" ? autoPageSize : undefined,
+          ),
+          paginationGetCurrentPage: vi.fn(() => pageAfterRestore),
+          paginationGoToPage: vi.fn(),
+          addEventListener: vi.fn(
+            (_type: string, listener: (typeof listeners)[number]) => {
+              listeners.push(listener)
+            },
+          ),
+          removeEventListener: vi.fn(
+            (_type: string, listener: (typeof listeners)[number]) => {
+              listeners.splice(listeners.indexOf(listener), 1)
+            },
+          ),
+        }
+        const emitPaginationChanged = (event: { newPageSize?: boolean }) => {
+          listeners.slice().forEach((listener) => listener(event))
+        }
+        return { api, emitPaginationChanged }
+      }
+
+      it("returns to the saved page once the page size is known", () => {
+        storePage(5)
+        const { api, emitPaginationChanged } = createPaginatedGridApi({
+          pageAfterRestore: 2,
+        })
+        const { result } = renderHook(() =>
+          useGridState("test-table", { version: 1 }),
+        )
+
+        act(() => {
+          result.current.restoreState(api as unknown as GridApi)
+        })
+        emitPaginationChanged({})
+        expect(api.paginationGoToPage).not.toHaveBeenCalled()
+
+        emitPaginationChanged({ newPageSize: true })
+        expect(api.paginationGoToPage).toHaveBeenCalledWith(5)
+
+        emitPaginationChanged({ newPageSize: true })
+        expect(api.paginationGoToPage).toHaveBeenCalledTimes(1)
+      })
+
+      it("leaves the page alone when the grid already restored it", () => {
+        storePage(5)
+        const { api, emitPaginationChanged } = createPaginatedGridApi({
+          pageAfterRestore: 5,
+        })
+        const { result } = renderHook(() =>
+          useGridState("test-table", { version: 1 }),
+        )
+
+        act(() => {
+          result.current.restoreState(api as unknown as GridApi)
+        })
+        emitPaginationChanged({ newPageSize: true })
+
+        expect(api.paginationGoToPage).not.toHaveBeenCalled()
+      })
+
+      it("leaves the page alone when the page size is fixed", () => {
+        storePage(5)
+        const { api, emitPaginationChanged } = createPaginatedGridApi({
+          pageAfterRestore: 2,
+          autoPageSize: false,
+        })
+        const { result } = renderHook(() =>
+          useGridState("test-table", { version: 1 }),
+        )
+
+        act(() => {
+          result.current.restoreState(api as unknown as GridApi)
+        })
+        emitPaginationChanged({ newPageSize: true })
+
+        expect(api.paginationGoToPage).not.toHaveBeenCalled()
+      })
+    })
   })
 
   describe("saveState", () => {
