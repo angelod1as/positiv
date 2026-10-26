@@ -10,8 +10,11 @@ import type {
   HandleErrorFunction,
 } from "react-router"
 import { isRouteErrorResponse, ServerRouter } from "react-router"
+import { describeFailure } from "~/lib/logger/describe-failure.server"
 import { logger, serializeError } from "~/lib/logger/logger.server"
 import { requestContext } from "~/lib/logger/request-context.server"
+import { requestFacts } from "~/lib/logger/request-facts.server"
+import { appFrames } from "~/lib/logger/stack-frames.server"
 import { applyDraftCacheControl } from "./business/cms/draft-mode.server"
 
 // The react-router 7.6.3 framework default (npx react-router reveal), with two
@@ -29,10 +32,23 @@ export const handleError: HandleErrorFunction = (
 ) => {
   if (request.signal.aborted) return
   if (isRouteErrorResponse(error) && error.status < 500) return
-  logger.error("Unhandled server error", {
+  const context = requestContext(request, params)
+  const serialized = serializeError(error)
+  const { status, summary } = describeFailure(
+    serialized,
+    request,
+    context.request.path,
+  )
+  const fromApp =
+    serialized.stack !== undefined && appFrames(serialized.stack).length > 0
+  logger.error(summary, {
     category: "unhandled",
-    ...requestContext(request, params),
-    error: serializeError(error),
+    ...context,
+    status,
+    ...(!fromApp && {
+      requestFacts: requestFacts(request, context.request.path),
+    }),
+    error: serialized,
   })
 }
 
