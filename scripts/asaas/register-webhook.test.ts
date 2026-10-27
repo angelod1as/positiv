@@ -28,6 +28,7 @@ beforeEach(() => {
   fetchMock.mockReset()
   vi.stubGlobal("fetch", fetchMock)
   env.ASAAS_WEBHOOK_TOKEN = "a".repeat(32)
+  env.ASAAS_API_URL = "https://api-sandbox.asaas.com/v3"
 })
 
 afterEach(() => {
@@ -38,17 +39,17 @@ describe("registerAsaasWebhook", () => {
   it("creates the webhook when the account has none by that name", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ data: [{ id: "hook_other", name: "Outro", url: "https://x" }] }))
     fetchMock.mockResolvedValueOnce(
-      jsonResponse({ id: "hook_1", name: "Positiv", url: "https://www.positivparty.com/api/payment/webhook" }),
+      jsonResponse({ id: "hook_1", name: "Positiv", url: "https://positiv-dev.trycloudflare.com/api/payment/webhook" }),
     )
 
-    const result = await registerAsaasWebhook("https://www.positivparty.com/")
+    const result = await registerAsaasWebhook("https://positiv-dev.trycloudflare.com/")
 
     expect(result).toEqual({ created: true, id: "hook_1" })
     expect(fetchMock.mock.calls[1][0]).toBe("https://api-sandbox.asaas.com/v3/webhooks")
     expect(fetchMock.mock.calls[1][1].method).toBe("POST")
     expect(bodyOf(1)).toEqual({
       name: "Positiv",
-      url: "https://www.positivparty.com/api/payment/webhook",
+      url: "https://positiv-dev.trycloudflare.com/api/payment/webhook",
       email: "contato@positivparty.com",
       enabled: true,
       interrupted: false,
@@ -64,10 +65,10 @@ describe("registerAsaasWebhook", () => {
       jsonResponse({ data: [{ id: "hook_1", name: "Positiv", url: "https://old.example.com" }] }),
     )
     fetchMock.mockResolvedValueOnce(
-      jsonResponse({ id: "hook_1", name: "Positiv", url: "https://www.positivparty.com/api/payment/webhook" }),
+      jsonResponse({ id: "hook_1", name: "Positiv", url: "https://positiv-dev.trycloudflare.com/api/payment/webhook" }),
     )
 
-    const result = await registerAsaasWebhook("https://www.positivparty.com")
+    const result = await registerAsaasWebhook("https://positiv-dev.trycloudflare.com")
 
     expect(result).toEqual({ created: false, id: "hook_1" })
     expect(fetchMock.mock.calls[1][0]).toBe("https://api-sandbox.asaas.com/v3/webhooks/hook_1")
@@ -94,7 +95,7 @@ describe("registerAsaasWebhook", () => {
       jsonResponse({ id: "hook_positiv", name: "Positiv", url: "https://x/api/payment/webhook" }),
     )
 
-    const result = await registerAsaasWebhook("https://www.positivparty.com")
+    const result = await registerAsaasWebhook("https://positiv-dev.trycloudflare.com")
 
     expect(result).toEqual({ created: false, id: "hook_positiv" })
     expect(fetchMock.mock.calls[0][0]).toContain("offset=0")
@@ -108,7 +109,7 @@ describe("registerAsaasWebhook", () => {
       jsonResponse({ id: "hook_new", name: "Positiv", url: "https://x/api/payment/webhook" }),
     )
 
-    const result = await registerAsaasWebhook("https://www.positivparty.com")
+    const result = await registerAsaasWebhook("https://positiv-dev.trycloudflare.com")
 
     expect(result).toEqual({ created: true, id: "hook_new" })
     expect(fetchMock).toHaveBeenCalledTimes(2)
@@ -143,9 +144,30 @@ describe("registerAsaasWebhook", () => {
   it("refuses a webhook token short enough to guess", async () => {
     env.ASAAS_WEBHOOK_TOKEN = "short"
 
-    await expect(registerAsaasWebhook("https://www.positivparty.com")).rejects.toThrow(
+    await expect(registerAsaasWebhook("https://positiv-dev.trycloudflare.com")).rejects.toThrow(
       /ASAAS_WEBHOOK_TOKEN/,
     )
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it.each(["https://www.positivparty.com", "https://positivparty.com/"])(
+    "refuses to point a sandbox account at production (%s)",
+    async (origin) => {
+      await expect(registerAsaasWebhook(origin)).rejects.toThrow(/sandbox/)
+      expect(fetchMock).not.toHaveBeenCalled()
+    },
+  )
+
+  it("points a production account at production", async () => {
+    env.ASAAS_API_URL = "https://www.asaas.com/api/v3"
+    fetchMock.mockResolvedValueOnce(jsonResponse({ data: [] }))
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ id: "hook_1", name: "Positiv", url: "https://www.positivparty.com/api/payment/webhook" }),
+    )
+
+    const result = await registerAsaasWebhook("https://www.positivparty.com")
+
+    expect(result).toEqual({ created: true, id: "hook_1" })
+    expect(bodyOf(1).url).toBe("https://www.positivparty.com/api/payment/webhook")
   })
 })
