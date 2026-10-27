@@ -378,3 +378,46 @@ describe("Login Page Component", () => {
     expect(screen.getByLabelText("Senha")).toHaveValue("segredo123")
   })
 })
+
+describe("Login Page analytics", () => {
+  const umamiTrack = vi.fn()
+
+  beforeEach(() => {
+    navigate.mockClear()
+    umamiTrack.mockClear()
+    window.umami = { track: umamiTrack }
+  })
+
+  afterEach(() => {
+    delete window.umami
+    vi.restoreAllMocks()
+  })
+
+  it("reports a login once the sign-in lets the person in, and nothing about who", async () => {
+    const user = userEvent.setup()
+    answers({ ok: true, redirectTo: "/dashboard" })
+    renderPage()
+
+    await answer(user)
+    await submit(user)
+
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith("/dashboard"))
+    expect(umamiTrack).toHaveBeenCalledWith("login_completed", undefined)
+  })
+
+  it("reports nothing when the sign-in refuses", async () => {
+    const user = userEvent.setup()
+    const fetch = answers(
+      { ok: false, errors: [], message: "E-mail ou senha incorretos" },
+      { status: 422 },
+    )
+    renderPage()
+
+    await answer(user)
+    await submit(user)
+
+    await waitFor(() => expect(fetch).toHaveBeenCalled())
+    await screen.findByText("E-mail ou senha incorretos")
+    expect(umamiTrack).not.toHaveBeenCalled()
+  })
+})
