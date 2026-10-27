@@ -72,25 +72,34 @@ describe("asaasConnector.readWebhook", () => {
     })
 
     it.each([
-      ["no token", null, "missing_header"],
-      ["the wrong token", "x".repeat(TOKEN.length), "mismatch"],
-      ["a token of a different length", "short", "mismatch"],
-    ])(
-      "shouts why it refused given %s, without the token",
-      async (_, token, reason) => {
-        await asaasConnector.readWebhook(
-          delivery({ id: "evt_1", event: "PAYMENT_RECEIVED" }, token),
-        )
+      ["the wrong token", "x".repeat(TOKEN.length)],
+      ["a token of a different length", "short"],
+    ])("shouts that it refused %s, without either token", async (_, token) => {
+      await asaasConnector.readWebhook(
+        delivery({ id: "evt_1", event: "PAYMENT_RECEIVED" }, token),
+      )
 
-        expect(logger.error).toHaveBeenCalledWith(
-          expect.any(String),
-          expect.objectContaining({ reason }),
-        )
-        const logged = JSON.stringify(logger.error.mock.calls)
-        expect(logged).not.toContain(TOKEN)
-        if (token) expect(logged).not.toContain(token)
-      },
-    )
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ reason: "mismatch" }),
+      )
+      const logged = JSON.stringify(logger.error.mock.calls)
+      expect(logged).not.toContain(TOKEN)
+      expect(logged).not.toContain(token)
+    })
+
+    it("only warns about a delivery with no token, which is a scanner, not Asaas", async () => {
+      await asaasConnector.readWebhook(
+        delivery({ id: "evt_1", event: "PAYMENT_RECEIVED" }, null),
+      )
+
+      expect(logger.error).not.toHaveBeenCalled()
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ reason: "missing_header" }),
+      )
+      expect(JSON.stringify(logger.warn.mock.calls)).not.toContain(TOKEN)
+    })
   })
 
   describe("parsing", () => {
