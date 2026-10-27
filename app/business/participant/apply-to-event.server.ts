@@ -31,6 +31,13 @@ export const applyToEvent = applySchema(
     throw new Error(participantCopy.application.eventNotFound)
   }
 
+  if (
+    event.event_status !== "Registration Open" &&
+    event.event_status !== "Registration Closed"
+  ) {
+    throw new Error(participantCopy.application.notAccepting)
+  }
+
   const appliesAsStaff = can(currentProfile, PERMISSIONS.EVENTS_APPLY_AS_STAFF)
 
   // A closed event still lets in staff, who are outside the limit that closed
