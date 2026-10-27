@@ -1,5 +1,5 @@
 import { redirect } from "react-router"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { Route } from "./+types/event-rules-page"
 import { loader } from "./event-rules-page"
 
@@ -778,5 +778,51 @@ describe("what the quiz tells a veteran it is about to ask", () => {
       ).toBeInTheDocument()
     })
     expect(screen.queryByText(rulesQuizCopy.veteranWager)).not.toBeInTheDocument()
+  })
+})
+
+describe("event-rules-page analytics", () => {
+  const skipLabel = /Pular quiz \(dev\)/i
+  const umamiTrack = vi.fn()
+
+  beforeEach(() => {
+    sessionStorage.clear()
+    ENV.NODE_ENV = "development"
+    vi.restoreAllMocks()
+    umamiTrack.mockClear()
+    window.umami = { track: umamiTrack }
+  })
+
+  afterEach(() => {
+    delete window.umami
+  })
+
+  it("reports the quiz passed once the check accepts the answers", async () => {
+    const user = userEvent.setup()
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json({ ok: true }))
+
+    renderPageWithPathname()
+    await shownQuestion()
+    await user.click(await screen.findByRole("button", { name: skipLabel }))
+
+    await waitFor(() =>
+      expect(umamiTrack).toHaveBeenCalledWith("rules_quiz_passed", {
+        eventId: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c",
+      }),
+    )
+  })
+
+  it("reports nothing when the check refuses the answers", async () => {
+    const user = userEvent.setup()
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      Response.json({ ok: false, errors: [] }),
+    )
+
+    renderPageWithPathname()
+    await shownQuestion()
+    await user.click(await screen.findByRole("button", { name: skipLabel }))
+
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled())
+    expect(umamiTrack).not.toHaveBeenCalled()
   })
 })

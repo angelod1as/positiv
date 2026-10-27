@@ -24,6 +24,7 @@ import {
   writeRulesDeal,
 } from "~/components/forms/custom/rules/rules-order"
 import type { CommitResult } from "~types/forms/commit.types"
+import { trackEvent } from "~/lib/analytics/umami"
 import { FormRunner } from "~/components/forms/runtime/form-runner"
 import { OneAtATime } from "~/components/forms/runtime/presentations/one-at-a-time"
 import type { Answers } from "~/components/forms/runtime/question.types"
@@ -178,7 +179,10 @@ const EventRulesPage = ({ params, loaderData }: Route.ComponentProps) => {
         body: JSON.stringify(answers),
       })
 
-      return (await response.json()) as CommitResult
+      const result = (await response.json()) as CommitResult
+      if (result.ok) trackEvent("rules_quiz_passed", { eventId })
+
+      return result
     },
     [eventId],
   )

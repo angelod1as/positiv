@@ -18,10 +18,6 @@ vi.mock("~/business/session.server", () => ({
   },
 }))
 
-vi.mock("~/lib/analytics/umami.server", () => ({
-  trackServerEvent: vi.fn(),
-}))
-
 vi.mock("~/business/participant/is-veteran.server", () => ({
   isVeteran: vi.fn(),
 }))
@@ -34,11 +30,9 @@ import { getUserContext } from "~/business/auth/auth.server"
 import { isVeteran } from "~/business/participant/is-veteran.server"
 import { rulesSessionStorage } from "~/business/session.server"
 import { getRulesFormQuestions } from "~/components/forms/custom/rules/rules-questions"
-import { trackServerEvent } from "~/lib/analytics/umami.server"
 
 const mockGetSession = vi.mocked(rulesSessionStorage.getSession)
 const mockCommitSession = vi.mocked(rulesSessionStorage.commitSession)
-const mockTrackServerEvent = vi.mocked(trackServerEvent)
 const mockGetUserContext = vi.mocked(getUserContext)
 const mockIsVeteran = vi.mocked(isVeteran)
 
@@ -175,18 +169,6 @@ describe("the rules quiz check", () => {
     await postAnswers(rightAnswers())
 
     expect(set).toHaveBeenCalledWith("rulesCorrect", ["3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c"])
-  })
-
-  it("records the quiz as passed only once it is", async () => {
-    await postAnswers({})
-    expect(mockTrackServerEvent).not.toHaveBeenCalled()
-
-    await postAnswers(rightAnswers())
-    expect(mockTrackServerEvent).toHaveBeenCalledWith(
-      "rules_quiz_passed",
-      { eventId: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" },
-      "/events/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/rules",
-    )
   })
 })
 
