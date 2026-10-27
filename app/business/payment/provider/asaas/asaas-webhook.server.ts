@@ -173,8 +173,6 @@ export async function readAsaasWebhook(
 
   const sent = request.headers.get("asaas-access-token")
   if (!tokensMatch(sent, expected)) {
-    // A sandbox account pointed at production is what this caught in POS-669:
-    // say why, never with either token, so the next one surfaces here first.
     logger.error("Asaas webhook refused: access token rejected", {
       reason: sent ? "mismatch" : "missing_header",
     })

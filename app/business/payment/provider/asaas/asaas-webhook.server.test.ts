@@ -73,7 +73,7 @@ describe("asaasConnector.readWebhook", () => {
 
     it.each([
       ["no token", null, "missing_header"],
-      ["the wrong token", "whsec_wrong_but_the_same_length_00000", "mismatch"],
+      ["the wrong token", "x".repeat(TOKEN.length), "mismatch"],
       ["a token of a different length", "short", "mismatch"],
     ])(
       "shouts why it refused given %s, without the token",
