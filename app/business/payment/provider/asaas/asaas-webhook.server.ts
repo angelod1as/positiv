@@ -171,7 +171,17 @@ export async function readAsaasWebhook(
     return { ok: false, status: 503, error: "not_configured" }
   }
 
-  if (!tokensMatch(request.headers.get("asaas-access-token"), expected)) {
+  const sent = request.headers.get("asaas-access-token")
+  if (!tokensMatch(sent, expected)) {
+    if (sent) {
+      logger.error("Asaas webhook refused: access token rejected", {
+        reason: "mismatch",
+      })
+    } else {
+      logger.warn("Asaas webhook refused: no access token", {
+        reason: "missing_header",
+      })
+    }
     return { ok: false, status: 401, error: "unauthorized" }
   }
 

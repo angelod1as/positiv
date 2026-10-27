@@ -35,6 +35,7 @@ export const WEBHOOK_EVENTS = [
 ] as const
 
 const MINIMUM_TOKEN_LENGTH = 32
+const PRODUCTION_HOST = "positivparty.com"
 
 const webhook = zod.object({
   id: zod.string(),
@@ -77,6 +78,16 @@ export async function registerAsaasWebhook(
   origin: string,
 ): Promise<{ created: boolean; id: string }> {
   if (!origin) throw new Error("usage: register-webhook <https://origin>")
+
+  if (!ENV.ASAAS_API_URL) throw new Error("ASAAS_API_URL is not set")
+
+  const target = new URL(origin).hostname.replace(/^www\./, "")
+  const account = new URL(ENV.ASAAS_API_URL).hostname
+  if (target === PRODUCTION_HOST && account.includes("sandbox")) {
+    throw new Error(
+      `ASAAS_API_URL is the sandbox (${account}); refusing to point it at ${origin}`,
+    )
+  }
 
   const token = ENV.ASAAS_WEBHOOK_TOKEN
   if (!token || token.length < MINIMUM_TOKEN_LENGTH) {
