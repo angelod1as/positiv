@@ -27,8 +27,10 @@ const {
 const formCopy = adminEventsCopy.form
 const { labels } = formCopy
 
+const EVENT_ID = "3f2c9a1e-5b7d-4c8e-9f10-2a3b4c5d6e7f"
+
 const event: Event = {
-  id: "event-1",
+  id: EVENT_ID,
   title: "Rapa do Tacho",
   emoji: "🎉",
   description: "Para quem sobreviveu ao carnaval",
@@ -50,7 +52,7 @@ const event: Event = {
   listmonk_list_synced_at: null,
 }
 
-const answered = (response: unknown = { ok: true, id: "event-1" }) => {
+const answered = (response: unknown = { ok: true, id: EVENT_ID }) => {
   const fetchMock = vi.fn().mockResolvedValue({ json: async () => response })
   vi.stubGlobal("fetch", fetchMock)
   return fetchMock
@@ -198,7 +200,7 @@ describe("EventForm", () => {
       await waitFor(() => expect(fetchMock).toHaveBeenCalled())
       expect(fetchMock.mock.calls[0][0]).toBe(ADMIN_EVENT_COMMIT)
       expect(bodyOf(fetchMock)).toMatchObject({
-        id: "event-1",
+        id: EVENT_ID,
         title: "Rapa do Tacho",
         ticket_price: "200",
         auto_publish: true,
@@ -229,7 +231,7 @@ describe("EventForm", () => {
       await save(user)
 
       await waitFor(() =>
-        expect(navigate).toHaveBeenCalledWith(ADMIN_VIEW_EVENT("event-1")),
+        expect(navigate).toHaveBeenCalledWith(ADMIN_VIEW_EVENT(EVENT_ID)),
       )
       expect(success).toHaveBeenCalledWith(
         adminEventsCopy.createEdit.saved(true),
