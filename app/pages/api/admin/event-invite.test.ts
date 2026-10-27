@@ -36,6 +36,10 @@ const call = (body: BodyInit) =>
 
 const post = (body: unknown) => call(JSON.stringify(body))
 
+const EVENT_ID = "3f2c9a1e-5b7d-4c8e-9f10-2a3b4c5d6e7f"
+const PROFILE_ID = "8a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d"
+const INVITE_ID = "5d6e7f80-9a1b-4c2d-ae3f-4b5c6d7e8f90"
+
 describe("the invite endpoint", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -46,7 +50,7 @@ describe("the invite endpoint", () => {
   })
 
   it("only answers an admin", async () => {
-    await post({ intent: "search", eventId: "e1", term: "maria" })
+    await post({ intent: "search", eventId: EVENT_ID, term: "maria" })
 
     expect(getAdminContext).toHaveBeenCalled()
   })
@@ -54,13 +58,13 @@ describe("the invite endpoint", () => {
   it("creates an invite", async () => {
     const response = await post({
       intent: "create",
-      eventId: "e1",
-      profileId: "p1",
+      eventId: EVENT_ID,
+      profileId: PROFILE_ID,
     })
 
     expect(createInvite).toHaveBeenCalledWith({
-      eventId: "e1",
-      profileId: "p1",
+      eventId: EVENT_ID,
+      profileId: PROFILE_ID,
     })
     expect(response.status).toBe(200)
   })
@@ -68,18 +72,18 @@ describe("the invite endpoint", () => {
   it("revokes an invite", async () => {
     const response = await post({
       intent: "revoke",
-      eventId: "e1",
-      inviteId: "i1",
+      eventId: EVENT_ID,
+      inviteId: INVITE_ID,
     })
 
-    expect(revokeInvite).toHaveBeenCalledWith("e1", "i1")
+    expect(revokeInvite).toHaveBeenCalledWith(EVENT_ID, INVITE_ID)
     expect(response.status).toBe(200)
   })
 
   it("searches", async () => {
-    await post({ intent: "search", eventId: "e1", term: "maria" })
+    await post({ intent: "search", eventId: EVENT_ID, term: "maria" })
 
-    expect(searchProfilesForInvite).toHaveBeenCalledWith("e1", "maria")
+    expect(searchProfilesForInvite).toHaveBeenCalledWith(EVENT_ID, "maria")
   })
 
   it("answers a write with the event's invites, so nobody has to ask twice", async () => {
@@ -87,8 +91,8 @@ describe("the invite endpoint", () => {
 
     const response = await post({
       intent: "create",
-      eventId: "e1",
-      profileId: "p1",
+      eventId: EVENT_ID,
+      profileId: PROFILE_ID,
     })
 
     await expect(response.json()).resolves.toMatchObject({
@@ -104,10 +108,26 @@ describe("the invite endpoint", () => {
   })
 
   it("refuses an unknown intent", async () => {
-    const response = await post({ intent: "nonsense", eventId: "e1" })
+    const response = await post({ intent: "nonsense", eventId: EVENT_ID })
 
     expect(response.status).toBe(422)
     expect(createInvite).not.toHaveBeenCalled()
     expect(revokeInvite).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    { intent: "search", eventId: "eventos", term: "maria" },
+    { intent: "create", eventId: "eventos", profileId: PROFILE_ID },
+    { intent: "create", eventId: EVENT_ID, profileId: "perfil" },
+    { intent: "revoke", eventId: "eventos", inviteId: INVITE_ID },
+    { intent: "revoke", eventId: EVENT_ID, inviteId: "convite" },
+  ])("refuses a non-uuid id before anything reaches the database: %o", async (body) => {
+    const response = await post(body)
+
+    expect(response.status).toBe(422)
+    expect(searchProfilesForInvite).not.toHaveBeenCalled()
+    expect(createInvite).not.toHaveBeenCalled()
+    expect(revokeInvite).not.toHaveBeenCalled()
+    expect(listInvitesForEvent).not.toHaveBeenCalled()
   })
 })
