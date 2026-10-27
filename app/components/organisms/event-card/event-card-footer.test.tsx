@@ -285,7 +285,7 @@ describe("EventCardFooter", () => {
 
       await user.click(screen.getByText("Candidatura direta"))
 
-      expect(mockTrack).toHaveBeenCalledWith("event_direct_application_clicked", {
+      expect(mockTrack).toHaveBeenCalledWith("direct_application_submitted", {
         eventId: "event-123",
       })
     })

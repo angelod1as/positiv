@@ -102,7 +102,7 @@ describe("the event application form", () => {
     renderForm()
     await fillAndSend()
 
-    expect(track).toHaveBeenCalledWith("event_application_clicked", {
+    expect(track).toHaveBeenCalledWith("application_submitted", {
       eventId: EVENT,
     })
   })
