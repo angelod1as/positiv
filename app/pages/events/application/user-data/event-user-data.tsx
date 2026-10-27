@@ -89,6 +89,7 @@ const EventUserInfo = ({ params }: Route.ComponentProps) => {
       // message, which the runtime shows in place of its generic one.
       if (!result.ok) return result
 
+      track("application_completed", { eventId })
       emailSentRef.current = result.emailSent ?? true
 
       return { ok: true }
