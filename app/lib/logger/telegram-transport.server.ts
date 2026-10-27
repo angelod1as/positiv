@@ -235,7 +235,7 @@ export class TelegramTransport extends TransportStream {
     burst.timer = setTimeout(
       () => {
         burst.editBy = undefined
-        void burst.sent?.then(() => this.flush(burst))
+        burst.sent = burst.sent?.then(() => this.flush(burst))
       },
       Math.min(EDIT_DELAY_MS, burst.editBy - now),
     )

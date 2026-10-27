@@ -583,6 +583,31 @@ describe("TelegramTransport", () => {
       expect(calls("editMessageText")).toHaveLength(1)
     })
 
+    it("does not start a second new alert while a fallback send is in flight", async () => {
+      let answer: (value: unknown) => void = () => {}
+      fetchSpy.mockImplementation((url: string) => {
+        if (url.endsWith("/editMessageText") && calls("editMessageText").length === 1) {
+          return Promise.resolve({ ok: false, json: async () => ({ ok: false }) })
+        }
+        return calls("sendMessage").length === 2
+          ? new Promise((resolve) => {
+              answer = resolve
+            })
+          : Promise.resolve({ ok: true, json: async () => SENT })
+      })
+
+      await log(unhandled("pay-1"))
+      await log(unhandled("pay-2"))
+      await vi.advanceTimersByTimeAsync(10_000)
+      await log(unhandled("pay-3"))
+      await vi.advanceTimersByTimeAsync(10_000)
+      answer({ ok: true, json: async () => SENT })
+      await vi.advanceTimersByTimeAsync(1_000)
+
+      expect(calls("sendMessage")).toHaveLength(2)
+      expect(calls("editMessageText").at(-1).text).toContain("Repeated 3×")
+    })
+
     it("does not spend the rate limit on repeats", async () => {
       for (let i = 0; i < 10; i++) await log(unhandled(`pay-${i}`))
       for (let i = 0; i < 4; i++) await log(unhandled("pay-1", `other-${i}`))
