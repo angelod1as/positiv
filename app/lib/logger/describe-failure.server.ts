@@ -1,5 +1,6 @@
 import type { SerializedError } from "./logger.server"
 import { requestFacts } from "./request-facts.server"
+import { appFrames } from "./stack-frames.server"
 
 export interface FailureDescription {
   status: number
@@ -33,6 +34,7 @@ function csrfCause(
 ): string | null {
   if (!MUTATION_METHODS.has(request.method)) return null
   if (!CSRF_MESSAGES.includes(error.message)) return null
+  if (error.stack !== undefined && appFrames(error.stack).length > 0) return null
   const header = request.headers.get("origin")
   const { origin } = requestFacts(request, path)
   if (header === null || origin === undefined) return null

@@ -15,6 +15,16 @@ function failureOf(error: unknown, request: Request, path: string) {
   return describeFailure(serializeError(error), request, path)
 }
 
+// React Router raises these from its own code: no frame in the app.
+function frameworkError(message: string) {
+  const error = new Error(message)
+  error.stack = [
+    `Error: ${message}`,
+    `    at singleFetchAction (${process.cwd()}/node_modules/react-router/dist/development/chunk-H4DAEOV7.mjs:867:31)`,
+  ].join("\n")
+  return error
+}
+
 describe("describeFailure", () => {
   describe("react-router's CSRF check", () => {
     it.each(["PUT", "PATCH", "DELETE"])("checks a %s too", (method) => {
@@ -24,7 +34,7 @@ describe("describeFailure", () => {
       })
 
       expect(
-        failureOf(new Error("Bad Request"), request, "/pagamento/abc").status,
+        failureOf(frameworkError("Bad Request"), request, "/pagamento/abc").status,
       ).toBe(400)
     })
 
@@ -35,7 +45,7 @@ describe("describeFailure", () => {
       )
 
       expect(
-        failureOf(new Error("Bad Request"), request, "/pagamento/abc"),
+        failureOf(frameworkError("Bad Request"), request, "/pagamento/abc"),
       ).toEqual({
         status: 400,
         summary:
@@ -48,7 +58,7 @@ describe("describeFailure", () => {
         "http://positivparty.com/pagamento/abc",
         "https://evil.example",
       )
-      const error = new Error(
+      const error = frameworkError(
         "The `request.url` origin does not match `origin` header from a forwarded action request. Aborting the action.",
       )
 
@@ -59,7 +69,7 @@ describe("describeFailure", () => {
 
     it("names an Origin that is not a URL", () => {
       const request = post("http://positivparty.com/pagamento/abc", "::nope")
-      const error = new Error(
+      const error = frameworkError(
         "`origin` header is not a valid URL. Aborting the action.",
       )
 
@@ -77,6 +87,20 @@ describe("describeFailure", () => {
       )
 
       expect(
+        failureOf(frameworkError("Bad Request"), request, "/pagamento/abc"),
+      ).toEqual({
+        status: 500,
+        summary: "POST /pagamento/abc failed with 500: Error: Bad Request",
+      })
+    })
+
+    it("does not blame the Origin for a Bad Request the app threw", () => {
+      const request = post(
+        "http://positivparty.com/pagamento/abc",
+        "https://positivparty.com",
+      )
+
+      expect(
         failureOf(new Error("Bad Request"), request, "/pagamento/abc"),
       ).toEqual({
         status: 500,
@@ -90,7 +114,7 @@ describe("describeFailure", () => {
       })
 
       expect(
-        failureOf(new Error("Bad Request"), request, "/eventos").status,
+        failureOf(frameworkError("Bad Request"), request, "/eventos").status,
       ).toBe(500)
     })
   })
