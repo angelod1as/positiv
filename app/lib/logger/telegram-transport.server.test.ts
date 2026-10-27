@@ -554,6 +554,35 @@ describe("TelegramTransport", () => {
       expect(sent[1].text).toContain("<b>🔁 Repeated 3× in 2s")
     })
 
+    it("never groups an alert that is not about a request", async () => {
+      await log({ level: "error", message: "Payment webhook failed", paymentId: "pay-1" })
+      await log({ level: "error", message: "Payment webhook failed", paymentId: "pay-2" })
+
+      const sent = calls("sendMessage")
+      expect(sent).toHaveLength(2)
+      expect(sent[1].text).toContain("pay-2")
+    })
+
+    it("waits for a slow first send instead of sending the count twice", async () => {
+      let answer: (value: unknown) => void = () => {}
+      fetchSpy.mockImplementation((url: string) =>
+        url.endsWith("/sendMessage") && calls("sendMessage").length === 1
+          ? new Promise((resolve) => {
+              answer = resolve
+            })
+          : Promise.resolve({ ok: true, json: async () => SENT }),
+      )
+
+      transport.log(unhandled("pay-1"), () => {})
+      await log(unhandled("pay-2"))
+      await vi.advanceTimersByTimeAsync(30_000)
+      answer({ ok: true, json: async () => SENT })
+      await vi.advanceTimersByTimeAsync(1_000)
+
+      expect(calls("sendMessage")).toHaveLength(1)
+      expect(calls("editMessageText")).toHaveLength(1)
+    })
+
     it("does not spend the rate limit on repeats", async () => {
       for (let i = 0; i < 10; i++) await log(unhandled(`pay-${i}`))
       for (let i = 0; i < 4; i++) await log(unhandled("pay-1", `other-${i}`))

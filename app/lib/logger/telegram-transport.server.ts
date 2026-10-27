@@ -128,6 +128,7 @@ interface Burst {
   messageId?: number
   timer?: ReturnType<typeof setTimeout>
   editBy?: number
+  sent?: Promise<void>
 }
 
 function routePattern(request: Record<string, unknown>): string | null {
@@ -147,9 +148,11 @@ function routePattern(request: Record<string, unknown>): string | null {
 }
 
 // The same error on the same route, whatever the ids in its path, is one
-// burst: POS-666 sent six identical alerts in a few minutes.
-function burstKey(info: Record<string, unknown>): string {
-  const request = isRecord(info.request) ? info.request : {}
+// burst: POS-666 sent six identical alerts in a few minutes. Only request
+// errors group; elsewhere the metadata a repeat would drop is the point.
+function burstKey(info: Record<string, unknown>): string | null {
+  if (!isRecord(info.request)) return null
+  const request = info.request
   const error = isRecord(info.error) ? info.error : {}
   return JSON.stringify([
     info.level,
@@ -232,23 +235,24 @@ export class TelegramTransport extends TransportStream {
     burst.timer = setTimeout(
       () => {
         burst.editBy = undefined
-        const text = burst.render(repeatLine(burst))
-        if (burst.messageId === undefined) {
-          void this.send(burst, text)
-          return
-        }
-        this.call("editMessageText", { message_id: burst.messageId, text })
-          .then((response) => (response.ok ? response.json() : null))
-          .then((response: unknown) => {
-            if (isRecord(response) && response.ok === true) return
-            burst.messageId = undefined
-            return this.send(burst, text)
-          })
-          .catch(() => {})
+        void burst.sent?.then(() => this.flush(burst))
       },
       Math.min(EDIT_DELAY_MS, burst.editBy - now),
     )
     burst.timer.unref?.()
+  }
+
+  private flush(burst: Burst): Promise<void> {
+    const text = burst.render(repeatLine(burst))
+    if (burst.messageId === undefined) return this.send(burst, text)
+    return this.call("editMessageText", { message_id: burst.messageId, text })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((response: unknown) => {
+        if (isRecord(response) && response.ok === true) return
+        burst.messageId = undefined
+        return this.send(burst, text)
+      })
+      .catch(() => {})
   }
 
   log(
@@ -260,7 +264,7 @@ export class TelegramTransport extends TransportStream {
       if (now - burst.firstAt >= BURST_WINDOW_MS) this.bursts.delete(key)
     }
     const key = burstKey(info)
-    const known = this.bursts.get(key)
+    const known = key === null ? undefined : this.bursts.get(key)
     if (known) {
       known.count++
       known.lastAt = now
@@ -371,9 +375,10 @@ export class TelegramTransport extends TransportStream {
       return `${head}${repetition}${message}${context}${anchors}${pre}`
     }
     const burst: Burst = { count: 1, firstAt: now, lastAt: now, render }
-    this.bursts.set(key, burst)
+    if (key !== null) this.bursts.set(key, burst)
 
-    this.send(burst, render("")).finally(() => {
+    burst.sent = this.send(burst, render(""))
+    burst.sent.finally(() => {
       this.emit("logged", info)
       callback()
     })
