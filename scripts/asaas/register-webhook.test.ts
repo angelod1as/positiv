@@ -150,6 +150,15 @@ describe("registerAsaasWebhook", () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
+  it("says so when ASAAS_API_URL is not set", async () => {
+    env.ASAAS_API_URL = undefined
+
+    await expect(registerAsaasWebhook("https://positiv-dev.trycloudflare.com")).rejects.toThrow(
+      "ASAAS_API_URL is not set",
+    )
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
   it.each(["https://www.positivparty.com", "https://positivparty.com/"])(
     "refuses to point a sandbox account at production (%s)",
     async (origin) => {

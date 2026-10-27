@@ -79,10 +79,10 @@ export async function registerAsaasWebhook(
 ): Promise<{ created: boolean; id: string }> {
   if (!origin) throw new Error("usage: register-webhook <https://origin>")
 
-  // A sandbox webhook pointed at production can only ever be refused, and
-  // Asaas emails about every refusal as if payments were failing (POS-669).
+  if (!ENV.ASAAS_API_URL) throw new Error("ASAAS_API_URL is not set")
+
   const target = new URL(origin).hostname.replace(/^www\./, "")
-  const account = new URL(ENV.ASAAS_API_URL ?? "").hostname
+  const account = new URL(ENV.ASAAS_API_URL).hostname
   if (target === PRODUCTION_HOST && account.includes("sandbox")) {
     throw new Error(
       `ASAAS_API_URL is the sandbox (${account}); refusing to point it at ${origin}`,
