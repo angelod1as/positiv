@@ -24,7 +24,7 @@ const preprocessDateTime = (value: unknown) => {
 const datetime = zod.preprocess(preprocessDateTime, zod.string().datetime())
 
 export const eventFormSchema = zod.object({
-  id: zod.string().optional(),
+  id: zod.string().uuid().optional(),
   title: zod.string().min(2).max(50),
   description: zod.string().min(2).max(255),
   emoji: zod.string().emoji(eventFormValidation.emojiInvalid).min(1),
@@ -95,8 +95,8 @@ export const updateEventDemographicsSchema = zod.object({})
 const spotTypeEnum = zod.enum(["regular", "social", "staff"])
 
 export const updateParticipantVsEventSchema = zod.object({
-  profile_id: zod.string(),
-  event_id: zod.string(),
+  profile_id: zod.string().uuid(),
+  event_id: zod.string().uuid(),
   intent: zod.literal("participant-vs-event-schema"),
   attendance_status: participantAttendanceStatusEnum,
   application_status: participantApplicationStatusEnum,
@@ -112,8 +112,8 @@ const parseBoolean = zod.union([
 ])
 
 export const updateEventParticipantByIdSchema = zod.object({
-  id: zod.string(),
-  profile_id: zod.string(),
+  id: zod.string().uuid(),
+  profile_id: zod.string().uuid(),
   attendance_status: participantAttendanceStatusEnum.optional(),
   application_status: participantApplicationStatusEnum.optional(),
   spot_type: spotTypeEnum.optional(),
@@ -141,14 +141,14 @@ export const updateEventParticipantByIdSchema = zod.object({
 
 export const updateProfileApprovalStatusSchema = zod.object({
   intent: zod.literal("update-profile-approval-status"),
-  profile_id: zod.string(),
+  profile_id: zod.string().uuid(),
   approved_to_attend: profileApprovedToAttendStatusEnum,
 })
 
 export const updateProfileAdminNotesSchema = zod
   .object({
     intent: zod.literal("update-profile-admin-notes"),
-    profile_id: zod.string(),
+    profile_id: zod.string().uuid(),
     flag: profileFlagStatusEnum.optional(),
     flag_notes: zod.string().nullable().optional(),
     general_notes: zod.string().nullable().optional(),

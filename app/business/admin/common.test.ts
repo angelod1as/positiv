@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vitest"
 import { eventFormValidation } from "~/copy/admin/events"
-import { eventFormSchema } from "./common"
+import {
+  participantApplicationStatusEnum,
+  participantAttendanceStatusEnum,
+  profileApprovedToAttendStatusEnum,
+} from "~types/database/entities.types"
+import {
+  eventFormSchema,
+  updateEventParticipantByIdSchema,
+  updateParticipantVsEventSchema,
+  updateProfileAdminNotesSchema,
+  updateProfileApprovalStatusSchema,
+} from "./common"
 
 const base = {
   title: "Festa",
@@ -51,4 +62,74 @@ describe("eventFormSchema.ticket_price", () => {
       eventFormSchema.parse({ ...base, ticket_price: "abc" }),
     ).toThrow()
   })
+})
+
+describe("admin body schemas refuse an id that is not a uuid", () => {
+  const UUID = "3f2c9a1e-5b7d-4c8e-9f10-2a3b4c5d6e7f"
+  const NOT_UUID = "eventos"
+
+  const participantVsEvent = {
+    profile_id: UUID,
+    event_id: UUID,
+    intent: "participant-vs-event-schema",
+    attendance_status: participantAttendanceStatusEnum.options[0],
+    application_status: participantApplicationStatusEnum.options[0],
+    spot_type: "regular",
+    was_selected_for_rotation: false,
+    admin_general_notes: "",
+  }
+
+  const cases = [
+    {
+      name: "updateParticipantVsEventSchema",
+      schema: updateParticipantVsEventSchema,
+      valid: participantVsEvent,
+      ids: ["profile_id", "event_id"],
+    },
+    {
+      name: "updateEventParticipantByIdSchema",
+      schema: updateEventParticipantByIdSchema,
+      valid: { id: UUID, profile_id: UUID },
+      ids: ["id", "profile_id"],
+    },
+    {
+      name: "updateProfileApprovalStatusSchema",
+      schema: updateProfileApprovalStatusSchema,
+      valid: {
+        intent: "update-profile-approval-status",
+        profile_id: UUID,
+        approved_to_attend: profileApprovedToAttendStatusEnum.options[0],
+      },
+      ids: ["profile_id"],
+    },
+    {
+      name: "updateProfileAdminNotesSchema",
+      schema: updateProfileAdminNotesSchema,
+      valid: { intent: "update-profile-admin-notes", profile_id: UUID },
+      ids: ["profile_id"],
+    },
+    {
+      name: "eventFormSchema",
+      schema: eventFormSchema,
+      valid: { ...base, ticket_price: "220", id: UUID },
+      ids: ["id"],
+    },
+  ]
+
+  for (const { name, schema, valid, ids } of cases) {
+    it(`${name} accepts a uuid`, () => {
+      expect(schema.safeParse(valid).success).toBe(true)
+    })
+
+    for (const id of ids) {
+      it(`${name} refuses a non-uuid ${id}`, () => {
+        const result = schema.safeParse({ ...valid, [id]: NOT_UUID })
+
+        expect(result.success).toBe(false)
+        if (!result.success) {
+          expect(result.error.issues[0].path).toEqual([id])
+        }
+      })
+    }
+  }
 })

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest"
 import { validationMessages } from "~/lib/helpers/validation-messages"
-import { feedbackFormSchema } from "./feedback-schema"
+import {
+  feedbackFormSchema,
+  updateFeedbackStatusSchema,
+} from "./feedback-schema"
 
 describe("feedbackFormSchema", () => {
   const validData = {
@@ -197,5 +200,28 @@ describe("feedbackFormSchema", () => {
       const result = feedbackFormSchema.safeParse(dataWithoutWhatsapp)
       expect(result.success).toBe(true)
     })
+  })
+})
+
+describe("updateFeedbackStatusSchema", () => {
+  it("accepts a uuid id", () => {
+    expect(
+      updateFeedbackStatusSchema.safeParse({
+        id: "6f1d5b3a-0000-4000-8000-000000000000",
+        status: "resolved",
+      }).success,
+    ).toBe(true)
+  })
+
+  it("refuses an id that is not a uuid", () => {
+    const result = updateFeedbackStatusSchema.safeParse({
+      id: "feedback-1",
+      status: "resolved",
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0].path).toEqual(["id"])
+    }
   })
 })
