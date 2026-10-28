@@ -1,0 +1,34 @@
+import { readFileSync } from "node:fs"
+import { join } from "node:path"
+import { describe, expect, it } from "vitest"
+
+// A pnpm version in the Dockerfile is a second copy that a packageManager bump leaves behind.
+const dockerfile = readFileSync(join(import.meta.dirname, "..", "Dockerfile"), "utf8")
+
+const packageJson = JSON.parse(
+  readFileSync(join(import.meta.dirname, "..", "package.json"), "utf8"),
+) as { packageManager: string }
+
+describe("pnpm version", () => {
+  it("declares an exact pnpm version with its integrity hash in packageManager", () => {
+    expect(packageJson.packageManager).toMatch(/^pnpm@\d+\.\d+\.\d+\+sha512\.[0-9a-f]{128}$/)
+  })
+
+  it("leaves the image's pnpm version to packageManager", () => {
+    const pins = [...dockerfile.matchAll(/pnpm@\S+/g)].map((m) => m[0])
+
+    expect(pins, "pnpm's version must come from packageManager").toEqual([])
+  })
+
+  it("enables corepack in every stage that runs pnpm", () => {
+    const stages = dockerfile
+      .split(/^FROM /m)
+      .slice(1)
+      .filter((s) => /^RUN .*\bpnpm\b/m.test(s))
+
+    expect(stages.length).toBeGreaterThan(0)
+    for (const stage of stages) {
+      expect(stage).toMatch(/^RUN corepack enable\b/m)
+    }
+  })
+})
