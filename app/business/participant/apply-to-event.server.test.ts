@@ -274,7 +274,6 @@ describe("applyToEvent", () => {
 
   describe("events that take no applications", () => {
     beforeEach(() => {
-      mockSingle.mockResolvedValueOnce({ data: null, error: null })
       vi.mocked(sendApplicationMail).mockResolvedValue({ emailSent: true })
     })
 
@@ -315,6 +314,8 @@ describe("applyToEvent", () => {
                 "Este evento não está recebendo candidaturas.",
               )
             }
+            expect(findValidInvite).not.toHaveBeenCalled()
+            expect(mockSingle).not.toHaveBeenCalled()
             expect(mockUpsert).not.toHaveBeenCalled()
             expect(sendApplicationMail).not.toHaveBeenCalled()
           },
