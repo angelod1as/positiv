@@ -119,32 +119,6 @@ export async function cleanupEventParticipations(userId: string, throwOnError: b
   }
 }
 
-/**
- * Cleans up event reminders for a user
- * @param userId - The user ID to clean up reminders for
- * @param throwOnError - If true, throws on error. If false, logs warning and continues.
- *                       Use true for critical operations (setup), false for best-effort cleanup.
- */
-export async function cleanupEventReminders(userId: string, throwOnError: boolean = false): Promise<void> {
-  const supabase = createSupabaseAdminClient()
-  
-  const { error } = await supabase
-    .from('event_newsletter_campaigns')
-    .delete()
-    .eq('profile_id', userId)
-  
-  if (error) {
-    const message = `Failed to clean up event reminders for user ${userId}`
-    
-    if (throwOnError) {
-      throw new CleanupError(message, 'cleanupEventReminders', error)
-    } else {
-      // Log but continue - this might be acceptable in some cleanup scenarios
-      console.warn(`[Non-critical] ${message}:`, error)
-    }
-  }
-}
-
 export async function resetUserToDefaultState(email: string): Promise<void> {
   const supabase = createSupabaseAdminClient()
   
@@ -165,7 +139,6 @@ export async function resetUserToDefaultState(email: string): Promise<void> {
   
   // These operations should complete but aren't necessarily critical
   await cleanupEventParticipations(profile.id, false)
-  await cleanupEventReminders(profile.id, false)
   
   const { error: updateError } = await supabase
     .from('profiles')
@@ -233,7 +206,6 @@ export async function cleanupTestUserData(email: string): Promise<void> {
   
   // Use non-throwing cleanup for test data cleanup
   await cleanupEventParticipations(profile.id, false)
-  await cleanupEventReminders(profile.id, false)
 }
 
 export async function cleanupAllTestUsers(): Promise<void> {
