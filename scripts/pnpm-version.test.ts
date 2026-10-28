@@ -24,7 +24,7 @@ describe("pnpm version", () => {
     const stages = dockerfile.split(/^FROM /m).slice(1)
 
     for (const stage of stages.filter((s) => /^RUN .*\bpnpm\b/m.test(s))) {
-      expect(stage).toMatch(/^RUN corepack enable$/m)
+      expect(stage).toMatch(/^RUN corepack enable\b/m)
     }
   })
 })
