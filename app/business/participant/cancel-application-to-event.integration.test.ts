@@ -72,6 +72,7 @@ describe("cancelApplicationToEvent", () => {
     const event = await createTestEvent(tracker, kysely, {
       title: "Withdraw Event",
       ticket_price: 22000,
+      event_status: "Registration Open",
     })
     eventId = event.id
 
