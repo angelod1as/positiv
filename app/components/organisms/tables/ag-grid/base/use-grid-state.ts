@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import type { GridApi, GridState } from "ag-grid-community"
+import type {
+  GridApi,
+  GridState,
+  PaginationChangedEvent,
+} from "ag-grid-community"
 import type {
   UseGridStateOptions,
   UseGridStateReturn,
@@ -8,6 +12,26 @@ import type {
 
 const STORAGE_KEY_PREFIX = "ag-grid-state-"
 const DEFAULT_DEBOUNCE_MS = 500
+
+// An auto-sized grid restores its state before it has measured its page size,
+// so it counts pages at the default size and clamps the saved page to the last
+// of those. Once the real size is known, the saved page exists again.
+function restorePageOnceAutoSized(api: GridApi, page: number | undefined) {
+  if (
+    !page ||
+    !api.getGridOption("paginationAutoPageSize") ||
+    api.paginationGetCurrentPage() === page
+  ) {
+    return
+  }
+
+  const onPaginationChanged = (event: PaginationChangedEvent) => {
+    if (!event.newPageSize) return
+    api.removeEventListener("paginationChanged", onPaginationChanged)
+    api.paginationGoToPage(page)
+  }
+  api.addEventListener("paginationChanged", onPaginationChanged)
+}
 
 /**
  * Hook for persisting AG Grid state to local storage.
@@ -84,6 +108,7 @@ export function useGridState(
         }
 
         api.setState(parsed.gridState)
+        restorePageOnceAutoSized(api, parsed.gridState.pagination?.page)
         setIsRestored(true)
       } catch (error) {
         // Only clear storage on parse errors, not on api.setState failures

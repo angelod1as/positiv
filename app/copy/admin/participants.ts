@@ -43,6 +43,8 @@ export const adminParticipantsCopy = {
     answers: "Respostas",
     participantNotes: (label: string | undefined) => `${label ?? ""} (Participante)`,
     noAnswer: "não respondeu",
+    cancelled: (date: string | undefined) =>
+      `Candidatura cancelada em ${date ?? ""}`,
   },
   adminNotes: {
     title: "Em toda a Positiv",

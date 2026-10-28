@@ -13,6 +13,8 @@ vi.mock("~/business/admin/admin.server", () => ({
 
 const context = { currentProfile: { id: "profile-1" } }
 
+const EVENT_ID = "3f2c9a1e-5b7d-4c8e-9f10-2a3b4c5d6e7f"
+
 const answers = {
   title: "Rapa do Tacho",
   emoji: "🎉",
@@ -43,13 +45,13 @@ describe("event commit endpoint", () => {
   it("saves the event and says which one it is now", async () => {
     createOrUpdateEvent.mockResolvedValue({
       success: true,
-      data: "event-1",
+      data: EVENT_ID,
       errors: [],
     })
 
     const response = await post(JSON.stringify(answers))
 
-    expect(await response.json()).toEqual({ ok: true, id: "event-1" })
+    expect(await response.json()).toEqual({ ok: true, id: EVENT_ID })
     expect(createOrUpdateEvent).toHaveBeenCalledWith(answers, {
       ...context,
       eventId: undefined,
@@ -59,15 +61,15 @@ describe("event commit endpoint", () => {
   it("updates the event the answers name", async () => {
     createOrUpdateEvent.mockResolvedValue({
       success: true,
-      data: "event-1",
+      data: EVENT_ID,
       errors: [],
     })
 
-    await post(JSON.stringify({ ...answers, id: "event-1" }))
+    await post(JSON.stringify({ ...answers, id: EVENT_ID }))
 
     expect(createOrUpdateEvent).toHaveBeenCalledWith(
-      { ...answers, id: "event-1" },
-      { ...context, eventId: "event-1" },
+      { ...answers, id: EVENT_ID },
+      { ...context, eventId: EVENT_ID },
     )
   })
 
@@ -104,6 +106,14 @@ describe("event commit endpoint", () => {
 
   it("refuses an id that is not an event id at all", async () => {
     const response = await post(JSON.stringify({ ...answers, id: { evil: 1 } }))
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ ok: false, errors: [] })
+    expect(createOrUpdateEvent).not.toHaveBeenCalled()
+  })
+
+  it("refuses an id that is not a uuid before anything reaches the database", async () => {
+    const response = await post(JSON.stringify({ ...answers, id: "eventos" }))
 
     expect(response.status).toBe(400)
     expect(await response.json()).toEqual({ ok: false, errors: [] })

@@ -272,6 +272,58 @@ describe("applyToEvent", () => {
     })
   })
 
+  describe("events that take no applications", () => {
+    beforeEach(() => {
+      vi.mocked(sendApplicationMail).mockResolvedValue({ emailSent: true })
+    })
+
+    const applicants = [
+      ["a regular user", []],
+      ["whoever may apply as staff", ["events.apply_as_staff"]],
+    ] as const
+
+    describe.each(["Draft", "Scheduled", "Cancelled", "Completed"])(
+      "%s",
+      (status) => {
+        it.each(applicants)(
+          "refuses %s and writes nothing",
+          async (_, permissions) => {
+            vi.mocked(db.selectFrom).mockReturnValue({
+              selectAll: vi.fn(() => ({
+                where: vi.fn(() => ({
+                  executeTakeFirst: vi
+                    .fn()
+                    .mockResolvedValue({ ...mockEvent, event_status: status }),
+                })),
+              })),
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any)
+
+            const context = createContext()
+            const result = await applyToEvent(validValues, {
+              ...context,
+              currentProfile: {
+                ...context.currentProfile,
+                permissions: [...permissions],
+              },
+            })
+
+            expect(result.success).toBe(false)
+            if (!result.success) {
+              expect(result.errors[0].message).toBe(
+                "Este evento não está recebendo candidaturas.",
+              )
+            }
+            expect(findValidInvite).not.toHaveBeenCalled()
+            expect(mockSingle).not.toHaveBeenCalled()
+            expect(mockUpsert).not.toHaveBeenCalled()
+            expect(sendApplicationMail).not.toHaveBeenCalled()
+          },
+        )
+      },
+    )
+  })
+
   describe("registration closed scenarios", () => {
     beforeEach(() => {
       vi.clearAllMocks()

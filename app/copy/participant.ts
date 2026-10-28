@@ -19,6 +19,7 @@ export const participantCopy = {
     eventNotFound: "Evento não encontrado.",
     registrationClosed:
       "Candidaturas encerradas! Este evento atingiu o limite de participantes.",
+    notAccepting: "Este evento não está recebendo candidaturas.",
     upsertFailed: "Sua candidatura teve um erro, tente novamente. Erro: upsert",
   },
   calendar: {

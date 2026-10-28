@@ -70,6 +70,36 @@ describe("asaasConnector.readWebhook", () => {
 
       expect(reading).toMatchObject({ ok: false, status: 401 })
     })
+
+    it.each([
+      ["the wrong token", "x".repeat(TOKEN.length)],
+      ["a token of a different length", "short"],
+    ])("shouts that it refused %s, without either token", async (_, token) => {
+      await asaasConnector.readWebhook(
+        delivery({ id: "evt_1", event: "PAYMENT_RECEIVED" }, token),
+      )
+
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ reason: "mismatch" }),
+      )
+      const logged = JSON.stringify(logger.error.mock.calls)
+      expect(logged).not.toContain(TOKEN)
+      expect(logged).not.toContain(token)
+    })
+
+    it("only warns about a delivery with no token, which is a scanner, not Asaas", async () => {
+      await asaasConnector.readWebhook(
+        delivery({ id: "evt_1", event: "PAYMENT_RECEIVED" }, null),
+      )
+
+      expect(logger.error).not.toHaveBeenCalled()
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ reason: "missing_header" }),
+      )
+      expect(JSON.stringify(logger.warn.mock.calls)).not.toContain(TOKEN)
+    })
   })
 
   describe("parsing", () => {

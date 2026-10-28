@@ -6,7 +6,7 @@ import {
 import { toCommitResult } from "~/lib/helpers/to-commit-result"
 import { zod } from "~/lib/helpers/zod"
 
-const eventTarget = zod.object({ id: zod.string().optional() })
+const eventTarget = zod.object({ id: zod.string().uuid().optional() })
 
 /**
  * A route of its own rather than the page's action: a POST to a page route is a

@@ -16,18 +16,18 @@ import { zod } from "~/lib/helpers/zod"
 const bodySchema = zod.discriminatedUnion("intent", [
   zod.object({
     intent: zod.literal("search"),
-    eventId: zod.string().min(1),
+    eventId: zod.string().uuid(),
     term: zod.string(),
   }),
   zod.object({
     intent: zod.literal("create"),
-    eventId: zod.string().min(1),
-    profileId: zod.string().min(1),
+    eventId: zod.string().uuid(),
+    profileId: zod.string().uuid(),
   }),
   zod.object({
     intent: zod.literal("revoke"),
-    eventId: zod.string().min(1),
-    inviteId: zod.string().min(1),
+    eventId: zod.string().uuid(),
+    inviteId: zod.string().uuid(),
   }),
 ])
 
