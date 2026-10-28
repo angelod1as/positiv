@@ -10,8 +10,8 @@ const packageJson = JSON.parse(
 ) as { packageManager: string }
 
 describe("pnpm version", () => {
-  it("declares an exact pnpm version in packageManager", () => {
-    expect(packageJson.packageManager).toMatch(/^pnpm@\d+\.\d+\.\d+$/)
+  it("declares an exact pnpm version with its integrity hash in packageManager", () => {
+    expect(packageJson.packageManager).toMatch(/^pnpm@\d+\.\d+\.\d+\+sha512\.[0-9a-f]{128}$/)
   })
 
   it("leaves the image's pnpm version to packageManager", () => {
