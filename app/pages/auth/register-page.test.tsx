@@ -218,3 +218,77 @@ describe("RegisterPage", () => {
     )
   })
 })
+
+describe("RegisterPage analytics", () => {
+  const umamiTrack = vi.fn()
+
+  beforeEach(() => {
+    navigate.mockClear()
+    umamiTrack.mockClear()
+    window.umami = { track: umamiTrack }
+    vi.spyOn(globalThis, "fetch")
+  })
+
+  afterEach(() => {
+    delete window.umami
+    vi.restoreAllMocks()
+  })
+
+  const sendWith = async (result: unknown) => {
+    const user = userEvent.setup()
+    vi.mocked(globalThis.fetch).mockResolvedValue(Response.json(result))
+    renderPage()
+
+    await fill(user)
+    await submit(user)
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled())
+  }
+
+  it("reports a signup once the server accepts it", async () => {
+    await sendWith({ ok: true })
+
+    await waitFor(() =>
+      expect(umamiTrack).toHaveBeenCalledWith("signup_completed", undefined),
+    )
+  })
+
+  it.each(["blocked_domain", "rate_limited"] as const)(
+    "reports a signup refused for %s, with the reason alone",
+    async (reason) => {
+      await sendWith({
+        ok: false,
+        errors: [],
+        message: "Recusado",
+        refused: reason,
+      })
+
+      await waitFor(() =>
+        expect(umamiTrack).toHaveBeenCalledWith("signup_refused", { reason }),
+      )
+      expect(umamiTrack).toHaveBeenCalledTimes(1)
+    },
+  )
+
+  it("reports a signup blocked by a claimed profile on its own", async () => {
+    await sendWith({
+      ok: false,
+      errors: [{ questionId: "email", message: "Houve um erro" }],
+      refused: "claimed_profile",
+    })
+
+    await waitFor(() =>
+      expect(umamiTrack).toHaveBeenCalledWith(
+        "claimed_profile_signup_blocked",
+        undefined,
+      ),
+    )
+    expect(umamiTrack).toHaveBeenCalledTimes(1)
+  })
+
+  it("reports nothing for a failure that gives no reason", async () => {
+    await sendWith({ ok: false, errors: [] })
+
+    await screen.findByText("Não foi possível salvar agora. Tente novamente.")
+    expect(umamiTrack).not.toHaveBeenCalled()
+  })
+})

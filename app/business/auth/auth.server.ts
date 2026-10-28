@@ -5,7 +5,6 @@ import type { z } from "zod"
 import { ENV } from "varlock/env"
 import { logoutCopy } from "~/copy/auth"
 import { errorsCopy } from "~/copy/errors"
-import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { appOrigin } from "~/lib/helpers/app-origin"
 import { kyselyDb } from "~/kysely-db"
 import { logger } from "~/lib/logger/logger.server"
@@ -202,24 +201,34 @@ export const logoutUser = async (context: z.infer<typeof contextSchema>) => {
   return redirectWithSuccess(HOME, logoutCopy.successToast)
 }
 
+/**
+ * A refused signup says why, so the page can report the refusal to analytics:
+ * the messages alone would tie the event to the copy.
+ */
+export type RegisterResult =
+  | Extract<CommitResult, { ok: true }>
+  | (Extract<CommitResult, { ok: false }> & {
+      refused?: "blocked_domain" | "rate_limited" | "claimed_profile"
+    })
+
 export const registerUser = async (
   values: z.infer<typeof registerUserSchema>,
   context: z.infer<typeof contextSchema>,
   ip: string | null,
-): Promise<CommitResult> => {
+): Promise<RegisterResult> => {
   const { supabase, host } = context
 
   const { over18, confirmPassword, captchaToken, ...data } = values
 
   if (await isSignupDomainBlocked(data.email)) {
     const domain = data.email.trim().toLowerCase().split("@").at(-1)
-    trackServerEvent("signup_domain_blocked", { domain }, "/auth/register")
     logger.warn("[ADMIN] Refused signup from a blocked domain:", { domain })
     return {
       ok: false,
       errors: [
         { questionId: "email", message: errorsCopy.auth.signupDomainBlocked },
       ],
+      refused: "blocked_domain",
     }
   }
 
@@ -231,9 +240,13 @@ export const registerUser = async (
       logger.error("Signup without a client IP; the attempt limit was skipped")
     }
   } else if (!(await recordSignupAttempt(ip))) {
-    trackServerEvent("signup_rate_limited", {}, "/auth/register")
     logger.warn("[ADMIN] Refused signup: too many attempts from one address")
-    return { ok: false, errors: [], message: errorsCopy.auth.signupRateLimited }
+    return {
+      ok: false,
+      errors: [],
+      message: errorsCopy.auth.signupRateLimited,
+      refused: "rate_limited",
+    }
   }
 
   // Block signup only when a claimed profile (user_id IS NOT NULL) already exists for
@@ -252,13 +265,6 @@ export const registerUser = async (
     const [localPart, domain] = normalizedEmail.split("@")
     const maskedEmail = `${localPart.slice(0, 3)}***@${domain}`
 
-    // Track blocked signup attempt for audit trail (no PII in analytics)
-    trackServerEvent(
-      "claimed_profile_signup_blocked",
-      { profileId: claimedProfile.id },
-      "/auth/register",
-    )
-
     // Log for admin debugging with masked PII
     logger.warn("[ADMIN] Blocked claimed profile signup:", {
       maskedEmail,
@@ -271,6 +277,7 @@ export const registerUser = async (
     return {
       ok: false,
       errors: [{ questionId: "email", message: errorsCopy.auth.signupBlocked }],
+      refused: "claimed_profile",
     }
   }
 
@@ -300,8 +307,6 @@ export const registerUser = async (
     // person keeps everything they typed.
     return { ok: false, errors: [] }
   }
-
-  trackServerEvent("user_signup_completed", {}, "/auth/register")
 
   return { ok: true }
 }
