@@ -261,7 +261,9 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ steps.supabase-creds.outputs.service_role_key }}
           SUPABASE_CONNECT_URL: ${{ steps.supabase-creds.outputs.db_url }}
 
-      # Run E2E tests against local Supabase
+      # Run E2E tests against local Supabase. No Listmonk credentials either:
+      # E2E_MODE short-circuits the subscriber and list calls, and the client
+      # refuses any non-reserved host during a test run.
       - name: Run E2E tests
         run: pnpm test:e2e
         env:
@@ -281,9 +283,6 @@ jobs:
           # that one is set.
           VITE_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
           SUPABASE_TURNSTILE_SECRET: ci-placeholder-never-sent
-          LISTMONK_API_URL: ${{ secrets.LISTMONK_API_URL }}
-          LISTMONK_API_USERNAME: ${{ secrets.LISTMONK_API_USERNAME }}
-          LISTMONK_API_PASSWORD: ${{ secrets.LISTMONK_API_PASSWORD }}
 
       # Upload artifacts
       - uses: actions/upload-artifact@v7
