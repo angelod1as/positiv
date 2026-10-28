@@ -1,8 +1,10 @@
+import { DoorOpen } from "lucide-react"
 import type { FC } from "react"
 import { useFetcher } from "react-router"
 import { z } from "zod"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
 import { adminParticipantsCopy } from "~/copy/admin/participants"
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
 import { Checkbox } from "~/components/ui/checkbox"
 import { Label } from "~/components/ui/label"
 import {
@@ -51,6 +53,9 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
     event_id,
     profile_id,
     application_date,
+    is_user_applied,
+    cancellation_date,
+    cancellation_reason,
     attendance_status,
     application_status,
     spot_type,
@@ -92,6 +97,24 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
   return (
     <div className="space-y-4">
       <h3>{vsEventCopy.title}</h3>
+      {!is_user_applied && cancellation_date && (
+        <Alert>
+          <DoorOpen />
+          <AlertTitle>
+            {vsEventCopy.cancelled(formatDateTime(cancellation_date).full)}
+          </AlertTitle>
+          {cancellation_reason && (
+            <AlertDescription>
+              <DataPair
+                pair={[
+                  eventParticipantPropMap("cancellation_reason"),
+                  cancellation_reason,
+                ]}
+              />
+            </AlertDescription>
+          )}
+        </Alert>
+      )}
       <div className="space-y-8">
         <div className="space-y-2">
           <h4>{vsEventCopy.administration}</h4>

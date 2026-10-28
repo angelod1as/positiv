@@ -276,4 +276,48 @@ describe("ParticipantVsEventData", () => {
       expect(screen.getByText("Test notes")).toBeInTheDocument()
     })
   })
+
+  describe("cancellation", () => {
+    const withdrawn: EventParticipantWithEvent = {
+      ...mockEventParticipant,
+      is_user_applied: false,
+      cancellation_date: "2026-10-24T17:00:00.000Z",
+    }
+
+    it("shows when the participant cancelled and why", () => {
+      const router = createTestRouter({
+        ...withdrawn,
+        cancellation_reason: "Vou viajar nesse fim de semana",
+      })
+      render(<RouterProvider router={router} />)
+
+      const alert = screen.getByRole("alert")
+      expect(alert).toHaveTextContent(
+        /Candidatura cancelada em 24 de outubro de 2026/,
+      )
+      expect(alert).toHaveTextContent("Motivo do cancelamento")
+      expect(alert).toHaveTextContent("Vou viajar nesse fim de semana")
+    })
+
+    it("shows only the date when the participant gave no reason", () => {
+      const router = createTestRouter(withdrawn)
+      render(<RouterProvider router={router} />)
+
+      const alert = screen.getByRole("alert")
+      expect(alert).toHaveTextContent(
+        /Candidatura cancelada em 24 de outubro de 2026/,
+      )
+      expect(alert).not.toHaveTextContent("Motivo do cancelamento")
+    })
+
+    it("shows nothing once the participant applied again", () => {
+      const router = createTestRouter({
+        ...withdrawn,
+        is_user_applied: true,
+      })
+      render(<RouterProvider router={router} />)
+
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+    })
+  })
 })
