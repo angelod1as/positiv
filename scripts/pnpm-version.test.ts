@@ -2,10 +2,7 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
-// Corepack resolves pnpm from packageManager when the image runs it from /app.
-// A version written into the Dockerfile is a second source of truth that a
-// packageManager bump leaves behind, and the image keeps building with the old
-// pnpm without anyone noticing.
+// A pnpm version in the Dockerfile is a second copy that a packageManager bump leaves behind.
 const dockerfile = readFileSync(join(import.meta.dirname, "..", "Dockerfile"), "utf8")
 
 const packageJson = JSON.parse(
@@ -26,7 +23,7 @@ describe("pnpm version", () => {
   it("enables corepack in every stage that runs pnpm", () => {
     const stages = dockerfile.split(/^FROM /m).slice(1)
 
-    for (const stage of stages.filter((s) => /^RUN pnpm /m.test(s))) {
+    for (const stage of stages.filter((s) => /^RUN .*\bpnpm\b/m.test(s))) {
       expect(stage).toMatch(/^RUN corepack enable$/m)
     }
   })
