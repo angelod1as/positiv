@@ -33,11 +33,6 @@ function formatMonth(monthString: string): string {
 }
 
 interface TooltipPayloadItem {
-  dataKey?: string
-  value?: number
-  color?: string
-  stroke?: string
-  fill?: string
   payload?: GrowthDataPoint & { label: string }
 }
 
