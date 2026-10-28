@@ -102,9 +102,51 @@ describe("the event application form", () => {
     renderForm()
     await fillAndSend()
 
-    expect(track).toHaveBeenCalledWith("event_application_clicked", {
+    expect(track).toHaveBeenCalledWith("application_submitted", {
       eventId: EVENT,
     })
+  })
+
+  it("counts the application once the server has written it", async () => {
+    renderForm()
+    await fillAndSend()
+
+    await waitFor(() => {
+      expect(track).toHaveBeenCalledWith("application_completed", {
+        eventId: EVENT,
+      })
+    })
+  })
+
+  it("does not count an application the server refused", async () => {
+    vi.stubGlobal(
+      "fetch",
+      answered({ ok: false, errors: [], message: "Inscrições encerradas" }),
+    )
+
+    renderForm()
+    await fillAndSend()
+
+    await screen.findByText("Inscrições encerradas")
+    expect(track).not.toHaveBeenCalledWith(
+      "application_completed",
+      expect.anything(),
+    )
+  })
+
+  it("does not count an application whose quiz expired", async () => {
+    vi.stubGlobal("fetch", answered({ ok: false, errors: [] }, 403))
+
+    renderForm()
+    await fillAndSend()
+
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith(`/dashboard/${EVENT}/regras`)
+    })
+    expect(track).not.toHaveBeenCalledWith(
+      "application_completed",
+      expect.anything(),
+    )
   })
 
   it("takes a finished application to the confirmation page", async () => {

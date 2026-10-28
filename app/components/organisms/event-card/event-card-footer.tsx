@@ -92,7 +92,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
   }
 
   const handleDirectApply = async () => {
-    track("event_direct_application_clicked", { eventId })
+    track("direct_application_submitted", { eventId })
     await fetcher.submit(
       { fetchId: "handleAdminApply", eventId },
       { method: "POST" },
@@ -100,7 +100,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
   }
 
   const handleConfirmCancel = async (closeDialog: () => void) => {
-    track("event_cancel_clicked", { eventId })
+    track("cancellation_submitted", { eventId })
     await fetcher.submit(
       {
         cancel: true,

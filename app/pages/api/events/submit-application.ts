@@ -7,7 +7,6 @@ import {
 } from "~/business/session.server"
 import { buildApplicationQuestions } from "~/components/forms/custom/application/build-application-questions"
 import { participantCopy } from "~/copy/participant"
-import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
 
@@ -92,12 +91,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
       message: result.errors[0]?.message ?? participantCopy.application.failed,
     })
   }
-
-  trackServerEvent(
-    "event_application_completed",
-    { eventId: params.id },
-    `/events/${params.id}/apply`,
-  )
 
   return Response.json({ ok: true, emailSent: result.data.emailSent })
 }

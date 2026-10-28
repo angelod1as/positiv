@@ -1,13 +1,16 @@
 import { describe, expect, it, vi } from "vitest"
 import userEvent from "@testing-library/user-event"
-import { render, screen } from "~/test/test-utils"
+import { act, render, screen } from "~/test/test-utils"
 import { eventCardCopy } from "~/copy/events"
 import { POSITIV_WHATSAPP } from "~/lib/constants/constants"
 import { EventCardFooter } from "./event-card-footer"
 
-const { mockSubmit, mockTrack } = vi.hoisted(() => ({
+const { mockSubmit, mockTrack, confirmDialog } = vi.hoisted(() => ({
   mockSubmit: vi.fn(),
   mockTrack: vi.fn(),
+  confirmDialog: {} as {
+    onConfirm?: (closeDialog: () => void) => Promise<void>
+  },
 }))
 
 vi.mock("~/lib/hooks/use-analytics", () => ({
@@ -43,9 +46,16 @@ vi.mock("~/components/atoms/button/button", () => ({
 }))
 
 vi.mock("~/components/molecules/confirm-dialog/confirm-dialog", () => {
-  const ConfirmDialog = ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  )
+  const ConfirmDialog = ({
+    children,
+    onConfirm,
+  }: {
+    children: React.ReactNode
+    onConfirm?: (closeDialog: () => void) => Promise<void>
+  }) => {
+    confirmDialog.onConfirm = onConfirm
+    return <div>{children}</div>
+  }
   ConfirmDialog.Trigger = ({ children }: { children: React.ReactNode }) => (
     <button>{children}</button>
   )
@@ -130,6 +140,26 @@ describe("EventCardFooter", () => {
 
       const cancelButton = screen.getByText(/Cancelar candidatura/i)
       expect(cancelButton).toBeInTheDocument()
+    })
+
+    it("should record the confirmed cancellation as submitted", async () => {
+      mockTrack.mockClear()
+      render(
+        <EventCardFooter
+          eventId="test-event-id"
+          event_status="Registration Open"
+          googleLink=""
+          is_applied={true}
+          dataTestId="test-footer"
+          isAdmin={false}
+        />,
+      )
+
+      await act(() => confirmDialog.onConfirm?.(() => {}))
+
+      expect(mockTrack).toHaveBeenCalledWith("cancellation_submitted", {
+        eventId: "test-event-id",
+      })
     })
 
     it("should render cancel button when user is applied and registrations closed", () => {
@@ -285,7 +315,7 @@ describe("EventCardFooter", () => {
 
       await user.click(screen.getByText("Candidatura direta"))
 
-      expect(mockTrack).toHaveBeenCalledWith("event_direct_application_clicked", {
+      expect(mockTrack).toHaveBeenCalledWith("direct_application_submitted", {
         eventId: "event-123",
       })
     })

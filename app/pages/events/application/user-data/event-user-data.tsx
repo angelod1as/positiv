@@ -58,7 +58,7 @@ const EventUserInfo = ({ params }: Route.ComponentProps) => {
 
   const commit = useCallback(
     async (answers: Answers): Promise<CommitResult> => {
-      track("event_application_clicked", { eventId })
+      track("application_submitted", { eventId })
 
       const response = await fetch(EVENT_APPLICATION_COMMIT(eventId), {
         method: "POST",
@@ -89,6 +89,7 @@ const EventUserInfo = ({ params }: Route.ComponentProps) => {
       // message, which the runtime shows in place of its generic one.
       if (!result.ok) return result
 
+      track("application_completed", { eventId })
       emailSentRef.current = result.emailSent ?? true
 
       return { ok: true }

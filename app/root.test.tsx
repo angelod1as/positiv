@@ -71,21 +71,28 @@ vi.mock("varlock/env", () => ({ ENV }))
 
 describe("Layout", () => {
   describe("Umami Analytics Script", () => {
+    async function renderLayout(path: string) {
+      vi.resetModules()
+      const { MemoryRouter } = await import("react-router")
+      const { Layout } = await import("./root")
+
+      return new DOMParser().parseFromString(
+        renderToStaticMarkup(
+          <MemoryRouter initialEntries={[path]}>
+            <Layout>
+              <div>Test Content</div>
+            </Layout>
+          </MemoryRouter>,
+        ),
+        "text/html",
+      )
+    }
+
     it("should render Umami script when VITE_UMAMI_WEBSITE_ID is set", { timeout: 30000 }, async () => {
       ENV.VITE_UMAMI_WEBSITE_ID = "test-website-id-123"
       ENV.VITE_UMAMI_URL = "https://umami.example.com"
 
-      vi.resetModules()
-      const { Layout } = await import("./root")
-
-      const document = new DOMParser().parseFromString(
-        renderToStaticMarkup(
-          <Layout>
-            <div>Test Content</div>
-          </Layout>,
-        ),
-        "text/html",
-      )
+      const document = await renderLayout("/eventos")
 
       const umamiScript = document.querySelector(
         'script[data-website-id="test-website-id-123"]',
@@ -97,24 +104,56 @@ describe("Layout", () => {
       expect(umamiScript?.hasAttribute("defer")).toBe(true)
     })
 
+    it("hands Umami the hook that refuses to send from admin pages", { timeout: 15000 }, async () => {
+      ENV.VITE_UMAMI_WEBSITE_ID = "test-website-id-123"
+      ENV.VITE_UMAMI_URL = "https://umami.example.com"
+
+      const document = await renderLayout("/eventos")
+      const scripts = Array.from(document.querySelectorAll("head script"))
+      const umamiAt = scripts.findIndex((script) =>
+        script.hasAttribute("data-website-id"),
+      )
+      const hookAt = scripts.findIndex((script) =>
+        script.textContent?.includes("window.umamiBeforeSend"),
+      )
+
+      expect(scripts[umamiAt]?.getAttribute("data-before-send")).toBe(
+        "umamiBeforeSend",
+      )
+      expect(hookAt).toBeGreaterThanOrEqual(0)
+      expect(hookAt).toBeLessThan(umamiAt)
+    })
+
     it("should not render Umami script when VITE_UMAMI_WEBSITE_ID is not set", { timeout: 15000 }, async () => {
       ENV.VITE_UMAMI_WEBSITE_ID = ""
       ENV.VITE_UMAMI_URL = ""
 
-      vi.resetModules()
-      const { Layout } = await import("./root")
-
-      const document = new DOMParser().parseFromString(
-        renderToStaticMarkup(
-          <Layout>
-            <div>Test Content</div>
-          </Layout>,
-        ),
-        "text/html",
-      )
+      const document = await renderLayout("/eventos")
 
       const umamiScript = document.querySelector("script[data-website-id]")
       expect(umamiScript).toBeNull()
+    })
+
+    it.each(["/admin", "/admin/eventos/123"])(
+      "does not render Umami script on the admin page %s",
+      { timeout: 15000 },
+      async (path) => {
+        ENV.VITE_UMAMI_WEBSITE_ID = "test-website-id-123"
+        ENV.VITE_UMAMI_URL = "https://umami.example.com"
+
+        const document = await renderLayout(path)
+
+        expect(document.querySelector("script[data-website-id]")).toBeNull()
+      },
+    )
+
+    it("renders Umami script on a page whose path only starts like admin", { timeout: 15000 }, async () => {
+      ENV.VITE_UMAMI_WEBSITE_ID = "test-website-id-123"
+      ENV.VITE_UMAMI_URL = "https://umami.example.com"
+
+      const document = await renderLayout("/administracao-de-eventos")
+
+      expect(document.querySelector("script[data-website-id]")).not.toBeNull()
     })
   })
 })

@@ -8,7 +8,6 @@ import {
 } from "~/components/forms/custom/rules/build-rules-flow"
 import { getRulesFormSchema } from "~/components/forms/custom/rules/rules-form-schema"
 import { kyselyDb } from "~/kysely-db"
-import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
 
@@ -94,12 +93,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
   session.set(
     "rulesCorrect",
     passed.includes(params.id) ? passed : [...passed, params.id],
-  )
-
-  trackServerEvent(
-    "rules_quiz_passed",
-    { eventId: params.id },
-    `/events/${params.id}/rules`,
   )
 
   return Response.json(

@@ -660,6 +660,40 @@ describe("registerUser", () => {
     expect(result).toEqual({ ok: false, errors: [] })
   })
 
+  describe("names why it refused, for the page to report", () => {
+    const values = {
+      email: "pessoa@bloqueado.com",
+      password: "password123",
+      confirmPassword: "password123",
+      over18: true,
+      captchaToken: "test-captcha-token",
+    }
+
+    const context = () => ({
+      supabase: { auth: { signUp: vi.fn() } } as unknown as DBClient,
+      host: "http://localhost:5173",
+      supabaseHeaders: new Headers(),
+      currentUser: null,
+      currentProfile: null,
+    })
+
+    it("a blocked domain", async () => {
+      vi.mocked(isSignupDomainBlocked).mockResolvedValue(true)
+
+      const result = await registerUser(values, context(), CLIENT_IP)
+
+      expect(result).toMatchObject({ ok: false, refused: "blocked_domain" })
+    })
+
+    it("too many attempts from one address", async () => {
+      vi.mocked(recordSignupAttempt).mockResolvedValue(false)
+
+      const result = await registerUser(values, context(), CLIENT_IP)
+
+      expect(result).toMatchObject({ ok: false, refused: "rate_limited" })
+    })
+  })
+
   it("should show error when email matches claimed profile (user_id IS NOT NULL)", async () => {
     const mockSignUp = vi.fn().mockResolvedValue({ error: null })
 
@@ -715,6 +749,7 @@ describe("registerUser", () => {
           ) as unknown as string,
         },
       ],
+      refused: "claimed_profile",
     })
 
     expect(kysely.selectFrom).toHaveBeenCalledWith("profiles")
@@ -984,6 +1019,7 @@ describe("registerUser signup guard", () => {
       message: expect.stringContaining(
         "Muitas tentativas",
       ) as unknown as string,
+      refused: "rate_limited",
     })
     expect(signUp).not.toHaveBeenCalled()
   })
@@ -1018,6 +1054,7 @@ describe("registerUser signup guard", () => {
           message: expect.stringContaining("outro e-mail") as unknown as string,
         },
       ],
+      refused: "blocked_domain",
     })
     expect(signUp).not.toHaveBeenCalled()
   })

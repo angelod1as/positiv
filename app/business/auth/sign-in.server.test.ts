@@ -11,10 +11,6 @@ import {
 } from "./auth-attempt-guard.server"
 import { signIn } from "./sign-in.server"
 
-vi.mock("~/lib/analytics/umami.server", () => ({
-  trackServerEvent: vi.fn(),
-}))
-
 vi.mock("varlock/env", () => ({
   ENV: {},
 }))
@@ -203,19 +199,6 @@ describe("signIn", () => {
       "email",
       "password",
     ])
-  })
-
-  it("records the login", async () => {
-    const { trackServerEvent } = await import("~/lib/analytics/umami.server")
-    const { supabase } = supabaseThat()
-
-    await signIn({ answers, context: contextWith(supabase) })
-
-    expect(trackServerEvent).toHaveBeenCalledWith(
-      "user_login",
-      { userId: "user-1" },
-      "/auth/login",
-    )
   })
 
   describe("attempt limits", () => {
