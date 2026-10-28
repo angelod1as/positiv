@@ -47,4 +47,20 @@ describe("umamiBeforeSendScript", () => {
 
     expect(beforeSend("event", payload)).toBe(payload)
   })
+
+  it.each([
+    "/",
+    "/admin",
+    "/admin/",
+    "/admin/eventos/123",
+    "/administracao",
+    "/dashboard/admin",
+    "/eventos/admin",
+  ])("agrees with isAdminPath on %s", (pathname) => {
+    const beforeSend = installHook()
+    const payload = { url: pathname }
+    window.history.replaceState(null, "", pathname)
+
+    expect(beforeSend("event", payload) === false).toBe(isAdminPath(pathname))
+  })
 })
