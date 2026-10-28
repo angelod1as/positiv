@@ -999,6 +999,7 @@ describe("test-run guard", () => {
     "http://localhost:9000",
     "http://127.0.0.1:9000",
     "http://listmonk.localhost",
+    "http://[::1]:9000",
   ])("lets a test run reach the reserved host %s", async (url) => {
     await withEnv({ NODE_ENV: "test", LISTMONK_API_URL: url })
 
@@ -1006,6 +1007,18 @@ describe("test-run guard", () => {
 
     expect(result.success).toBe(true)
     expect(fetchSpy).toHaveBeenCalledWith(`${url}/api/subscribers`, expect.anything())
+  })
+
+  it.each([
+    "https://evil-localhost.com",
+    "https://listmonk.test.example.com",
+  ])("refuses %s, which only looks reserved", async (url) => {
+    await withEnv({ NODE_ENV: "test", LISTMONK_API_URL: url })
+
+    const result = await testConnection()
+
+    expect(result.success).toBe(false)
+    expect(fetchSpy).not.toHaveBeenCalled()
   })
 
   it("lets production reach a real host", async () => {
