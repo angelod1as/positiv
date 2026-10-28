@@ -66,7 +66,7 @@ describe("Integration Test Setup", () => {
 })
 
 describe("Integration Test Hooks", () => {
-  let originalEnv: string | undefined
+  let originalEnv: typeof process.env.NODE_ENV
 
   beforeEach(() => {
     originalEnv = process.env.NODE_ENV
