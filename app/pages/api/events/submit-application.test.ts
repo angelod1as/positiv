@@ -18,17 +18,11 @@ vi.mock("~/business/participant/apply-to-event.server", () => ({
   applyToEvent: vi.fn(),
 }))
 
-vi.mock("~/lib/analytics/umami.server", () => ({
-  trackServerEvent: vi.fn(),
-}))
-
 import { applyToEvent } from "~/business/participant/apply-to-event.server"
 import { rulesSessionStorage } from "~/business/session.server"
-import { trackServerEvent } from "~/lib/analytics/umami.server"
 
 const mockApplyToEvent = vi.mocked(applyToEvent)
 const mockGetSession = vi.mocked(rulesSessionStorage.getSession)
-const mockTrackServerEvent = vi.mocked(trackServerEvent)
 
 const filledIn = {
   referred: "ninguém",
@@ -154,27 +148,6 @@ describe("the event application submit", () => {
 
     expect(body.ok).toBe(false)
     expect(body.message).toBe("Inscrições encerradas")
-  })
-
-  it("counts an application only once it is written", async () => {
-    mockApplyToEvent.mockResolvedValue({
-      success: false,
-      errors: [{ message: "Inscrições encerradas" }],
-    } as never)
-    await submit()
-    expect(mockTrackServerEvent).not.toHaveBeenCalled()
-
-    mockApplyToEvent.mockResolvedValue({
-      success: true,
-      data: { emailSent: true },
-    } as never)
-    await submit()
-
-    expect(mockTrackServerEvent).toHaveBeenCalledWith(
-      "event_application_completed",
-      { eventId: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" },
-      "/events/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/apply",
-    )
   })
 
   it("blames nobody for a body it cannot read", async () => {

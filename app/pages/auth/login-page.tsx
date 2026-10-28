@@ -22,6 +22,7 @@ import {
 import { loginCopy } from "~/copy/auth"
 import { metaCopy } from "~/copy/meta"
 import { createMetaArray } from "~/lib/helpers/meta"
+import { trackEvent } from "~/lib/analytics/umami"
 import { safeRedirect } from "~/lib/helpers/safe-redirect"
 import paths from "~/lib/paths"
 import { cn } from "~/lib/utils"
@@ -84,7 +85,10 @@ const LoginPage = ({}: Route.ComponentProps) => {
       })
 
       const result = (await response.json()) as SignInResult
-      if (result.ok) destination.current = result.redirectTo
+      if (result.ok) {
+        destination.current = result.redirectTo
+        trackEvent("login_completed")
+      }
 
       return result
     },

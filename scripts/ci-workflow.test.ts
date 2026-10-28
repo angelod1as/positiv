@@ -109,6 +109,12 @@ describe("deploy-and-test workflow", () => {
     expect(step).not.toContain("LISTMONK")
   })
 
+  it("never hands the e2e suite Listmonk credentials", () => {
+    const step = stepBlock("e2e-test", "Run E2E tests")
+
+    expect(step).not.toContain("LISTMONK")
+  })
+
   it("runs e2e alongside the other checks rather than queued behind them", () => {
     expect(jobBlock("e2e-test")).not.toMatch(/^ {4}needs:/m)
   })

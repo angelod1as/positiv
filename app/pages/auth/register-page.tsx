@@ -2,6 +2,7 @@ import { Turnstile } from "@marsidev/react-turnstile"
 import { useCallback, useMemo } from "react"
 import { useLoaderData, useNavigate } from "react-router"
 import { buildRegisterQuestions } from "~/components/forms/custom/register/build-register-questions"
+import type { RegisterResult } from "~/business/auth/auth.server"
 import type { CommitResult } from "~types/forms/commit.types"
 import { FormRunner } from "~/components/forms/runtime/form-runner"
 import { AllAtOnce } from "~/components/forms/runtime/presentations/all-at-once"
@@ -17,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card"
+import { trackEvent } from "~/lib/analytics/umami"
 import { getTurnstileConfig } from "~/lib/helpers/get-turnstile-config.server"
 import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
@@ -52,7 +54,17 @@ const RegisterPage = ({}: Route.ComponentProps) => {
       body: JSON.stringify(answers),
     })
 
-    return (await response.json()) as CommitResult
+    const result = (await response.json()) as RegisterResult
+
+    if (result.ok) {
+      trackEvent("signup_completed")
+    } else if (result.refused === "claimed_profile") {
+      trackEvent("claimed_profile_signup_blocked")
+    } else if (result.refused) {
+      trackEvent("signup_refused", { reason: result.refused })
+    }
+
+    return result
   }, [])
 
   const flow = useMemo(

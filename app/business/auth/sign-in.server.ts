@@ -2,7 +2,6 @@ import { ENV } from "varlock/env"
 import { can, PERMISSIONS } from "~/business/auth/permissions"
 import type { z } from "zod"
 import { errorsCopy } from "~/copy/errors"
-import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { safeRedirect } from "~/lib/helpers/safe-redirect"
 import { toCommitErrors } from "~/lib/helpers/to-commit-errors"
 import { logger } from "~/lib/logger/logger.server"
@@ -124,8 +123,6 @@ export async function signIn({
       message: errorsCopy.auth.authFailed(error.code, error.message),
     }
   }
-
-  trackServerEvent("user_login", { userId: data.user.id }, "/auth/login")
 
   const { data: profile } = await supabase
     .rpc("get_profile_with_roles", { user_id_input: data.user.id })

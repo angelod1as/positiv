@@ -2,7 +2,6 @@ import type { FC } from "react"
 import { Await } from "react-router"
 import { Suspense } from "react"
 import { redirectWithInfo } from "remix-toast"
-import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { getContext, getUserContext } from "~/business/auth/auth.server"
 import { can, PERMISSIONS } from "~/business/auth/permissions"
 import { applyToEvent } from "~/business/participant/apply-to-event.server"
@@ -15,6 +14,7 @@ import { EventListSkeleton } from "~/components/organisms/event-list/event-list-
 import { dashboardCopy } from "~/copy/dashboard"
 import { eventListCopy } from "~/copy/events"
 import { metaCopy } from "~/copy/meta"
+import { trackEvent } from "~/lib/analytics/umami"
 import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
 import type { Event } from "~types/database/entities.types"
@@ -96,9 +96,7 @@ export async function action({ request, params }: Route.ClientActionArgs) {
       throw new Error(dashboardCopy.cancelFailed)
     }
 
-    trackServerEvent("event_cancel_completed", { eventId }, "/dashboard")
-
-    return
+    return { ok: true }
   }
 
   if (fetchId === "handleAdminApply") {
@@ -128,16 +126,35 @@ export async function action({ request, params }: Route.ClientActionArgs) {
       }
     }
 
-    trackServerEvent(
-      "event_direct_application_completed",
-      { eventId },
-      "/dashboard",
-    )
-
-    return
+    return { ok: true }
   }
 
   return
+}
+
+// The completions are reported from here because the browser is the one
+// visitor Umami should see, and the card that asked is gone by the time the
+// answer lands: the revalidated event moves to the other list.
+export async function clientAction({
+  request,
+  serverAction,
+}: Route.ClientActionArgs) {
+  const formData = await request.clone().formData()
+  const fetchId = formData.get("fetchId")?.toString()
+  const eventId = formData.get("eventId")?.toString()
+
+  const result = await serverAction()
+
+  if (result && "ok" in result && eventId) {
+    if (fetchId === "handleConfirmCancel") {
+      trackEvent("cancellation_completed", { eventId })
+    }
+    if (fetchId === "handleAdminApply") {
+      trackEvent("direct_application_completed", { eventId })
+    }
+  }
+
+  return result
 }
 
 export const EventsContent: FC<{

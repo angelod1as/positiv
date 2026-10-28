@@ -14,6 +14,11 @@ import {
 import { getToast, redirectWithError, redirectWithSuccess } from "remix-toast"
 import { toast as notify, Toaster } from "sonner"
 import { ENV } from "varlock/env"
+import {
+  isAdminPath,
+  UMAMI_BEFORE_SEND,
+  umamiBeforeSendScript,
+} from "~/lib/analytics/admin-pages"
 import { isValidCpf } from "~/lib/helpers/cpf"
 import { isValidPhone } from "~/lib/helpers/phone"
 import { useMarkHydrated } from "~/lib/hooks/use-mark-hydrated"
@@ -313,6 +318,8 @@ export async function action({ params, request }: Route.ActionArgs) {
 }
 
 export function Layout(props: { children: ReactNode }) {
+  const { pathname } = useLocation()
+
   return (
     <html lang="pt-BR" data-theme="light">
       <head>
@@ -321,13 +328,21 @@ export function Layout(props: { children: ReactNode }) {
         <meta name="color-scheme" content="only light" />
         <Meta />
         <Links />
-        {ENV.VITE_UMAMI_WEBSITE_ID && ENV.VITE_UMAMI_URL && (
-          <script
-            defer
-            src={`${ENV.VITE_UMAMI_URL}/script.js`}
-            data-website-id={ENV.VITE_UMAMI_WEBSITE_ID}
-          />
-        )}
+        {!isAdminPath(pathname) &&
+          ENV.VITE_UMAMI_WEBSITE_ID &&
+          ENV.VITE_UMAMI_URL && (
+            <>
+              <script
+                dangerouslySetInnerHTML={{ __html: umamiBeforeSendScript }}
+              />
+              <script
+                defer
+                src={`${ENV.VITE_UMAMI_URL}/script.js`}
+                data-website-id={ENV.VITE_UMAMI_WEBSITE_ID}
+                data-before-send={UMAMI_BEFORE_SEND}
+              />
+            </>
+          )}
       </head>
       <body className="h-screen flex flex-col">
         <TooltipProvider delayDuration={0}>

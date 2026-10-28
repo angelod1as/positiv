@@ -939,3 +939,101 @@ describe("updateCampaignStatus", () => {
     expect(result.success).toBe(false)
   })
 })
+
+describe("test-run guard", () => {
+  let fetchSpy: MockInstance
+  let configured: Record<string, unknown>
+
+  const withEnv = async (overrides: Record<string, unknown>) => {
+    const { ENV } = await import("varlock/env")
+    Object.assign(ENV, overrides)
+  }
+
+  beforeEach(async () => {
+    const { ENV } = await import("varlock/env")
+    configured = { ...ENV }
+    fetchSpy = vi.spyOn(global, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: [] }),
+    } as Response)
+  })
+
+  afterEach(async () => {
+    const { ENV } = await import("varlock/env")
+    for (const key of Object.keys(ENV)) {
+      Reflect.deleteProperty(ENV, key)
+    }
+    Object.assign(ENV, configured)
+    fetchSpy.mockRestore()
+    vi.clearAllMocks()
+  })
+
+  it("refuses a real host when a test runner is executing", async () => {
+    await withEnv({
+      NODE_ENV: "test",
+      LISTMONK_API_URL: "https://newsletter.example.com",
+    })
+
+    const result = await testConnection()
+
+    expect(result.success).toBe(false)
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it("refuses a real host from the e2e server, whose build says production", async () => {
+    await withEnv({
+      NODE_ENV: "production",
+      E2E_MODE: true,
+      LISTMONK_API_URL: "https://newsletter.example.com",
+    })
+
+    const result = await createCampaign({ name: "e2e" })
+
+    expect(result.success).toBe(false)
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    "https://listmonk.test",
+    "https://listmonk.invalid",
+    "http://localhost:9000",
+    "http://127.0.0.1:9000",
+    "http://listmonk.localhost",
+    "http://[::1]:9000",
+  ])("lets a test run reach the reserved host %s", async (url) => {
+    await withEnv({ NODE_ENV: "test", LISTMONK_API_URL: url })
+
+    const result = await testConnection()
+
+    expect(result.success).toBe(true)
+    expect(fetchSpy).toHaveBeenCalledWith(`${url}/api/subscribers`, expect.anything())
+  })
+
+  it.each([
+    "https://evil-localhost.com",
+    "https://listmonk.test.example.com",
+  ])("refuses %s, which only looks reserved", async (url) => {
+    await withEnv({ NODE_ENV: "test", LISTMONK_API_URL: url })
+
+    const result = await testConnection()
+
+    expect(result.success).toBe(false)
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it("lets production reach a real host", async () => {
+    await withEnv({
+      NODE_ENV: "production",
+      E2E_MODE: false,
+      LISTMONK_API_URL: "https://newsletter.example.com",
+    })
+
+    const result = await testConnection()
+
+    expect(result.success).toBe(true)
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://newsletter.example.com/api/subscribers",
+      expect.anything()
+    )
+  })
+})

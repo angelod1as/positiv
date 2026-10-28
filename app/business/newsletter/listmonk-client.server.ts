@@ -23,6 +23,30 @@ interface ListmonkSearchResponse {
   }
 }
 
+const RESERVED_TEST_HOSTS = ["localhost", "127.0.0.1", "[::1]"]
+const RESERVED_TEST_SUFFIXES = [".localhost", ".test", ".invalid"]
+
+// A test run is either a vitest process (NODE_ENV) or the e2e server, whose
+// build forces NODE_ENV to production, so E2E_MODE is what marks it. Either
+// way only an RFC 2606/6761 reserved host is allowed: a developer's .env holds
+// real credentials, and a test must never reach a Listmonk that sends mail.
+function assertTestRunStaysOffRealListmonk(listmonkApiUrl: string) {
+  if (ENV.NODE_ENV !== "test" && !ENV.E2E_MODE) {
+    return
+  }
+
+  const { hostname } = new URL(listmonkApiUrl)
+  const reserved =
+    RESERVED_TEST_HOSTS.includes(hostname) ||
+    RESERVED_TEST_SUFFIXES.some((suffix) => hostname.endsWith(suffix))
+
+  if (!reserved) {
+    throw new Error(
+      `Refusing to reach Listmonk at ${hostname} from a test run`
+    )
+  }
+}
+
 export function getListmonkConfig() {
   const {
     LISTMONK_API_URL: listmonkApiUrl,
@@ -33,6 +57,8 @@ export function getListmonkConfig() {
   if (!listmonkApiUrl || !listmonkApiUsername || !listmonkApiPassword) {
     throw new Error("Listmonk API credentials not configured")
   }
+
+  assertTestRunStaysOffRealListmonk(listmonkApiUrl)
 
   const basicAuthHeader = `Basic ${Buffer.from(
     `${listmonkApiUsername}:${listmonkApiPassword}`

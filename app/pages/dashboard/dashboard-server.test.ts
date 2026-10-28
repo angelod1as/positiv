@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("~/business/auth/auth.server", () => ({
   getContext: vi.fn(),
@@ -21,22 +21,17 @@ vi.mock("~/business/settings/app-settings.server", () => ({
   isCardPaymentsEnabled: vi.fn(),
 }))
 
-vi.mock("~/lib/analytics/umami.server", () => ({
-  trackServerEvent: vi.fn(),
-}))
-
 vi.mock("../page/fetch/get-next-events", () => ({
   getNextEvents: vi.fn(),
 }))
 
-import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { getContext, getUserContext } from "~/business/auth/auth.server"
 import { applyToEvent } from "~/business/participant/apply-to-event.server"
 import { cancelApplicationToEvent } from "~/business/participant/cancel-application-to-event.server"
 import { hasEverApplied } from "~/business/participant/has-ever-applied.server"
 import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
 import { getNextEvents } from "../page/fetch/get-next-events"
-import { action, loader } from "./dashboard-page"
+import { action, clientAction, loader } from "./dashboard-page"
 import { PERMISSIONS } from "~/business/auth/permissions"
 import { dashboardCopy } from "~/copy/dashboard"
 
@@ -46,7 +41,6 @@ const mockApplyToEvent = vi.mocked(applyToEvent)
 const mockCancelApplicationToEvent = vi.mocked(cancelApplicationToEvent)
 const mockHasEverApplied = vi.mocked(hasEverApplied)
 const mockIsCardPaymentsEnabled = vi.mocked(isCardPaymentsEnabled)
-const mockTrackServerEvent = vi.mocked(trackServerEvent)
 const mockGetNextEvents = vi.mocked(getNextEvents)
 
 const ADMIN = [
@@ -120,6 +114,15 @@ describe("dashboard action — cancellation", () => {
     })
   })
 
+  it("tells the browser the cancellation went through", async () => {
+    const result = await run({
+      fetchId: "handleConfirmCancel",
+      eventId: "event-123",
+    })
+
+    expect(result).toEqual({ ok: true })
+  })
+
   it("fails without recording a cancellation when it is refused", async () => {
     mockCancelApplicationToEvent.mockResolvedValue({
       success: false,
@@ -132,7 +135,6 @@ describe("dashboard action — cancellation", () => {
     await expect(
       run({ fetchId: "handleConfirmCancel", eventId: "event-123" }),
     ).rejects.toThrow(dashboardCopy.cancelFailed)
-    expect(mockTrackServerEvent).not.toHaveBeenCalled()
   })
 })
 
@@ -167,27 +169,7 @@ describe("dashboard action — direct application", () => {
     })
     expect(values.applicationDate).toBeInstanceOf(Date)
 
-    expect(result).toBeUndefined()
-  })
-
-  it("records the application it just made", async () => {
-    mockGetUserContext.mockResolvedValue(contextFor(ADMIN))
-
-    await run({ fetchId: "handleAdminApply", eventId: "event-123" })
-
-    expect(mockTrackServerEvent).toHaveBeenCalledWith(
-      "event_direct_application_completed",
-      { eventId: "event-123" },
-      "/dashboard",
-    )
-  })
-
-  it("records nothing when the application never happened", async () => {
-    mockGetUserContext.mockResolvedValue(contextFor(USER))
-
-    await run({ fetchId: "handleAdminApply", eventId: "event-123" })
-
-    expect(mockTrackServerEvent).not.toHaveBeenCalled()
+    expect(result).toEqual({ ok: true })
   })
 
   it("applies a staff the same way", async () => {
@@ -199,7 +181,7 @@ describe("dashboard action — direct application", () => {
     })
 
     expect(mockApplyToEvent).toHaveBeenCalledTimes(1)
-    expect(result).toBeUndefined()
+    expect(result).toEqual({ ok: true })
   })
 
   it("refuses whoever may not apply directly", async () => {
@@ -304,5 +286,74 @@ describe("dashboard loader", () => {
     await expect(load(USER)).resolves.toMatchObject({
       cardPaymentsEnabled: true,
     })
+  })
+})
+
+describe("dashboard client action — analytics", () => {
+  const umamiTrack = vi.fn()
+
+  beforeEach(() => {
+    umamiTrack.mockClear()
+    vi.stubGlobal("window", { umami: { track: umamiTrack } })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  const runInBrowser = (
+    fields: Record<string, string>,
+    serverAction: () => Promise<unknown>,
+  ) =>
+    clientAction({
+      request: request(fields),
+      params: {},
+      serverAction,
+    } as unknown as Parameters<typeof clientAction>[0])
+
+  it("reports a cancellation once the server has made it", async () => {
+    const result = await runInBrowser(
+      { fetchId: "handleConfirmCancel", eventId: "event-123" },
+      () => Promise.resolve({ ok: true }),
+    )
+
+    expect(result).toEqual({ ok: true })
+    expect(umamiTrack).toHaveBeenCalledWith("cancellation_completed", {
+      eventId: "event-123",
+    })
+  })
+
+  it("reports nothing for a cancellation the server refused", async () => {
+    await expect(
+      runInBrowser(
+        { fetchId: "handleConfirmCancel", eventId: "event-123" },
+        () => Promise.reject(new Error(dashboardCopy.cancelFailed)),
+      ),
+    ).rejects.toThrow(dashboardCopy.cancelFailed)
+
+    expect(umamiTrack).not.toHaveBeenCalled()
+  })
+
+  it("reports a direct application once the server has made it", async () => {
+    await runInBrowser(
+      { fetchId: "handleAdminApply", eventId: "event-123" },
+      () => Promise.resolve({ ok: true }),
+    )
+
+    expect(umamiTrack).toHaveBeenCalledWith("direct_application_completed", {
+      eventId: "event-123",
+    })
+  })
+
+  it("reports nothing for a direct application the server refused", async () => {
+    const refusal = { error: dashboardCopy.directApply.notAllowed }
+
+    const result = await runInBrowser(
+      { fetchId: "handleAdminApply", eventId: "event-123" },
+      () => Promise.resolve(refusal),
+    )
+
+    expect(result).toBe(refusal)
+    expect(umamiTrack).not.toHaveBeenCalled()
   })
 })

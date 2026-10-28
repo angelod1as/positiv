@@ -8,7 +8,7 @@ function TestComponent() {
 
   return (
     <button
-      onClick={() => track("test_event", { key: "value" })}
+      onClick={() => track("application_submitted", { eventId: "123" })}
       data-testid="track-button"
     >
       Track Event
@@ -39,11 +39,13 @@ describe("useAnalytics", () => {
     await user.click(screen.getByTestId("track-button"))
 
     expect(mockTrack).toHaveBeenCalledTimes(1)
-    expect(mockTrack).toHaveBeenCalledWith("test_event", { key: "value" })
+    expect(mockTrack).toHaveBeenCalledWith("application_submitted", {
+      eventId: "123",
+    })
   })
 
   it("should return stable function references across re-renders", async () => {
-    type TrackFn = (event: string, data?: Record<string, unknown>) => void
+    type TrackFn = ReturnType<typeof useAnalytics>["track"]
     let trackRef1: TrackFn | undefined
     let trackRef2: TrackFn | undefined
 
@@ -56,7 +58,7 @@ describe("useAnalytics", () => {
         trackRef2 = track
       }
 
-      return <button onClick={() => track("event")}>Click</button>
+      return <button onClick={() => track("signup_completed")}>Click</button>
     }
 
     const { rerender } = render(<TrackingRefComponent />)
