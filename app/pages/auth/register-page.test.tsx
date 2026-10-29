@@ -291,4 +291,27 @@ describe("RegisterPage analytics", () => {
     await screen.findByText("Não foi possível salvar agora. Tente novamente.")
     expect(umamiTrack).not.toHaveBeenCalled()
   })
+
+  it("reports a click on the login link", async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(screen.getByRole("link", { name: "Entre aqui" }))
+
+    expect(umamiTrack).toHaveBeenCalledWith("auth_link_clicked", {
+      action: "login",
+      area: "register_page",
+    })
+  })
+
+  it("reports nothing for a click beside the login link", async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(
+      screen.getByRole("link", { name: "Entre aqui" }).parentElement as HTMLElement,
+    )
+
+    expect(umamiTrack).not.toHaveBeenCalled()
+  })
 })

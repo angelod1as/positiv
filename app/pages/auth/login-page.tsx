@@ -107,7 +107,17 @@ const LoginPage = ({}: Route.ComponentProps) => {
           <CardTitle className="text-2xl">{loginCopy.title}</CardTitle>
           <CardDescription>
             <p>{loginCopy.description}</p>
-            <p className="text-sm">
+            <p
+              className="text-sm"
+              onClick={(event) => {
+                if ((event.target as Element).closest("a")) {
+                  trackEvent("auth_link_clicked", {
+                    action: "signup",
+                    area: "login_page",
+                  })
+                }
+              }}
+            >
               <Copy inline>{loginCopy.signupPrompt(LOGON)}</Copy>
             </p>
           </CardDescription>

@@ -129,7 +129,17 @@ const RegisterPage = ({}: Route.ComponentProps) => {
           />
         </CardContent>
         <CardFooter>
-          <p className="text-sm text-muted-foreground">
+          <p
+            className="text-sm text-muted-foreground"
+            onClick={(event) => {
+              if ((event.target as Element).closest("a")) {
+                trackEvent("auth_link_clicked", {
+                  action: "login",
+                  area: "register_page",
+                })
+              }
+            }}
+          >
             <Copy inline>{registerCopy.loginPrompt(LOGIN)}</Copy>
           </p>
         </CardFooter>

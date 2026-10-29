@@ -420,4 +420,27 @@ describe("Login Page analytics", () => {
     await screen.findByText("E-mail ou senha incorretos")
     expect(umamiTrack).not.toHaveBeenCalled()
   })
+
+  it("reports a click on the sign-up link", async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(screen.getByRole("link", { name: "Criar conta" }))
+
+    expect(umamiTrack).toHaveBeenCalledWith("auth_link_clicked", {
+      action: "signup",
+      area: "login_page",
+    })
+  })
+
+  it("reports nothing for a click beside the sign-up link", async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(
+      screen.getByRole("link", { name: "Criar conta" }).parentElement as HTMLElement,
+    )
+
+    expect(umamiTrack).not.toHaveBeenCalled()
+  })
 })
