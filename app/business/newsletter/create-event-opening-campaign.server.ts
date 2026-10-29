@@ -5,6 +5,8 @@ import {
   LISTMONK_EVENT_OPENING_TEMPLATE_ID,
 } from "~/lib/constants/constants"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
+import { emailLink } from "~/lib/helpers/email-link"
+import { escapeHtml } from "~/lib/helpers/escape-html"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import type { Event } from "~types/database/entities.types"
 import { getListmonkConfig } from "./listmonk-client.server"
@@ -58,7 +60,7 @@ function generateCampaignBody(event: Event): string {
 </p>
 
 <div style="text-align: center; margin: 30px 0;">
-  <a href="${DASHBOARD_URL}" style="display: inline-block; background: #bf03c3; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif; box-shadow: 0 2px 8px rgba(191,3,195,0.3);">
+  <a href="${escapeHtml(emailLink(DASHBOARD_URL, { medium: "newsletter", campaign: "event-opening" }))}" style="display: inline-block; background: #bf03c3; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif; box-shadow: 0 2px 8px rgba(191,3,195,0.3);">
     ${eventOpeningCampaignCopy.cta}
   </a>
 </div>
