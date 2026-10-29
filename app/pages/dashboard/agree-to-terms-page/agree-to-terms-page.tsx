@@ -14,6 +14,7 @@ import type { CommitResult } from "~types/forms/commit.types"
 import { buildSingleScreenFlow } from "~/components/forms/runtime/single-screen-flow"
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
 import { agreeToTermsCopy } from "~/copy/dashboard"
+import { trackEvent } from "~/lib/analytics/umami"
 import { metaCopy } from "~/copy/meta"
 import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
@@ -123,6 +124,8 @@ const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
         continueLabel={agreeToTermsCopy.buttonLabel}
         pendingLabel={agreeToTermsCopy.pendingButtonLabel}
         onDone={() => {
+          trackEvent("terms_accepted")
+
           if (newsletterFailed.current) {
             toast.warning(agreeToTermsCopy.newsletterWarning, {
               duration: Infinity,

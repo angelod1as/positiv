@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import BasicDataPage from "./basic-data-page"
 
 const navigate = vi.hoisted(() => vi.fn())
@@ -241,6 +241,68 @@ describe("BasicDataPage", () => {
         expect(screen.getByText("CPF já cadastrado")).toBeInTheDocument(),
       )
       expect(navigate).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("analytics", () => {
+    const umamiTrack = vi.fn()
+
+    beforeEach(() => {
+      window.umami = { track: umamiTrack }
+    })
+
+    afterEach(() => {
+      delete window.umami
+    })
+
+    const save = async () => {
+      const user = userEvent.setup()
+      await user.click(screen.getByRole("button", { name: "Continuar" }))
+    }
+
+    it("sends basic_data_saved as a first time during onboarding", async () => {
+      draw({
+        profile: { ...filledProfile, basic_data_filled: false },
+        orphanedProfile: null,
+      })
+
+      await save()
+
+      await waitFor(() =>
+        expect(umamiTrack).toHaveBeenCalledWith("basic_data_saved", {
+          firstTime: true,
+        }),
+      )
+    })
+
+    it("sends basic_data_saved as an update for someone correcting their data", async () => {
+      draw({ profile: filledProfile, orphanedProfile: null })
+
+      await save()
+
+      await waitFor(() =>
+        expect(umamiTrack).toHaveBeenCalledWith("basic_data_saved", {
+          firstTime: false,
+        }),
+      )
+    })
+
+    it("sends nothing when the save refuses an answer", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          json: async () => ({
+            ok: false,
+            errors: [{ questionId: "cpf", message: "CPF já cadastrado" }],
+          }),
+        }),
+      )
+      draw({ profile: filledProfile, orphanedProfile: null })
+
+      await save()
+
+      await screen.findByText("CPF já cadastrado")
+      expect(umamiTrack).not.toHaveBeenCalled()
     })
   })
 })

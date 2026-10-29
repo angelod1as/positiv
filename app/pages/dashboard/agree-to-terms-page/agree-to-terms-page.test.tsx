@@ -220,4 +220,45 @@ describe("AgreeToTermsPage", () => {
     expect(await screen.findByText("Problema ao criar perfil")).toBeVisible()
     expect(navigate).not.toHaveBeenCalled()
   })
+
+  describe("analytics", () => {
+    const umamiTrack = vi.fn()
+
+    beforeEach(() => {
+      umamiTrack.mockClear()
+      window.umami = { track: umamiTrack }
+    })
+
+    afterEach(() => {
+      delete window.umami
+    })
+
+    it("sends terms_accepted once the choices are saved", async () => {
+      const user = userEvent.setup()
+      answers({ ok: true, newsletterFailed: false })
+      renderPage()
+
+      await user.click(box("Li tudo e estou de acordo!"))
+      await submit(user)
+
+      await waitFor(() =>
+        expect(umamiTrack).toHaveBeenCalledWith("terms_accepted", undefined),
+      )
+    })
+
+    it("sends nothing when the save is refused", async () => {
+      const user = userEvent.setup()
+      answers(
+        { ok: false, errors: [], message: "Problema ao criar perfil" },
+        { status: 422 },
+      )
+      renderPage()
+
+      await user.click(box("Li tudo e estou de acordo!"))
+      await submit(user)
+
+      await screen.findByText("Problema ao criar perfil")
+      expect(umamiTrack).not.toHaveBeenCalled()
+    })
+  })
 })
