@@ -14,5 +14,7 @@ export const emailLink = (
     utm_medium: medium,
     utm_campaign: campaign,
   })
-  return `${url}${url.includes("?") ? "&" : "?"}${utm}`
+  const [base, ...fragment] = url.split("#")
+  const hash = fragment.length ? `#${fragment.join("#")}` : ""
+  return `${base}${base.includes("?") ? "&" : "?"}${utm}${hash}`
 }

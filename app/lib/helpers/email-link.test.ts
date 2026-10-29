@@ -35,6 +35,17 @@ describe("emailLink", () => {
     )
   })
 
+  it("puts the UTMs before a fragment", () => {
+    expect(
+      emailLink("https://www.positivparty.com/eventos?tipo=festa#proximos", {
+        medium: "newsletter",
+        campaign: "default",
+      }),
+    ).toBe(
+      "https://www.positivparty.com/eventos?tipo=festa&utm_source=email&utm_medium=newsletter&utm_campaign=default#proximos",
+    )
+  })
+
   it("does not throw on a link without a scheme", () => {
     expect(
       emailLink("/pagamento/123", {
