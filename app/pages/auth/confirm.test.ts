@@ -50,6 +50,21 @@ describe("auth confirm loader", () => {
     expect(landing.searchParams.get(EMAIL_CONFIRMED_PARAM)).toBe("1")
   })
 
+  it("flags the landing page of a signup confirmed by its older type", async () => {
+    const landing = await landingFor("token_hash=abc&type=signup")
+
+    expect(landing.searchParams.get(EMAIL_CONFIRMED_PARAM)).toBe("1")
+  })
+
+  it("keeps the fragment the next page carries", async () => {
+    const landing = await landingFor(
+      `token_hash=abc&type=email&next=${encodeURIComponent("/conta#dados")}`,
+    )
+
+    expect(landing.hash).toBe("#dados")
+    expect(landing.searchParams.get(EMAIL_CONFIRMED_PARAM)).toBe("1")
+  })
+
   it("does not flag a password reset", async () => {
     const landing = await landingFor(
       "token_hash=abc&type=recovery&next=/conta/mudar-senha",

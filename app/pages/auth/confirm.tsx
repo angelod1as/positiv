@@ -64,7 +64,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       if (type === "email" || type === "signup") {
         const flagged = new URL(next, requestUrl.origin)
         flagged.searchParams.set(EMAIL_CONFIRMED_PARAM, "1")
-        landing = `${flagged.pathname}${flagged.search}`
+        landing = `${flagged.pathname}${flagged.search}${flagged.hash}`
       }
 
       return redirectWithSuccess(landing, successMessage, { headers })
