@@ -963,7 +963,26 @@ describe("getUserContext", () => {
     )
   })
 
-  it("carries the UTMs onto the login page so an abandoned login is attributed", async () => {
+  it("encodes the destination as before when it carries no UTMs", async () => {
+    const { createServerClient } = await import("~/lib/supabase/server")
+    vi.mocked(createServerClient).mockReturnValue({
+      supabase: signedOutSupabase() as unknown as DBClient,
+      headers: new Headers(),
+    })
+
+    const { redirectWithError } = await import("remix-toast")
+
+    await expect(
+      getUserContext(new Request("http://localhost:5173/dashboard?q=a%20b(1)"), {}),
+    ).rejects.toThrow()
+
+    expect(redirectWithError).toHaveBeenCalledWith(
+      `/entrar?redirect_to=${encodeURIComponent("/dashboard?q=a%20b(1)")}`,
+      expect.any(String),
+    )
+  })
+
+  it("moves the UTMs onto the login page so the click is attributed once", async () => {
     const { createServerClient } = await import("~/lib/supabase/server")
     vi.mocked(createServerClient).mockReturnValue({
       supabase: signedOutSupabase() as unknown as DBClient,
@@ -982,7 +1001,7 @@ describe("getUserContext", () => {
     ).rejects.toThrow()
 
     expect(redirectWithError).toHaveBeenCalledWith(
-      "/entrar?redirect_to=%2Fdashboard%3Futm_source%3Demail%26utm_medium%3Dtransactional%26utm_campaign%3Dpayment-confirmed%26q%3D2&utm_source=email&utm_medium=transactional&utm_campaign=payment-confirmed",
+      "/entrar?redirect_to=%2Fdashboard%3Fq%3D2&utm_source=email&utm_medium=transactional&utm_campaign=payment-confirmed",
       expect.any(String),
     )
   })

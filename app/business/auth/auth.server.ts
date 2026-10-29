@@ -159,11 +159,12 @@ export const getUserContext = async (
     // Where they were going, so the login can put them back. A private link
     // opened while signed out used to end at the dashboard with no explanation.
     const url = new URL(request.url)
-    const destination = `${url.pathname}${url.search}`
-    // The UTMs ride along on the login page too, so a visit from an e-mail is
-    // attributed even when the person gives up before signing in.
+    // The UTMs move to the login page, so a visit from an e-mail is attributed
+    // even when the person gives up before signing in, and only once when not.
     const utm = [...url.searchParams].filter(([key]) => key.startsWith("utm_"))
-    const login = `${LOGIN}?${new URLSearchParams([["redirect_to", destination], ...utm])}`
+    for (const [key] of utm) url.searchParams.delete(key)
+    const destination = `${url.pathname}${url.search}`
+    const login = `${LOGIN}?redirect_to=${encodeURIComponent(destination)}${utm.length ? `&${new URLSearchParams(utm)}` : ""}`
 
     throw await redirectWithError(login, errorsCopy.auth.loginRequired)
   }
