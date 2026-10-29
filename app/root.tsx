@@ -237,7 +237,9 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       { headers },
     )
   } catch (error) {
-    logger.error("Root loader error", { error: serializeError(error) })
+    if (!(error instanceof Response)) {
+      logger.error("Root loader error", { error: serializeError(error) })
+    }
     const draft = await draftQuery
     return {
       currentUser: null,
