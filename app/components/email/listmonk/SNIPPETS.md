@@ -8,7 +8,7 @@ Reusable HTML components to copy-paste into your Listmonk campaigns. These work 
 
 ```html
 <div style="text-align: center; margin: 24px 0;">
-  <a href="https://www.positivparty.com" style="display: inline-block; background: #bf03c3; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif; box-shadow: 0 2px 8px rgba(191,3,195,0.3);">
+  <a href="https://www.positivparty.com/?utm_source=email&amp;utm_medium=newsletter&amp;utm_campaign=default" style="display: inline-block; background: #bf03c3; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif; box-shadow: 0 2px 8px rgba(191,3,195,0.3);">
     Texto do Botão
   </a>
 </div>
@@ -18,7 +18,7 @@ Reusable HTML components to copy-paste into your Listmonk campaigns. These work 
 
 ```html
 <div style="text-align: center; margin: 24px 0;">
-  <a href="https://www.positivparty.com" style="display: inline-block; background: #4a75d2; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif; box-shadow: 0 2px 8px rgba(74,117,210,0.3);">
+  <a href="https://www.positivparty.com/?utm_source=email&amp;utm_medium=newsletter&amp;utm_campaign=default" style="display: inline-block; background: #4a75d2; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif; box-shadow: 0 2px 8px rgba(74,117,210,0.3);">
     Texto do Botão
   </a>
 </div>
@@ -28,7 +28,7 @@ Reusable HTML components to copy-paste into your Listmonk campaigns. These work 
 
 ```html
 <div style="text-align: center; margin: 24px 0;">
-  <a href="https://www.positivparty.com" style="display: inline-block; background: transparent; color: #bf03c3; text-decoration: none; padding: 14px 32px; border-radius: 8px; border: 2px solid #bf03c3; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif;">
+  <a href="https://www.positivparty.com/?utm_source=email&amp;utm_medium=newsletter&amp;utm_campaign=default" style="display: inline-block; background: transparent; color: #bf03c3; text-decoration: none; padding: 14px 32px; border-radius: 8px; border: 2px solid #bf03c3; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif;">
     Texto do Botão
   </a>
 </div>
@@ -160,7 +160,7 @@ Reusable HTML components to copy-paste into your Listmonk campaigns. These work 
     Descrição breve do evento. O que os participantes podem esperar e por que devem comparecer.
   </p>
   <div style="text-align: center;">
-    <a href="https://www.positivparty.com/eventos" style="display: inline-block; background: #bf03c3; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px;">
+    <a href="https://www.positivparty.com/eventos?utm_source=email&amp;utm_medium=newsletter&amp;utm_campaign=default" style="display: inline-block; background: #bf03c3; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px;">
       Inscrever-se
     </a>
   </div>
