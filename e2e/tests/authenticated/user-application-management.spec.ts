@@ -13,7 +13,7 @@ import {
   getApplicationState,
   ensureTestUserProfileExists
 } from '../../utils/application-helpers'
-import { ensureMinimumOpenEvents, ensureClosedTestEvent } from '../../utils/test-event-helpers'
+import { ensureMinimumOpenEvents } from '../../utils/test-event-helpers'
 import { createClosedEventSoon, seedInvite } from '../../utils/invite-helpers'
 
 test.describe('POS-191: Application Management Tests', () => {
@@ -170,52 +170,10 @@ test.describe('POS-191: Application Management Tests', () => {
     // Check prerequisites
     expect(profileId).toBeTruthy()
     if (!profileId) return
-    
-    // Ensure we have a closed test event
-    const closedEvent = await ensureClosedTestEvent()
-    expect(closedEvent).toBeTruthy()
-    
-    // The dashboard lists the events
-    await page.goto('/dashboard')
-    await page.waitForLoadState('networkidle')
-    
-    // Verify that closed events either don't show "Me candidatar" button
-    // or show some indication that registration is closed
-    const eventCards = page.locator('[data-testid="event-card"]').or(page.locator('.event-card')).or(page.locator('article'))
-    const closedEventCard = eventCards.filter({ hasText: closedEvent.title })
-    
-    if (await closedEventCard.count() > 0) {
-      // Check if the apply button is disabled or not present
-      const applyButton = closedEventCard.getByRole('link', { name: 'Me candidatar' })
-      const buttonCount = await applyButton.count()
-      
-      if (buttonCount > 0) {
-        // If button exists, it should be disabled or lead to a page that shows registration closed
-        await applyButton.first().click()
-        await page.waitForLoadState('networkidle')
-        
-        // We should see some indication that registration is closed
-        const closedText = page.getByText(/candidaturas encerradas|registration closed|evento fechado/i)
-        await expect(closedText.first()).toBeVisible({ timeout: 5000 }).catch(() => {
-          // If no closed text, we might be on a page that just doesn't allow application
-          // This is also acceptable behavior
-        })
-      } else {
-        // No apply button for closed events is correct behavior
-        expect(buttonCount).toBe(0)
-      }
-    } else {
-      // Closed events might not be shown on the main events page, which is fine
-      expect(true).toBe(true)
-    }
 
-    // An invite is the one way past a closed event, and it is worth proving
-    // here rather than in a session of its own: the same person, the same
-    // browser, one event later.
-    //
-    // ensureClosedTestEvent above dates its event in the past, so the dashboard
-    // — which lists the twelve nearest events still to come — never shows it.
-    // This one has to start in the future to be on the page at all.
+    // The dashboard lists the twelve nearest events still to come, so the
+    // closed event has to start in the future to be on the page at all. The
+    // same event then proves an invite is the one way past it.
     const invitedEvent = await createClosedEventSoon(`Invite ${Date.now()}`)
 
     await page.goto('/dashboard')
@@ -230,6 +188,9 @@ test.describe('POS-191: Application Management Tests', () => {
     await expect(
       invitedCard.getByRole('button', { name: 'Candidaturas encerradas' }),
     ).toBeDisabled()
+    await expect(
+      invitedCard.getByRole('link', { name: 'Me candidatar' }),
+    ).toHaveCount(0)
 
     const token = await seedInvite(invitedEvent.id, profileId)
     await page.goto(`/convite/${token}`)

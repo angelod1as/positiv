@@ -211,6 +211,38 @@ describe("ParticipantVsEventData", () => {
       expect(formData.get("intent")).toBe("update-event-participant")
     })
 
+    it("should auto-save when spot_type changes", async () => {
+      const user = userEvent.setup()
+      const router = createTestRouter(mockEventParticipant)
+      render(<RouterProvider router={router} />)
+
+      await user.click(screen.getByLabelText(/tipo de vaga/i))
+      const options = await screen.findAllByRole("option", { name: "Social" })
+      await user.click(options[0])
+
+      await waitFor(() => {
+        expect(mockFetcher.submit).toHaveBeenCalled()
+      })
+
+      const formData = mockFetcher.submit.mock.calls[0][0] as FormData
+      expect(formData.get("spot_type")).toBe("social")
+    })
+
+    it("should auto-save when was_selected_for_rotation is toggled", async () => {
+      const user = userEvent.setup()
+      const router = createTestRouter(mockEventParticipant)
+      render(<RouterProvider router={router} />)
+
+      await user.click(screen.getByLabelText(/selecionado para rodízio/i))
+
+      await waitFor(() => {
+        expect(mockFetcher.submit).toHaveBeenCalled()
+      })
+
+      const formData = mockFetcher.submit.mock.calls[0][0] as FormData
+      expect(formData.get("was_selected_for_rotation")).toBe("true")
+    })
+
     it("should auto-save admin_general_notes on blur", async () => {
       const user = userEvent.setup()
       const router = createTestRouter(mockEventParticipant)

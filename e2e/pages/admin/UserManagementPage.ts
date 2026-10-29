@@ -1,4 +1,4 @@
-import { type Locator, type Page } from "@playwright/test"
+import { expect, type Locator, type Page } from "@playwright/test"
 import { BasePage } from "../BasePage"
 
 export class UserManagementPage extends BasePage {
@@ -8,6 +8,8 @@ export class UserManagementPage extends BasePage {
   readonly whatsappButtons: Locator
   readonly saveButton: Locator
   readonly googleContactsButton: Locator
+  readonly veteranLabel: Locator
+  readonly veteranCheckbox: Locator
 
   constructor(page: Page) {
     super(page)
@@ -27,6 +29,9 @@ export class UserManagementPage extends BasePage {
     this.googleContactsButton = page.getByRole("button", {
       name: "Adicionar ao Google Contacts",
     })
+    // The checkbox input is visually hidden; its label is what takes the click
+    this.veteranLabel = page.locator("label").filter({ hasText: /^Veterano$/ })
+    this.veteranCheckbox = this.veteranLabel.getByRole("checkbox")
   }
 
   async navigate(eventId: string): Promise<void> {
@@ -270,6 +275,25 @@ export class UserManagementPage extends BasePage {
     // Auto-save is now in place - wait for network idle to ensure save completes
     // Note: We don't wait for sonner toast as it's unreliable in E2E tests
     await this.page.waitForLoadState("networkidle")
+  }
+
+  async expectToastAfter(
+    type: "success" | "warning",
+    action: () => Promise<void>,
+  ): Promise<void> {
+    // Toasts from earlier saves are still on screen with the same text, so
+    // mark them first and wait for one that was not there before the action
+    await this.page
+      .locator("[data-sonner-toast]")
+      .evaluateAll((toasts) =>
+        toasts.forEach((toast) => toast.setAttribute("data-e2e-seen", "")),
+      )
+    await action()
+    await expect(
+      this.page.locator(
+        `[data-sonner-toast][data-type="${type}"]:not([data-e2e-seen])`,
+      ),
+    ).toBeVisible()
   }
 
   async getDetailFieldValue(fieldName: string): Promise<string> {

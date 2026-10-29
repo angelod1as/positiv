@@ -291,6 +291,48 @@ test.describe("Admin User Management", () => {
       expect(openedUrl).toContain("contacts.google.com")
     }
 
+    // Both fixture participants start flagged, one of them with notes
+    await userManagement.expectToastAfter("success", () =>
+      userManagement.editDetailField("flag", "Sem flag"),
+    )
+    await userManagement.editDetailField("flag_notes", "")
+    await page.locator("#flag_notes").blur()
+    await userManagement.saveDetailViewChanges()
+
+    // A flag needs notes: without them nothing is saved
+    await userManagement.expectToastAfter("warning", () =>
+      userManagement.editDetailField("flag", "Flag amarela"),
+    )
+    await expect(page.locator("#flag")).toContainText("Sem flag")
+
+    const flagNotes = `E2E flag notes ${timestamp}`
+    await userManagement.expectToastAfter("success", async () => {
+      await userManagement.editDetailField("flag_notes", flagNotes)
+      await page.locator("#flag_notes").blur()
+    })
+    await userManagement.expectToastAfter("success", () =>
+      userManagement.editDetailField("flag", "Flag amarela"),
+    )
+
+    const wasVeteran = await userManagement.veteranCheckbox.isChecked()
+    await userManagement.expectToastAfter("success", () =>
+      userManagement.veteranLabel.click(),
+    )
+
+    await userManagement.expectToastAfter("success", () =>
+      userManagement.editDetailField("attendance_status", "Desistiu"),
+    )
+
+    // One reload proves every save above reached the database
+    await page.reload()
+    await userManagement.waitForDetailView()
+    await expect(page.locator("#flag")).toContainText("Flag amarela")
+    await expect(page.locator("#flag_notes")).toHaveValue(flagNotes)
+    await expect(userManagement.veteranCheckbox).toBeChecked({
+      checked: !wasVeteran,
+    })
+    await expect(page.locator("#attendance_status")).toContainText("Desistiu")
+
     // Navigate back to table
     await userManagement.navigate(testEventIdDetail)
     await userManagement.waitForTableToLoad()

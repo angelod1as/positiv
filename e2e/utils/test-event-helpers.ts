@@ -1,5 +1,5 @@
 import { createSupabaseAdminClient } from './db-cleanup'
-import { runEventTitle, runEventTitlePattern } from './run-context'
+import { runEventTitle } from './run-context'
 
 type EventStatus = 'Draft' | 'Completed' | 'Cancelled' | 'Scheduled' | 'Registration Closed' | 'Registration Open'
 
@@ -97,50 +97,5 @@ export async function createOpenRegularEvent(): Promise<{ id: string; title: str
     throw new Error(`Failed to create a regular test event: ${error?.message}`)
   }
 
-  return { id: data.id, title: data.title || '' }
-}
-
-export async function ensureClosedTestEvent(): Promise<{ id: string; title: string }> {
-  const supabase = createSupabaseAdminClient()
-  
-  // Check for existing closed test event
-  const { data: existingClosed, error: fetchError } = await supabase
-    .from('events')
-    .select('id, title')
-    .eq('event_status', 'Registration Closed')
-    .like('title', runEventTitlePattern())
-    .limit(1)
-    .single()
-  
-  if (!fetchError && existingClosed) {
-    return { id: existingClosed.id, title: existingClosed.title || '' }
-  }
-  
-  // Create a closed test event
-  const now = new Date()
-  const pastDate = new Date(now)
-  pastDate.setDate(pastDate.getDate() - 10) // Event 10 days ago
-  
-  const closedEvent = {
-    title: runEventTitle(`Closed Event ${Date.now()}`),
-    event_status: 'Registration Closed' as EventStatus,
-    time_event_start: pastDate.toISOString(),
-    time_event_end: new Date(pastDate.getTime() + 3 * 60 * 60 * 1000).toISOString(),
-    time_application_start: new Date(pastDate.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    description: 'Test closed event for E2E testing',
-    location: 'Test Location',
-    total_spots: 100
-  }
-  
-  const { data, error } = await supabase
-    .from('events')
-    .insert(closedEvent)
-    .select('id, title')
-    .single()
-  
-  if (error) {
-    throw new Error(`Failed to create closed test event: ${error.message}`)
-  }
-  
   return { id: data.id, title: data.title || '' }
 }
