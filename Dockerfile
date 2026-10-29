@@ -39,7 +39,6 @@ WORKDIR /app
 RUN pnpm run build
 
 FROM node:24.22.1-alpine
-RUN corepack enable
 
 # This image is a production artifact, so it says so itself rather than relying
 # on the platform to remember. Without this, the schema defaults would apply and
