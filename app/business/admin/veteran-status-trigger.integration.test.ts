@@ -116,9 +116,36 @@ describe("veteran status triggers (POS-636)", () => {
 
     const status = await veteranStatusOf(profile.id)
     expect(status.is_veteran).toBe(true)
-    expect(new Date(status.became_veteran_date ?? "").getTime()).toBeGreaterThanOrEqual(
-      before - 60_000,
-    )
+    const markedAt = new Date(status.became_veteran_date ?? "").getTime()
+    expect(markedAt).toBeGreaterThanOrEqual(before - 60_000)
+    expect(markedAt).toBeLessThanOrEqual(Date.now() + 60_000)
+  })
+
+  it("makes an unmarked person a veteran again from the next event they attend", async () => {
+    const profile = await aProfile("unmarked-then-attended")
+    const first = await anEvent()
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: first.id,
+      attendance_status: "attended",
+    })
+    await setVeteranByHand(profile.id, false)
+
+    const nextStart = new Date("2026-03-14T22:00:00.000Z")
+    const next = await createTestEvent(tracker, kysely, {
+      title: "Evento seguinte",
+      event_status: "Completed",
+      time_event_start: nextStart.toISOString(),
+    })
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: next.id,
+      attendance_status: "attended",
+    })
+
+    const status = await veteranStatusOf(profile.id)
+    expect(status.is_veteran).toBe(true)
+    expect(new Date(status.became_veteran_date ?? "")).toEqual(nextStart)
   })
 
   it("clears the date when an admin unmarks a veteran", async () => {
