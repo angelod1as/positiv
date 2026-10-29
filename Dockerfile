@@ -24,14 +24,12 @@ ARG VITE_TURNSTILE_SITE_KEY
 ARG VITE_UMAMI_WEBSITE_ID
 ARG VITE_UMAMI_URL
 ARG VITE_GTM_ID
-ARG VITE_APP_DOMAIN
 ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
     VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY \
     VITE_TURNSTILE_SITE_KEY=$VITE_TURNSTILE_SITE_KEY \
     VITE_UMAMI_WEBSITE_ID=$VITE_UMAMI_WEBSITE_ID \
     VITE_UMAMI_URL=$VITE_UMAMI_URL \
-    VITE_GTM_ID=$VITE_GTM_ID \
-    VITE_APP_DOMAIN=$VITE_APP_DOMAIN
+    VITE_GTM_ID=$VITE_GTM_ID
 
 COPY . /app/
 COPY --from=development-dependencies-env /app/node_modules /app/node_modules
@@ -39,7 +37,6 @@ WORKDIR /app
 RUN pnpm run build
 
 FROM node:24.22.1-alpine
-RUN corepack enable
 
 # This image is a production artifact, so it says so itself rather than relying
 # on the platform to remember. Without this, the schema defaults would apply and

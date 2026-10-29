@@ -31,4 +31,16 @@ describe("pnpm version", () => {
       expect(stage).toMatch(/^RUN corepack enable\b/m)
     }
   })
+
+  it("leaves corepack out of every stage that never runs pnpm", () => {
+    const stages = dockerfile
+      .split(/^FROM /m)
+      .slice(1)
+      .filter((s) => !/^RUN .*\bpnpm\b/m.test(s))
+
+    expect(stages.length).toBeGreaterThan(0)
+    for (const stage of stages) {
+      expect(stage).not.toMatch(/\bcorepack\b/)
+    }
+  })
 })

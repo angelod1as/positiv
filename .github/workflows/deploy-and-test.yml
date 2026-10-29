@@ -128,7 +128,6 @@ jobs:
             VITE_UMAMI_WEBSITE_ID=ci-placeholder-website-id
             VITE_UMAMI_URL=https://umami.example.com
             VITE_GTM_ID=GTM-PLACEHOLDER
-            VITE_APP_DOMAIN=www.positivparty.com
 
   # Deliberately ungated. Waiting on validate-schema and unit-test saved a
   # runner when they failed, but it cost every green pull request their three
