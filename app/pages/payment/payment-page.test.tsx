@@ -1,6 +1,6 @@
 import { screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { renderWithRouter } from "~/test/test-utils"
 import { buildPaymentOptions } from "~/business/payment/pricing"
 import { asaasConnector } from "~/business/payment/provider/asaas/asaas-connector.server"
@@ -299,4 +299,72 @@ describe("PaymentPage", () => {
       ).not.toBeInTheDocument()
     },
   )
+
+  describe("analytics", () => {
+    const umamiTrack = vi.fn()
+
+    beforeEach(() => {
+      umamiTrack.mockClear()
+      window.umami = { track: umamiTrack }
+    })
+
+    afterEach(() => {
+      delete window.umami
+    })
+
+    // jsdom cannot submit a form, and says so loudly.
+    const pay = async () => {
+      const button = screen.getByRole("button", { name: paymentsCopy.page.pay })
+      button
+        .closest("form")
+        ?.addEventListener("submit", (event) => event.preventDefault())
+      await userEvent.click(button)
+    }
+
+    it("reports the page opened with what it offered", () => {
+      renderPage(ready)
+
+      expect(umamiTrack).toHaveBeenCalledWith("payment_page_opened", {
+        state: "ready",
+      })
+    })
+
+    it("reports the page opened on a link already paid", () => {
+      renderPage({
+        state: "paid",
+        eventTitle: "Encontro de Maio",
+        amount: 22199,
+        paidAt: "2026-08-20T12:00:00Z",
+      })
+
+      expect(umamiTrack).toHaveBeenCalledWith("payment_page_opened", {
+        state: "paid",
+      })
+    })
+
+    it("reports Pix picked when the default goes through", async () => {
+      renderPage(ready)
+
+      await pay()
+
+      expect(umamiTrack).toHaveBeenCalledWith("payment_method_picked", {
+        method: "pix",
+        installments: 1,
+      })
+    })
+
+    it("reports the card and its installments when that is picked", async () => {
+      renderPage(ready)
+
+      await userEvent.click(
+        screen.getByRole("radio", { name: /Cartão de crédito — 3x de/ }),
+      )
+      await pay()
+
+      expect(umamiTrack).toHaveBeenCalledWith("payment_method_picked", {
+        method: "credit_card",
+        installments: 3,
+      })
+    })
+  })
 })

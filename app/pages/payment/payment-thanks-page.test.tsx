@@ -1,5 +1,5 @@
 import { screen } from "@testing-library/react"
-import { describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { renderWithRouter } from "~/test/test-utils"
 import { paymentsCopy } from "~/copy/payments"
 import PaymentThanksPage from "./payment-thanks-page"
@@ -82,5 +82,47 @@ describe("PaymentThanksPage", () => {
     expect(
       screen.queryByRole("link", { name: "WhatsApp" }),
     ).not.toBeInTheDocument()
+  })
+
+  describe("analytics", () => {
+    const umamiTrack = vi.fn()
+
+    beforeEach(() => {
+      umamiTrack.mockClear()
+      window.umami = { track: umamiTrack }
+    })
+
+    afterEach(() => {
+      delete window.umami
+    })
+
+    it("reports the thank-you reached while the payment is in flight", () => {
+      renderPage({ state: "waiting", eventTitle: "Encontro de Maio" })
+
+      expect(umamiTrack).toHaveBeenCalledWith(
+        "payment_thanks_reached",
+        undefined,
+      )
+    })
+
+    it("reports the thank-you reached once the payment has landed", () => {
+      renderPage({
+        state: "paid",
+        eventTitle: "Encontro de Maio",
+        amount: 22199,
+        paidAt: "2026-08-20T12:00:00Z",
+      })
+
+      expect(umamiTrack).toHaveBeenCalledWith(
+        "payment_thanks_reached",
+        undefined,
+      )
+    })
+
+    it("reports nothing for a link that closed", () => {
+      renderPage({ state: "closed", eventTitle: "Encontro de Maio" })
+
+      expect(umamiTrack).not.toHaveBeenCalled()
+    })
   })
 })
