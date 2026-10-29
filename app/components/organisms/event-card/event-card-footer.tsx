@@ -53,6 +53,7 @@ type EventCardFooterProps = {
    */
   appliesAsStaff?: boolean
 }
+
 const ApplyButton = ({
   eventId,
   dataTestId,
