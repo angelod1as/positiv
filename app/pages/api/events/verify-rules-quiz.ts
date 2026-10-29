@@ -68,7 +68,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
     given.includes(OPENING_QUESTION) &&
     given.length >= SHORT_RUN_LENGTH &&
     Boolean(
-      currentProfile && (await isVeteran(currentProfile.id, params.id)),
+      currentProfile && (await isVeteran(currentProfile.id)),
     )
 
   // The same schemas the browser used. Answering in the browser is what makes

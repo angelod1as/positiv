@@ -200,10 +200,10 @@ describe("the rules quiz check for someone who has been to a Positiv", () => {
     mockIsVeteran.mockResolvedValue(true)
   })
 
-  it("counts the past editions itself instead of believing the post", async () => {
+  it("asks the database whether the person is a veteran instead of believing the post", async () => {
     await postAnswers(rightAnswersTo("trigger", ...twoOthers))
 
-    expect(mockIsVeteran).toHaveBeenCalledWith("profile-1", "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c")
+    expect(mockIsVeteran).toHaveBeenCalledWith("profile-1")
   })
 
   it("lets three right answers through", async () => {
