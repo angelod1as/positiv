@@ -22,6 +22,7 @@ const input = {
   amount: 22000,
   method: "pix",
   installmentCount: null,
+  perInstallment: null,
   paidAt: "2026-09-01T12:00:00Z",
 }
 

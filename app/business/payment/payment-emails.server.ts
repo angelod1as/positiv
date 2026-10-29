@@ -187,13 +187,17 @@ export async function sendPaymentConfirmedEmail({
     return { success: false }
   }
 
+  const amount = payment.amount ?? 0
   const { html, text, subject } = await formatPaymentConfirmedMail({
     displayName: payment.social_name || payment.full_name || "",
     eventTitle: payment.event_title ?? "",
     eventEmoji: payment.event_emoji,
-    amount: payment.amount ?? 0,
+    amount,
     method: payment.method,
     installmentCount: payment.installment_count,
+    perInstallment: payment.installment_count
+      ? paymentProvider().splitInstallments(amount, payment.installment_count)[0]
+      : null,
     paidAt: payment.paid_at ?? new Date().toISOString(),
   })
 

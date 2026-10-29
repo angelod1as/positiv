@@ -10,6 +10,7 @@ describe("paymentConfirmedMailTemplate", () => {
       amount: 23454,
       method: "credit_card",
       installmentCount: 3,
+      perInstallment: 7818,
       paidAt: "2026-08-24T12:00:00Z",
     })
 
@@ -20,6 +21,21 @@ describe("paymentConfirmedMailTemplate", () => {
     expect(html).toContain("3x")
   })
 
+  it("quotes the installment it is given rather than computing one", () => {
+    const html = paymentConfirmedMailTemplate({
+      displayName: "Ana",
+      eventTitle: "Festa",
+      eventEmoji: null,
+      amount: 22000,
+      method: "credit_card",
+      installmentCount: 6,
+      perInstallment: 3666,
+      paidAt: "2026-08-24T12:00:00Z",
+    })
+
+    expect(html).toContain("6x de R$ 36,66")
+  })
+
   it("does not mention installments for Pix", () => {
     const html = paymentConfirmedMailTemplate({
       displayName: "Ana",
@@ -28,6 +44,7 @@ describe("paymentConfirmedMailTemplate", () => {
       amount: 22199,
       method: "pix",
       installmentCount: null,
+      perInstallment: null,
       paidAt: "2026-08-24T12:00:00Z",
     })
 
@@ -43,6 +60,7 @@ describe("paymentConfirmedMailTemplate", () => {
       amount: 100,
       method: "pix",
       installmentCount: null,
+      perInstallment: null,
       paidAt: "2026-08-24T12:00:00Z",
     })
 
@@ -57,6 +75,7 @@ describe("paymentConfirmedMailTemplate", () => {
       amount: 22199,
       method: "pix",
       installmentCount: null,
+      perInstallment: null,
       paidAt: "2026-08-24T02:00:00Z",
     })
 
@@ -71,6 +90,7 @@ describe("paymentConfirmedMailTemplate", () => {
       amount: 22199,
       method: "pix",
       installmentCount: null,
+      perInstallment: null,
       paidAt: "2026-08-24T12:00:00Z",
     })
 
@@ -89,6 +109,7 @@ describe("paymentConfirmedMailTemplate links", () => {
       amount: 23454,
       method: "credit_card",
       installmentCount: 3,
+      perInstallment: 7818,
       paidAt: "2026-08-24T12:00:00Z",
     })
     const siteLinks = [
