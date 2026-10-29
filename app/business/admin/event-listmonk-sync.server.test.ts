@@ -59,6 +59,7 @@ vi.mock("~/kysely-db", () => {
 vi.mock("../newsletter/listmonk-lists.server", () => ({
   createList: vi.fn(),
   deleteList: vi.fn(),
+  getBlocklistedSubscribers: vi.fn(),
   getListById: vi.fn(),
   getListSubscribers: vi.fn(),
 }))
@@ -80,7 +81,13 @@ import {
   updateEventListmonkList,
   listmonkSyncFiltersSchema,
 } from "./event-listmonk-sync.server"
-import { createList, deleteList, getListById, getListSubscribers } from "../newsletter/listmonk-lists.server"
+import {
+  createList,
+  deleteList,
+  getBlocklistedSubscribers,
+  getListById,
+  getListSubscribers,
+} from "../newsletter/listmonk-lists.server"
 import { addSubscriber, addSubscribersToListBulk, removeSubscriberFromList } from "../newsletter/listmonk-client.server"
 import {
   saveListmonkSubscriberId,
@@ -91,6 +98,8 @@ const mockCreateList = vi.mocked(createList)
 const mockDeleteList = vi.mocked(deleteList)
 const mockGetListById = vi.mocked(getListById)
 const mockGetListSubscribers = vi.mocked(getListSubscribers)
+const mockGetBlocklistedSubscribers = vi.mocked(getBlocklistedSubscribers)
+mockGetBlocklistedSubscribers.mockResolvedValue({ success: true, data: [], errors: [] })
 const mockAddSubscriber = vi.mocked(addSubscriber)
 const mockAddSubscribersToListBulk = vi.mocked(addSubscribersToListBulk)
 const mockRemoveSubscriberFromList = vi.mocked(removeSubscriberFromList)
@@ -451,14 +460,17 @@ describe("updateEventListmonkList", () => {
       data: createMockListmonkList(),
       errors: [],
     })
-    mockGetListSubscribers.mockResolvedValue({
+    mockGetListSubscribers.mockImplementation(async (_listId, membership) => ({
       success: true,
-      data: [
-        { id: 100, email: "rejected@example.com", name: "Rejected User", status: "confirmed", updated_at: "2024-01-01T00:00:00Z", lists: [] },
-        { id: 101, email: "user1@example.com", name: "User One", status: "confirmed", updated_at: "2024-01-01T00:00:00Z", lists: [] },
-      ],
+      data:
+        membership === "unsubscribed"
+          ? []
+          : [
+              { id: 100, email: "rejected@example.com", name: "Rejected User", status: "confirmed", updated_at: "2024-01-01T00:00:00Z", lists: [] },
+              { id: 101, email: "user1@example.com", name: "User One", status: "confirmed", updated_at: "2024-01-01T00:00:00Z", lists: [] },
+            ],
       errors: [],
-    })
+    }))
     mockExecute.mockResolvedValue([
       {
         profile_id: "profile-1",
@@ -502,6 +514,121 @@ describe("updateEventListmonkList", () => {
     await updateEventListmonkList("event-123")
 
     expect(mockExecute).toHaveBeenCalled()
+  })
+})
+
+describe("event list sync respects Listmonk opt-outs", () => {
+  const optedOut = (id: number, email: string) => ({
+    id,
+    email,
+    name: email,
+    status: "enabled",
+    updated_at: "2026-10-01T12:00:00Z",
+    lists: [],
+  })
+
+  const participant = (n: number, listmonkSubscriberId: number | null) => ({
+    profile_id: `profile-${n}`,
+    email: `user${n}@example.com`,
+    social_name: `User ${n}`,
+    full_name: `User ${n} Full`,
+    approved_to_attend: "approved",
+    listmonk_subscriber_id: listmonkSubscriberId,
+  })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockGetBlocklistedSubscribers.mockResolvedValue({ success: true, data: [], errors: [] })
+    mockAddSubscriber.mockResolvedValue({ success: true, data: { subscriberId: 900 }, errors: [] })
+    mockAddSubscribersToListBulk.mockResolvedValue({ success: true, data: undefined, errors: [] })
+  })
+
+  afterEach(() => {
+    mockGetBlocklistedSubscribers.mockResolvedValue({ success: true, data: [], errors: [] })
+  })
+
+  function withNewList() {
+    mockExecuteTakeFirstOrThrow.mockResolvedValue({
+      id: "event-123",
+      title: "Test Event",
+      listmonk_list_id: null,
+      listmonk_list_synced_at: null,
+    })
+    mockCreateList.mockResolvedValue({
+      success: true,
+      data: createMockListmonkList(),
+      errors: [],
+    })
+  }
+
+  function withExistingList(unsubscribed: ReturnType<typeof optedOut>[]) {
+    mockExecuteTakeFirstOrThrow.mockResolvedValue({
+      id: "event-123",
+      title: "Test Event",
+      listmonk_list_id: 456,
+      listmonk_list_synced_at: "2024-01-01T00:00:00Z",
+    })
+    mockGetListById.mockResolvedValue({
+      success: true,
+      data: createMockListmonkList(),
+      errors: [],
+    })
+    mockGetListSubscribers.mockImplementation(async (_listId, membership) => ({
+      success: true,
+      data: membership === "unsubscribed" ? unsubscribed : [],
+      errors: [],
+    }))
+  }
+
+  it("never adds a blocklisted participant", async () => {
+    withNewList()
+    mockGetBlocklistedSubscribers.mockResolvedValue({
+      success: true,
+      data: [optedOut(10, "USER1@example.com"), optedOut(20, "user3@example.com")],
+      errors: [],
+    })
+    mockExecute.mockResolvedValue([
+      participant(1, null),
+      participant(2, null),
+      participant(3, 20),
+      participant(4, 40),
+    ])
+
+    const result = await createEventListmonkList("event-123")
+
+    expect(result.success).toBe(true)
+    expect(mockAddSubscriber).toHaveBeenCalledTimes(1)
+    expect(mockAddSubscriber).toHaveBeenCalledWith(
+      expect.objectContaining({ email: "user2@example.com" }),
+    )
+    expect(mockAddSubscribersToListBulk).toHaveBeenCalledWith([40], 456)
+  })
+
+  it("never re-confirms someone who left this event's list", async () => {
+    withExistingList([optedOut(10, "user1@example.com")])
+    mockExecute.mockResolvedValue([participant(1, 10), participant(2, 20)])
+
+    const result = await updateEventListmonkList("event-123")
+
+    expect(result.success).toBe(true)
+    expect(mockGetListSubscribers).toHaveBeenCalledWith(456, "unsubscribed")
+    expect(mockAddSubscribersToListBulk).toHaveBeenCalledWith([20], 456)
+    expect(mockAddSubscriber).not.toHaveBeenCalled()
+  })
+
+  it("adds nobody when the opt-outs cannot be read", async () => {
+    withNewList()
+    mockGetBlocklistedSubscribers.mockResolvedValue({
+      success: false,
+      errors: [new Error("Listmonk is down")],
+    })
+    mockExecute.mockResolvedValue([participant(1, null), participant(2, 20)])
+
+    const result = await createEventListmonkList("event-123")
+
+    expect(result.success).toBe(false)
+    expect(mockAddSubscriber).not.toHaveBeenCalled()
+    expect(mockAddSubscribersToListBulk).not.toHaveBeenCalled()
   })
 })
 
