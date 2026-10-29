@@ -870,6 +870,43 @@ describe("event-rules-page analytics", () => {
     await waitFor(() => expect(sent("rules_quiz_failed")).toHaveLength(1))
   })
 
+  it("reports again for another event the page stays mounted for", async () => {
+    const user = userEvent.setup()
+    const OTHER_EVENT_ID = "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f"
+    const { rerender } = renderPageWithPathname()
+
+    const first = await firstSingleAnswerQuestion()
+    await answer(user, first.entry.answers.incorrect[0])
+    await waitFor(() => expect(sent("rules_quiz_failed")).toHaveLength(1))
+
+    rerender(
+      <MemoryRouter initialEntries={[`/dashboard/${OTHER_EVENT_ID}/regras`]}>
+        <EventRulesPage
+          {...({} as Route.ComponentProps)}
+          params={{ id: OTHER_EVENT_ID }}
+          loaderData={{ eventStatus: "Registration Open", isVeteran: false, profileId: "profile-1" }}
+        />
+      </MemoryRouter>,
+    )
+
+    const second = await firstSingleAnswerQuestion()
+    await answer(user, second.entry.answers.incorrect[0])
+
+    await waitFor(() =>
+      expect(sent("rules_quiz_failed")).toEqual([
+        ["rules_quiz_failed", { eventId: EVENT_ID, question: idOf(first.entry) }],
+        [
+          "rules_quiz_failed",
+          { eventId: OTHER_EVENT_ID, question: idOf(second.entry) },
+        ],
+      ]),
+    )
+    expect(sent("rules_quiz_started")).toEqual([
+      ["rules_quiz_started", { eventId: EVENT_ID }],
+      ["rules_quiz_started", { eventId: OTHER_EVENT_ID }],
+    ])
+  })
+
   it("reports nothing when the check refuses the answers", async () => {
     const user = userEvent.setup()
     vi.spyOn(globalThis, "fetch").mockResolvedValue(

@@ -189,20 +189,22 @@ const EventRulesPage = ({ params, loaderData }: Route.ComponentProps) => {
 
   // Once per visit to the page: a run resumed after a refresh is a new visit as
   // far as the funnel is concerned, and Umami folds it into the same session.
-  const started = useRef(false)
-  const failed = useRef(false)
+  // Holding the event rather than a flag: the route stays mounted when only its
+  // id changes.
+  const started = useRef<string | null>(null)
+  const failed = useRef<string | null>(null)
 
   const reportStarted = useCallback(() => {
-    if (started.current) return
-    started.current = true
+    if (started.current === eventId) return
+    started.current = eventId
     trackEvent("rules_quiz_started", { eventId })
   }, [eventId])
 
   const reportFailed = useCallback(
     (question: string) => {
       reportStarted()
-      if (failed.current) return
-      failed.current = true
+      if (failed.current === eventId) return
+      failed.current = eventId
       trackEvent("rules_quiz_failed", { eventId, question })
     },
     [eventId, reportStarted],
