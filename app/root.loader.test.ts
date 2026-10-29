@@ -192,6 +192,28 @@ describe("root loader", () => {
     })
   })
 
+  it("does not log a redirect thrown inside the loader as a root loader error", async () => {
+    const { siteSnapshotCache } = await import(
+      "./business/cms/site-snapshot-cache.server"
+    )
+    vi.mocked(siteSnapshotCache.get).mockResolvedValue({
+      pages: new Map(),
+      siteSettings: null,
+      paymentMessages: null,
+    })
+    mockGetContext.mockRejectedValue(
+      new Response(null, { status: 302, headers: { Location: "/login" } }),
+    )
+
+    const request = new Request("http://localhost:5173/")
+    await loader({ request, params: {} } as never)
+
+    expect(logger.error).not.toHaveBeenCalledWith(
+      "Root loader error",
+      expect.anything(),
+    )
+  })
+
   describe("draft mode", () => {
     it("flags draft mode, carries the live snapshot and bypasses the published cache", async () => {
       isDraftModeEnabled.mockResolvedValue(true)

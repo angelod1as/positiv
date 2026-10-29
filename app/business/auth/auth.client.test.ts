@@ -28,7 +28,7 @@ describe("getClientContext", () => {
   })
 
   const setupMockSupabase = async (
-    error: { message?: string | null; code?: string } | null,
+    error: { message?: string | null; code?: string; status?: number } | null,
     data: { user: null } | null = null,
   ) => {
     const mockSupabase = {
@@ -104,5 +104,32 @@ describe("getClientContext", () => {
     expect(result.currentProfile).toBeNull()
     expect(mockSignOut).not.toHaveBeenCalled()
     expect(consoleSpy).not.toHaveBeenCalled()
+  })
+
+  it("treats an unrelated auth error as signed out and logs only the error", async () => {
+    const fakeToken = "fake-access-token-for-tests"
+    const fakeEmail = "someone@example.invalid"
+    const mockSupabase = await setupMockSupabase({
+      message: "Some other error",
+      code: "different_error",
+      status: 500,
+    })
+    Object.assign(mockSupabase, {
+      realtime: { accessTokenValue: fakeToken, email: fakeEmail },
+    })
+
+    const { redirectWithError } = await import("remix-toast")
+    const { getClientContext } = await import("./auth.client")
+    const result = await getClientContext()
+
+    expect(result.currentUser).toBeNull()
+    expect(result.currentProfile).toBeNull()
+    expect(redirectWithError).not.toHaveBeenCalled()
+    expect(consoleSpy).toHaveBeenCalledWith("AUTH error", {
+      error: { code: "different_error", message: "Some other error", status: 500 },
+    })
+    const logged = JSON.stringify(consoleSpy.mock.calls)
+    expect(logged).not.toContain(fakeToken)
+    expect(logged).not.toContain(fakeEmail)
   })
 })
