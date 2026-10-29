@@ -14,7 +14,10 @@ vi.mock("./listmonk-lists.server", () => ({
   getBlocklistedSubscribers,
 }))
 
-import { syncListmonkUnsubscribes } from "./listmonk-unsubscribe-sync.server"
+import {
+  reportConsentDrift,
+  syncListmonkUnsubscribes,
+} from "./listmonk-unsubscribe-sync.server"
 
 const leftRegistered = (
   id: number,
@@ -31,6 +34,21 @@ const leftRegistered = (
       id: LISTMONK_REGISTERED_LIST_ID,
       subscription_status: "unsubscribed",
       subscription_updated_at: at,
+    },
+  ],
+})
+
+const onRegistered = (id: number, email: string): ListSubscriber => ({
+  id,
+  email,
+  name: email,
+  status: "enabled",
+  updated_at: "2026-09-01T10:00:00.000Z",
+  lists: [
+    {
+      id: LISTMONK_REGISTERED_LIST_ID,
+      subscription_status: "confirmed",
+      subscription_updated_at: "2026-09-01T10:00:00.000Z",
     },
   ],
 })
@@ -206,5 +224,72 @@ describe("syncListmonkUnsubscribes - Integration Tests", () => {
 
     expect(result.success).toBe(false)
     expect((await subscription(id)).consent_given).toBe(true)
+  })
+
+  describe("reportConsentDrift", () => {
+    it("lists the consents the sync would withdraw, without writing", async () => {
+      const id = await consentedProfile(
+        "pos635-report-left@example.com",
+        "2026-09-01T10:00:00.000Z",
+      )
+      getListSubscribers.mockImplementation(async (_listId, membership) => ({
+        success: true,
+        data:
+          membership === "unsubscribed"
+            ? [leftRegistered(7, "pos635-report-left@example.com", "2026-10-01T10:00:00.000Z")]
+            : [],
+        errors: [],
+      }))
+
+      const result = await reportConsentDrift()
+
+      expect(result.success && result.data.withdrawnInListmonk).toEqual([
+        {
+          email: "pos635-report-left@example.com",
+          optedOutAt: "2026-10-01T10:00:00.000Z",
+        },
+      ])
+      expect((await subscription(id)).consent_given).toBe(true)
+    })
+
+    it("lists who is subscribed in Listmonk without consent on the site", async () => {
+      await consentedProfile(
+        "pos635-report-consented@example.com",
+        "2026-09-01T10:00:00.000Z",
+      )
+      const declined = await createTestProfile(tracker, kysely, {
+        user_id: null,
+        email: "pos635-report-declined@example.com",
+      })
+      const row = await kysely
+        .insertInto("newsletter_subscriptions")
+        .values({
+          profile_id: declined.id,
+          consent_given: false,
+          sync_status: "unsubscribed",
+        })
+        .returning("id")
+        .executeTakeFirstOrThrow()
+      tracker.track("newsletter_subscriptions", row.id)
+      getListSubscribers.mockImplementation(async (_listId, membership) => ({
+        success: true,
+        data:
+          membership === "unsubscribed"
+            ? []
+            : [
+                onRegistered(8, "pos635-report-consented@example.com"),
+                onRegistered(9, "POS635-report-declined@example.com"),
+                { ...onRegistered(10, "pos635-report-blocked@example.com"), status: "blocklisted" },
+              ],
+        errors: [],
+      }))
+
+      const result = await reportConsentDrift()
+
+      expect(getListSubscribers).toHaveBeenCalledWith(LISTMONK_REGISTERED_LIST_ID)
+      expect(result.success && result.data.subscribedOnlyInListmonk).toEqual([
+        { email: "pos635-report-declined@example.com", subscriberId: 9 },
+      ])
+    })
   })
 })

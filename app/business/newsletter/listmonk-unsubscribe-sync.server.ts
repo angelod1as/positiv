@@ -63,69 +63,120 @@ async function readOptOuts(): Promise<OptOut[]> {
   ]
 }
 
-export const syncListmonkUnsubscribes = composable(
-  async (): Promise<{ unsubscribed: number }> => {
-    const optOuts = await readOptOuts()
+async function findWithdrawnConsents() {
+  const optOuts = await readOptOuts()
 
-    if (optOuts.length === 0) {
-      return { unsubscribed: 0 }
+  if (optOuts.length === 0) {
+    return []
+  }
+
+  const byEmail = new Map(optOuts.map((optOut) => [optOut.email, optOut]))
+  const bySubscriberId = new Map(
+    optOuts.map((optOut) => [optOut.subscriberId, optOut]),
+  )
+
+  const consented = await db
+    .selectFrom("newsletter_subscriptions as ns")
+    .innerJoin("profiles as p", "p.id", "ns.profile_id")
+    .select([
+      "ns.id",
+      "ns.listmonk_subscriber_id",
+      "ns.last_consent_given_at",
+      "ns.subscribed_at",
+      "p.email",
+    ])
+    .where("ns.consent_given", "=", true)
+    .where((eb) =>
+      eb.or([
+        eb(eb.fn("lower", ["p.email"]), "in", [...byEmail.keys()]),
+        eb("ns.listmonk_subscriber_id", "in", [...bySubscriberId.keys()]),
+      ]),
+    )
+    .execute()
+
+  return consented.flatMap((row) => {
+    const optOut =
+      (row.listmonk_subscriber_id !== null
+        ? bySubscriberId.get(row.listmonk_subscriber_id)
+        : undefined) ?? byEmail.get(row.email.trim().toLowerCase())
+
+    if (!optOut) {
+      return []
     }
 
-    const byEmail = new Map(optOuts.map((optOut) => [optOut.email, optOut]))
-    const bySubscriberId = new Map(
-      optOuts.map((optOut) => [optOut.subscriberId, optOut]),
-    )
+    const consentedAt = row.last_consent_given_at ?? row.subscribed_at
+    if (consentedAt && new Date(consentedAt) >= optOut.optedOutAt) {
+      return []
+    }
 
-    const consented = await db
-      .selectFrom("newsletter_subscriptions as ns")
-      .innerJoin("profiles as p", "p.id", "ns.profile_id")
-      .select([
-        "ns.id",
-        "ns.listmonk_subscriber_id",
-        "ns.last_consent_given_at",
-        "ns.subscribed_at",
-        "p.email",
-      ])
-      .where("ns.consent_given", "=", true)
-      .where((eb) =>
-        eb.or([
-          eb(eb.fn("lower", ["p.email"]), "in", [...byEmail.keys()]),
-          eb("ns.listmonk_subscriber_id", "in", [...bySubscriberId.keys()]),
-        ]),
-      )
-      .execute()
+    return [{ subscriptionId: row.id, email: row.email, optedOutAt: optOut.optedOutAt }]
+  })
+}
 
-    let unsubscribed = 0
+export const syncListmonkUnsubscribes = composable(
+  async (): Promise<{ unsubscribed: number }> => {
+    const withdrawn = await findWithdrawnConsents()
 
-    for (const row of consented) {
-      const optOut =
-        (row.listmonk_subscriber_id !== null
-          ? bySubscriberId.get(row.listmonk_subscriber_id)
-          : undefined) ?? byEmail.get(row.email.trim().toLowerCase())
-
-      if (!optOut) {
-        continue
-      }
-
-      const consentedAt = row.last_consent_given_at ?? row.subscribed_at
-      if (consentedAt && new Date(consentedAt) >= optOut.optedOutAt) {
-        continue
-      }
-
+    for (const consent of withdrawn) {
       await db
         .updateTable("newsletter_subscriptions")
         .set({
           consent_given: false,
-          unsubscribed_at: optOut.optedOutAt.toISOString(),
+          unsubscribed_at: consent.optedOutAt.toISOString(),
           subscription_source: null,
           sync_status: "unsubscribed",
         })
-        .where("id", "=", row.id)
+        .where("id", "=", consent.subscriptionId)
         .execute()
-
-      unsubscribed++
     }
 
-    return { unsubscribed }
+    return { unsubscribed: withdrawn.length }
   },
 )
+
+async function findSubscribedOnlyInListmonk() {
+  const registered = await getListSubscribers(LISTMONK_REGISTERED_LIST_ID)
+  if (!registered.success) {
+    throw new Error(
+      registered.errors[0]?.message ?? "Failed to read the Registered list",
+    )
+  }
+
+  const consented = await db
+    .selectFrom("newsletter_subscriptions as ns")
+    .innerJoin("profiles as p", "p.id", "ns.profile_id")
+    .select("p.email")
+    .where("ns.consent_given", "=", true)
+    .execute()
+  const consentedEmails = new Set(
+    consented.map((row) => row.email.trim().toLowerCase()),
+  )
+
+  return registered.data
+    .filter(
+      (subscriber) =>
+        subscriber.status !== "blocklisted" &&
+        !consentedEmails.has(subscriber.email.trim().toLowerCase()),
+    )
+    .map((subscriber) => ({
+      email: subscriber.email.trim().toLowerCase(),
+      subscriberId: subscriber.id,
+    }))
+}
+
+/**
+ * Read-only: the consents the sync would withdraw, and who Listmonk still
+ * sends the newsletter to without consent on the site — the second list is
+ * for a person to review, never fixed automatically.
+ */
+export const reportConsentDrift = composable(async () => {
+  const withdrawn = await findWithdrawnConsents()
+
+  return {
+    withdrawnInListmonk: withdrawn.map((consent) => ({
+      email: consent.email,
+      optedOutAt: consent.optedOutAt.toISOString(),
+    })),
+    subscribedOnlyInListmonk: await findSubscribedOnlyInListmonk(),
+  }
+})

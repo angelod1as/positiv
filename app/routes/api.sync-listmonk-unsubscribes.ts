@@ -1,7 +1,10 @@
 import { timingSafeEqual } from "node:crypto"
 import type { ActionFunctionArgs } from "react-router"
 import { ENV } from "varlock/env"
-import { syncListmonkUnsubscribes } from "~/business/newsletter/listmonk-unsubscribe-sync.server"
+import {
+  reportConsentDrift,
+  syncListmonkUnsubscribes,
+} from "~/business/newsletter/listmonk-unsubscribe-sync.server"
 import { logger } from "~/lib/logger/logger.server"
 
 /**
@@ -9,7 +12,8 @@ import { logger } from "~/lib/logger/logger.server"
  * site — Listmonk has no outgoing webhooks to push them.
  *
  * Called by the pg_cron job 'sync-listmonk-unsubscribes'. Authentication is
- * the same bearer token every internal job uses.
+ * the same bearer token every internal job uses. `?dryRun=true` writes
+ * nothing and answers with the drift instead, for a person to review.
  */
 export async function action({ request }: ActionFunctionArgs) {
   const authHeader = request.headers.get("Authorization")
@@ -31,6 +35,26 @@ export async function action({ request }: ActionFunctionArgs) {
 
   if (request.method !== "POST") {
     return Response.json({ error: "Method not allowed" }, { status: 405 })
+  }
+
+  if (new URL(request.url).searchParams.get("dryRun") === "true") {
+    const report = await reportConsentDrift()
+
+    if (!report.success) {
+      logger.error("The Listmonk consent drift report failed", {
+        errors: report.errors.map((error) => error.message),
+      })
+
+      return Response.json(
+        {
+          success: false,
+          error: report.errors[0]?.message ?? "Unknown error",
+        },
+        { status: 500 },
+      )
+    }
+
+    return Response.json({ success: true, dryRun: true, drift: report.data })
   }
 
   const result = await syncListmonkUnsubscribes()
