@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const TOKEN = "whsec_a_token_long_enough_to_be_real_0000"
 
@@ -15,7 +15,8 @@ vi.mock("~/lib/logger/logger.server", () => ({
   logger: { ...logger, child: () => logger },
 }))
 
-import { asaasConnector } from "./asaas-connector.server"
+type Connector = typeof import("./asaas-connector.server").asaasConnector
+let asaasConnector: Connector
 
 function delivery(body: unknown, token: string | null = TOKEN) {
   return new Request("http://localhost/api/payment/webhook", {
@@ -41,9 +42,12 @@ const charge = {
   value: 221.99,
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   env.ASAAS_WEBHOOK_TOKEN = TOKEN
   vi.clearAllMocks()
+  // The refusal alert is throttled in module state; each test starts fresh.
+  vi.resetModules()
+  ;({ asaasConnector } = await import("./asaas-connector.server"))
 })
 
 describe("asaasConnector.readWebhook", () => {
@@ -99,6 +103,84 @@ describe("asaasConnector.readWebhook", () => {
         expect.objectContaining({ reason: "missing_header" }),
       )
       expect(JSON.stringify(logger.warn.mock.calls)).not.toContain(TOKEN)
+    })
+  })
+
+  describe("alert throttling", () => {
+    const FIFTEEN_MINUTES = 15 * 60 * 1000
+    const wrongToken = "x".repeat(TOKEN.length)
+
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["Date"] })
+      vi.setSystemTime(new Date("2026-10-29T12:00:00Z"))
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    async function refuse(times: number, token: string | null = wrongToken) {
+      for (let i = 0; i < times; i++) {
+        await asaasConnector.readWebhook(
+          delivery({ id: `evt_${i}`, event: "PAYMENT_RECEIVED" }, token),
+        )
+      }
+    }
+
+    it("shouts once about a burst of rejected tokens and only warns about the rest", async () => {
+      await refuse(5)
+
+      expect(logger.error).toHaveBeenCalledTimes(1)
+      expect(logger.warn).toHaveBeenCalledTimes(4)
+      for (const [, context] of logger.warn.mock.calls) {
+        expect(context).toMatchObject({ reason: "mismatch" })
+      }
+      const logged = JSON.stringify([
+        logger.error.mock.calls,
+        logger.warn.mock.calls,
+      ])
+      expect(logged).not.toContain(TOKEN)
+      expect(logged).not.toContain(wrongToken)
+    })
+
+    it("shouts again once the window has passed", async () => {
+      await refuse(2)
+      vi.setSystemTime(Date.now() + FIFTEEN_MINUTES - 1)
+      await refuse(1)
+      expect(logger.error).toHaveBeenCalledTimes(1)
+
+      vi.setSystemTime(Date.now() + 1)
+      await refuse(1)
+
+      expect(logger.error).toHaveBeenCalledTimes(2)
+    })
+
+    it("shouts once about a burst of deliveries while the token is not configured", async () => {
+      env.ASAAS_WEBHOOK_TOKEN = ""
+
+      await refuse(3)
+
+      expect(logger.error).toHaveBeenCalledTimes(1)
+      expect(logger.warn).toHaveBeenCalledTimes(2)
+      for (const [, context] of logger.warn.mock.calls) {
+        expect(context).toMatchObject({ reason: "not_configured" })
+      }
+    })
+
+    it("keeps a window per reason", async () => {
+      await refuse(2)
+      env.ASAAS_WEBHOOK_TOKEN = ""
+      await refuse(2)
+
+      expect(logger.error).toHaveBeenCalledTimes(2)
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ reason: "mismatch" }),
+      )
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ reason: "not_configured" }),
+      )
     })
   })
 
