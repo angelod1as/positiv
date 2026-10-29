@@ -111,7 +111,7 @@ describe("event-rules-page loader", () => {
       params: { id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" },
     } as Route.LoaderArgs)
 
-    expect(mockIsVeteran).toHaveBeenCalledWith("profile-1", "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c")
+    expect(mockIsVeteran).toHaveBeenCalledWith("profile-1")
     expect(data).toEqual({
       eventStatus: "Registration Open",
       isVeteran: true,

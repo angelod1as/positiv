@@ -13,22 +13,27 @@ import { isVeteran } from "./is-veteran.server"
 describe("isVeteran", () => {
   const { tracker, kysely } = setupIntegrationTest()
 
-  const aProfile = (label: string) =>
+  const aProfile = (label: string, data: Record<string, unknown> = {}) =>
     createTestProfile(tracker, kysely, {
       user_id: null,
       full_name: label,
       email: `${label}-${Date.now()}-${Math.random()}@example.com`,
+      ...data,
     })
 
-  const anEvent = (
-    title: string,
-    status: "Completed" | "Cancelled" | "Registration Open" = "Completed",
-  ) =>
+  const anEvent = () =>
     createTestEvent(tracker, kysely, {
-      title,
-      event_status: status,
+      title: "Evento passado",
+      event_status: "Completed",
       time_event_start: new Date(Date.now() - 86400000).toISOString(),
     })
+
+  const setVeteranByHand = (profileId: string, value: boolean) =>
+    kysely
+      .updateTable("profiles")
+      .set({ is_veteran: value })
+      .where("id", "=", profileId)
+      .execute()
 
   beforeEach(() => {
     tracker.clear()
@@ -40,98 +45,53 @@ describe("isVeteran", () => {
 
   it("is false for someone who never went to an event", async () => {
     const profile = await aProfile("newcomer")
-    const event = await anEvent("Evento de hoje", "Registration Open")
 
-    expect(await isVeteran(profile.id, event.id)).toBe(false)
+    expect(await isVeteran(profile.id)).toBe(false)
   })
 
-  it("is true for someone who attended a finalised application", async () => {
+  it("is false for a profile that does not exist", async () => {
+    expect(await isVeteran(crypto.randomUUID())).toBe(false)
+  })
+
+  it("is true for someone who attended an event", async () => {
     const profile = await aProfile("veteran")
-    const past = await anEvent("Evento passado")
-    const current = await anEvent("Evento de hoje", "Registration Open")
+    const past = await anEvent()
 
     await createTestEventParticipant(tracker, kysely, {
       profile_id: profile.id,
       event_id: past.id,
       attendance_status: "attended",
-      application_status: "finalised",
     })
 
-    expect(await isVeteran(profile.id, current.id)).toBe(true)
+    expect(await isVeteran(profile.id)).toBe(true)
   })
 
-  it("is false when the person applied but never attended", async () => {
-    const profile = await aProfile("applied-only")
-    const past = await anEvent("Evento passado")
-    const current = await anEvent("Evento de hoje", "Registration Open")
+  it("is true for someone an admin marked as veteran by hand", async () => {
+    const profile = await aProfile("marked-by-hand")
 
-    await createTestEventParticipant(tracker, kysely, {
-      profile_id: profile.id,
-      event_id: past.id,
-      attendance_status: "not-attended",
-      application_status: "finalised",
-    })
+    await setVeteranByHand(profile.id, true)
 
-    expect(await isVeteran(profile.id, current.id)).toBe(false)
+    expect(await isVeteran(profile.id)).toBe(true)
   })
 
-  it("is false when the application never reached finalised", async () => {
-    const profile = await aProfile("unfinalised")
-    const past = await anEvent("Evento passado")
-    const current = await anEvent("Evento de hoje", "Registration Open")
+  it("is false for someone an admin unmarked, even after attending", async () => {
+    const profile = await aProfile("unmarked-by-hand")
+    const past = await anEvent()
 
     await createTestEventParticipant(tracker, kysely, {
       profile_id: profile.id,
       event_id: past.id,
       attendance_status: "attended",
-      application_status: "talking",
     })
+    await setVeteranByHand(profile.id, false)
 
-    expect(await isVeteran(profile.id, current.id)).toBe(false)
+    expect(await isVeteran(profile.id)).toBe(false)
   })
 
-  it("is false when the attended event was cancelled", async () => {
-    const profile = await aProfile("cancelled-event")
-    const past = await anEvent("Evento cancelado", "Cancelled")
-    const current = await anEvent("Evento de hoje", "Registration Open")
-
-    await createTestEventParticipant(tracker, kysely, {
-      profile_id: profile.id,
-      event_id: past.id,
-      attendance_status: "attended",
-      application_status: "finalised",
-    })
-
-    expect(await isVeteran(profile.id, current.id)).toBe(false)
-  })
-
-  it("does not count the event being applied to", async () => {
-    const profile = await aProfile("same-event")
-    const current = await anEvent("Evento de hoje", "Registration Open")
-
-    await createTestEventParticipant(tracker, kysely, {
-      profile_id: profile.id,
-      event_id: current.id,
-      attendance_status: "attended",
-      application_status: "finalised",
-    })
-
-    expect(await isVeteran(profile.id, current.id)).toBe(false)
-  })
-
-  it("does not count someone else's attendance", async () => {
+  it("does not count someone else's veteran status", async () => {
     const profile = await aProfile("bystander")
-    const other = await aProfile("the-real-veteran")
-    const past = await anEvent("Evento passado")
-    const current = await anEvent("Evento de hoje", "Registration Open")
+    await aProfile("the-real-veteran", { is_veteran: true })
 
-    await createTestEventParticipant(tracker, kysely, {
-      profile_id: other.id,
-      event_id: past.id,
-      attendance_status: "attended",
-      application_status: "finalised",
-    })
-
-    expect(await isVeteran(profile.id, current.id)).toBe(false)
+    expect(await isVeteran(profile.id)).toBe(false)
   })
 })

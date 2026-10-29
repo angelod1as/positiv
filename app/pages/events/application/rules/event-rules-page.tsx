@@ -68,7 +68,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return {
     eventStatus: event.event_status,
     isVeteran: currentProfile
-      ? await isVeteran(currentProfile.id, params.id)
+      ? await isVeteran(currentProfile.id)
       : false,
     profileId: currentProfile?.id ?? "",
   }
