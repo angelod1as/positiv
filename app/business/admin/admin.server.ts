@@ -37,6 +37,7 @@ import {
   deleteEventListmonkList,
   updateEventListmonkList,
 } from "./event-listmonk-sync.server"
+import { syncVeteransListmonkList } from "../newsletter/veterans-list.server"
 
 const {
   root: { HOME },
@@ -593,6 +594,14 @@ export const updateEventStatus = applySchema(
           errors: syncResult.errors,
         })
       }
+    } else if (values.event_status === "Completed") {
+      const syncResult = await syncVeteransListmonkList()
+      if (!syncResult.success) {
+        logger.warn("Failed to sync the Veterans Listmonk list:", {
+          eventId,
+          errors: syncResult.errors,
+        })
+      }
     }
   }
 
@@ -694,7 +703,7 @@ export const updateEventParticipantById = applySchema(
   const { id, profile_id, is_veteran, flag, flag_notes, approved_to_attend, ...data } =
     formData
 
-  return await kyselyDb.transaction().execute(async (transaction) => {
+  const result = await kyselyDb.transaction().execute(async (transaction) => {
     if (
       typeof is_veteran === "boolean" ||
       flag !== undefined ||
@@ -728,6 +737,18 @@ export const updateEventParticipantById = applySchema(
         .execute()
     }
   })
+
+  if (typeof is_veteran === "boolean") {
+    const syncResult = await syncVeteransListmonkList()
+    if (!syncResult.success) {
+      logger.warn("Failed to sync the Veterans Listmonk list:", {
+        profile_id,
+        errors: syncResult.errors,
+      })
+    }
+  }
+
+  return result
 })
 
 export const updateProfileApprovalStatus = applySchema(
@@ -824,6 +845,16 @@ export const updateProfileAdminNotes = applySchema(
 
   if (result.length === 0 || Number(result[0].numUpdatedRows) === 0) {
     throw new Error("Failed to update profile admin notes")
+  }
+
+  if (is_veteran !== undefined) {
+    const syncResult = await syncVeteransListmonkList()
+    if (!syncResult.success) {
+      logger.warn("Failed to sync the Veterans Listmonk list:", {
+        profile_id,
+        errors: syncResult.errors,
+      })
+    }
   }
 
   return { profile_id, ...updateData }
