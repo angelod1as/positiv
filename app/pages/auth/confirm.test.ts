@@ -65,6 +65,15 @@ describe("auth confirm loader", () => {
     expect(landing.searchParams.get(EMAIL_CONFIRMED_PARAM)).toBe("1")
   })
 
+  it("keeps a protocol-relative next on this site", async () => {
+    const landing = await landingFor(
+      `token_hash=abc&type=email&next=${encodeURIComponent("//evil.com/x")}`,
+    )
+
+    expect(landing.host).toBe("localhost")
+    expect(landing.pathname).toBe("/x")
+  })
+
   it("does not flag a password reset", async () => {
     const landing = await landingFor(
       "token_hash=abc&type=recovery&next=/conta/mudar-senha",
