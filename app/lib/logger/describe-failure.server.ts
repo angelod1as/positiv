@@ -1,3 +1,4 @@
+import reactRouterConfig from "../../../react-router.config"
 import type { SerializedError } from "./logger.server"
 import { requestFacts } from "./request-facts.server"
 import { appFrames } from "./stack-frames.server"
@@ -42,6 +43,12 @@ function csrfCause(
   const parsed = header === "null" ? "null" : parseOrigin(header)
   if (parsed === null) return `Origin ${origin} is not a valid URL`
   if (parsed === requestOrigin) return null
+  if (
+    parsed !== "null" &&
+    reactRouterConfig.allowedActionOrigins.includes(new URL(parsed).host)
+  ) {
+    return null
+  }
   return `Origin ${origin} does not match request URL ${requestOrigin}`
 }
 

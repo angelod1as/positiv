@@ -1,6 +1,7 @@
 import { data, UNSAFE_ErrorResponseImpl as ErrorResponseImpl } from "react-router"
 import { describe, expect, it } from "vitest"
 
+import reactRouterConfig from "../../../react-router.config"
 import { describeFailure } from "./describe-failure.server"
 import { serializeError } from "./logger.server"
 
@@ -30,7 +31,7 @@ describe("describeFailure", () => {
     it.each(["PUT", "PATCH", "DELETE"])("checks a %s too", (method) => {
       const request = new Request("http://positivparty.com/pagamento/abc", {
         method,
-        headers: { origin: "https://positivparty.com" },
+        headers: { origin: "https://evil.example" },
       })
 
       expect(
@@ -41,7 +42,7 @@ describe("describeFailure", () => {
     it("names a mismatched Origin behind a bare Bad Request", () => {
       const request = post(
         "http://positivparty.com/pagamento/abc.data",
-        "https://positivparty.com",
+        "https://evil.example",
       )
 
       expect(
@@ -49,7 +50,7 @@ describe("describeFailure", () => {
       ).toEqual({
         status: 400,
         summary:
-          "POST /pagamento/abc rejected with 400 before the action ran: Origin https://positivparty.com does not match request URL http://positivparty.com (react-router CSRF check)",
+          "POST /pagamento/abc rejected with 400 before the action ran: Origin https://evil.example does not match request URL http://positivparty.com (react-router CSRF check)",
       })
     })
 
@@ -94,10 +95,35 @@ describe("describeFailure", () => {
       })
     })
 
+    it("does not blame an Origin in allowedActionOrigins", () => {
+      const request = post(
+        "http://positivparty.com/pagamento/abc",
+        "https://www.positivparty.com",
+      )
+
+      expect(
+        failureOf(frameworkError("Bad Request"), request, "/pagamento/abc"),
+      ).toEqual({
+        status: 500,
+        summary: "POST /pagamento/abc failed with 500: Error: Bad Request",
+      })
+    })
+
+    it("names an opaque null Origin", () => {
+      const request = post("http://positivparty.com/pagamento/abc", "null")
+
+      expect(
+        failureOf(frameworkError("Bad Request"), request, "/pagamento/abc")
+          .summary,
+      ).toBe(
+        "POST /pagamento/abc rejected with 400 before the action ran: Origin null does not match request URL http://positivparty.com (react-router CSRF check)",
+      )
+    })
+
     it("does not blame the Origin for a Bad Request the app threw", () => {
       const request = post(
         "http://positivparty.com/pagamento/abc",
-        "https://positivparty.com",
+        "https://evil.example",
       )
 
       expect(
@@ -110,13 +136,21 @@ describe("describeFailure", () => {
 
     it("does not blame the Origin on a GET", () => {
       const request = new Request("http://positivparty.com/eventos", {
-        headers: { origin: "https://positivparty.com" },
+        headers: { origin: "https://evil.example" },
       })
 
       expect(
         failureOf(frameworkError("Bad Request"), request, "/eventos").status,
       ).toBe(500)
     })
+  })
+
+  // csrfCause matches allowedActionOrigins exactly; react-router also accepts
+  // wildcards, which an exact match would miss.
+  it("finds no wildcard in allowedActionOrigins", () => {
+    expect(
+      reactRouterConfig.allowedActionOrigins.filter((host) => host.includes("*")),
+    ).toEqual([])
   })
 
   it("says what failed for an ordinary error", () => {
