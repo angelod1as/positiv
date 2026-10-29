@@ -35,6 +35,9 @@ function generateCampaignBody(event: Event): string {
   const sanitizedEmoji = sanitizeHtml(event.emoji || "")
   const sanitizedTitle = sanitizeHtml(event.title || "")
   const sanitizedLocation = sanitizeHtml(event.location || "")
+  const ctaUrl = escapeHtml(
+    emailLink(DASHBOARD_URL, { medium: "newsletter", campaign: "pre-opening-reminder" }),
+  )
 
   const eventDisplay = [
     sanitizedEmoji
@@ -61,7 +64,7 @@ function generateCampaignBody(event: Event): string {
 </p>
 
 <div style="text-align: center; margin: 30px 0;">
-  <a href="${escapeHtml(emailLink(DASHBOARD_URL, { medium: "newsletter", campaign: "pre-opening-reminder" }))}" style="display: inline-block; background: #bf03c3; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif; box-shadow: 0 2px 8px rgba(191,3,195,0.3);">
+  <a href="${ctaUrl}" style="display: inline-block; background: #bf03c3; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif; box-shadow: 0 2px 8px rgba(191,3,195,0.3);">
     ${preOpeningReminderCopy.cta}
   </a>
 </div>
