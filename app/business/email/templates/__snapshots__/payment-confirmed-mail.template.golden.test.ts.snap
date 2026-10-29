@@ -142,7 +142,7 @@ exports[`payment-confirmed email byte-for-byte > renders the frozen HTML with th
                   Forma de pagamento: <strong>Cartão de crédito</strong>
                 </div>
                 <div style="margin-bottom: 8px; font-size: 14px; color: #333;">
-                  Parcelado em <strong>3x de R$ 83,34</strong>
+                  Parcelado em <strong>3x de R$ 83,33</strong>
                 </div>
                 <div style="font-size: 14px; color: #333;">
                   Data: <strong>01/12/2026</strong>

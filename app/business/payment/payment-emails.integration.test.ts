@@ -48,6 +48,7 @@ vi.mock("~/business/settings/app-settings.server", async (importOriginal) => ({
 }))
 
 import {
+  sendPaymentConfirmedEmail,
   sendPaymentLinkEmail,
   sendPaymentRefundEmail,
 } from "./payment-emails.server"
@@ -262,6 +263,80 @@ describe("sendPaymentLinkEmail", () => {
 
     expect(result.success).toBe(false)
     expect(sendEmail).not.toHaveBeenCalled()
+  })
+})
+
+describe("sendPaymentConfirmedEmail", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+  let participantId: string
+  let counter = 0
+
+  beforeEach(async () => {
+    tracker.clear()
+    counter += 1
+    sendEmail.mockReset()
+    sendEmail.mockResolvedValue({ success: true })
+
+    const testId = `${Date.now()}-${counter}`
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Confirmed Event",
+      emoji: "🎉",
+      ticket_price: 22000,
+    })
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: `test${testId}-confirmed-mail@example.com`,
+      full_name: "Confirmed Tester",
+    })
+    participantId = (
+      await createTestEventParticipant(tracker, kysely, {
+        event_id: event.id,
+        profile_id: profile.id,
+        spot_type: "regular",
+      })
+    ).id
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  const paidCharge = (overrides: Record<string, unknown> = {}) =>
+    createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "online",
+      status: "paid",
+      base_amount: 22000,
+      amount: 22000,
+      method: "credit_card",
+      installment_count: 6,
+      paid_at: "2026-09-01T12:00:00Z",
+      ...overrides,
+    })
+
+  // Asaas charges R$ 220,00 in 6x as 5 x 36,66 + 36,70, and the payment page
+  // quotes the first of those.
+  it("quotes the installment the way Asaas charges it", async () => {
+    const payment = await paidCharge()
+
+    const result = await sendPaymentConfirmedEmail({ paymentId: payment.id })
+
+    expect(result.success).toBe(true)
+    const [options] = sendEmail.mock.calls[0]
+    expect(options.html).toContain("6x de R$ 36,66")
+  })
+
+  it("does not mention installments for Pix", async () => {
+    const payment = await paidCharge({
+      method: "pix",
+      amount: 19800,
+      installment_count: null,
+    })
+
+    await sendPaymentConfirmedEmail({ paymentId: payment.id })
+
+    const [options] = sendEmail.mock.calls[0]
+    expect(options.html).not.toContain("Parcelado")
   })
 })
 

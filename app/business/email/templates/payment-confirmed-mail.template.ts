@@ -28,6 +28,7 @@ export type PaymentConfirmedMailInput = {
   amount: number
   method: string | null
   installmentCount: number | null
+  perInstallment: number | null
   paidAt: string
 }
 
@@ -53,10 +54,10 @@ export const paymentConfirmedMailTemplate = (
   )
   const methodName = input.method ? (methodNames[input.method] ?? "") : ""
   const installments =
-    input.installmentCount && input.installmentCount > 1
+    input.installmentCount && input.installmentCount > 1 && input.perInstallment
       ? paymentConfirmedMailCopy.installments(
           input.installmentCount,
-          formatCurrency(Math.ceil(input.amount / input.installmentCount)),
+          formatCurrency(input.perInstallment),
         )
       : ""
 

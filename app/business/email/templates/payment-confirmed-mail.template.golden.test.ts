@@ -18,6 +18,7 @@ const input = {
   amount: 25000,
   method: "credit_card",
   installmentCount: 3,
+  perInstallment: 8333,
   paidAt: "2026-12-01T15:00:00Z",
 }
 
@@ -36,6 +37,7 @@ describe("payment-confirmed email byte-for-byte", () => {
         eventEmoji: null,
         method: "pix",
         installmentCount: null,
+        perInstallment: null,
       }),
     ).toMatchSnapshot()
   })
