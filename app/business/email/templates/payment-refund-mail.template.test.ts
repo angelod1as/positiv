@@ -171,3 +171,27 @@ describe("paymentRefundMailTemplate", () => {
     expect(html).not.toContain("onerror")
   })
 })
+
+describe("paymentRefundMailTemplate links", () => {
+  it("tags every link to the site with the e-mail UTMs", () => {
+    const html = paymentRefundMailTemplate({
+      displayName: "Ana",
+      eventTitle: "Festa de Setembro",
+      eventEmoji: "🎉",
+      refundAmount: 21900,
+      amount: 22199,
+      method: "pix",
+      kind: "online",
+    })
+    const siteLinks = [
+      ...html.matchAll(/href="(https:\/\/www\.positivparty\.com[^"]*)"/g),
+    ].map(([, href]) => href)
+
+    expect(siteLinks.length).toBeGreaterThan(0)
+    for (const href of siteLinks) {
+      expect(href).toContain(
+        "utm_source=email&amp;utm_medium=transactional&amp;utm_campaign=payment-refund",
+      )
+    }
+  })
+})

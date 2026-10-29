@@ -79,3 +79,27 @@ describe("paymentConfirmedMailTemplate", () => {
     expect(html).not.toContain("100vh")
   })
 })
+
+describe("paymentConfirmedMailTemplate links", () => {
+  it("tags every link to the site with the e-mail UTMs", () => {
+    const html = paymentConfirmedMailTemplate({
+      displayName: "Ana",
+      eventTitle: "Festa de Setembro",
+      eventEmoji: "🎉",
+      amount: 23454,
+      method: "credit_card",
+      installmentCount: 3,
+      paidAt: "2026-08-24T12:00:00Z",
+    })
+    const siteLinks = [
+      ...html.matchAll(/href="(https:\/\/www\.positivparty\.com[^"]*)"/g),
+    ].map(([, href]) => href)
+
+    expect(siteLinks.length).toBeGreaterThan(0)
+    for (const href of siteLinks) {
+      expect(href).toContain(
+        "utm_source=email&amp;utm_medium=transactional&amp;utm_campaign=payment-confirmed",
+      )
+    }
+  })
+})

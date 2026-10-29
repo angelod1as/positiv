@@ -131,3 +131,21 @@ describe("paymentLinkMailTemplate", () => {
     expect(html).not.toContain("100vh")
   })
 })
+
+describe("paymentLinkMailTemplate links", () => {
+  it("tags every link to the site with the e-mail UTMs", () => {
+    const html = paymentLinkMailTemplate(base)
+    const siteLinks = [
+      ...html.matchAll(/href="(https:\/\/www\.positivparty\.com[^"]*)"/g),
+    ]
+      .map(([, href]) => href)
+      .filter((href) => href !== base.paymentUrl)
+
+    expect(siteLinks.length).toBeGreaterThan(0)
+    for (const href of siteLinks) {
+      expect(href).toContain(
+        "utm_source=email&amp;utm_medium=transactional&amp;utm_campaign=payment-link",
+      )
+    }
+  })
+})

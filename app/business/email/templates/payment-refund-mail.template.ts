@@ -9,7 +9,16 @@ import { paymentsCopy } from "~/copy/payments"
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
 import { escapeHtml } from "~/lib/helpers/escape-html"
+import { emailLink } from "~/lib/helpers/email-link"
 import { formatCurrency } from "~/lib/helpers/format-currency"
+
+const siteLink = (path = "") =>
+  escapeHtml(
+    emailLink(`${POSITIV_URL}${path}`, {
+      medium: "transactional",
+      campaign: "payment-refund",
+    }),
+  )
 
 export type PaymentRefundMailInput = {
   displayName: string
@@ -142,7 +151,7 @@ export const paymentRefundMailTemplate = (
 
               <!-- CTA -->
               <div style="text-align: center; margin: 0;">
-                <a href="${POSITIV_URL}dashboard" style="display: inline-block; background-color: #bf03c3; color: #ffffff; font-family: 'DM Sans', Arial, sans-serif; font-size: 16px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                <a href="${siteLink("dashboard")}" style="display: inline-block; background-color: #bf03c3; color: #ffffff; font-family: 'DM Sans', Arial, sans-serif; font-size: 16px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                   ${cta}
                 </a>
               </div>
@@ -153,10 +162,10 @@ export const paymentRefundMailTemplate = (
             <div style="background-color: #f9f9f9; padding: 24px; text-align: center; border-top: 1px solid #e0e0e0;">
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; color: #666666; margin: 0 0 8px 0;">
                 ${paymentRefundMailCopy.footer.reason}
-                <a href="${POSITIV_URL}" style="color: #bf03c3; text-decoration: none; font-weight: 700;">${paymentRefundMailCopy.footer.brand}</a>
+                <a href="${siteLink()}" style="color: #bf03c3; text-decoration: none; font-weight: 700;">${paymentRefundMailCopy.footer.brand}</a>
               </p>
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; color: #666666; margin: 0;">
-                <a href="${POSITIV_URL}conta" style="color: #666; text-decoration: underline;">${paymentRefundMailCopy.footer.settings}</a>
+                <a href="${siteLink("conta")}" style="color: #666; text-decoration: underline;">${paymentRefundMailCopy.footer.settings}</a>
               </p>
             </div>
 

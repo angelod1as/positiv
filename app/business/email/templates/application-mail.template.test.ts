@@ -136,6 +136,20 @@ describe("applicationMailTemplate", () => {
     // back into the iframe height and leaves a huge empty scroll.
     expect(html).not.toContain("100vh")
   })
+
+  it("tags every link to the site with the e-mail UTMs", () => {
+    const html = applicationMailTemplate(mockProfile, mockEvent)
+    const siteLinks = [
+      ...html.matchAll(/href="(https:\/\/www\.positivparty\.com[^"]*)"/g),
+    ].map(([, href]) => href)
+
+    expect(siteLinks.length).toBeGreaterThan(0)
+    for (const href of siteLinks) {
+      expect(href).toContain(
+        "utm_source=email&amp;utm_medium=transactional&amp;utm_campaign=application",
+      )
+    }
+  })
 })
 
 describe("applicationMailTemplate - XSS Protection", () => {
