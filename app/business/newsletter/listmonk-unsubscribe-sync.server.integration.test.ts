@@ -17,6 +17,7 @@ vi.mock("./listmonk-lists.server", () => ({
 import {
   reportConsentDrift,
   syncListmonkUnsubscribes,
+  withdrawConsentIfStale,
 } from "./listmonk-unsubscribe-sync.server"
 
 const leftRegistered = (
@@ -256,6 +257,21 @@ describe("syncListmonkUnsubscribes - Integration Tests", () => {
 
     await syncListmonkUnsubscribes()
 
+    expect((await subscription(id)).consent_given).toBe(true)
+  })
+
+  it("refuses to withdraw a consent that became newer after it was selected", async () => {
+    const id = await consentedProfile(
+      "pos635-race@example.com",
+      "2026-10-10T10:00:00.000Z",
+    )
+
+    const withdrawn = await withdrawConsentIfStale(
+      id,
+      new Date("2026-10-01T10:00:00.000Z"),
+    )
+
+    expect(withdrawn).toBe(false)
     expect((await subscription(id)).consent_given).toBe(true)
   })
 

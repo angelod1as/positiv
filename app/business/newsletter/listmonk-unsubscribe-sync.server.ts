@@ -125,24 +125,55 @@ async function findWithdrawnConsents() {
   })
 }
 
+// Re-checks the condition in the UPDATE, so a consent given on the site
+// after findWithdrawnConsents read the row is never overwritten.
+export async function withdrawConsentIfStale(
+  subscriptionId: string,
+  optedOutAt: Date,
+): Promise<boolean> {
+  const optedOutAtIso = optedOutAt.toISOString()
+
+  const result = await db
+    .updateTable("newsletter_subscriptions")
+    .set({
+      consent_given: false,
+      unsubscribed_at: optedOutAtIso,
+      subscription_source: null,
+      sync_status: "unsubscribed",
+    })
+    .where("id", "=", subscriptionId)
+    .where("consent_given", "=", true)
+    .where((eb) =>
+      eb.or([
+        eb(
+          eb.fn.coalesce("last_consent_given_at", "subscribed_at"),
+          "is",
+          null,
+        ),
+        eb(
+          eb.fn.coalesce("last_consent_given_at", "subscribed_at"),
+          "<",
+          optedOutAtIso,
+        ),
+      ]),
+    )
+    .executeTakeFirst()
+
+  return Number(result.numUpdatedRows) > 0
+}
+
 export const syncListmonkUnsubscribes = composable(
   async (): Promise<{ unsubscribed: number }> => {
     const withdrawn = await findWithdrawnConsents()
 
+    let unsubscribed = 0
     for (const consent of withdrawn) {
-      await db
-        .updateTable("newsletter_subscriptions")
-        .set({
-          consent_given: false,
-          unsubscribed_at: consent.optedOutAt.toISOString(),
-          subscription_source: null,
-          sync_status: "unsubscribed",
-        })
-        .where("id", "=", consent.subscriptionId)
-        .execute()
+      if (await withdrawConsentIfStale(consent.subscriptionId, consent.optedOutAt)) {
+        unsubscribed++
+      }
     }
 
-    return { unsubscribed: withdrawn.length }
+    return { unsubscribed }
   },
 )
 
