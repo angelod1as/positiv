@@ -58,6 +58,8 @@ type FormRunnerProps = {
    * changes — a flow branching on an early mistake grows mid-run.
    */
   onProgressChange?: (progress: { index: number; total: number } | null) => void
+  /** Called once per question whose first attempt was wrong. */
+  onFirstTryWrong?: (questionId: string) => void
 }
 
 export function FormRunner({
@@ -75,6 +77,7 @@ export function FormRunner({
   stepId,
   onStepChange,
   onProgressChange,
+  onFirstTryWrong,
 }: FormRunnerProps) {
   const runtime = useFormRuntime({
     questions,
@@ -83,6 +86,7 @@ export function FormRunner({
     initialAnswers,
     persistence,
     stepId,
+    onFirstTryWrong,
   })
   const { answers, isDone, isRestored, currentStepId, lastMove } = runtime
 

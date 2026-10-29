@@ -13,6 +13,7 @@ import type { Answers } from "~/components/forms/runtime/question.types"
 import { buildSingleScreenFlow } from "~/components/forms/runtime/single-screen-flow"
 import { basicDataCopy } from "~/copy/account"
 import { metaCopy } from "~/copy/meta"
+import { trackEvent } from "~/lib/analytics/umami"
 import { createMetaArray } from "~/lib/helpers/meta"
 import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
@@ -126,6 +127,9 @@ const BasicDataPage = ({ loaderData }: Route.ComponentProps) => {
         // No persistence, deliberately: the answers include a CPF and an RG,
         // and persistence writes them to sessionStorage.
         onDone={() => {
+          trackEvent("basic_data_saved", {
+            firstTime: !profileData?.basic_data_filled,
+          })
           toast.success(basicDataCopy.successToast)
           void navigate(destination)
         }}

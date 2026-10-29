@@ -187,6 +187,29 @@ const EventRulesPage = ({ params, loaderData }: Route.ComponentProps) => {
     [eventId],
   )
 
+  // Once per visit to the page: a run resumed after a refresh is a new visit as
+  // far as the funnel is concerned, and Umami folds it into the same session.
+  // Holding the event rather than a flag: the route stays mounted when only its
+  // id changes.
+  const started = useRef<string | null>(null)
+  const failed = useRef<string | null>(null)
+
+  const reportStarted = useCallback(() => {
+    if (started.current === eventId) return
+    started.current = eventId
+    trackEvent("rules_quiz_started", { eventId })
+  }, [eventId])
+
+  const reportFailed = useCallback(
+    (question: string) => {
+      reportStarted()
+      if (failed.current === eventId) return
+      failed.current = eventId
+      trackEvent("rules_quiz_failed", { eventId, question })
+    },
+    [eventId, reportStarted],
+  )
+
   const flow = useMemo(
     () => buildRulesFlow(questions, commit, { isVeteran: loaderData.isVeteran }),
     [questions, commit, loaderData.isVeteran],
@@ -243,7 +266,9 @@ const EventRulesPage = ({ params, loaderData }: Route.ComponentProps) => {
         stepId={requestedStep}
         onProgressChange={(progress) => {
           setScreens(progress ? { runId, total: progress.total } : null)
+          if (progress && progress.index > 1) reportStarted()
         }}
+        onFirstTryWrong={reportFailed}
         onStepChange={(step, { direction }) => {
           if (direction === "back" && pushed.current > 0) {
             pushed.current -= 1

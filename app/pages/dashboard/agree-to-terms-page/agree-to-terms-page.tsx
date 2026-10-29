@@ -15,6 +15,7 @@ import { buildSingleScreenFlow } from "~/components/forms/runtime/single-screen-
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
 import { agreeToTermsCopy } from "~/copy/dashboard"
 import { metaCopy } from "~/copy/meta"
+import { trackEvent } from "~/lib/analytics/umami"
 import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/agree-to-terms-page"
@@ -123,6 +124,8 @@ const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
         continueLabel={agreeToTermsCopy.buttonLabel}
         pendingLabel={agreeToTermsCopy.pendingButtonLabel}
         onDone={() => {
+          trackEvent("terms_accepted")
+
           if (newsletterFailed.current) {
             toast.warning(agreeToTermsCopy.newsletterWarning, {
               duration: Infinity,

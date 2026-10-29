@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import userEvent from "@testing-library/user-event"
 import { act, render, screen } from "~/test/test-utils"
 import { eventCardCopy } from "~/copy/events"
@@ -496,5 +496,66 @@ describe("EventCardFooter", () => {
         expect(offered.sort()).toEqual([...expected].sort())
       },
     )
+  })
+
+  describe("funnel analytics", () => {
+    beforeEach(() => {
+      mockTrack.mockClear()
+    })
+
+    const footer = (
+      props: Partial<React.ComponentProps<typeof EventCardFooter>> = {},
+    ) =>
+      render(
+        <EventCardFooter
+          eventId="test-event-id"
+          event_status="Registration Open"
+          googleLink=""
+          is_applied={false}
+          dataTestId="test-footer"
+          {...props}
+        />,
+      )
+
+    it("records the view of an event the person can apply to", () => {
+      footer()
+
+      expect(mockTrack).toHaveBeenCalledWith("event_viewed", {
+        eventId: "test-event-id",
+      })
+    })
+
+    it("records the view of a closed event the person is invited to", () => {
+      footer({ event_status: "Registration Closed", is_invited: true })
+
+      expect(mockTrack).toHaveBeenCalledWith("event_viewed", {
+        eventId: "test-event-id",
+      })
+    })
+
+    it("records the click on the application", async () => {
+      const user = userEvent.setup()
+      footer()
+
+      const apply = screen.getByText(/Me candidatar/i)
+      // jsdom cannot follow the link, and says so loudly.
+      apply.addEventListener("click", (event) => event.preventDefault())
+      await user.click(apply)
+
+      expect(mockTrack).toHaveBeenCalledWith("apply_clicked", {
+        eventId: "test-event-id",
+      })
+    })
+
+    it.each([
+      ["already applied", { is_applied: true }],
+      ["not open yet", { event_status: "Scheduled" as const }],
+      ["closed", { event_status: "Registration Closed" as const }],
+      ["seen by an admin", { isAdmin: true }],
+    ])("records no view of an event %s", (_, props) => {
+      footer(props)
+
+      expect(mockTrack).not.toHaveBeenCalled()
+    })
   })
 })

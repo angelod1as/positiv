@@ -8,6 +8,7 @@ import { type LoaderFunctionArgs } from "react-router"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import { ENV } from "varlock/env"
 import { authConfirmCopy } from "~/copy/auth"
+import { EMAIL_CONFIRMED_PARAM } from "~/lib/hooks/use-track-email-confirmed"
 import paths from "~/lib/paths"
 import type { Database } from "~types/database/database.types"
 
@@ -59,7 +60,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
           ? authConfirmCopy.passwordReset
           : authConfirmCopy.emailConfirmed
 
-      return redirectWithSuccess(next, successMessage, { headers })
+      let landing = next
+      if (type === "email" || type === "signup") {
+        const flagged = new URL(next, requestUrl.origin)
+        flagged.searchParams.set(EMAIL_CONFIRMED_PARAM, "1")
+        landing = `${flagged.pathname}${flagged.search}${flagged.hash}`
+      }
+
+      return redirectWithSuccess(landing, successMessage, { headers })
     }
 
     if (

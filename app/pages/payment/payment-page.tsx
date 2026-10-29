@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Form, redirect, useFetcher, useNavigation } from "react-router"
 import { redirectWithError } from "remix-toast"
 import { getUserContext } from "~/business/auth/auth.server"
@@ -24,6 +24,7 @@ import { Label } from "~/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group"
 import { metaCopy } from "~/copy/meta"
 import { paymentsCopy } from "~/copy/payments"
+import { trackEvent } from "~/lib/analytics/umami"
 import { formatCurrency } from "~/lib/helpers/format-currency"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { createMetaArray } from "~/lib/helpers/meta"
@@ -84,6 +85,10 @@ export async function action({ params, request }: Route.ActionArgs) {
 
 const PaymentPage = ({ loaderData }: Route.ComponentProps) => {
   const data = loaderData as PaymentPageData
+
+  useEffect(() => {
+    trackEvent("payment_page_opened", { state: data.state })
+  }, [data.state])
 
   return (
     <Card className="my-12">
@@ -216,8 +221,19 @@ const Options = ({
   const navigation = useNavigation()
   const submitting = navigation.state !== "idle"
 
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const optionId = new FormData(event.currentTarget).get("optionId")
+    const option = data.options.find((item) => item.id === optionId)
+    if (!option) return
+
+    trackEvent("payment_method_picked", {
+      method: option.method,
+      installments: option.installmentCount ?? 1,
+    })
+  }
+
   return (
-    <Form method="post">
+    <Form method="post" onSubmit={handleSubmit}>
       <CardContent className="flex flex-col gap-4">
         <h2 className="font-bold">{page.chooseOption}</h2>
         <p className="text-muted-foreground text-sm">

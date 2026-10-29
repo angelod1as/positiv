@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react"
 import { createMemoryRouter, RouterProvider } from "react-router"
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import AccountReadyPage, { meta } from "./account-ready-page"
 
 const renderPage = () => {
@@ -65,5 +65,19 @@ describe("Account ready page", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const titleMeta = meta({} as any).find((m) => "title" in m)
     expect(titleMeta).toEqual({ title: "Tudo pronto | Positiv Party" })
+  })
+
+  it("sends onboarding_finished when it opens", () => {
+    const umamiTrack = vi.fn()
+    window.umami = { track: umamiTrack }
+
+    renderPage()
+
+    expect(umamiTrack).toHaveBeenCalledWith("onboarding_finished", undefined)
+    expect(umamiTrack).toHaveBeenCalledTimes(1)
+  })
+
+  afterEach(() => {
+    delete window.umami
   })
 })

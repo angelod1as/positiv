@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { redirectWithError } from "remix-toast"
 import { getUserContext } from "~/business/auth/auth.server"
 import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
@@ -13,6 +14,7 @@ import {
 } from "~/components/ui/card"
 import { metaCopy } from "~/copy/meta"
 import { paymentsCopy } from "~/copy/payments"
+import { trackEvent } from "~/lib/analytics/umami"
 import { createMetaArray } from "~/lib/helpers/meta"
 import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
@@ -68,6 +70,11 @@ function thanksMessage(data: PaymentThanksData) {
 const PaymentThanksPage = ({ loaderData }: Route.ComponentProps) => {
   const data = loaderData as PaymentThanksData & { betaNotice: boolean }
   const { title, body } = thanksMessage(data)
+
+  const reached = data.state !== "closed"
+  useEffect(() => {
+    if (reached) trackEvent("payment_thanks_reached")
+  }, [reached])
 
   return (
     <Card className="my-12">

@@ -1,3 +1,5 @@
+import type { PaymentMethod } from "~/business/payment/pricing"
+
 type PersonalDataField =
   | "email"
   | "name"
@@ -18,6 +20,14 @@ export type AnonymousRegistry<
 type OnEvent = { eventId: string }
 
 export type AnalyticsEvents = AnonymousRegistry<{
+  email_confirmed: undefined
+  terms_accepted: undefined
+  basic_data_saved: { firstTime: boolean }
+  onboarding_finished: undefined
+  event_viewed: OnEvent
+  apply_clicked: OnEvent
+  rules_quiz_started: OnEvent
+  rules_quiz_failed: OnEvent & { question: string }
   rules_quiz_passed: OnEvent
   application_submitted: OnEvent
   application_completed: OnEvent
@@ -29,6 +39,9 @@ export type AnalyticsEvents = AnonymousRegistry<{
   signup_completed: undefined
   signup_refused: { reason: "blocked_domain" | "rate_limited" }
   claimed_profile_signup_blocked: undefined
+  payment_page_opened: { state: "needs_cpf" | "ready" | "paid" | "closed" }
+  payment_method_picked: { method: PaymentMethod; installments: number }
+  payment_thanks_reached: undefined
 }>
 
 export type AnalyticsEventName = keyof AnalyticsEvents

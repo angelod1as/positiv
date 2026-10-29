@@ -336,6 +336,34 @@ describe("FormRunner with oneAtATime", () => {
   })
 })
 
+describe("FormRunner first-attempt mistakes", () => {
+  it("hands the caller the question someone got wrong first", async () => {
+    const user = userEvent.setup()
+    const onFirstTryWrong = vi.fn()
+    const quiz: Question = {
+      ...question("nome", "Qual seu nome?"),
+      schema: zod.string().refine((value) => value === "certa", {
+        message: "Resposta errada",
+      }),
+    }
+
+    render(
+      <FormRunner
+        questions={[quiz, questions[1]]}
+        flow={steppedFlow}
+        presentation={OneAtATime}
+        renderQuestion={renderQuestion}
+        onFirstTryWrong={onFirstTryWrong}
+      />,
+    )
+
+    await user.type(screen.getByLabelText("Qual seu nome?"), "errada")
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+
+    expect(onFirstTryWrong).toHaveBeenCalledWith("nome")
+  })
+})
+
 describe("oneAtATime keyboard flow", () => {
   it("leaves the screen it opens on alone", () => {
     render(

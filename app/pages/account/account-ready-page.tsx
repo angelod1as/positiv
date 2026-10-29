@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { Button } from "~/components/atoms/button/button"
 import { Copy } from "~/components/atoms/copy/copy"
 import {
@@ -9,6 +10,7 @@ import {
 } from "~/components/ui/card"
 import { accountReadyCopy } from "~/copy/account"
 import { metaCopy } from "~/copy/meta"
+import { trackEvent } from "~/lib/analytics/umami"
 import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/account-ready-page"
@@ -22,6 +24,10 @@ export function meta({}: Route.MetaArgs) {
 }
 
 const AccountReadyPage = ({}: Route.ComponentProps) => {
+  useEffect(() => {
+    trackEvent("onboarding_finished")
+  }, [])
+
   return (
     <Card className="my-12">
       <CardHeader>
