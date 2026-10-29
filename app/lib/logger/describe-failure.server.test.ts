@@ -94,6 +94,31 @@ describe("describeFailure", () => {
       })
     })
 
+    it("does not blame an Origin in allowedActionOrigins", () => {
+      const request = post(
+        "http://positivparty.com/pagamento/abc",
+        "https://www.positivparty.com",
+      )
+
+      expect(
+        failureOf(frameworkError("Bad Request"), request, "/pagamento/abc"),
+      ).toEqual({
+        status: 500,
+        summary: "POST /pagamento/abc failed with 500: Error: Bad Request",
+      })
+    })
+
+    it("names an opaque null Origin", () => {
+      const request = post("http://positivparty.com/pagamento/abc", "null")
+
+      expect(
+        failureOf(frameworkError("Bad Request"), request, "/pagamento/abc")
+          .summary,
+      ).toBe(
+        "POST /pagamento/abc rejected with 400 before the action ran: Origin null does not match request URL http://positivparty.com (react-router CSRF check)",
+      )
+    })
+
     it("does not blame the Origin for a Bad Request the app threw", () => {
       const request = post(
         "http://positivparty.com/pagamento/abc",
