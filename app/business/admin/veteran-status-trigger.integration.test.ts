@@ -121,6 +121,24 @@ describe("veteran status triggers (POS-636)", () => {
     expect(markedAt).toBeLessThanOrEqual(Date.now() + 60_000)
   })
 
+  it("keeps the hand-marked date when a hand-marked veteran attends an event", async () => {
+    const profile = await aProfile("marked-then-attended")
+    await setVeteranByHand(profile.id, true)
+    const markedAt = (await veteranStatusOf(profile.id)).became_veteran_date
+
+    const event = await anEvent()
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event.id,
+      attendance_status: "attended",
+    })
+
+    const status = await veteranStatusOf(profile.id)
+    expect(status.is_veteran).toBe(true)
+    expect(status.became_veteran_date).toEqual(markedAt)
+    expect(new Date(status.became_veteran_date ?? "")).not.toEqual(eventStart)
+  })
+
   it("makes an unmarked person a veteran again from the next event they attend", async () => {
     const profile = await aProfile("unmarked-then-attended")
     const first = await anEvent()
