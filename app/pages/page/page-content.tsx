@@ -18,6 +18,7 @@ export function PageContent({ page, events, isLoggedIn }: PageContentProps) {
       <div>
         <PageHeader header={page.header} />
         <PageSections
+          page={page.address}
           sections={page.sections}
           events={events}
           isLoggedIn={isLoggedIn}
