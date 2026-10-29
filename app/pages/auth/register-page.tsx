@@ -132,7 +132,10 @@ const RegisterPage = ({}: Route.ComponentProps) => {
           <p
             className="text-sm text-muted-foreground"
             onClick={(event) => {
-              if ((event.target as Element).closest("a")) {
+              if (
+                event.target instanceof Element &&
+                event.target.closest("a")
+              ) {
                 trackEvent("auth_link_clicked", {
                   action: "login",
                   area: "register_page",

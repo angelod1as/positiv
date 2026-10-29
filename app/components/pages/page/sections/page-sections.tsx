@@ -38,7 +38,8 @@ export const PageSections = ({
   // Tracked here, not in each Section, so a link an Editor adds anywhere in a
   // Section is counted without a code change.
   const trackCta = (section: string) => (event: MouseEvent<HTMLElement>) => {
-    const link = (event.target as Element).closest("a")
+    if (!(event.target instanceof Element)) return
+    const link = event.target.closest("a")
     if (!link) return
     track("page_cta_clicked", { page, section, label: linkLabel(link) })
   }
@@ -62,10 +63,7 @@ const renderSection = (
   switch (section._type) {
     case "nextEvents":
       return (
-        <Suspense
-          key={section._key}
-          fallback={<NextEventsSectionSkeleton content={section} />}
-        >
+        <Suspense fallback={<NextEventsSectionSkeleton content={section} />}>
           <Await resolve={events}>
             {(resolvedEvents) =>
               resolvedEvents ? (
@@ -76,32 +74,20 @@ const renderSection = (
         </Suspense>
       )
     case "about":
-      return <AboutSection key={section._key} content={section} />
+      return <AboutSection content={section} />
     case "testimonials":
-      return <TestimonialsSection key={section._key} content={section} />
+      return <TestimonialsSection content={section} />
     case "ctaBanner":
-      return (
-        <CtaBannerSection
-          key={section._key}
-          content={section}
-          isLoggedIn={isLoggedIn}
-        />
-      )
+      return <CtaBannerSection content={section} isLoggedIn={isLoggedIn} />
     case "founders":
-      return <FoundersSection key={section._key} content={section} />
+      return <FoundersSection content={section} />
     case "feedback":
-      return <FeedbackSection key={section._key} content={section} />
+      return <FeedbackSection content={section} />
     case "richTextSection":
-      return <RichTextSection key={section._key} content={section} />
+      return <RichTextSection content={section} />
     case "imageSection":
-      return <ImageSection key={section._key} content={section} />
+      return <ImageSection content={section} />
     case "placeholder":
-      return (
-        <PagePlaceholder
-          key={section._key}
-          variant="section"
-          missing={section.missing}
-        />
-      )
+      return <PagePlaceholder variant="section" missing={section.missing} />
   }
 }
