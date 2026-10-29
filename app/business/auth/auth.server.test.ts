@@ -204,7 +204,7 @@ describe("getContext", () => {
     expect(logger.error).not.toHaveBeenCalled()
   })
 
-  it("should not handle unrelated auth errors", async () => {
+  it("treats an unrelated auth error as signed out instead of redirecting", async () => {
     const mockRequest = new Request("http://localhost:5173/")
     const mockParams = {}
 
@@ -223,10 +223,52 @@ describe("getContext", () => {
 
     const { redirectWithError } = await import("remix-toast")
 
-    await expect(getContext(mockRequest, mockParams)).rejects.toThrow()
+    const result = await getContext(mockRequest, mockParams)
+
+    expect(result.currentUser).toBeNull()
+    expect(result.currentProfile).toBeNull()
     expect(mockSignOut).not.toHaveBeenCalled()
     expect(logger.error).toHaveBeenCalledTimes(1)
-    expect(redirectWithError).toHaveBeenCalled()
+    expect(redirectWithError).not.toHaveBeenCalled()
+  })
+
+  it("logs the auth error and nothing from the client, the headers or the session", async () => {
+    const fakeToken = "fake-access-token-for-tests"
+    const fakeEmail = "someone@example.invalid"
+    const fakeCookie = "sb-fake-auth-token=fake-cookie-value"
+    const mockRequest = new Request("http://localhost:5173/", {
+      headers: { Cookie: fakeCookie },
+    })
+
+    const mockSupabase = {
+      ...createMockSupabase({
+        message: "Some other error",
+        code: "different_error",
+        name: "AuthApiError",
+        status: 500,
+      }),
+      realtime: { accessTokenValue: fakeToken, email: fakeEmail },
+    }
+
+    const { createServerClient } = await import("~/lib/supabase/server")
+    vi.mocked(createServerClient).mockReturnValue({
+      supabase: mockSupabase as unknown as DBClient,
+      headers: new Headers({ "Set-Cookie": fakeCookie }),
+    })
+
+    await getContext(mockRequest, {})
+
+    expect(logger.error).toHaveBeenCalledWith("AUTH error", {
+      error: {
+        code: "different_error",
+        message: "Some other error",
+        status: 500,
+      },
+    })
+    const logged = JSON.stringify(vi.mocked(logger.error).mock.calls)
+    expect(logged).not.toContain(fakeToken)
+    expect(logged).not.toContain(fakeEmail)
+    expect(logged).not.toContain("fake-cookie-value")
   })
 
   it("should handle Auth session missing error without redirect", async () => {

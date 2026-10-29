@@ -1,16 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
-import { errorsCopy } from "~/copy/errors"
 import { zod } from "~/lib/helpers/zod"
-import paths from "~/lib/paths"
 import { createBrowserClient } from "~/lib/supabase/client"
 import type { Database } from "~types/database/database.types"
 import { currentProfileSchema, currentUserSchema } from "../common"
-
-const {
-  dash: { DASHBOARD },
-} = paths
 
 export const clientContextSchema = zod.object({
   supabase: zod.custom<SupabaseClient<Database, "public">>(),
@@ -47,8 +40,14 @@ export const getClientContext = async (): Promise<
     }
 
     if (!authError.message.includes("Auth session missing!")) {
-      console.error("AUTH error", errorProps)
-      throw await redirectWithError(DASHBOARD, errorsCopy.auth.sessionFailed)
+      console.error("AUTH error", {
+        error: {
+          code: authError.code,
+          message: authError.message,
+          status: authError.status,
+        },
+      })
+      return errorProps
     }
   }
 

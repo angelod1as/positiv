@@ -25,7 +25,6 @@ const {
   root: { HOME },
   auth: { LOGIN, LOGON_CALLBACK },
   dash: {
-    DASHBOARD,
     account: { CHANGE_PASSWORD },
   },
 } = paths
@@ -81,8 +80,14 @@ async function _fetchContext(
     }
 
     if (!authError.message.includes("Auth session missing!")) {
-      logger.error("AUTH error", errorProps)
-      throw await redirectWithError(DASHBOARD, errorsCopy.auth.sessionFailed)
+      logger.error("AUTH error", {
+        error: {
+          code: authError.code,
+          message: authError.message,
+          status: authError.status,
+        },
+      })
+      return errorProps
     }
   }
 
