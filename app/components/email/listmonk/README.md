@@ -169,6 +169,13 @@ attributes the visit to the e-mail. In HTML the separator is `&amp;`:
 ```
 
 Links built in code go through `emailLink` in `app/lib/helpers/email-link.ts`.
+`listmonk-templates.test.ts` fails if a link here goes without them.
+
+The campaign is the template, not the Listmonk campaign: every send on
+`default` reports as `default`. A campaign built in code tags its own button
+with its own name, so the pre-opening reminder, which uses the
+`event-opening` template, reports its button as `pre-opening-reminder` and
+its footer as `event-opening`.
 
 ### Transactional Data (transactional.html only)
 
