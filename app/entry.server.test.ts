@@ -155,7 +155,7 @@ describe("handleError", () => {
       return new Request("http://positivparty.com/pagamento/pay-1.data", {
         method: "POST",
         headers: {
-          origin: "https://positivparty.com",
+          origin: "https://evil.example",
           host: "positivparty.com",
           "x-forwarded-proto": "https",
           cookie: "sb-access-token=cookie-secret",
@@ -172,7 +172,7 @@ describe("handleError", () => {
       } as never)
 
       expect(logger.error).toHaveBeenCalledWith(
-        "POST /pagamento/pay-1 rejected with 400 before the action ran: Origin https://positivparty.com does not match request URL http://positivparty.com (react-router CSRF check)",
+        "POST /pagamento/pay-1 rejected with 400 before the action ran: Origin https://evil.example does not match request URL http://positivparty.com (react-router CSRF check)",
         expect.objectContaining({ category: "unhandled", status: 400 }),
       )
     })
@@ -190,7 +190,7 @@ describe("handleError", () => {
           requestFacts: {
             method: "POST",
             url: "http://positivparty.com/pagamento/pay-1",
-            origin: "https://positivparty.com",
+            origin: "https://evil.example",
             host: "positivparty.com",
             xForwardedProto: "https",
           },

@@ -30,7 +30,7 @@ describe("describeFailure", () => {
     it.each(["PUT", "PATCH", "DELETE"])("checks a %s too", (method) => {
       const request = new Request("http://positivparty.com/pagamento/abc", {
         method,
-        headers: { origin: "https://positivparty.com" },
+        headers: { origin: "https://evil.example" },
       })
 
       expect(
@@ -41,7 +41,7 @@ describe("describeFailure", () => {
     it("names a mismatched Origin behind a bare Bad Request", () => {
       const request = post(
         "http://positivparty.com/pagamento/abc.data",
-        "https://positivparty.com",
+        "https://evil.example",
       )
 
       expect(
@@ -49,7 +49,7 @@ describe("describeFailure", () => {
       ).toEqual({
         status: 400,
         summary:
-          "POST /pagamento/abc rejected with 400 before the action ran: Origin https://positivparty.com does not match request URL http://positivparty.com (react-router CSRF check)",
+          "POST /pagamento/abc rejected with 400 before the action ran: Origin https://evil.example does not match request URL http://positivparty.com (react-router CSRF check)",
       })
     })
 
@@ -97,7 +97,7 @@ describe("describeFailure", () => {
     it("does not blame the Origin for a Bad Request the app threw", () => {
       const request = post(
         "http://positivparty.com/pagamento/abc",
-        "https://positivparty.com",
+        "https://evil.example",
       )
 
       expect(
@@ -110,7 +110,7 @@ describe("describeFailure", () => {
 
     it("does not blame the Origin on a GET", () => {
       const request = new Request("http://positivparty.com/eventos", {
-        headers: { origin: "https://positivparty.com" },
+        headers: { origin: "https://evil.example" },
       })
 
       expect(
