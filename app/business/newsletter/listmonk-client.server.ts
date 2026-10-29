@@ -253,6 +253,7 @@ async function updateSubscriberAttributes(
   email: string,
   name: string,
   attributes: Record<string, unknown>,
+  existingListIds: number[],
   existingAttribs?: Record<string, unknown>
 ): Promise<void> {
   const { listmonkApiUrl, headers } = getListmonkConfig()
@@ -266,6 +267,7 @@ async function updateSubscriberAttributes(
       email,
       name,
       attribs: mergedAttribs,
+      lists: existingListIds,
     }),
   })
 
@@ -297,13 +299,11 @@ export const addSubscriber = composable(
         params.email,
         params.name,
         params.attributes,
+        existingSubscriber.lists.map((list) => list.id),
         existingSubscriber.attribs
       )
 
-      const existingListIds = existingSubscriber.lists.map((list) => list.id)
-      const allListIds = [...new Set([...existingListIds, ...params.lists])]
-
-      await addSubscriberToLists(existingSubscriber.id, allListIds)
+      await addSubscriberToLists(existingSubscriber.id, params.lists)
 
       return { subscriberId: existingSubscriber.id }
     } else {

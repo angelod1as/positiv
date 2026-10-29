@@ -222,7 +222,7 @@ describe("addSubscriber", () => {
         body: JSON.stringify({
           ids: [456],
           action: "add",
-          target_list_ids: [1, 4],
+          target_list_ids: [4],
           status: "confirmed",
         }),
       })
@@ -275,7 +275,7 @@ describe("addSubscriber", () => {
     )
   })
 
-  it("should preserve existing lists when adding subscriber to new lists", async () => {
+  it("should confirm only the requested lists, leaving lists the subscriber left untouched", async () => {
     fetchSpy
       .mockResolvedValueOnce({
         ok: true,
@@ -314,7 +314,7 @@ describe("addSubscriber", () => {
     expect(listBody).toEqual({
       ids: [456],
       action: "add",
-      target_list_ids: [1, 2, 4],
+      target_list_ids: [4],
       status: "confirmed",
     })
   })
@@ -435,6 +435,49 @@ describe("addSubscriber", () => {
     })
   })
 
+  // Listmonk's PUT /api/subscribers/:id deletes every subscription not in
+  // `lists`; sending the current ones without preconfirm keeps their statuses
+  it("should keep every existing subscription when updating subscriber details", async () => {
+    fetchSpy
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            results: [
+              {
+                id: 456,
+                email: "existing@example.com",
+                lists: [{ id: 4 }, { id: 99 }],
+                attribs: {},
+              },
+            ],
+          },
+        }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { id: 456 } }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({}),
+      } as Response)
+
+    await addSubscriber({
+      email: "existing@example.com",
+      name: "Existing User",
+      lists: [4],
+      attributes: {},
+    })
+
+    const updateCall = fetchSpy.mock.calls.find(
+      (call) => call[0] === "https://listmonk.test/api/subscribers/456"
+    )
+    const updateBody = JSON.parse(updateCall?.[1]?.body as string)
+    expect(updateBody.lists).toEqual([4, 99])
+    expect(updateBody.preconfirm_subscriptions).toBeUndefined()
+  })
+
   it("should use dedicated list management endpoint for additive list subscriptions", async () => {
     fetchSpy
       .mockResolvedValueOnce({
@@ -481,7 +524,7 @@ describe("addSubscriber", () => {
         body: JSON.stringify({
           ids: [789],
           action: "add",
-          target_list_ids: [1, 2, 4],
+          target_list_ids: [4],
           status: "confirmed",
         }),
       })
