@@ -454,8 +454,8 @@ describe("updateEventListmonkList", () => {
     mockGetListSubscribers.mockResolvedValue({
       success: true,
       data: [
-        { id: 100, email: "rejected@example.com", name: "Rejected User", status: "confirmed" },
-        { id: 101, email: "user1@example.com", name: "User One", status: "confirmed" },
+        { id: 100, email: "rejected@example.com", name: "Rejected User", status: "confirmed", updated_at: "2024-01-01T00:00:00Z", lists: [] },
+        { id: 101, email: "user1@example.com", name: "User One", status: "confirmed", updated_at: "2024-01-01T00:00:00Z", lists: [] },
       ],
       errors: [],
     })
