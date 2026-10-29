@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { renderToStaticMarkup } from "react-dom/server"
 import { render, renderWithRouter, screen, waitFor } from "~/test/test-utils"
 import type { Route } from "./+types/root"
@@ -279,6 +279,10 @@ describe("App live Site Settings", () => {
 })
 
 describe("App email confirmation landing", () => {
+  afterEach(() => {
+    delete window.umami
+  })
+
   it("reports the landing of a confirmed signup", { timeout: 15000 }, async () => {
     const umamiTrack = vi.fn()
     window.umami = { track: umamiTrack }
@@ -304,6 +308,5 @@ describe("App email confirmation landing", () => {
     await waitFor(() =>
       expect(umamiTrack).toHaveBeenCalledWith("email_confirmed", undefined),
     )
-    delete window.umami
   })
 })

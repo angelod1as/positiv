@@ -71,7 +71,6 @@ const PaymentThanksPage = ({ loaderData }: Route.ComponentProps) => {
   const data = loaderData as PaymentThanksData & { betaNotice: boolean }
   const { title, body } = thanksMessage(data)
 
-  // A closed link lands here too, and nobody paid through it.
   const reached = data.state !== "closed"
   useEffect(() => {
     if (reached) trackEvent("payment_thanks_reached")

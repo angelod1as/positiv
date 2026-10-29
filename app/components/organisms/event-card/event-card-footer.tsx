@@ -53,8 +53,6 @@ type EventCardFooterProps = {
    */
   appliesAsStaff?: boolean
 }
-// Rendered only where the application is on offer, so the view it records is
-// the first step of the application funnel, not every card on the dashboard.
 const ApplyButton = ({
   eventId,
   dataTestId,
