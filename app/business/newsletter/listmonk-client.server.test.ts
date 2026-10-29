@@ -6,6 +6,7 @@ import {
   addSubscribersToListBulk,
   removeSubscribersFromListBulk,
   removeSubscriber,
+  unsubscribeSubscriber,
   createCampaign,
   updateCampaignStatus,
 } from "./listmonk-client.server"
@@ -857,6 +858,86 @@ describe("removeSubscriber", () => {
     const result = await removeSubscriber("unsubscribe@example.com")
 
     expect(result.success).toBe(false)
+  })
+})
+
+describe("unsubscribeSubscriber", () => {
+  let fetchSpy: MockInstance
+
+  beforeEach(() => {
+    fetchSpy = vi.spyOn(global, "fetch")
+  })
+
+  afterEach(() => {
+    fetchSpy.mockRestore()
+    vi.clearAllMocks()
+  })
+
+  it("should mark the given lists unsubscribed, keeping the memberships", async () => {
+    fetchSpy
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            results: [
+              { id: 456, email: "leaving@example.com", lists: [{ id: 4 }, { id: 99 }] },
+            ],
+          },
+        }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({}),
+      } as Response)
+
+    const result = await unsubscribeSubscriber("leaving@example.com", [4, 141])
+
+    expect(result.success).toBe(true)
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      2,
+      "https://listmonk.test/api/subscribers/lists",
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({
+          ids: [456],
+          action: "unsubscribe",
+          target_list_ids: [4, 141],
+        }),
+      })
+    )
+  })
+
+  it("should do nothing when the subscriber is not in Listmonk", async () => {
+    fetchSpy.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ data: { results: [] } }),
+    } as Response)
+
+    const result = await unsubscribeSubscriber("nobody@example.com", [4])
+
+    expect(result.success).toBe(true)
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it("should fail when Listmonk rejects the unsubscribe", async () => {
+    fetchSpy
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: { results: [{ id: 456, email: "leaving@example.com", lists: [] }] },
+        }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        statusText: "Bad Request",
+        text: async () => "nope",
+      } as Response)
+
+    const result = await unsubscribeSubscriber("leaving@example.com", [4])
+
+    expect(result.success).toBe(false)
+    expect(result.errors?.[0]?.message).toContain("Failed to unsubscribe subscriber")
   })
 })
 

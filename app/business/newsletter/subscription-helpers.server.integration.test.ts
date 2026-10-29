@@ -1,4 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import {
+  LISTMONK_REGISTERED_LIST_ID,
+  LISTMONK_TEST_LIST_ID,
+  LISTMONK_VETERANS_LIST_ID,
+} from "~/lib/constants/constants"
+import * as listmonkClient from "./listmonk-client.server"
 import {
   setupIntegrationTest,
   cleanupAfterTest,
@@ -190,12 +196,25 @@ describe("Newsletter Subscription Helpers - Integration Tests", () => {
 
       tracker.track("newsletter_subscriptions", subscription.id)
 
+      const unsubscribeSubscriber = vi
+        .spyOn(listmonkClient, "unsubscribeSubscriber")
+        .mockResolvedValue({ success: true, data: undefined, errors: [] })
+
       const result = await unsubscribeProfile(profile.id)
+
+      // Unsubscribed, not removed: Listmonk keeps the "no", and event lists
+      // stay, since event email does not depend on newsletter consent.
+      expect(unsubscribeSubscriber).toHaveBeenCalledWith("test@example.com", [
+        LISTMONK_REGISTERED_LIST_ID,
+        LISTMONK_VETERANS_LIST_ID,
+        LISTMONK_TEST_LIST_ID,
+      ])
+      unsubscribeSubscriber.mockRestore()
 
       expect(result.success).toBe(true)
       if (result.success) {
         expect(result.data?.consent_given).toBe(false)
-        expect(["unsubscribed", "failed"]).toContain(result.data?.sync_status)
+        expect(result.data?.sync_status).toBe("unsubscribed")
         expect(result.data?.unsubscribed_at).not.toBeNull()
       }
     })

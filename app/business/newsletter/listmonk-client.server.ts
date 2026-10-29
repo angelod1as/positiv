@@ -372,6 +372,39 @@ export const removeSubscriber = composable(
   }
 )
 
+export const unsubscribeSubscriber = composable(
+  async (email: string, listIds: number[]): Promise<void> => {
+    if (ENV.E2E_MODE) {
+      return
+    }
+
+    const existingSubscriber = await getSubscriberByEmail(email)
+
+    if (!existingSubscriber) {
+      return
+    }
+
+    const { listmonkApiUrl, headers } = getListmonkConfig()
+
+    const response = await fetch(`${listmonkApiUrl}/api/subscribers/lists`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({
+        ids: [existingSubscriber.id],
+        action: "unsubscribe",
+        target_list_ids: listIds,
+      }),
+    })
+
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => "Unable to read error body")
+      throw new Error(
+        `Failed to unsubscribe subscriber: ${response.status} ${response.statusText}. Response: ${errorBody}`
+      )
+    }
+  }
+)
+
 export const createCampaign = composable(
   async (data: Record<string, unknown>): Promise<void> => {
     const { listmonkApiUrl, headers } = getListmonkConfig()
