@@ -49,6 +49,10 @@ describe("isVeteran", () => {
     expect(await isVeteran(profile.id)).toBe(false)
   })
 
+  it("is false for a profile that does not exist", async () => {
+    expect(await isVeteran(crypto.randomUUID())).toBe(false)
+  })
+
   it("is true for someone who attended an event", async () => {
     const profile = await aProfile("veteran")
     const past = await anEvent()
