@@ -262,6 +262,11 @@ export function useFormRuntime({
     setCurrentStepId(previousStepId)
   }, [isDone, previousStepId])
 
+  const onFirstTryWrongRef = useRef(onFirstTryWrong)
+  useEffect(() => {
+    onFirstTryWrongRef.current = onFirstTryWrong
+  })
+
   const runAdvance = useCallback(async () => {
     setLastMove("forward")
 
@@ -285,7 +290,7 @@ export function useFormRuntime({
           ...firstTryRef.current,
           [question.id]: result.ok,
         }
-        if (!result.ok) onFirstTryWrong?.(question.id)
+        if (!result.ok) onFirstTryWrongRef.current?.(question.id)
       }
 
       if (!result.ok) {
@@ -426,7 +431,7 @@ export function useFormRuntime({
 
     stepRef.current = destination
     setCurrentStepId(destination)
-  }, [flow, questionsById, data, onFirstTryWrong])
+  }, [flow, questionsById, data])
 
   // Commits here register people for events, so a second Enter while one is in
   // flight must not submit twice.

@@ -532,6 +532,29 @@ describe("useFormRuntime first-try tracking", () => {
     expect(onFirstTryWrong).toHaveBeenCalledWith("a")
   })
 
+  it("keeps advance stable and calls the latest callback when it is written inline", async () => {
+    const first = vi.fn()
+    const latest = vi.fn()
+    const { result, rerender } = renderHook(
+      ({ onFirstTryWrong }) =>
+        useFormRuntime({ questions: probes, flow: probeFlow, onFirstTryWrong }),
+      { initialProps: { onFirstTryWrong: first } },
+    )
+    const advance = result.current.advance
+
+    rerender({ onFirstTryWrong: latest })
+
+    expect(result.current.advance).toBe(advance)
+
+    await act(async () => {
+      result.current.answer("a", "errada")
+      await result.current.advance()
+    })
+
+    expect(first).not.toHaveBeenCalled()
+    expect(latest).toHaveBeenCalledWith("a")
+  })
+
   it("reports nothing for a question right the first time", async () => {
     const onFirstTryWrong = vi.fn()
     const { result } = renderHook(() =>
