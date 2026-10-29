@@ -158,6 +158,23 @@ export function translateAsaasEvent(event: AsaasWebhookEvent): PaymentEvent {
   return { ...base, type: "ignored" }
 }
 
+// The endpoint is public, so a refusal can repeat once per request. Every one
+// reaches the container logs, but only the first per reason in a window is an
+// error, which is what goes to Telegram.
+const REFUSAL_ALERT_WINDOW_MS = 15 * 60 * 1000
+const lastRefusalAlertAt = new Map<string, number>()
+
+function logRefusal(message: string, reason: string) {
+  const now = Date.now()
+  const last = lastRefusalAlertAt.get(reason)
+  if (last === undefined || now - last >= REFUSAL_ALERT_WINDOW_MS) {
+    lastRefusalAlertAt.set(reason, now)
+    logger.error(message, { reason })
+  } else {
+    logger.warn(message, { reason })
+  }
+}
+
 export async function readAsaasWebhook(
   request: Request,
 ): Promise<WebhookReading> {
@@ -165,8 +182,9 @@ export async function readAsaasWebhook(
   if (!expected) {
     // Never accept an unauthenticated webhook. A deploy without the token is a
     // misconfiguration to fix, not a door to leave open.
-    logger.error(
+    logRefusal(
       "ASAAS_WEBHOOK_TOKEN is not configured; refusing every webhook",
+      "not_configured",
     )
     return { ok: false, status: 503, error: "not_configured" }
   }
@@ -174,9 +192,7 @@ export async function readAsaasWebhook(
   const sent = request.headers.get("asaas-access-token")
   if (!tokensMatch(sent, expected)) {
     if (sent) {
-      logger.error("Asaas webhook refused: access token rejected", {
-        reason: "mismatch",
-      })
+      logRefusal("Asaas webhook refused: access token rejected", "mismatch")
     } else {
       logger.warn("Asaas webhook refused: no access token", {
         reason: "missing_header",
