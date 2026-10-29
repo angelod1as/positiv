@@ -35,6 +35,8 @@ type UseFormRuntimeOptions = {
   stepId?: StepId
   /** Keeps the run alive across a refresh. Without it, memory only. */
   persistence?: { formId: string; scopeId: string }
+  /** Called once per question whose first attempt was wrong. */
+  onFirstTryWrong?: (questionId: string) => void
 }
 
 type QuestionsById = Map<string, Question>
@@ -77,6 +79,7 @@ export function useFormRuntime({
   initialAnswers,
   persistence,
   stepId,
+  onFirstTryWrong,
 }: UseFormRuntimeOptions) {
   const questionsById = useMemo(
     () => new Map(questions.map((question) => [question.id, question])),
@@ -282,6 +285,7 @@ export function useFormRuntime({
           ...firstTryRef.current,
           [question.id]: result.ok,
         }
+        if (!result.ok) onFirstTryWrong?.(question.id)
       }
 
       if (!result.ok) {
@@ -422,7 +426,7 @@ export function useFormRuntime({
 
     stepRef.current = destination
     setCurrentStepId(destination)
-  }, [flow, questionsById, data])
+  }, [flow, questionsById, data, onFirstTryWrong])
 
   // Commits here register people for events, so a second Enter while one is in
   // flight must not submit twice.

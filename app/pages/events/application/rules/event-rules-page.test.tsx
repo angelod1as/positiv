@@ -812,6 +812,64 @@ describe("event-rules-page analytics", () => {
     )
   })
 
+  const EVENT_ID = "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c"
+  const sent = (name: string) =>
+    umamiTrack.mock.calls.filter(([event]) => event === name)
+  const idOf = (entry: (typeof quiz)[keyof typeof quiz]) =>
+    Object.keys(quiz).find((id) => quiz[id as keyof typeof quiz] === entry)
+
+  it("reports nothing about the quiz before anything is answered", async () => {
+    renderPageWithPathname()
+    await shownQuestion()
+
+    expect(umamiTrack).not.toHaveBeenCalled()
+  })
+
+  it("reports the quiz started once the first answer goes through", async () => {
+    const user = userEvent.setup()
+    renderPageWithPathname()
+
+    const { entry } = await firstSingleAnswerQuestion()
+    await answer(user, entry.answers.correct[0])
+    await shownQuestion()
+
+    await waitFor(() =>
+      expect(sent("rules_quiz_started")).toEqual([
+        ["rules_quiz_started", { eventId: EVENT_ID }],
+      ]),
+    )
+  })
+
+  it("reports the quiz started, then failed, on a wrong first answer", async () => {
+    const user = userEvent.setup()
+    renderPageWithPathname()
+
+    const { entry } = await firstSingleAnswerQuestion()
+    await answer(user, entry.answers.incorrect[0])
+
+    await waitFor(() =>
+      expect(sent("rules_quiz_failed")).toEqual([
+        ["rules_quiz_failed", { eventId: EVENT_ID, question: idOf(entry) }],
+      ]),
+    )
+    expect(sent("rules_quiz_started")).toHaveLength(1)
+  })
+
+  it("reports the quiz failed once per run", async () => {
+    const user = userEvent.setup()
+    renderPageWithPathname()
+
+    const first = await firstSingleAnswerQuestion()
+    await answer(user, first.entry.answers.incorrect[0])
+    await answer(user, first.entry.answers.correct[0])
+
+    const second = await firstSingleAnswerQuestion()
+    expect(second.prompt).not.toBe(first.prompt)
+    await answer(user, second.entry.answers.incorrect[0])
+
+    await waitFor(() => expect(sent("rules_quiz_failed")).toHaveLength(1))
+  })
+
   it("reports nothing when the check refuses the answers", async () => {
     const user = userEvent.setup()
     vi.spyOn(globalThis, "fetch").mockResolvedValue(

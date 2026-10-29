@@ -509,6 +509,46 @@ describe("useFormRuntime first-try tracking", () => {
     expect(result.current.firstTryCorrect.a).toBe(false)
   })
 
+  it("reports a first-attempt mistake once, by question", async () => {
+    const onFirstTryWrong = vi.fn()
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: probes, flow: probeFlow, onFirstTryWrong }),
+    )
+
+    await act(async () => {
+      result.current.answer("a", "errada")
+      await result.current.advance()
+    })
+    await act(async () => {
+      result.current.answer("a", "outra errada")
+      await result.current.advance()
+    })
+    await act(async () => {
+      result.current.answer("a", "certa")
+      await result.current.advance()
+    })
+
+    expect(onFirstTryWrong).toHaveBeenCalledTimes(1)
+    expect(onFirstTryWrong).toHaveBeenCalledWith("a")
+  })
+
+  it("reports nothing for a question right the first time", async () => {
+    const onFirstTryWrong = vi.fn()
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: probes, flow: probeFlow, onFirstTryWrong }),
+    )
+
+    await act(async () => {
+      await result.current.advance()
+    })
+    await act(async () => {
+      result.current.answer("a", "certa")
+      await result.current.advance()
+    })
+
+    expect(onFirstTryWrong).not.toHaveBeenCalled()
+  })
+
   it("does not count an unanswered advance as a first-attempt mistake", async () => {
     const { result } = renderHook(() =>
       useFormRuntime({ questions: probes, flow: probeFlow }),
