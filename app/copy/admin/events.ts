@@ -43,6 +43,9 @@ export const adminEventsCopy = {
   buttons: {
     download: "Baixar dados",
   },
+  downloadData: {
+    staff: "Staff",
+  },
   generalData: {
     title: "Dados gerais",
     field: (label: string | undefined, value: string | number) =>

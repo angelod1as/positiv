@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { isValidCpf, normalizeCpf } from "./cpf"
+import { formatCpf, isValidCpf, normalizeCpf } from "./cpf"
 
 describe("normalizeCpf", () => {
   it("keeps only digits", () => {
@@ -38,5 +38,21 @@ describe("isValidCpf", () => {
     expect(isValidCpf("")).toBe(false)
     expect(isValidCpf(null)).toBe(false)
     expect(isValidCpf(undefined)).toBe(false)
+  })
+})
+
+describe("formatCpf", () => {
+  it("writes the eleven digits as 000.000.000-00", () => {
+    expect(formatCpf("52998224725")).toBe("529.982.247-25")
+    expect(formatCpf("01234567890")).toBe("012.345.678-90")
+  })
+
+  it("returns an empty string for a missing value", () => {
+    expect(formatCpf(null)).toBe("")
+    expect(formatCpf(undefined)).toBe("")
+  })
+
+  it("leaves a value that is not eleven digits as it is", () => {
+    expect(formatCpf("1234")).toBe("1234")
   })
 })

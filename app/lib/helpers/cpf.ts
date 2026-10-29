@@ -20,3 +20,9 @@ export function isValidCpf(value: string | null | undefined): boolean {
     checkDigit(digits, 10) === Number(digits[10])
   )
 }
+
+export function formatCpf(value: string | null | undefined): string {
+  const digits = normalizeCpf(value)
+  if (digits.length !== 11) return value ?? ""
+  return digits.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4")
+}

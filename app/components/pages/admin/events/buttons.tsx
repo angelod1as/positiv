@@ -5,6 +5,7 @@ import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import { Button } from "~/components/atoms/button/button"
 import { adminEventsCopy } from "~/copy/admin/events"
 import { sharedCopy } from "~/copy/shared"
+import { buildCsv, downloadCSV } from "~/lib/helpers/download-csv"
 import { mapParticipantsToDownloadFormat } from "~/lib/helpers/download-helpers"
 import { getWillGoToEventParticipants } from "~/lib/helpers/get-filtered-participants"
 import paths from "~/lib/paths"
@@ -31,13 +32,10 @@ export const Buttons: FC<ButtonProps> = ({
 }) => {
   const { id, event_status, listmonk_list_id } = event
 
-  // The spreadsheet library is heavy and only an admin who actually clicks
-  // needs it, so it is fetched here rather than with the page
-  const handleDownload = async () => {
-    const { downloadXLSX } = await import("~/lib/helpers/download-xlsx")
+  const handleDownload = () => {
     const filteredParticipants =
       getWillGoToEventParticipants(participants).participants
-    downloadXLSX(mapParticipantsToDownloadFormat(filteredParticipants))
+    downloadCSV(buildCsv(mapParticipantsToDownloadFormat(filteredParticipants)))
   }
 
   return (

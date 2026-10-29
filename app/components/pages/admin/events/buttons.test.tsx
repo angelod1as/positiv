@@ -2,15 +2,16 @@ import type { FetcherWithComponents } from "react-router"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { renderWithRouter, screen, waitFor } from "~/test/test-utils"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
-import { downloadXLSX } from "~/lib/helpers/download-xlsx"
+import { downloadCSV } from "~/lib/helpers/download-csv"
 import type {
   ComposableFetcherData,
   Event,
 } from "~types/database/entities.types"
 import { Buttons } from "./buttons"
 
-vi.mock("~/lib/helpers/download-xlsx", () => ({
-  downloadXLSX: vi.fn(),
+vi.mock("~/lib/helpers/download-csv", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("~/lib/helpers/download-csv")>()),
+  downloadCSV: vi.fn(),
 }))
 
 const mockFetcher = {
@@ -34,6 +35,7 @@ const goingParticipant = {
   id: "1",
   full_name: "João Silva",
   social_name: "João",
+  cpf: "52998224725",
   rg: "12345678",
   rg_issuer: "SSP",
   approved_to_attend: "approved",
@@ -66,23 +68,16 @@ describe("Buttons", () => {
     vi.clearAllMocks()
   })
 
-  it("should download the names and RG sheet when clicking 'Baixar dados'", async () => {
+  it("should download the names and CPF sheet when clicking 'Baixar dados'", async () => {
     renderButtons([goingParticipant])
 
     screen.getByRole("button", { name: /baixar dados/i }).click()
 
-    await waitFor(() => expect(downloadXLSX).toHaveBeenCalled())
-    expect(downloadXLSX).toHaveBeenCalledWith([
-      {
-        "Nº": 1,
-        Staff: "",
-        "Status de Aprovação": "approved",
-        "Nome completo": "João Silva",
-        "Nome social ou apelido": "João",
-        RG: "12345678",
-        "Emissor do RG": "SSP",
-      },
-    ])
+    await waitFor(() => expect(downloadCSV).toHaveBeenCalled())
+    expect(downloadCSV).toHaveBeenCalledWith(
+      "\uFEFFNome completo;Nome social ou apelido;CPF;Staff\r\n" +
+        "João Silva;João;529.982.247-25;\r\n",
+    )
   })
 
   it("should leave out participants who will not go to the event", async () => {
@@ -90,11 +85,9 @@ describe("Buttons", () => {
 
     screen.getByRole("button", { name: /baixar dados/i }).click()
 
-    await waitFor(() => expect(downloadXLSX).toHaveBeenCalled())
-    const [rows] = vi.mocked(downloadXLSX).mock.calls[0] as [
-      Array<Record<string, unknown>>,
-    ]
-    expect(rows).toHaveLength(1)
-    expect(rows[0]["Nome completo"]).toBe("João Silva")
+    await waitFor(() => expect(downloadCSV).toHaveBeenCalled())
+    const [content] = vi.mocked(downloadCSV).mock.calls[0]
+    expect(content).toContain("João Silva")
+    expect(content).not.toContain("Maria Santos")
   })
 })
