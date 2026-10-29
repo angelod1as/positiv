@@ -42,6 +42,17 @@ export type AnalyticsEvents = AnonymousRegistry<{
   payment_page_opened: { state: "needs_cpf" | "ready" | "paid" | "closed" }
   payment_method_picked: { method: PaymentMethod; installments: number }
   payment_thanks_reached: undefined
+  nav_link_clicked: { area: "header" | "footer"; label: string; href: string }
+  page_cta_clicked: { page: string; section: string; label: string }
+  auth_link_clicked: {
+    action: "login" | "signup"
+    area: "header" | "login_page" | "register_page"
+  }
+  event_action_clicked: OnEvent & { action: "pay" | "paid_cancel_whatsapp" }
+  outbound_link_clicked: {
+    destination: "whatsapp" | "instagram"
+    area: "floating_button" | "footer"
+  }
 }>
 
 export type AnalyticsEventName = keyof AnalyticsEvents

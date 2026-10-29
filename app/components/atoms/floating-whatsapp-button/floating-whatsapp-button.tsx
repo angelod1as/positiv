@@ -6,10 +6,12 @@ import {
 } from "~/components/ui/tooltip"
 import { whatsAppButtonCopy } from "~/copy/layout"
 import { POSITIV_WHATSAPP } from "~/lib/constants/constants"
+import { useAnalytics } from "~/lib/hooks/use-analytics"
 
 import { Link } from "../link/link"
 
 export const FloatingWhatsAppButton = () => {
+  const { track } = useAnalytics()
   const message = whatsAppButtonCopy.message
   const whatsappLink = `https://wa.me/${POSITIV_WHATSAPP}?text=${encodeURIComponent(message)}`
 
@@ -21,6 +23,12 @@ export const FloatingWhatsAppButton = () => {
           target="_blank"
           rel="noopener noreferrer"
           aria-label={whatsAppButtonCopy.ariaLabel}
+          onClick={() =>
+            track("outbound_link_clicked", {
+              destination: "whatsapp",
+              area: "floating_button",
+            })
+          }
           className="fixed bottom-6 right-6 z-40 flex size-14 items-center justify-center rounded-full bg-white text-white shadow-lg transition-transform hover:scale-110 hover:bg-green sm:bottom-4 sm:right-4"
         >
           <img src={WhatsAppIcon} alt={whatsAppButtonCopy.iconAlt} className="size-7" />

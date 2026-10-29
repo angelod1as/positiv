@@ -385,6 +385,21 @@ describe("EventCardFooter", () => {
         screen.queryByRole("link", { name: eventCardCopy.payment.pay }),
       ).not.toBeInTheDocument()
     })
+
+    it("records the click on pay", async () => {
+      const user = userEvent.setup()
+      renderApplied({ active_payment_id: "pay-1" })
+
+      const pay = screen.getByRole("link", { name: eventCardCopy.payment.pay })
+      // jsdom cannot follow the link, and says so loudly.
+      pay.addEventListener("click", (event) => event.preventDefault())
+      await user.click(pay)
+
+      expect(mockTrack).toHaveBeenCalledWith("event_action_clicked", {
+        eventId: "test-event-id",
+        action: "pay",
+      })
+    })
   })
 
   describe("cancelling once paid", () => {
@@ -425,6 +440,21 @@ describe("EventCardFooter", () => {
         ).not.toBeInTheDocument()
       },
     )
+
+    it("records the click on the WhatsApp cancellation", async () => {
+      const user = userEvent.setup()
+      renderPaid()
+
+      const whatsapp = screen.getByRole("link", { name: paidCancel.trigger })
+      // jsdom cannot follow the link, and says so loudly.
+      whatsapp.addEventListener("click", (event) => event.preventDefault())
+      await user.click(whatsapp)
+
+      expect(mockTrack).toHaveBeenCalledWith("event_action_clicked", {
+        eventId: "test-event-id",
+        action: "paid_cancel_whatsapp",
+      })
+    })
 
     it("leaves the event out of the message when it has no title", () => {
       renderPaid({ eventTitle: null })

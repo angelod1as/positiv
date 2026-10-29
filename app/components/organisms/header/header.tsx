@@ -15,6 +15,7 @@ import {
 } from "~/components/ui/sheet"
 import { Separator } from "~/components/ui/separator"
 import { headerCopy } from "~/copy/layout"
+import { useAnalytics } from "~/lib/hooks/use-analytics"
 import paths from "~/lib/paths"
 import type { PortableText } from "~/business/cms/content.schema"
 import type { SiteLink } from "~/business/cms/site-settings.schema"
@@ -52,6 +53,7 @@ export const Header: FC<HeaderProps> = ({
   editorialSystemUnavailable = false,
 }) => {
   const { pathname } = useLocation()
+  const { track } = useAnalytics()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const topRef = useRef<HTMLDivElement>(null)
 
@@ -177,7 +179,14 @@ export const Header: FC<HeaderProps> = ({
                             <ContentLink
                               href={link.href}
                               className="no-underline hover:underline"
-                              onClick={() => setIsMenuOpen(false)}
+                              onClick={() => {
+                                track("nav_link_clicked", {
+                                  area: "header",
+                                  label: link.label,
+                                  href: link.href,
+                                })
+                                setIsMenuOpen(false)
+                              }}
                               aria-current={
                                 link.href === pathname ? "page" : undefined
                               }
@@ -222,7 +231,14 @@ export const Header: FC<HeaderProps> = ({
                   </Button>
                 </div>
               ) : (
-                <Button to={LOGIN}>{headerCopy.login}</Button>
+                <Button
+                  to={LOGIN}
+                  onClick={() =>
+                    track("auth_link_clicked", { action: "login", area: "header" })
+                  }
+                >
+                  {headerCopy.login}
+                </Button>
               ))}
           </div>
         </header>

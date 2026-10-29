@@ -8,6 +8,12 @@ import { paragraph } from "~/test/page-documents"
 import { render, renderWithDataRouter, renderWithRouter, screen, within } from "~/test/test-utils"
 import { Header } from "./header"
 
+const { mockTrack } = vi.hoisted(() => ({ mockTrack: vi.fn() }))
+
+vi.mock("~/lib/hooks/use-analytics", () => ({
+  useAnalytics: () => ({ track: mockTrack }),
+}))
+
 vi.mock("../news-dialog/news-utils", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../news-dialog/news-utils")>()),
   hasVisibleNews: () => true,
@@ -397,6 +403,40 @@ describe("Header", () => {
       unmount()
 
       expect(headerHeight()).toBe("")
+    })
+  })
+})
+
+describe("Header — click tracking", () => {
+  beforeEach(() => {
+    mockTrack.mockClear()
+  })
+
+  it("records a click on a Navigation link", async () => {
+    renderHeader()
+
+    await userEvent.click(
+      screen.getByRole("button", { name: headerCopy.openMenu }),
+    )
+    await userEvent.click(
+      within(screen.getByRole("dialog")).getByRole("link", { name: "Sobre" }),
+    )
+
+    expect(mockTrack).toHaveBeenCalledWith("nav_link_clicked", {
+      area: "header",
+      label: "Sobre",
+      href: "/sobre",
+    })
+  })
+
+  it("records a click on the login button", async () => {
+    renderHeader([])
+
+    await userEvent.click(screen.getByRole("link", { name: headerCopy.login }))
+
+    expect(mockTrack).toHaveBeenCalledWith("auth_link_clicked", {
+      action: "login",
+      area: "header",
     })
   })
 })

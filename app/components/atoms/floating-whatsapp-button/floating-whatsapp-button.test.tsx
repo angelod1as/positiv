@@ -1,8 +1,15 @@
 import { render, screen } from "~/test/test-utils"
 import { BrowserRouter } from "react-router"
-import { describe, expect, it } from "vitest"
+import userEvent from "@testing-library/user-event"
+import { describe, expect, it, vi } from "vitest"
 import { POSITIV_WHATSAPP } from "~/lib/constants/constants"
 import { FloatingWhatsAppButton } from "./floating-whatsapp-button"
+
+const { mockTrack } = vi.hoisted(() => ({ mockTrack: vi.fn() }))
+
+vi.mock("~/lib/hooks/use-analytics", () => ({
+  useAnalytics: () => ({ track: mockTrack }),
+}))
 
 const renderWithRouter = (component: React.ReactElement) => {
   return render(<BrowserRouter>{component}</BrowserRouter>)
@@ -56,5 +63,19 @@ describe("FloatingWhatsAppButton", () => {
     const { container } = renderWithRouter(<FloatingWhatsAppButton />)
     const button = container.firstChild as HTMLElement
     expect(button.className).toContain("fixed")
+  })
+
+  it("records a click on the button", async () => {
+    renderWithRouter(<FloatingWhatsAppButton />)
+    const link = screen.getByRole("link", { name: /fale conosco/i })
+    // jsdom cannot follow the link, and says so loudly.
+    link.addEventListener("click", (event) => event.preventDefault())
+
+    await userEvent.click(link)
+
+    expect(mockTrack).toHaveBeenCalledWith("outbound_link_clicked", {
+      destination: "whatsapp",
+      area: "floating_button",
+    })
   })
 })

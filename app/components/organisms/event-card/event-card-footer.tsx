@@ -156,7 +156,12 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
     return (
       <div className="flex flex-col sm:flex-row gap-4 w-full">
         {active_payment_id && (
-          <Button to={PAYMENT(active_payment_id)}>
+          <Button
+            to={PAYMENT(active_payment_id)}
+            onClick={() =>
+              track("event_action_clicked", { eventId, action: "pay" })
+            }
+          >
             {eventCardCopy.payment.pay}
           </Button>
         )}
@@ -204,6 +209,12 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
               variant="outline"
               to={`https://wa.me/${POSITIV_WHATSAPP}?text=${encodeURIComponent(eventCardCopy.paidCancel.whatsappMessage(eventTitle))}`}
               linkProps={{ target: "_blank", rel: "noopener noreferrer" }}
+              onClick={() =>
+                track("event_action_clicked", {
+                  eventId,
+                  action: "paid_cancel_whatsapp",
+                })
+              }
             >
               {eventCardCopy.paidCancel.trigger}
             </Button>
