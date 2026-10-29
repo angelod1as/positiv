@@ -22,6 +22,7 @@ import {
 import { isValidCpf } from "~/lib/helpers/cpf"
 import { isValidPhone } from "~/lib/helpers/phone"
 import { useMarkHydrated } from "~/lib/hooks/use-mark-hydrated"
+import { useTrackEmailConfirmed } from "~/lib/hooks/use-track-email-confirmed"
 import { logger, serializeError } from "~/lib/logger/logger.server"
 import { Copy } from "~/components/atoms/copy/copy"
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
@@ -429,6 +430,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
   const location = useLocation()
 
   useMarkHydrated()
+  useTrackEmailConfirmed()
 
   useEffect(() => {
     if (toast?.type) {

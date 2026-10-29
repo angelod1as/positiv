@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 import { renderToStaticMarkup } from "react-dom/server"
-import { renderWithRouter, screen } from "~/test/test-utils"
+import { render, renderWithRouter, screen, waitFor } from "~/test/test-utils"
 import type { Route } from "./+types/root"
 
 vi.mock("react-router", async () => {
@@ -275,5 +275,35 @@ describe("App live Site Settings", () => {
     )
 
     expect(await screen.findByText("LOADER")).toBeInTheDocument()
+  })
+})
+
+describe("App email confirmation landing", () => {
+  it("reports the landing of a confirmed signup", { timeout: 15000 }, async () => {
+    const umamiTrack = vi.fn()
+    window.umami = { track: umamiTrack }
+    vi.resetModules()
+    const { default: App } = await import("./root")
+    const { MemoryRouter } = await import("react-router")
+
+    render(
+      <App
+        {...({
+          loaderData: { siteSettings: null },
+        } as Route.ComponentProps)}
+      />,
+      {
+        wrapper: ({ children }) => (
+          <MemoryRouter initialEntries={["/?email-confirmado=1"]}>
+            {children}
+          </MemoryRouter>
+        ),
+      },
+    )
+
+    await waitFor(() =>
+      expect(umamiTrack).toHaveBeenCalledWith("email_confirmed", undefined),
+    )
+    delete window.umami
   })
 })
