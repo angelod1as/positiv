@@ -53,6 +53,34 @@ type EventCardFooterProps = {
    */
   appliesAsStaff?: boolean
 }
+// Rendered only where the application is on offer, so the view it records is
+// the first step of the application funnel, not every card on the dashboard.
+const ApplyButton = ({
+  eventId,
+  dataTestId,
+}: {
+  eventId: string
+  dataTestId: string | undefined
+}) => {
+  const prefetchStrategy = useSmartPrefetch()
+  const { track } = useAnalytics()
+
+  useEffect(() => {
+    track("event_viewed", { eventId })
+  }, [track, eventId])
+
+  return (
+    <Button
+      data-testid={dataTestId}
+      to={EVENT_VIEW(eventId)}
+      linkProps={{ prefetch: prefetchStrategy }}
+      onClick={() => track("apply_clicked", { eventId })}
+    >
+      {eventCardCopy.apply}
+    </Button>
+  )
+}
+
 export const EventCardFooter: FC<EventCardFooterProps> = ({
   is_applied,
   is_invited,
@@ -68,7 +96,6 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
   appliesAsStaff,
 }) => {
   const fetcher = useFetcher()
-  const prefetchStrategy = useSmartPrefetch()
   const { track } = useAnalytics()
   const [cancellationReason, setCancellationReason] = useState("")
   const reasonId = useId()
@@ -234,26 +261,14 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
 
   if (isClosed && is_invited && !appliesAsStaff) {
     return (
-      <Button
-        data-testid={dataTestId}
-        to={EVENT_VIEW(eventId)}
-        linkProps={{ prefetch: prefetchStrategy }}
-      >
-        {eventCardCopy.apply}
-      </Button>
+      <ApplyButton eventId={eventId} dataTestId={dataTestId} />
     )
   }
 
   if (isOpen || (isClosed && appliesAsStaff)) {
     return (
       <div className="flex flex-col sm:flex-row gap-4 w-full">
-        <Button
-          data-testid={dataTestId}
-          to={EVENT_VIEW(eventId)}
-          linkProps={{ prefetch: prefetchStrategy }}
-        >
-          {eventCardCopy.apply}
-        </Button>
+        <ApplyButton eventId={eventId} dataTestId={dataTestId} />
 
         {directApply && (
           <Button
