@@ -160,7 +160,10 @@ export const getUserContext = async (
     // opened while signed out used to end at the dashboard with no explanation.
     const url = new URL(request.url)
     const destination = `${url.pathname}${url.search}`
-    const login = `${LOGIN}?redirect_to=${encodeURIComponent(destination)}`
+    // The UTMs ride along on the login page too, so a visit from an e-mail is
+    // attributed even when the person gives up before signing in.
+    const utm = [...url.searchParams].filter(([key]) => key.startsWith("utm_"))
+    const login = `${LOGIN}?${new URLSearchParams([["redirect_to", destination], ...utm])}`
 
     throw await redirectWithError(login, errorsCopy.auth.loginRequired)
   }

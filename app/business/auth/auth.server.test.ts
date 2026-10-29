@@ -962,6 +962,30 @@ describe("getUserContext", () => {
       expect.any(String),
     )
   })
+
+  it("carries the UTMs onto the login page so an abandoned login is attributed", async () => {
+    const { createServerClient } = await import("~/lib/supabase/server")
+    vi.mocked(createServerClient).mockReturnValue({
+      supabase: signedOutSupabase() as unknown as DBClient,
+      headers: new Headers(),
+    })
+
+    const { redirectWithError } = await import("remix-toast")
+
+    await expect(
+      getUserContext(
+        new Request(
+          "http://localhost:5173/dashboard?utm_source=email&utm_medium=transactional&utm_campaign=payment-confirmed&q=2",
+        ),
+        {},
+      ),
+    ).rejects.toThrow()
+
+    expect(redirectWithError).toHaveBeenCalledWith(
+      "/entrar?redirect_to=%2Fdashboard%3Futm_source%3Demail%26utm_medium%3Dtransactional%26utm_campaign%3Dpayment-confirmed%26q%3D2&utm_source=email&utm_medium=transactional&utm_campaign=payment-confirmed",
+      expect.any(String),
+    )
+  })
 })
 
 describe("registerUser signup guard", () => {
