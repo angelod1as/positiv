@@ -270,6 +270,34 @@ describe("Veterans list sync triggers - Integration Tests", () => {
     )
   })
 
+  it("keeps the admin's change when the Listmonk call throws", async () => {
+    const warn = vi.spyOn(logger, "warn")
+    getListSubscribers.mockRejectedValue(new Error("socket hang up"))
+    const { profile, participant } = await createParticipant(
+      "pos656-listmonk-throws@example.com",
+      false,
+    )
+
+    const result = await updateEventParticipantById({
+      id: participant.id,
+      profile_id: profile.id,
+      intent: "update-event-participant",
+      is_veteran: true,
+    })
+
+    expect(result.success).toBe(true)
+    const stored = await kysely
+      .selectFrom("profiles")
+      .select("is_veteran")
+      .where("id", "=", profile.id)
+      .executeTakeFirstOrThrow()
+    expect(stored.is_veteran).toBe(true)
+    expect(warn).toHaveBeenCalledWith(
+      "Failed to sync the Veterans Listmonk list:",
+      expect.anything(),
+    )
+  })
+
   it("keeps the event completed when Listmonk fails", async () => {
     getListSubscribers.mockResolvedValue({
       success: false,
