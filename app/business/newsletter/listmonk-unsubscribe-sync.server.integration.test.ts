@@ -155,6 +155,36 @@ describe("syncListmonkUnsubscribes - Integration Tests", () => {
     expect((await subscription(id)).consent_given).toBe(false)
   })
 
+  it("dates a block by its subscriptions, not by the subscriber's last edit", async () => {
+    const id = await consentedProfile(
+      "pos635-blocked-then-back@example.com",
+      "2026-10-05T10:00:00.000Z",
+    )
+    const blockedAt = "2026-10-01T10:00:00.000Z"
+    getBlocklistedSubscribers.mockResolvedValue({
+      success: true,
+      data: [
+        {
+          // updated_at moves on any edit, e.g. a basic-data save
+          ...blocklisted(12, "pos635-blocked-then-back@example.com", "2026-10-20T10:00:00.000Z"),
+          lists: [
+            {
+              id: LISTMONK_REGISTERED_LIST_ID,
+              subscription_status: "unsubscribed",
+              subscription_updated_at: blockedAt,
+            },
+          ],
+        },
+      ],
+      errors: [],
+    })
+
+    const result = await syncListmonkUnsubscribes()
+
+    expect(result.success && result.data.unsubscribed).toBe(0)
+    expect((await subscription(id)).consent_given).toBe(true)
+  })
+
   it("matches by Listmonk subscriber ID when the e-mail changed", async () => {
     const id = await consentedProfile(
       "pos635-new-address@example.com",
@@ -198,6 +228,30 @@ describe("syncListmonkUnsubscribes - Integration Tests", () => {
       success: true,
       data: [leftRegistered(5, "pos635-someone-else@example.com", "2026-10-01T10:00:00.000Z")],
       errors: [],
+    })
+
+    await syncListmonkUnsubscribes()
+
+    expect((await subscription(id)).consent_given).toBe(true)
+  })
+
+  it("keeps a consent given on the site while Listmonk was being read", async () => {
+    const id = await consentedProfile(
+      "pos635-mid-sync@example.com",
+      "2026-09-01T10:00:00.000Z",
+    )
+    getListSubscribers.mockResolvedValue({
+      success: true,
+      data: [leftRegistered(11, "pos635-mid-sync@example.com", "2026-10-01T10:00:00.000Z")],
+      errors: [],
+    })
+    getBlocklistedSubscribers.mockImplementation(async () => {
+      await kysely
+        .updateTable("newsletter_subscriptions")
+        .set({ last_consent_given_at: "2026-10-10T10:00:00.000Z" })
+        .where("id", "=", id)
+        .execute()
+      return { success: true, data: [], errors: [] }
     })
 
     await syncListmonkUnsubscribes()

@@ -46,8 +46,20 @@ async function readOptOuts(): Promise<OptOut[]> {
   }
 
   const registeredOptOutAt = (subscriber: ListSubscriber) =>
-    subscriber.lists?.find((list) => list.id === LISTMONK_REGISTERED_LIST_ID)
+    subscriber.lists.find((list) => list.id === LISTMONK_REGISTERED_LIST_ID)
       ?.subscription_updated_at ?? subscriber.updated_at
+
+  // A block unsubscribes every list at once; the subscriber's own updated_at
+  // moves on any later edit, so it would date the block too late.
+  const blockedAt = (subscriber: ListSubscriber) =>
+    subscriber.lists.reduce<string | null>(
+      (latest, list) =>
+        latest === null ||
+        new Date(list.subscription_updated_at) > new Date(latest)
+          ? list.subscription_updated_at
+          : latest,
+      null,
+    ) ?? subscriber.updated_at
 
   return [
     ...leftRegistered.data.map((subscriber) => ({
@@ -58,7 +70,7 @@ async function readOptOuts(): Promise<OptOut[]> {
     ...blocklisted.data.map((subscriber) => ({
       subscriberId: subscriber.id,
       email: subscriber.email.trim().toLowerCase(),
-      optedOutAt: new Date(subscriber.updated_at),
+      optedOutAt: new Date(blockedAt(subscriber)),
     })),
   ]
 }
