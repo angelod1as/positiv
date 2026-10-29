@@ -68,7 +68,7 @@ test.describe('Admin Event Management', () => {
     // page of its own
     const downloadPromise = page.waitForEvent('download')
     await eventManagement.clickDownloadData()
-    expect((await downloadPromise).suggestedFilename()).toBe('planilha.xlsx')
+    expect((await downloadPromise).suggestedFilename()).toBe('planilha.csv')
     
     // Go back to dashboard
     await adminDashboard.navigate()
