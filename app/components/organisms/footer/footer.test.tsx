@@ -1,9 +1,16 @@
-import { describe, expect, it } from "vitest"
+import userEvent from "@testing-library/user-event"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { siteSettingsSchema } from "~/business/cms/site-settings.schema"
 import { footerCopy, newsDialogCopy } from "~/copy/layout"
 import { siteSettingsDocument } from "~/test/site-settings-documents"
 import { renderWithDataRouter, screen, within } from "~/test/test-utils"
 import { Footer } from "./footer"
+
+const { mockTrack } = vi.hoisted(() => ({ mockTrack: vi.fn() }))
+
+vi.mock("~/lib/hooks/use-analytics", () => ({
+  useAnalytics: () => ({ track: mockTrack }),
+}))
 
 const siteSettings = siteSettingsSchema.parse(siteSettingsDocument())
 
@@ -112,6 +119,45 @@ describe("Footer", () => {
       const grid = screen.getByTestId("footer-grid")
       expect(grid.children).toHaveLength(1)
       expect(grid.children[0]).toHaveClass("lg:col-span-2")
+    })
+  })
+
+  describe("click tracking", () => {
+    beforeEach(() => {
+      mockTrack.mockClear()
+    })
+
+    it("records a click on a link column's link", async () => {
+      renderFooter(siteSettings)
+
+      await userEvent.click(
+        within(screen.getByRole("list", { name: "A Positiv" })).getByRole(
+          "link",
+          { name: "Início" },
+        ),
+      )
+
+      expect(mockTrack).toHaveBeenCalledWith("nav_link_clicked", {
+        area: "footer",
+        label: "Início",
+        href: "/",
+      })
+    })
+
+    it("records a click on the Instagram link", async () => {
+      renderFooter(siteSettings)
+
+      const instagram = screen.getByRole("link", {
+        name: new RegExp(footerCopy.instagram),
+      })
+      // jsdom cannot follow the link, and says so loudly.
+      instagram.addEventListener("click", (event) => event.preventDefault())
+      await userEvent.click(instagram)
+
+      expect(mockTrack).toHaveBeenCalledWith("outbound_link_clicked", {
+        destination: "instagram",
+        area: "footer",
+      })
     })
   })
 })

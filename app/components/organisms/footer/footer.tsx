@@ -6,6 +6,7 @@ import { Copy } from "~/components/atoms/copy/copy"
 import { Link } from "~/components/atoms/link/link"
 import { RichText } from "~/components/atoms/rich-text/rich-text"
 import { footerCopy } from "~/copy/layout"
+import { useAnalytics } from "~/lib/hooks/use-analytics"
 import type { ProfileWithRoles } from "~types/database/entities.types"
 import { NewsDialog } from "../news-dialog/news-dialog"
 
@@ -18,18 +19,33 @@ type FooterProps = {
   siteSettings?: SiteSettings | null
 }
 
-const InstagramLink: FC<{ url: string }> = ({ url }) => (
-  <Link target="_blank" to={url} className="flex gap-2 items-center">
-    <img src={Instagram} alt={footerCopy.instagramIconAlt} width={20} />{" "}
-    {footerCopy.instagram}
-  </Link>
-)
+const InstagramLink: FC<{ url: string }> = ({ url }) => {
+  const { track } = useAnalytics()
+
+  return (
+    <Link
+      target="_blank"
+      to={url}
+      className="flex gap-2 items-center"
+      onClick={() =>
+        track("outbound_link_clicked", {
+          destination: "instagram",
+          area: "footer",
+        })
+      }
+    >
+      <img src={Instagram} alt={footerCopy.instagramIconAlt} width={20} />{" "}
+      {footerCopy.instagram}
+    </Link>
+  )
+}
 
 export const Footer: FC<FooterProps> = ({
   isThereAnyNews,
   currentProfile,
   siteSettings,
 }) => {
+  const { track } = useAnalytics()
   const footer = siteSettings?.footer
   const columns = footer?.columns ?? []
   const hasColumns = columns.length > 0
@@ -57,7 +73,18 @@ export const Footer: FC<FooterProps> = ({
                   >
                     {column.links.map((link) => (
                       <li key={link._key}>
-                        <ContentLink href={link.href}>{link.label}</ContentLink>
+                        <ContentLink
+                          href={link.href}
+                          onClick={() =>
+                            track("nav_link_clicked", {
+                              area: "footer",
+                              label: link.label,
+                              href: link.href,
+                            })
+                          }
+                        >
+                          {link.label}
+                        </ContentLink>
                       </li>
                     ))}
                   </ul>
