@@ -9,8 +9,7 @@ import { participantCopy } from "~/copy/participant"
 import { basicDataValidation } from "~/copy/account"
 import { isUniqueViolation } from "~/lib/helpers/is-unique-violation"
 import { basicDataSchema, ExtraBasicDataSchema, userContextSchema } from "../common"
-import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
-import type { SubscriptionSource } from "../newsletter/types"
+import { refreshNewsletterSubscriber } from "../newsletter/auto-subscribe.server"
 
 type SaveBasicDataProps = {
   answers: Record<string, unknown>
@@ -123,10 +122,7 @@ export async function saveBasicData({
     .executeTakeFirst()
 
   if (subscription?.subscription_source) {
-    await subscribeProfileToNewsletter(
-      saved.id,
-      subscription.subscription_source as SubscriptionSource,
-    )
+    await refreshNewsletterSubscriber(saved.id)
   }
 
   return { ok: true }
