@@ -18,7 +18,7 @@
 import { composable } from "composable-functions"
 import { logger } from "~/lib/logger/logger.server"
 import { db } from "~/lib/supabase/db.server"
-import { addSubscriber } from "./listmonk-client.server"
+import { addSubscriber, unsubscribeSubscriber } from "./listmonk-client.server"
 import {
   computeSubscriberName,
   updateSyncStatus,
@@ -26,6 +26,7 @@ import {
 import {
   LISTMONK_REGISTERED_LIST_ID,
   LISTMONK_TEST_LIST_ID,
+  LISTMONK_VETERANS_LIST_ID,
 } from "~/lib/constants/constants"
 import {
   DEFAULT_BACKOFF_MINUTES,
@@ -37,6 +38,7 @@ import type { Database } from "~/types/database/database.types"
 type SubscriptionWithProfile = {
   id: string
   profile_id: string
+  consent_given: boolean
   retry_count: number
   last_sync_attempt_at: string | null
   email: string
@@ -56,6 +58,7 @@ export async function getFailedSubscriptionsForRetry(): Promise<
     .select([
       "newsletter_subscriptions.id",
       "newsletter_subscriptions.profile_id",
+      "newsletter_subscriptions.consent_given",
       "newsletter_subscriptions.retry_count",
       "newsletter_subscriptions.last_sync_attempt_at",
       "profiles.email",
@@ -90,6 +93,48 @@ export function shouldRetrySubscription(
   return new Date() >= nextRetryTime
 }
 
+// A failed sync of someone who declined is a failed unsubscribe: retrying it
+// as a subscribe would put them back on the newsletter.
+async function retryUnsubscribe(
+  subscription: SubscriptionWithProfile,
+): Promise<{
+  success: boolean
+  profileId: string
+  errors?: unknown[]
+}> {
+  const result = await unsubscribeSubscriber(subscription.email, [
+    LISTMONK_REGISTERED_LIST_ID,
+    LISTMONK_VETERANS_LIST_ID,
+    LISTMONK_TEST_LIST_ID,
+  ])
+
+  await db
+    .updateTable("newsletter_subscriptions")
+    .set(
+      result.success
+        ? {
+            sync_status: "unsubscribed",
+            retry_count: 0,
+            last_sync_attempt_at: new Date().toISOString(),
+          }
+        : {
+            retry_count: subscription.retry_count + 1,
+            last_sync_attempt_at: new Date().toISOString(),
+          },
+    )
+    .where("id", "=", subscription.id)
+    .where("sync_status", "=", "failed")
+    .execute()
+
+  return result.success
+    ? { success: true, profileId: subscription.profile_id }
+    : {
+        success: false,
+        profileId: subscription.profile_id,
+        errors: result.errors,
+      }
+}
+
 async function retrySubscriptionSync(
   subscription: SubscriptionWithProfile,
 ): Promise<{
@@ -97,6 +142,10 @@ async function retrySubscriptionSync(
   profileId: string
   errors?: unknown[]
 }> {
+  if (!subscription.consent_given) {
+    return retryUnsubscribe(subscription)
+  }
+
   const computedName = computeSubscriberName(
     subscription.social_name,
     subscription.full_name,
