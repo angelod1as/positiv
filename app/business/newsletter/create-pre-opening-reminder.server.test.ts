@@ -276,6 +276,25 @@ describe("createPreOpeningReminder", () => {
       expect(callBody.body).toContain("background: #bf03c3")
     })
 
+    it("should tag the CTA link with the e-mail UTMs", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: { id: 123, name: "", subject: "", status: "draft" },
+        }),
+      })
+
+      await createPreOpeningReminder({
+        event: mockEvent,
+        listIds: [4],
+      })
+
+      const callBody = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(callBody.body).toContain(
+        'href="https://www.positivparty.com/dashboard?utm_source=email&amp;utm_medium=newsletter&amp;utm_campaign=pre-opening-reminder"',
+      )
+    })
+
     it("should handle missing event emoji gracefully", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,

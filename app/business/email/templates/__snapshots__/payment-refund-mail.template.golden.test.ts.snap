@@ -57,7 +57,7 @@ exports[`payment-refund email byte-for-byte > renders the frozen HTML for a full
 
               <!-- CTA -->
               <div style="text-align: center; margin: 0;">
-                <a href="https://www.positivparty.com/dashboard" style="display: inline-block; background-color: #bf03c3; color: #ffffff; font-family: 'DM Sans', Arial, sans-serif; font-size: 16px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                <a href="https://www.positivparty.com/dashboard?utm_source=email&amp;utm_medium=transactional&amp;utm_campaign=payment-refund" style="display: inline-block; background-color: #bf03c3; color: #ffffff; font-family: 'DM Sans', Arial, sans-serif; font-size: 16px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                   Ver meus eventos
                 </a>
               </div>
@@ -68,10 +68,10 @@ exports[`payment-refund email byte-for-byte > renders the frozen HTML for a full
             <div style="background-color: #f9f9f9; padding: 24px; text-align: center; border-top: 1px solid #e0e0e0;">
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; color: #666666; margin: 0 0 8px 0;">
                 Você recebeu este e-mail pois se candidatou a um evento da
-                <a href="https://www.positivparty.com/" style="color: #bf03c3; text-decoration: none; font-weight: 700;">Positiv</a>
+                <a href="https://www.positivparty.com/?utm_source=email&amp;utm_medium=transactional&amp;utm_campaign=payment-refund" style="color: #bf03c3; text-decoration: none; font-weight: 700;">Positiv</a>
               </p>
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; color: #666666; margin: 0;">
-                <a href="https://www.positivparty.com/conta" style="color: #666; text-decoration: underline;">Configurações</a>
+                <a href="https://www.positivparty.com/conta?utm_source=email&amp;utm_medium=transactional&amp;utm_campaign=payment-refund" style="color: #666; text-decoration: underline;">Configurações</a>
               </p>
             </div>
 
@@ -147,7 +147,7 @@ exports[`payment-refund email byte-for-byte > renders the frozen HTML for a part
 
               <!-- CTA -->
               <div style="text-align: center; margin: 0;">
-                <a href="https://www.positivparty.com/dashboard" style="display: inline-block; background-color: #bf03c3; color: #ffffff; font-family: 'DM Sans', Arial, sans-serif; font-size: 16px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                <a href="https://www.positivparty.com/dashboard?utm_source=email&amp;utm_medium=transactional&amp;utm_campaign=payment-refund" style="display: inline-block; background-color: #bf03c3; color: #ffffff; font-family: 'DM Sans', Arial, sans-serif; font-size: 16px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                   Ver meus eventos
                 </a>
               </div>
@@ -158,10 +158,10 @@ exports[`payment-refund email byte-for-byte > renders the frozen HTML for a part
             <div style="background-color: #f9f9f9; padding: 24px; text-align: center; border-top: 1px solid #e0e0e0;">
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; color: #666666; margin: 0 0 8px 0;">
                 Você recebeu este e-mail pois se candidatou a um evento da
-                <a href="https://www.positivparty.com/" style="color: #bf03c3; text-decoration: none; font-weight: 700;">Positiv</a>
+                <a href="https://www.positivparty.com/?utm_source=email&amp;utm_medium=transactional&amp;utm_campaign=payment-refund" style="color: #bf03c3; text-decoration: none; font-weight: 700;">Positiv</a>
               </p>
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; color: #666666; margin: 0;">
-                <a href="https://www.positivparty.com/conta" style="color: #666; text-decoration: underline;">Configurações</a>
+                <a href="https://www.positivparty.com/conta?utm_source=email&amp;utm_medium=transactional&amp;utm_campaign=payment-refund" style="color: #666; text-decoration: underline;">Configurações</a>
               </p>
             </div>
 

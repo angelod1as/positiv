@@ -120,6 +120,17 @@ describe("sendPaymentLinkEmail", () => {
     expect(options.text).toContain("No Pix")
   })
 
+  it("tags the payment link with the e-mail UTMs", async () => {
+    const payment = await openCharge()
+
+    await sendPaymentLinkEmail({ paymentId: payment.id })
+
+    const [options] = sendEmail.mock.calls[0]
+    expect(options.html).toContain(
+      `/pagamento/${payment.id}?utm_source=email&amp;utm_medium=transactional&amp;utm_campaign=payment-link"`,
+    )
+  })
+
   it("prices every option the participant may choose", async () => {
     const payment = await openCharge()
 

@@ -8,11 +8,20 @@ import { applicationMailCopy } from "~/copy/emails/application-mail"
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
 import { escapeHtml } from "~/lib/helpers/escape-html"
+import { emailLink } from "~/lib/helpers/email-link"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import type {
   Event,
   ProfileWithRoles,
 } from "~types/database/entities.types"
+
+const siteLink = (path = "") =>
+  escapeHtml(
+    emailLink(`${POSITIV_URL}${path}`, {
+      medium: "transactional",
+      campaign: "application",
+    }),
+  )
 
 /**
  * Application Email Template
@@ -149,10 +158,10 @@ export const applicationMailTemplate = (
             <div style="background-color: #f9f9f9; padding: 24px; text-align: center; border-top: 1px solid #e0e0e0;">
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; color: #666666; margin: 0 0 8px 0;">
                 ${applicationMailCopy.footer.reason}
-                <a href="${POSITIV_URL}" style="color: #bf03c3; text-decoration: none; font-weight: 700;">${applicationMailCopy.footer.brand}</a>
+                <a href="${siteLink()}" style="color: #bf03c3; text-decoration: none; font-weight: 700;">${applicationMailCopy.footer.brand}</a>
               </p>
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; color: #666666; margin: 0;">
-                <a href="${POSITIV_URL}conta" style="color: #666; text-decoration: underline;">${applicationMailCopy.footer.settings}</a>
+                <a href="${siteLink("conta")}" style="color: #666; text-decoration: underline;">${applicationMailCopy.footer.settings}</a>
               </p>
             </div>
 
