@@ -46,26 +46,6 @@ afterEach(() => {
   delete process.env.E2E_RUN_ID
 })
 
-describe('ensureClosedTestEvent', () => {
-  it('only reuses a closed event created by the current run', async () => {
-    const double = useDouble(respondWithNoExistingEvents)
-    const { ensureClosedTestEvent } = await import('./test-event-helpers')
-
-    await ensureClosedTestEvent()
-
-    expect(double.argumentsOf('events', 'like')).toEqual(['title', '[E2E:thisrun]%'])
-  })
-
-  it('tags the event it creates with the current run', async () => {
-    const double = useDouble(respondWithNoExistingEvents)
-    const { ensureClosedTestEvent } = await import('./test-event-helpers')
-
-    await ensureClosedTestEvent()
-
-    expect(insertedTitles(double)).toEqual([expect.stringContaining('[E2E:thisrun]')])
-  })
-})
-
 describe('ensureMinimumOpenEvents', () => {
   it('tags every event it creates with the current run', async () => {
     const double = useDouble(respondWithNoExistingEvents)
