@@ -113,3 +113,12 @@ _Avoid_: Administrator, superuser, Editor (who changes Public Site content)
 The Role for people who work at events. A Staff may apply to an event
 directly, skipping the usual application, and holds nothing else.
 _Avoid_: Crew, team member, volunteer
+
+### Participants
+
+**Veteran**:
+A person who has been to a Positiv: marked as such once they attend an event,
+or by an Admin by hand. Only an Admin takes it away. The date someone became a
+Veteran follows the mark — the start of the event they attended, the moment an
+Admin marked them, and none once unmarked.
+_Avoid_: Returning participant, regular
