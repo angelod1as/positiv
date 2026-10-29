@@ -1,6 +1,7 @@
 import { data, UNSAFE_ErrorResponseImpl as ErrorResponseImpl } from "react-router"
 import { describe, expect, it } from "vitest"
 
+import reactRouterConfig from "../../../react-router.config"
 import { describeFailure } from "./describe-failure.server"
 import { serializeError } from "./logger.server"
 
@@ -142,6 +143,14 @@ describe("describeFailure", () => {
         failureOf(frameworkError("Bad Request"), request, "/eventos").status,
       ).toBe(500)
     })
+  })
+
+  // csrfCause matches allowedActionOrigins exactly; react-router also accepts
+  // wildcards, which an exact match would miss.
+  it("finds no wildcard in allowedActionOrigins", () => {
+    expect(
+      reactRouterConfig.allowedActionOrigins.filter((host) => host.includes("*")),
+    ).toEqual([])
   })
 
   it("says what failed for an ordinary error", () => {
