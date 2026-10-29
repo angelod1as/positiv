@@ -1,4 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import {
+  LISTMONK_REGISTERED_LIST_ID,
+  LISTMONK_TEST_LIST_ID,
+  LISTMONK_VETERANS_LIST_ID,
+} from "~/lib/constants/constants"
+import * as listmonkClient from "./listmonk-client.server"
 import {
   setupIntegrationTest,
   cleanupAfterTest,
@@ -6,6 +12,7 @@ import {
 import { createTestProfile } from "~/test/db-test-utils"
 import {
   getSubscriptionStatus,
+  saveListmonkSubscriberId,
   subscribeProfile,
   unsubscribeProfile,
   updateSyncStatus,
@@ -189,12 +196,25 @@ describe("Newsletter Subscription Helpers - Integration Tests", () => {
 
       tracker.track("newsletter_subscriptions", subscription.id)
 
+      const unsubscribeSubscriber = vi
+        .spyOn(listmonkClient, "unsubscribeSubscriber")
+        .mockResolvedValue({ success: true, data: undefined, errors: [] })
+
       const result = await unsubscribeProfile(profile.id)
+
+      // Unsubscribed, not removed: Listmonk keeps the "no", and event lists
+      // stay, since event email does not depend on newsletter consent.
+      expect(unsubscribeSubscriber).toHaveBeenCalledWith("test@example.com", [
+        LISTMONK_REGISTERED_LIST_ID,
+        LISTMONK_VETERANS_LIST_ID,
+        LISTMONK_TEST_LIST_ID,
+      ])
+      unsubscribeSubscriber.mockRestore()
 
       expect(result.success).toBe(true)
       if (result.success) {
         expect(result.data?.consent_given).toBe(false)
-        expect(["unsubscribed", "failed"]).toContain(result.data?.sync_status)
+        expect(result.data?.sync_status).toBe("unsubscribed")
         expect(result.data?.unsubscribed_at).not.toBeNull()
       }
     })
@@ -312,6 +332,66 @@ describe("Newsletter Subscription Helpers - Integration Tests", () => {
 
       expect(result.success).toBe(false)
       expect(result.errors.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe("saveListmonkSubscriberId", () => {
+    it("should save the subscriber ID and leave consent untouched", async () => {
+      const profile = await createTestProfile(tracker, kysely, {
+        user_id: null,
+        email: "test@example.com",
+      })
+
+      const unsubscribedAt = "2026-10-01T12:00:00.000Z"
+      const [subscription] = await kysely
+        .insertInto("newsletter_subscriptions")
+        .values({
+          profile_id: profile.id,
+          consent_given: false,
+          unsubscribed_at: unsubscribedAt,
+          subscription_source: null,
+          sync_status: "unsubscribed",
+        })
+        .returningAll()
+        .execute()
+
+      tracker.track("newsletter_subscriptions", subscription.id)
+
+      const result = await saveListmonkSubscriberId(profile.id, 789)
+
+      expect(result.success).toBe(true)
+
+      const saved = await kysely
+        .selectFrom("newsletter_subscriptions")
+        .selectAll()
+        .where("id", "=", subscription.id)
+        .executeTakeFirstOrThrow()
+
+      expect(saved.listmonk_subscriber_id).toBe(789)
+      expect(saved.consent_given).toBe(false)
+      expect(saved.sync_status).toBe("unsubscribed")
+      expect(new Date(saved.unsubscribed_at as string).toISOString()).toBe(
+        unsubscribedAt,
+      )
+    })
+
+    it("should succeed without creating a subscription when none exists", async () => {
+      const profile = await createTestProfile(tracker, kysely, {
+        user_id: null,
+        email: "test@example.com",
+      })
+
+      const result = await saveListmonkSubscriberId(profile.id, 789)
+
+      expect(result.success).toBe(true)
+
+      const subscription = await kysely
+        .selectFrom("newsletter_subscriptions")
+        .select("id")
+        .where("profile_id", "=", profile.id)
+        .executeTakeFirst()
+
+      expect(subscription).toBeUndefined()
     })
   })
 })

@@ -228,6 +228,8 @@ describe("saveBasicData - Integration Tests", () => {
     expect(addSubscriber.mock.calls[0][0].attributes.full_name).toBe(
       "Maria Silva",
     )
+    // A name refresh is not consent: it must not re-confirm any list.
+    expect(addSubscriber.mock.calls[0][0].lists).toEqual([])
   })
 
   it("writes nothing when an answer is refused", async () => {

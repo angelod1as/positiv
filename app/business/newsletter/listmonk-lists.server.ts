@@ -137,6 +137,12 @@ export interface ListSubscriber {
   email: string
   name: string
   status: string
+  updated_at: string
+  lists: Array<{
+    id: number
+    subscription_status: string
+    subscription_updated_at: string
+  }>
 }
 
 interface ListSubscribersResponse {
@@ -148,6 +154,55 @@ interface ListSubscribersResponse {
   }
 }
 
+async function readSubscribers(
+  sqlQuery: string,
+  description: string,
+): Promise<ListSubscriber[]> {
+  const { listmonkApiUrl, headers } = getListmonkConfig()
+
+  const allSubscribers: ListSubscriber[] = []
+  let page = 1
+  const perPage = 100
+  let hasMore = true
+  let reportedTotal = 0
+  const query = encodeURIComponent(sqlQuery)
+
+  while (hasMore) {
+    const response = await fetch(
+      `${listmonkApiUrl}/api/subscribers?query=${query}&page=${page}&per_page=${perPage}`,
+      {
+        method: "GET",
+        headers,
+      }
+    )
+
+    if (!response.ok) {
+      const errorBody = await response
+        .text()
+        .catch(() => "Unable to read error body")
+      throw new Error(
+        `Failed to get ${description}: ${response.status} ${response.statusText}. Response: ${errorBody}`
+      )
+    }
+
+    const data = (await response.json()) as ListSubscribersResponse
+    const results = data.data.results || []
+    allSubscribers.push(...results)
+    reportedTotal = data.data.total ?? 0
+
+    hasMore = results.length === perPage
+    page++
+  }
+
+  if (allSubscribers.length < reportedTotal) {
+    throw new Error(
+      `Incomplete read of ${description}: got ${allSubscribers.length} of ${reportedTotal} subscribers`,
+    )
+  }
+
+  return allSubscribers
+}
+
 export const getListSubscribers = composable(
   async (
     listId: number,
@@ -157,54 +212,27 @@ export const getListSubscribers = composable(
       return []
     }
 
-    const { listmonkApiUrl, headers } = getListmonkConfig()
-
-    const allSubscribers: ListSubscriber[] = []
-    let page = 1
-    const perPage = 100
-    let hasMore = true
-    let reportedTotal = 0
     const statusCondition =
       membership === "unsubscribed"
         ? "status = 'unsubscribed'"
         : "status != 'unsubscribed'"
 
-    while (hasMore) {
-      const query = encodeURIComponent(
-        `subscribers.id IN (SELECT subscriber_id FROM subscriber_lists WHERE list_id = ${listId} AND ${statusCondition})`
-      )
-      const response = await fetch(
-        `${listmonkApiUrl}/api/subscribers?query=${query}&page=${page}&per_page=${perPage}`,
-        {
-          method: "GET",
-          headers,
-        }
-      )
+    return await readSubscribers(
+      `subscribers.id IN (SELECT subscriber_id FROM subscriber_lists WHERE list_id = ${listId} AND ${statusCondition})`,
+      `list ${listId}`,
+    )
+  }
+)
 
-      if (!response.ok) {
-        const errorBody = await response
-          .text()
-          .catch(() => "Unable to read error body")
-        throw new Error(
-          `Failed to get list subscribers: ${response.status} ${response.statusText}. Response: ${errorBody}`
-        )
-      }
-
-      const data = (await response.json()) as ListSubscribersResponse
-      const results = data.data.results || []
-      allSubscribers.push(...results)
-      reportedTotal = data.data.total ?? 0
-
-      hasMore = results.length === perPage
-      page++
+export const getBlocklistedSubscribers = composable(
+  async (): Promise<ListSubscriber[]> => {
+    if (ENV.E2E_MODE) {
+      return []
     }
 
-    if (allSubscribers.length < reportedTotal) {
-      throw new Error(
-        `Incomplete read of list ${listId}: got ${allSubscribers.length} of ${reportedTotal} subscribers`,
-      )
-    }
-
-    return allSubscribers
+    return await readSubscribers(
+      "subscribers.status = 'blocklisted'",
+      "blocklisted subscribers",
+    )
   }
 )

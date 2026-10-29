@@ -10,6 +10,7 @@ import {
 import {
   createList,
   deleteList,
+  getBlocklistedSubscribers,
   getListById,
   getListSubscribers,
 } from "./listmonk-lists.server"
@@ -407,5 +408,67 @@ describe("getListSubscribers", () => {
     expect(requestedQuery()).toContain(
       "WHERE list_id = 141 AND status = 'unsubscribed'",
     )
+  })
+})
+
+describe("getBlocklistedSubscribers", () => {
+  let fetchSpy: MockInstance
+
+  beforeEach(() => {
+    fetchSpy = vi.spyOn(global, "fetch")
+  })
+
+  afterEach(() => {
+    fetchSpy.mockRestore()
+    vi.clearAllMocks()
+  })
+
+  const page = (ids: number[], total: number) =>
+    ({
+      ok: true,
+      json: async () => ({
+        data: {
+          results: ids.map((id) => ({
+            id,
+            email: `s${id}@example.com`,
+            name: `s${id}`,
+            status: "blocklisted",
+            updated_at: "2026-10-01T12:00:00Z",
+            lists: [],
+          })),
+          total,
+          page: 1,
+          per_page: 100,
+        },
+      }),
+    }) as Response
+
+  it("should read only blocklisted subscribers", async () => {
+    fetchSpy.mockResolvedValueOnce(page([7], 1))
+
+    const result = await getBlocklistedSubscribers()
+
+    expect(decodeURIComponent(String(fetchSpy.mock.calls[0][0]))).toContain(
+      "query=subscribers.status = 'blocklisted'",
+    )
+    expect(result.success && result.data.map((s) => s.id)).toEqual([7])
+  })
+
+  it("should read every page until Listmonk's total is reached", async () => {
+    fetchSpy
+      .mockResolvedValueOnce(page(Array.from({ length: 100 }, (_, i) => i + 1), 120))
+      .mockResolvedValueOnce(page(Array.from({ length: 20 }, (_, i) => i + 101), 120))
+
+    const result = await getBlocklistedSubscribers()
+
+    expect(result.success && result.data).toHaveLength(120)
+  })
+
+  it("should fail when the pages return fewer subscribers than Listmonk's total", async () => {
+    fetchSpy.mockResolvedValueOnce(page([1, 2], 5))
+
+    const result = await getBlocklistedSubscribers()
+
+    expect(result.success).toBe(false)
   })
 })

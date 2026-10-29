@@ -213,6 +213,57 @@ describe("Newsletter Retry Logic - Integration Tests", () => {
       )
     })
 
+    it("should retry the unsubscribe, never a subscribe, for someone who declined", async () => {
+      const addSubscriber = vi.spyOn(listmonkClient, "addSubscriber")
+      const unsubscribeSubscriber = vi
+        .spyOn(listmonkClient, "unsubscribeSubscriber")
+        .mockResolvedValue({ success: true, data: undefined, errors: [] })
+
+      const profile = await createTestProfile(tracker, kysely, {
+        user_id: null,
+        email: "retry-declined@example.com",
+      })
+
+      const unsubscribedAt = "2026-10-01T12:00:00.000Z"
+      const [sub] = await kysely
+        .insertInto("newsletter_subscriptions")
+        .values({
+          profile_id: profile.id,
+          consent_given: false,
+          unsubscribed_at: unsubscribedAt,
+          subscription_source: null,
+          sync_status: "failed",
+          retry_count: 0,
+          last_sync_attempt_at: null,
+        })
+        .returningAll()
+        .execute()
+
+      tracker.track("newsletter_subscriptions", sub.id)
+
+      const result = await processFailedSyncRetries()
+
+      expect(result.success && result.data.succeeded).toBe(1)
+      expect(addSubscriber).not.toHaveBeenCalled()
+      expect(unsubscribeSubscriber).toHaveBeenCalledWith(
+        "retry-declined@example.com",
+        expect.arrayContaining([4]),
+      )
+
+      const updated = await kysely
+        .selectFrom("newsletter_subscriptions")
+        .selectAll()
+        .where("id", "=", sub.id)
+        .executeTakeFirstOrThrow()
+
+      expect(updated.consent_given).toBe(false)
+      expect(updated.sync_status).toBe("unsubscribed")
+      expect(updated.retry_count).toBe(0)
+      expect(new Date(updated.unsubscribed_at as string).toISOString()).toBe(
+        unsubscribedAt,
+      )
+    })
+
     it("should increment retry_count when sync fails", async () => {
       // Mock failed addSubscriber
       vi.spyOn(listmonkClient, "addSubscriber").mockResolvedValue({

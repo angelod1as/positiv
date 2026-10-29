@@ -1,7 +1,12 @@
 import { composable } from "composable-functions"
+import {
+  LISTMONK_REGISTERED_LIST_ID,
+  LISTMONK_TEST_LIST_ID,
+  LISTMONK_VETERANS_LIST_ID,
+} from "~/lib/constants/constants"
 import { logger } from "~/lib/logger/logger.server"
 import { db } from "~/lib/supabase/db.server"
-import { removeSubscriber } from "./listmonk-client.server"
+import { unsubscribeSubscriber } from "./listmonk-client.server"
 import type { SubscriptionSource, SyncStatus } from "./types"
 
 /**
@@ -98,7 +103,11 @@ export const unsubscribeProfile = composable(async (profileId: string) => {
     .where("id", "=", profileId)
     .executeTakeFirstOrThrow()
 
-  const removeResult = await removeSubscriber(profile.email)
+  const removeResult = await unsubscribeSubscriber(profile.email, [
+    LISTMONK_REGISTERED_LIST_ID,
+    LISTMONK_VETERANS_LIST_ID,
+    LISTMONK_TEST_LIST_ID,
+  ])
 
   const now = new Date().toISOString()
   let syncStatus: SyncStatus = "unsubscribed"
@@ -106,7 +115,7 @@ export const unsubscribeProfile = composable(async (profileId: string) => {
   if (!removeResult.success) {
     syncStatus = "failed"
     logger.warn(
-      "Failed to remove subscriber from Listmonk:",
+      "Failed to unsubscribe subscriber in Listmonk:",
       { error: removeResult.errors?.map(e => e.message).join(", ") ?? "Unknown error" },
     )
   }
@@ -126,6 +135,16 @@ export const unsubscribeProfile = composable(async (profileId: string) => {
 
   return updatedSubscription
 })
+
+export const saveListmonkSubscriberId = composable(
+  async (profileId: string, listmonkSubscriberId: number) => {
+    await db
+      .updateTable("newsletter_subscriptions")
+      .set({ listmonk_subscriber_id: listmonkSubscriberId })
+      .where("profile_id", "=", profileId)
+      .execute()
+  },
+)
 
 export const updateSyncStatus = composable(
   async (

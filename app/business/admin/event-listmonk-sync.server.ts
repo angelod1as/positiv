@@ -15,10 +15,11 @@ import {
 import {
   createList,
   deleteList,
+  getBlocklistedSubscribers,
   getListById,
   getListSubscribers,
 } from "../newsletter/listmonk-lists.server"
-import { updateSyncStatus } from "../newsletter/subscription-helpers.server"
+import { saveListmonkSubscriberId } from "../newsletter/subscription-helpers.server"
 
 export const listmonkSyncFiltersSchema = z.object({
   approvalStatuses: z.array(profileApprovedToAttendStatusEnum).optional(),
@@ -109,6 +110,46 @@ async function updateEventListmonkFields(
 }
 
 /**
+ * Emails Listmonk says must not be (re-)added: blocklisted subscribers, and
+ * anyone who unsubscribed from this event's list. Listmonk's list add
+ * overwrites an unsubscribed membership, so these are filtered out first.
+ */
+async function getOptedOutEmails(listId: number | null) {
+  const blocklisted = await getBlocklistedSubscribers()
+  if (!blocklisted.success) {
+    throw new Error(
+      blocklisted.errors[0]?.message ??
+        "Failed to read blocklisted Listmonk subscribers",
+    )
+  }
+
+  const emails = blocklisted.data.map((subscriber) => subscriber.email)
+
+  if (listId !== null) {
+    const leftList = await getListSubscribers(listId, "unsubscribed")
+    if (!leftList.success) {
+      throw new Error(
+        leftList.errors[0]?.message ??
+          `Failed to read who left Listmonk list ${listId}`,
+      )
+    }
+    emails.push(...leftList.data.map((subscriber) => subscriber.email))
+  }
+
+  return new Set(emails.map((email) => email.trim().toLowerCase()))
+}
+
+function withoutOptedOut<T extends { email: string }>(
+  participants: T[],
+  optedOutEmails: Set<string>,
+) {
+  return participants.filter(
+    (participant) =>
+      !optedOutEmails.has(participant.email.trim().toLowerCase()),
+  )
+}
+
+/**
  * Add participants to a Listmonk list using the bulk API when possible.
  * - Participants WITH existing listmonk_subscriber_id: Added via bulk API (single call)
  * - Participants WITHOUT listmonk_subscriber_id: Created individually (new subscribers)
@@ -189,9 +230,8 @@ async function addParticipantsToList(
     if (result.success && result.data) {
       subscribersAdded++
       // Save the new subscriber ID for future bulk operations
-      await updateSyncStatus(
+      await saveListmonkSubscriberId(
         participant.profile_id,
-        "synced",
         result.data.subscriberId,
       )
     } else {
@@ -220,6 +260,8 @@ export const createEventListmonkList = composable(
       return result.data
     }
 
+    const optedOutEmails = await getOptedOutEmails(null)
+
     const listResult = await createList({
       name: `Candidates - ${event.title ?? "Evento sem título"}`,
       type: "private",
@@ -237,7 +279,7 @@ export const createEventListmonkList = composable(
     const participants = await getNonRejectedParticipants(eventId, filters)
 
     const { subscribersAdded, subscribersFailed } = await addParticipantsToList(
-      participants,
+      withoutOptedOut(participants, optedOutEmails),
       listId,
     )
 
@@ -337,6 +379,8 @@ export const updateEventListmonkList = composable(
       return result.data
     }
 
+    const optedOutEmails = await getOptedOutEmails(event.listmonk_list_id)
+
     const participants = await getNonRejectedParticipants(eventId, filters)
     const eligibleEmails = new Set(
       participants
@@ -351,7 +395,7 @@ export const updateEventListmonkList = composable(
     )
 
     const { subscribersAdded, subscribersFailed } = await addParticipantsToList(
-      participants,
+      withoutOptedOut(participants, optedOutEmails),
       event.listmonk_list_id,
     )
 

@@ -8,10 +8,12 @@ import type { userContextSchema } from "../common"
 import { saveBasicData } from "./basic-data.server"
 
 const subscribe = vi.hoisted(() => vi.fn())
+const refresh = vi.hoisted(() => vi.fn())
 const selectFrom = vi.hoisted(() => vi.fn())
 
 vi.mock("../newsletter/auto-subscribe.server", () => ({
   subscribeProfileToNewsletter: subscribe,
+  refreshNewsletterSubscriber: refresh,
 }))
 
 vi.mock("~/lib/supabase/db.server", () => ({
@@ -235,7 +237,7 @@ describe("saveBasicData", () => {
     expect(result.errors[0].questionId).toBe("confirm_phone")
   })
 
-  it("re-syncs the newsletter once there is a real name to sync", async () => {
+  it("refreshes the subscriber's name without resubscribing", async () => {
     const supabase = mockSupabase(null, "profile-9")
     selectFrom.mockReturnValue({
       select: () => ({
@@ -252,7 +254,8 @@ describe("saveBasicData", () => {
 
     await saveBasicData({ answers, context: contextWith(supabase) })
 
-    expect(subscribe).toHaveBeenCalledWith("profile-9", "terms_and_conditions")
+    expect(refresh).toHaveBeenCalledWith("profile-9")
+    expect(subscribe).not.toHaveBeenCalled()
   })
 
   it("leaves the newsletter alone when nobody consented", async () => {
@@ -261,5 +264,6 @@ describe("saveBasicData", () => {
     await saveBasicData({ answers, context: contextWith(supabase) })
 
     expect(subscribe).not.toHaveBeenCalled()
+    expect(refresh).not.toHaveBeenCalled()
   })
 })

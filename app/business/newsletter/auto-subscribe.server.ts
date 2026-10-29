@@ -13,25 +13,47 @@ import {
 } from "./subscription-helpers.server"
 import type { SubscriptionSource } from "./types"
 
+async function getNewsletterProfile(profileId: string) {
+  const profile = await db
+    .selectFrom("profiles")
+    .select([
+      "id",
+      "email",
+      "user_id",
+      "social_name",
+      "full_name",
+      "is_veteran",
+      "approved_to_attend",
+    ])
+    .where("id", "=", profileId)
+    .executeTakeFirst()
+
+  if (!profile) {
+    throw new Error("Profile not found")
+  }
+
+  return profile
+}
+
+function subscriberAttributes(
+  profile: Awaited<ReturnType<typeof getNewsletterProfile>>,
+  computedName: string,
+) {
+  return {
+    profile_id: profile.id,
+    user_id: profile.user_id,
+    social_name: profile.social_name,
+    full_name: profile.full_name,
+    name: computedName,
+    is_veteran: profile.is_veteran,
+    approved_to_attend: profile.approved_to_attend,
+    synced_at: new Date().toISOString(),
+  }
+}
+
 export const subscribeProfileToNewsletter = composable(
   async (profileId: string, source: SubscriptionSource) => {
-    const profile = await db
-      .selectFrom("profiles")
-      .select([
-        "id",
-        "email",
-        "user_id",
-        "social_name",
-        "full_name",
-        "is_veteran",
-        "approved_to_attend",
-      ])
-      .where("id", "=", profileId)
-      .executeTakeFirst()
-
-    if (!profile) {
-      throw new Error("Profile not found")
-    }
+    const profile = await getNewsletterProfile(profileId)
 
     await subscribeProfile(profileId, source)
 
@@ -61,16 +83,7 @@ export const subscribeProfileToNewsletter = composable(
       email: profile.email,
       name: computedName,
       lists,
-      attributes: {
-        profile_id: profile.id,
-        user_id: profile.user_id,
-        social_name: profile.social_name,
-        full_name: profile.full_name,
-        name: computedName,
-        is_veteran: profile.is_veteran,
-        approved_to_attend: profile.approved_to_attend,
-        synced_at: new Date().toISOString(),
-      },
+      attributes: subscriberAttributes(profile, computedName),
     })
 
     if (!listmonkResult.success) {
@@ -94,5 +107,34 @@ export const subscribeProfileToNewsletter = composable(
     const { subscriberId } = listmonkResult.data
     await updateSyncStatus(profileId, "synced", subscriberId)
     return { syncStatus: "synced" as const }
+  },
+)
+
+/**
+ * Pushes a profile's current name and attributes to Listmonk without touching
+ * any list subscription — refreshing details is not consent.
+ */
+export const refreshNewsletterSubscriber = composable(
+  async (profileId: string) => {
+    const profile = await getNewsletterProfile(profileId)
+
+    const computedName = computeSubscriberName(
+      profile.social_name,
+      profile.full_name,
+      profile.email,
+    )
+
+    const result = await addSubscriber({
+      email: profile.email,
+      name: computedName,
+      lists: [],
+      attributes: subscriberAttributes(profile, computedName),
+    })
+
+    if (!result.success) {
+      throw new Error(
+        result.errors[0]?.message ?? "Failed to refresh newsletter subscriber",
+      )
+    }
   },
 )

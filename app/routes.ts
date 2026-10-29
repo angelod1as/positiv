@@ -19,6 +19,7 @@ export default [
   // API ROUTES (internal endpoints)
   route("/api/process-campaigns", "routes/api.process-campaigns.ts"),
   route("/api/retry-newsletter-syncs", "routes/api.retry-newsletter-syncs.ts"),
+  route("/api/sync-listmonk-unsubscribes", "routes/api.sync-listmonk-unsubscribes.ts"),
   route(
     "/api/process-pre-opening-reminders",
     "routes/api.process-pre-opening-reminders.ts",

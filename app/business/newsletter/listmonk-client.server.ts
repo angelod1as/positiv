@@ -253,6 +253,7 @@ async function updateSubscriberAttributes(
   email: string,
   name: string,
   attributes: Record<string, unknown>,
+  existingListIds: number[],
   existingAttribs?: Record<string, unknown>
 ): Promise<void> {
   const { listmonkApiUrl, headers } = getListmonkConfig()
@@ -266,6 +267,7 @@ async function updateSubscriberAttributes(
       email,
       name,
       attribs: mergedAttribs,
+      lists: existingListIds,
     }),
   })
 
@@ -297,13 +299,11 @@ export const addSubscriber = composable(
         params.email,
         params.name,
         params.attributes,
+        existingSubscriber.lists.map((list) => list.id),
         existingSubscriber.attribs
       )
 
-      const existingListIds = existingSubscriber.lists.map((list) => list.id)
-      const allListIds = [...new Set([...existingListIds, ...params.lists])]
-
-      await addSubscriberToLists(existingSubscriber.id, allListIds)
+      await addSubscriberToLists(existingSubscriber.id, params.lists)
 
       return { subscriberId: existingSubscriber.id }
     } else {
@@ -367,6 +367,39 @@ export const removeSubscriber = composable(
       const errorBody = await response.text().catch(() => "Unable to read error body")
       throw new Error(
         `Failed to remove subscriber from lists: ${response.status} ${response.statusText}. Response: ${errorBody}`
+      )
+    }
+  }
+)
+
+export const unsubscribeSubscriber = composable(
+  async (email: string, listIds: number[]): Promise<void> => {
+    if (ENV.E2E_MODE) {
+      return
+    }
+
+    const existingSubscriber = await getSubscriberByEmail(email)
+
+    if (!existingSubscriber) {
+      return
+    }
+
+    const { listmonkApiUrl, headers } = getListmonkConfig()
+
+    const response = await fetch(`${listmonkApiUrl}/api/subscribers/lists`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({
+        ids: [existingSubscriber.id],
+        action: "unsubscribe",
+        target_list_ids: listIds,
+      }),
+    })
+
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => "Unable to read error body")
+      throw new Error(
+        `Failed to unsubscribe subscriber: ${response.status} ${response.statusText}. Response: ${errorBody}`
       )
     }
   }
