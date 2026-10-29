@@ -6,6 +6,7 @@ import {
 import { createTestProfile } from "~/test/db-test-utils"
 import {
   getSubscriptionStatus,
+  saveListmonkSubscriberId,
   subscribeProfile,
   unsubscribeProfile,
   updateSyncStatus,
@@ -312,6 +313,66 @@ describe("Newsletter Subscription Helpers - Integration Tests", () => {
 
       expect(result.success).toBe(false)
       expect(result.errors.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe("saveListmonkSubscriberId", () => {
+    it("should save the subscriber ID and leave consent untouched", async () => {
+      const profile = await createTestProfile(tracker, kysely, {
+        user_id: null,
+        email: "test@example.com",
+      })
+
+      const unsubscribedAt = "2026-10-01T12:00:00.000Z"
+      const [subscription] = await kysely
+        .insertInto("newsletter_subscriptions")
+        .values({
+          profile_id: profile.id,
+          consent_given: false,
+          unsubscribed_at: unsubscribedAt,
+          subscription_source: null,
+          sync_status: "unsubscribed",
+        })
+        .returningAll()
+        .execute()
+
+      tracker.track("newsletter_subscriptions", subscription.id)
+
+      const result = await saveListmonkSubscriberId(profile.id, 789)
+
+      expect(result.success).toBe(true)
+
+      const saved = await kysely
+        .selectFrom("newsletter_subscriptions")
+        .selectAll()
+        .where("id", "=", subscription.id)
+        .executeTakeFirstOrThrow()
+
+      expect(saved.listmonk_subscriber_id).toBe(789)
+      expect(saved.consent_given).toBe(false)
+      expect(saved.sync_status).toBe("unsubscribed")
+      expect(new Date(saved.unsubscribed_at as string).toISOString()).toBe(
+        unsubscribedAt,
+      )
+    })
+
+    it("should succeed without creating a subscription when none exists", async () => {
+      const profile = await createTestProfile(tracker, kysely, {
+        user_id: null,
+        email: "test@example.com",
+      })
+
+      const result = await saveListmonkSubscriberId(profile.id, 789)
+
+      expect(result.success).toBe(true)
+
+      const subscription = await kysely
+        .selectFrom("newsletter_subscriptions")
+        .select("id")
+        .where("profile_id", "=", profile.id)
+        .executeTakeFirst()
+
+      expect(subscription).toBeUndefined()
     })
   })
 })

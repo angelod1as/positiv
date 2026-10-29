@@ -18,7 +18,7 @@ import {
   getListById,
   getListSubscribers,
 } from "../newsletter/listmonk-lists.server"
-import { updateSyncStatus } from "../newsletter/subscription-helpers.server"
+import { saveListmonkSubscriberId } from "../newsletter/subscription-helpers.server"
 
 export const listmonkSyncFiltersSchema = z.object({
   approvalStatuses: z.array(profileApprovedToAttendStatusEnum).optional(),
@@ -189,9 +189,8 @@ async function addParticipantsToList(
     if (result.success && result.data) {
       subscribersAdded++
       // Save the new subscriber ID for future bulk operations
-      await updateSyncStatus(
+      await saveListmonkSubscriberId(
         participant.profile_id,
-        "synced",
         result.data.subscriberId,
       )
     } else {

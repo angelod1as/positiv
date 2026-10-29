@@ -70,6 +70,7 @@ vi.mock("../newsletter/listmonk-client.server", () => ({
 }))
 
 vi.mock("../newsletter/subscription-helpers.server", () => ({
+  saveListmonkSubscriberId: vi.fn(),
   updateSyncStatus: vi.fn(),
 }))
 
@@ -81,7 +82,10 @@ import {
 } from "./event-listmonk-sync.server"
 import { createList, deleteList, getListById, getListSubscribers } from "../newsletter/listmonk-lists.server"
 import { addSubscriber, addSubscribersToListBulk, removeSubscriberFromList } from "../newsletter/listmonk-client.server"
-import { updateSyncStatus } from "../newsletter/subscription-helpers.server"
+import {
+  saveListmonkSubscriberId,
+  updateSyncStatus,
+} from "../newsletter/subscription-helpers.server"
 
 const mockCreateList = vi.mocked(createList)
 const mockDeleteList = vi.mocked(deleteList)
@@ -90,6 +94,7 @@ const mockGetListSubscribers = vi.mocked(getListSubscribers)
 const mockAddSubscriber = vi.mocked(addSubscriber)
 const mockAddSubscribersToListBulk = vi.mocked(addSubscribersToListBulk)
 const mockRemoveSubscriberFromList = vi.mocked(removeSubscriberFromList)
+const mockSaveListmonkSubscriberId = vi.mocked(saveListmonkSubscriberId)
 const mockUpdateSyncStatus = vi.mocked(updateSyncStatus)
 
 function createMockListmonkList(overrides: Partial<ListmonkList> = {}): ListmonkList {
@@ -210,7 +215,7 @@ describe("createEventListmonkList", () => {
     )
   })
 
-  it("should save new subscriber IDs for future bulk operations", async () => {
+  it("should save new subscriber IDs without writing consent", async () => {
     mockCreateList.mockResolvedValue({
       success: true,
       data: createMockListmonkList(),
@@ -231,7 +236,8 @@ describe("createEventListmonkList", () => {
     const result = await createEventListmonkList("event-123")
 
     expect(result.success).toBe(true)
-    expect(mockUpdateSyncStatus).toHaveBeenCalledWith("profile-1", "synced", 789)
+    expect(mockSaveListmonkSubscriberId).toHaveBeenCalledWith("profile-1", 789)
+    expect(mockUpdateSyncStatus).not.toHaveBeenCalled()
   })
 
   it("should update event with listmonk_list_id via Kysely updateTable", async () => {

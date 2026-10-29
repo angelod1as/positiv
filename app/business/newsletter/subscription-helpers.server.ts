@@ -127,6 +127,16 @@ export const unsubscribeProfile = composable(async (profileId: string) => {
   return updatedSubscription
 })
 
+export const saveListmonkSubscriberId = composable(
+  async (profileId: string, listmonkSubscriberId: number) => {
+    await db
+      .updateTable("newsletter_subscriptions")
+      .set({ listmonk_subscriber_id: listmonkSubscriberId })
+      .where("profile_id", "=", profileId)
+      .execute()
+  },
+)
+
 export const updateSyncStatus = composable(
   async (
     profileId: string,
