@@ -436,6 +436,39 @@ describe("addSubscriber", () => {
     })
   })
 
+  it("should leave every subscription alone when asked for no lists", async () => {
+    fetchSpy
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            results: [
+              { id: 456, email: "existing@example.com", lists: [{ id: 4 }], attribs: {} },
+            ],
+          },
+        }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { id: 456 } }),
+      } as Response)
+
+    const result = await addSubscriber({
+      email: "existing@example.com",
+      name: "Existing User",
+      lists: [],
+      attributes: {},
+    })
+
+    expect(result.success).toBe(true)
+    expect(fetchSpy).toHaveBeenCalledTimes(2)
+    expect(
+      fetchSpy.mock.calls.some(
+        (call) => call[0] === "https://listmonk.test/api/subscribers/lists"
+      )
+    ).toBe(false)
+  })
+
   // Listmonk's PUT /api/subscribers/:id deletes every subscription not in
   // `lists`; sending the current ones without preconfirm keeps their statuses
   it("should keep every existing subscription when updating subscriber details", async () => {
