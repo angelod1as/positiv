@@ -34,6 +34,7 @@ const goingParticipant = {
   id: "1",
   full_name: "João Silva",
   social_name: "João",
+  cpf: "52998224725",
   rg: "12345678",
   rg_issuer: "SSP",
   approved_to_attend: "approved",
@@ -66,7 +67,7 @@ describe("Buttons", () => {
     vi.clearAllMocks()
   })
 
-  it("should download the names and RG sheet when clicking 'Baixar dados'", async () => {
+  it("should download the names and CPF sheet when clicking 'Baixar dados'", async () => {
     renderButtons([goingParticipant])
 
     screen.getByRole("button", { name: /baixar dados/i }).click()
@@ -74,13 +75,10 @@ describe("Buttons", () => {
     await waitFor(() => expect(downloadXLSX).toHaveBeenCalled())
     expect(downloadXLSX).toHaveBeenCalledWith([
       {
-        "Nº": 1,
-        Staff: "",
-        "Status de Aprovação": "approved",
         "Nome completo": "João Silva",
         "Nome social ou apelido": "João",
-        RG: "12345678",
-        "Emissor do RG": "SSP",
+        CPF: "529.982.247-25",
+        Staff: "",
       },
     ])
   })
