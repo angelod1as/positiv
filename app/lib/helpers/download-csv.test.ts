@@ -47,6 +47,29 @@ describe("buildCsv", () => {
     expect(csv).toBe(`${BOM}A;B;C\r\n;;x\r\n`)
   })
 
+  it("should neutralise values a spreadsheet would run as a formula", () => {
+    const csv = buildCsv([
+      {
+        A: '=HYPERLINK("http://x","y")',
+        B: "+1",
+        C: "-1",
+        D: "@SUM(A1)",
+        E: "\tx",
+        F: "\rx",
+      },
+    ])
+
+    expect(csv).toBe(
+      `${BOM}A;B;C;D;E;F\r\n"'=HYPERLINK(""http://x"",""y"")";'+1;'-1;'@SUM(A1);'\tx;"'\rx"\r\n`,
+    )
+  })
+
+  it("should leave values that only contain those characters further in", () => {
+    const csv = buildCsv([{ A: "Ana-Maria", B: "a=b", C: "529.982.247-25" }])
+
+    expect(csv).toBe(`${BOM}A;B;C\r\nAna-Maria;a=b;529.982.247-25\r\n`)
+  })
+
   it("should return only the BOM for an empty list", () => {
     expect(buildCsv([])).toBe(BOM)
   })
@@ -55,6 +78,7 @@ describe("buildCsv", () => {
 describe("downloadCSV", () => {
   afterEach(() => {
     vi.restoreAllMocks()
+    vi.unstubAllGlobals()
   })
 
   it("should download the content as a UTF-8 .csv file", () => {
@@ -73,6 +97,5 @@ describe("downloadCSV", () => {
     const [blob] = createObjectURL.mock.calls[0]
     expect(blob.type).toBe("text/csv;charset=utf-8")
     expect(blob.size).toBe(new TextEncoder().encode(content).length)
-    vi.unstubAllGlobals()
   })
 })
