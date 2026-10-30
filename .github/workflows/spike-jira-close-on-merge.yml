@@ -1,0 +1,59 @@
+name: SPIKE Jira close on merge
+
+# Throwaway probe for the Jira spike. Never merge to main.
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - pos-681-jira-spike
+
+permissions: {}
+
+jobs:
+  transition:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      JIRA_API_BASE: https://api.atlassian.com/ex/jira/7a81017b-2b5c-4f1a-9b67-c2ee7f74b3c8
+      JIRA_TARGET_STATUS: Feito
+    steps:
+      - name: Move ticket to done
+        env:
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+
+          jira() {
+            printf 'user = "%s:%s"\n' "$JIRA_USER_EMAIL" "$JIRA_API_TOKEN" |
+              curl --config - --silent --show-error "$@"
+          }
+
+          key=$(printf '%s' "$PR_TITLE" | grep -oE '\bSPK-[0-9]+\b' | head -n 1 || true)
+          if [ -z "$key" ]; then
+            echo "No SPK key in the title, nothing to move"
+            exit 0
+          fi
+
+          status=$(jira --output transitions.json --write-out '%{http_code}' \
+            "$JIRA_API_BASE/rest/api/3/issue/$key/transitions")
+          echo "GET transitions for $key: HTTP $status"
+          [ "$status" = "200" ]
+
+          id=$(jq -r --arg target "$JIRA_TARGET_STATUS" \
+            '.transitions[] | select(.to.name == $target) | .id' transitions.json | head -n 1)
+          if [ -z "$id" ]; then
+            echo "No transition to $JIRA_TARGET_STATUS for $key"
+            exit 1
+          fi
+
+          status=$(jira --output /dev/null --write-out '%{http_code}' \
+            --request POST \
+            --header 'Content-Type: application/json' \
+            --data "{\"transition\":{\"id\":\"$id\"}}" \
+            "$JIRA_API_BASE/rest/api/3/issue/$key/transitions")
+          echo "POST transition for $key: HTTP $status"
+          [ "$status" = "204" ]
