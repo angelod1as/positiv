@@ -83,6 +83,8 @@ The `umami` MCP server works the same way with `POSITIV_UMAMI_URL` and
 API key of a user whose only access is View only on the Positiv website. It
 lists funnels and reports, runs funnels and counts events; it cannot change
 anything. Never put the key on a command line or in a versioned file.
+`list_websites` comes back empty for a view-only team member: pass the website
+ID directly, the `data-website-id` on <https://positivparty.com>.
 
 ## Essential Commands
 
