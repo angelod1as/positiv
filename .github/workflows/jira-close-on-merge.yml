@@ -1,0 +1,31 @@
+name: Jira close on merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+permissions: {}
+
+jobs:
+  close-tickets:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          check-latest: true
+          package-manager-cache: false
+      - name: Move the PR's tickets to Done
+        env:
+          JIRA_API_BASE: https://api.atlassian.com/ex/jira/7a81017b-2b5c-4f1a-9b67-c2ee7f74b3c8
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: node scripts/jira-close-on-merge.ts
