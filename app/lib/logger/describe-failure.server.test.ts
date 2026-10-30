@@ -51,6 +51,7 @@ describe("describeFailure", () => {
         status: 400,
         summary:
           "POST /pagamento/abc rejected with 400 before the action ran: Origin https://evil.example does not match request URL http://positivparty.com (react-router CSRF check)",
+        foreignOrigin: true,
       })
     })
 
@@ -78,6 +79,7 @@ describe("describeFailure", () => {
         status: 400,
         summary:
           "POST /pagamento/abc rejected with 400 before the action ran: Origin ::nope is not a valid URL (react-router CSRF check)",
+        foreignOrigin: true,
       })
     })
 
@@ -118,6 +120,63 @@ describe("describeFailure", () => {
       ).toBe(
         "POST /pagamento/abc rejected with 400 before the action ran: Origin null does not match request URL http://positivparty.com (react-router CSRF check)",
       )
+    })
+
+    it("counts an opaque null Origin as foreign", () => {
+      const request = post("http://positivparty.com/pagamento/abc", "null")
+
+      expect(
+        failureOf(frameworkError("Bad Request"), request, "/pagamento/abc")
+          .foreignOrigin,
+      ).toBe(true)
+    })
+
+    describe("an Origin on the site's own host", () => {
+      const ownHostFailure = {
+        status: 400,
+        summary:
+          "POST /pagamento/abc rejected with 400 before the action ran: Origin https://preview.positivparty.com does not match request URL http://10.0.1.5:3000 (react-router CSRF check)",
+      }
+
+      function behindProxy(headers: Record<string, string>) {
+        return new Request("http://10.0.1.5:3000/pagamento/abc", {
+          method: "POST",
+          headers: { origin: "https://preview.positivparty.com", ...headers },
+        })
+      }
+
+      it("is not foreign when only the scheme differs from the URL", () => {
+        const request = post(
+          "http://preview.positivparty.com/pagamento/abc",
+          "https://preview.positivparty.com",
+        )
+
+        expect(
+          failureOf(frameworkError("Bad Request"), request, "/pagamento/abc"),
+        ).toEqual({
+          status: 400,
+          summary:
+            "POST /pagamento/abc rejected with 400 before the action ran: Origin https://preview.positivparty.com does not match request URL http://preview.positivparty.com (react-router CSRF check)",
+        })
+      })
+
+      it("is not foreign when it matches the Host header", () => {
+        const request = behindProxy({ host: "preview.positivparty.com" })
+
+        expect(
+          failureOf(frameworkError("Bad Request"), request, "/pagamento/abc"),
+        ).toEqual(ownHostFailure)
+      })
+
+      it("is not foreign when it matches X-Forwarded-Host", () => {
+        const request = behindProxy({
+          "x-forwarded-host": "preview.positivparty.com",
+        })
+
+        expect(
+          failureOf(frameworkError("Bad Request"), request, "/pagamento/abc"),
+        ).toEqual(ownHostFailure)
+      })
     })
 
     it("does not blame the Origin for a Bad Request the app threw", () => {
