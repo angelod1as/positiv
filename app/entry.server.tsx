@@ -34,15 +34,18 @@ export const handleError: HandleErrorFunction = (
   if (isRouteErrorResponse(error) && error.status < 500) return
   const context = requestContext(request, params)
   const serialized = serializeError(error)
-  const { status, summary } = describeFailure(
+  const { status, summary, foreignOrigin } = describeFailure(
     serialized,
     request,
     context.request.path,
   )
   const fromApp =
     serialized.stack !== undefined && appFrames(serialized.stack).length > 0
-  logger.error(summary, {
-    category: "unhandled",
+  // A foreign Origin refused is the protection working, and anyone can repeat
+  // it per request; a warning stays in the logs and never reaches Telegram.
+  const level = foreignOrigin ? "warn" : "error"
+  logger[level](summary, {
+    category: foreignOrigin ? "foreign-origin" : "unhandled",
     ...context,
     status,
     ...(!fromApp && {

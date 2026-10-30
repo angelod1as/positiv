@@ -45,6 +45,7 @@ describe("handleDataRequest", () => {
 describe("handleError", () => {
   afterEach(() => {
     vi.mocked(logger.error).mockClear()
+    vi.mocked(logger.warn).mockClear()
   })
 
   it("reports a render error through the logger", () => {
@@ -164,17 +165,18 @@ describe("handleError", () => {
       })
     }
 
-    it("names the cause of today's 400 without reading code", () => {
+    it("logs a foreign Origin as a warning, not an error alert", () => {
       handleError(bareBadRequest(), {
         request: csrfRejectedPost(),
         params: { id: "pay-1" },
         context: {},
       } as never)
 
-      expect(logger.error).toHaveBeenCalledWith(
+      expect(logger.warn).toHaveBeenCalledWith(
         "POST /pagamento/pay-1 rejected with 400 before the action ran: Origin https://evil.example does not match request URL http://positivparty.com (react-router CSRF check)",
-        expect.objectContaining({ category: "unhandled", status: 400 }),
+        expect.objectContaining({ category: "foreign-origin", status: 400 }),
       )
+      expect(logger.error).not.toHaveBeenCalled()
     })
 
     it("attaches the request facts that explain it, and no secret", () => {
@@ -184,7 +186,7 @@ describe("handleError", () => {
         context: {},
       } as never)
 
-      expect(logger.error).toHaveBeenCalledWith(
+      expect(logger.warn).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
           requestFacts: {
@@ -196,9 +198,47 @@ describe("handleError", () => {
           },
         }),
       )
-      expect(JSON.stringify(vi.mocked(logger.error).mock.calls[0])).not.toMatch(
+      expect(JSON.stringify(vi.mocked(logger.warn).mock.calls[0])).not.toMatch(
         /secret/,
       )
+    })
+
+    it("keeps the error alert when our own host is refused", () => {
+      const request = new Request("http://staging.positivparty.com/x", {
+        method: "POST",
+        headers: { origin: "https://staging.positivparty.com" },
+      })
+
+      handleError(bareBadRequest(), {
+        request,
+        params: {},
+        context: {},
+      } as never)
+
+      expect(logger.error).toHaveBeenCalledWith(
+        "POST /x rejected with 400 before the action ran: Origin https://staging.positivparty.com does not match request URL http://staging.positivparty.com (react-router CSRF check)",
+        expect.objectContaining({ category: "unhandled", status: 400 }),
+      )
+      expect(logger.warn).not.toHaveBeenCalled()
+    })
+
+    it("keeps the error alert for an Origin in allowedActionOrigins", () => {
+      const request = new Request("http://positivparty.com/pagamento/pay-1", {
+        method: "POST",
+        headers: { origin: "https://www.positivparty.com" },
+      })
+
+      handleError(bareBadRequest(), {
+        request,
+        params: {},
+        context: {},
+      } as never)
+
+      expect(logger.error).toHaveBeenCalledWith(
+        "POST /pagamento/pay-1 failed with 500: Error: Bad Request",
+        expect.objectContaining({ category: "unhandled", status: 500 }),
+      )
+      expect(logger.warn).not.toHaveBeenCalled()
     })
 
     it("leaves the request facts out when the stack reaches app code", () => {
