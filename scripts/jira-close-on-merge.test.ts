@@ -12,9 +12,9 @@ function json(body: unknown) {
 
 function jira({
   transitions = [
-    { id: "31", to: { name: "In Review" } },
-    { id: "41", to: { name: "Done" } },
-    { id: "51", to: { name: "Cancelled" } },
+    { id: "31", to: { name: "Em revisão" } },
+    { id: "41", to: { name: "Feito" } },
+    { id: "51", to: { name: "Cancelado" } },
   ],
   listStatus = 200,
   postStatus = 204,
@@ -50,7 +50,7 @@ describe("keysIn", () => {
 })
 
 describe("closeTickets", () => {
-  it("moves the ticket through the transition that leads to Done", async () => {
+  it("moves the ticket through the transition that leads to Feito", async () => {
     const fetcher = jira()
 
     await closeTickets({
@@ -107,14 +107,14 @@ describe("closeTickets", () => {
     expect(fetcher).not.toHaveBeenCalled()
   })
 
-  it("fails when the project has no transition to Done", async () => {
+  it("fails when the project has no transition to Feito", async () => {
     const fetcher = jira({
-      transitions: [{ id: "51", to: { name: "Cancelled" } }],
+      transitions: [{ id: "51", to: { name: "Cancelado" } }],
     })
 
     await expect(
       closeTickets({ title: "[WEB-12] x", apiBase, authorization, fetcher }),
-    ).rejects.toThrow("No transition to Done for WEB-12")
+    ).rejects.toThrow("No transition to Feito for WEB-12")
   })
 
   it("fails on an expired or wrong token, which is how we learn it lapsed", async () => {
@@ -130,7 +130,7 @@ describe("closeTickets", () => {
 
     await expect(
       closeTickets({ title: "[WEB-12] x", apiBase, authorization, fetcher }),
-    ).rejects.toThrow("Moving WEB-12 to Done returned HTTP 400")
+    ).rejects.toThrow("Moving WEB-12 to Feito returned HTTP 400")
   })
 
   it("still tries the other tickets before reporting a failure", async () => {

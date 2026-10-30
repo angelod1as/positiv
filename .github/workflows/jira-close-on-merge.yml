@@ -22,7 +22,7 @@ jobs:
           node-version-file: .nvmrc
           check-latest: true
           package-manager-cache: false
-      - name: Move the PR's tickets to Done
+      - name: Move the PR's tickets to Feito
         env:
           JIRA_API_BASE: https://api.atlassian.com/ex/jira/7a81017b-2b5c-4f1a-9b67-c2ee7f74b3c8
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}

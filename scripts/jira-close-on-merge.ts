@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url"
 
-const DONE_STATUS = "Done"
+const DONE_STATUS = "Feito"
 
 type Fetcher = (url: string, init?: RequestInit) => Promise<Response>
 
