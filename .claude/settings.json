@@ -140,6 +140,7 @@
       "Bash(*SUPABASE_DB_PASSWORD=*)",
       "Bash(*POSTGRES_PASSWORD=*)",
       "Bash(*LISTMONK_ADMIN_PASSWORD=*)",
+      "Bash(*POSITIV_UMAMI_API_KEY=*)",
 
       "Read(./.env)",
       "Read(./.env.local)",
