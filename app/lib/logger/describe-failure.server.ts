@@ -6,6 +6,12 @@ import { appFrames } from "./stack-frames.server"
 export interface FailureDescription {
   status: number
   summary: string
+  foreignOrigin?: true
+}
+
+interface CsrfCause {
+  cause: string
+  foreignOrigin: boolean
 }
 
 const MUTATION_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"])
@@ -26,13 +32,23 @@ function parseOrigin(origin: string): string | null {
   }
 }
 
+// Our own host refused is the POS-666 outage, whatever the allowed list says.
+// The headers count because behind the proxy request.url can be an internal one.
+function isOwnHost(host: string, request: Request): boolean {
+  return [
+    new URL(request.url).host,
+    request.headers.get("host"),
+    request.headers.get("x-forwarded-host"),
+  ].includes(host)
+}
+
 // The same comparison react-router makes before an action runs, redone from
 // the request, because the error it hands over no longer says.
 function csrfCause(
   error: SerializedError,
   request: Request,
   path: string,
-): string | null {
+): CsrfCause | null {
   if (!MUTATION_METHODS.has(request.method)) return null
   if (!CSRF_MESSAGES.includes(error.message)) return null
   if (error.stack !== undefined && appFrames(error.stack).length > 0) return null
@@ -41,7 +57,9 @@ function csrfCause(
   if (header === null || origin === undefined) return null
   const requestOrigin = new URL(request.url).origin
   const parsed = header === "null" ? "null" : parseOrigin(header)
-  if (parsed === null) return `Origin ${origin} is not a valid URL`
+  if (parsed === null) {
+    return { cause: `Origin ${origin} is not a valid URL`, foreignOrigin: true }
+  }
   if (parsed === requestOrigin) return null
   if (
     parsed !== "null" &&
@@ -49,7 +67,10 @@ function csrfCause(
   ) {
     return null
   }
-  return `Origin ${origin} does not match request URL ${requestOrigin}`
+  return {
+    cause: `Origin ${origin} does not match request URL ${requestOrigin}`,
+    foreignOrigin: parsed === "null" || !isOwnHost(new URL(parsed).host, request),
+  }
 }
 
 function statusOf(error: SerializedError): number {
@@ -66,11 +87,12 @@ export function describeFailure(
   path: string,
 ): FailureDescription {
   const action = `${request.method} ${path}`
-  const cause = csrfCause(error, request, path)
-  if (cause !== null) {
+  const csrf = csrfCause(error, request, path)
+  if (csrf !== null) {
     return {
       status: 400,
-      summary: `${action} rejected with 400 before the action ran: ${cause} (react-router CSRF check)`,
+      summary: `${action} rejected with 400 before the action ran: ${csrf.cause} (react-router CSRF check)`,
+      ...(csrf.foreignOrigin && { foreignOrigin: true }),
     }
   }
   const status = statusOf(error)
