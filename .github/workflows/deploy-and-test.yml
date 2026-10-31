@@ -283,6 +283,10 @@ jobs:
           VITE_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
           SUPABASE_TURNSTILE_SECRET: ci-placeholder-never-sent
 
+      - name: Print diagnostics
+        if: always()
+        run: cat /tmp/diag.log || true
+
       # Upload artifacts
       - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}

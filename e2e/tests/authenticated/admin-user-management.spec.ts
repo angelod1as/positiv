@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { appendFileSync } from "fs"
 import path from "path"
 import { AdminDashboardPage } from "../../pages/admin/AdminDashboardPage"
 import { EventManagementPage } from "../../pages/admin/EventManagementPage"
@@ -27,7 +28,16 @@ test.describe("Admin User Management", () => {
   let testEventId: string = ""
   let testEventIdDetail: string = ""
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }, testInfo) => {
+    const label = `${testInfo.title} retry=${testInfo.retry}`
+    page.on("console", (message) => {
+      if (message.text().startsWith("[diag]")) {
+        appendFileSync("/tmp/diag.log", `${label} ${message.text()}\n`)
+      }
+    })
+    page.on("pageerror", (error) => {
+      appendFileSync("/tmp/diag.log", `${label} [pageerror] ${error.message}\n`)
+    })
     userManagement = new UserManagementPage(page)
     adminDashboard = new AdminDashboardPage(page)
     eventManagement = new EventManagementPage(page)

@@ -288,12 +288,14 @@ export class UserManagementPage extends BasePage {
       .evaluateAll((toasts) =>
         toasts.forEach((toast) => toast.setAttribute("data-e2e-seen", "")),
       )
+    await this.page.evaluate((t) => console.info(`[diag] step-start ${t}`), type)
     await action()
     await expect(
       this.page.locator(
         `[data-sonner-toast][data-type="${type}"]:not([data-e2e-seen])`,
       ),
     ).toBeVisible()
+    await this.page.evaluate((t) => console.info(`[diag] step-end ${t}`), type)
   }
 
   async getDetailFieldValue(fieldName: string): Promise<string> {

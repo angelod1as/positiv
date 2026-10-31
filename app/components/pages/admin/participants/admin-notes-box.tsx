@@ -1,5 +1,5 @@
 import type { ChangeEvent, FC } from "react"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useFetcher } from "react-router"
 import { toast } from "sonner"
 import { Card, CardContent } from "~/components/ui/card"
@@ -23,6 +23,24 @@ import type {
 
 const notesCopy = adminParticipantsCopy.adminNotes
 
+const diagIds = new WeakMap<object, number>()
+let diagCounter = 0
+let diagInstances = 0
+const diagId = (value: unknown) => {
+  if (!value || typeof value !== "object") return "none"
+  if (!diagIds.has(value)) diagIds.set(value, ++diagCounter)
+  return `#${diagIds.get(value)}`
+}
+const diag = (message: string) =>
+  console.info(`[diag] ${performance.now().toFixed(0)} ${message}`)
+type DiagRouter = {
+  subscribe: (
+    listener: (state: {
+      fetchers: Map<string, { state: string; data: unknown }>
+    }) => void,
+  ) => () => void
+}
+
 type AdminNotesBoxProps = {
   profileId: string
   flag: ProfileFlagStatus
@@ -41,6 +59,27 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
   const fetcher = useFetcher<ComposableFetcherData>()
   const previousDataRef = useRef<ComposableFetcherData | undefined>(undefined)
 
+  const [instance] = useState(() => ++diagInstances)
+  diag(
+    `render i=${instance} state=${fetcher.state} data=${diagId(fetcher.data)} flag=${flag}`,
+  )
+  useEffect(() => {
+    diag(`mount i=${instance}`)
+    const router = (window as unknown as { __reactRouterDataRouter?: DiagRouter })
+      .__reactRouterDataRouter
+    const unsubscribe = router?.subscribe((state) =>
+      diag(
+        `router ${[...state.fetchers]
+          .map(([key, f]) => `${key}:${f.state}:${diagId(f.data)}`)
+          .join(",")}`,
+      ),
+    )
+    return () => {
+      diag(`unmount i=${instance}`)
+      unsubscribe?.()
+    }
+  }, [instance])
+
   // Local state for text inputs, synced with props
   const [localFlagNotes, setLocalFlagNotes] = useSyncedState(flagNotes ?? "")
   const [localGeneralNotes, setLocalGeneralNotes] = useSyncedState(
@@ -49,9 +88,18 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
 
   // Show toast feedback when fetcher.data changes
   useEffect(() => {
+    diag(
+      `effect i=${instance} data=${diagId(fetcher.data)} prev=${diagId(previousDataRef.current)} success=${String(fetcher.data?.success)}`,
+    )
     if (fetcher.data && fetcher.data !== previousDataRef.current) {
       if (fetcher.data.success) {
-        toast.success(notesCopy.saved)
+        const toastId = toast.success(notesCopy.saved)
+        diag(`toast.success id=${String(toastId)}`)
+        setTimeout(() => {
+          diag(
+            `after-toast id=${String(toastId)} active=${toast.getToasts?.().length} dom=${document.querySelectorAll("[data-sonner-toast]").length} toaster=${document.querySelectorAll("[data-sonner-toaster]").length}`,
+          )
+        }, 200)
       } else {
         const errorMessage =
           fetcher.data.errors?._global?.[0] ?? notesCopy.saveFailed
@@ -77,6 +125,7 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
       })
     }
 
+    diag(`submit ${field}=${String(value)} state=${fetcher.state}`)
     fetcher.submit(formData, { method: "POST" })
   }
 
