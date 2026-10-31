@@ -32,7 +32,7 @@ To create a new ADR: `pnpm adr:new`
 
 ### 📁 Temporary Plans
 
-- [plans/](./plans/) - Temporary implementation plans for Linear tasks (deleted after PR creation)
+- [plans/](./plans/) - Temporary implementation plans for Jira tickets (deleted after PR creation)
 
 ## About This Documentation
 

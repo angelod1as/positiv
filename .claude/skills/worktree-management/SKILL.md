@@ -1,13 +1,13 @@
 ---
 name: worktree-management
-description: This skill should be used when the user asks to "create worktree", "crie worktree", "new worktree", "novo worktree", "setup worktree", "remove worktree", "remova worktree", "remover worktree", "cleanup worktree", "limpe worktree", "limpar worktree", "delete worktree", "deletar worktree", "list worktrees", "liste worktrees", "listar worktrees", "switch worktree", mentions "POS-XXX worktree", says "worktree for", "worktree para", says "Do POS-XXX", "Faça POS-XXX", "Fazer POS-XXX", says "Plan POS-XXX", "Planeje POS-XXX", "Planejar POS-XXX", says "Approve plan for POS-XXX", "Aprove plano para POS-XXX", says "Show plan for POS-XXX", "Mostre plano para POS-XXX", says "Update plan for POS-XXX", "Atualize plano para POS-XXX", says "Regenerate plan for POS-XXX", "Regenere plano para POS-XXX", says "Work on POS-XXX", "Trabalhe em POS-XXX", "Trabalhar em POS-XXX", says "Start POS-XXX", "Comece POS-XXX", "Começar POS-XXX", "mesclado", or discusses Linear task worktree management, branch creation from Linear tasks, plan generation, plan approval, or worktree lifecycle operations for the Positiv project. User may speak in English or Brazilian Portuguese.
+description: This skill should be used when the user asks to "create worktree", "crie worktree", "new worktree", "novo worktree", "setup worktree", "remove worktree", "remova worktree", "remover worktree", "cleanup worktree", "limpe worktree", "limpar worktree", "delete worktree", "deletar worktree", "list worktrees", "liste worktrees", "listar worktrees", "switch worktree", mentions "WEB-XXX worktree", says "worktree for", "worktree para", says "Do WEB-XXX", "Faça WEB-XXX", "Fazer WEB-XXX", says "Plan WEB-XXX", "Planeje WEB-XXX", "Planejar WEB-XXX", says "Approve plan for WEB-XXX", "Aprove plano para WEB-XXX", says "Show plan for WEB-XXX", "Mostre plano para WEB-XXX", says "Update plan for WEB-XXX", "Atualize plano para WEB-XXX", says "Regenerate plan for WEB-XXX", "Regenere plano para WEB-XXX", says "Work on WEB-XXX", "Trabalhe em WEB-XXX", "Trabalhar em WEB-XXX", says "Start WEB-XXX", "Comece WEB-XXX", "Começar WEB-XXX", "mesclado", or discusses Jira ticket worktree management, branch creation from Jira tickets, plan generation, plan approval, or worktree lifecycle operations for the Positiv project. User may speak in English or Brazilian Portuguese.
 ---
 
 # Worktree Management for Positiv Project
 
 ## Overview
 
-This skill manages the complete lifecycle of Git worktrees for the Positiv project, including creation from Linear tasks, environment setup, and cleanup. It integrates with Linear MCP to automatically fetch task information and follows strict project conventions.
+This skill manages the complete lifecycle of Git worktrees for the Positiv project, including creation from Jira tickets, environment setup, and cleanup. It integrates with Atlassian MCP to automatically fetch task information and follows strict project conventions.
 
 ## Critical: Read CLAUDE.md First
 
@@ -31,13 +31,13 @@ It contains critical information about:
 ## When to Use This Skill
 
 Use this skill when the user:
-- Wants to create a new worktree from a Linear task
-  - English: "create worktree for POS-314"
-  - Portuguese: "crie worktree para POS-314"
-- Wants to start working on a Linear task
-  - English: "Do POS-314", "Plan POS-357"
-  - Portuguese: "Faça POS-314", "Planeje POS-357"
-- Needs a quick worktree without a Linear task
+- Wants to create a new worktree from a Jira ticket
+  - English: "create worktree for WEB-314"
+  - Portuguese: "crie worktree para WEB-314"
+- Wants to start working on a Jira ticket
+  - English: "Do WEB-314", "Plan WEB-357"
+  - Portuguese: "Faça WEB-314", "Planeje WEB-357"
+- Needs a quick worktree without a Jira ticket
   - English: "create worktree", "new worktree"
   - Portuguese: "crie worktree", "novo worktree"
 - Wants to list active worktrees with their status
@@ -60,9 +60,9 @@ positiv/
     │   ├── CLAUDE.md           # Development guide (versioned)
     │   ├── .claude/            # Shared settings + this skill (versioned)
     │   └── .env                # Environment variables to copy
-    ├── pos-314-description/    # Linear task worktree
-    ├── pos-357-another-task/   # Another task worktree
-    └── feature/quick-fix/      # Non-Linear worktree
+    ├── web-314-description/    # Jira ticket worktree
+    ├── web-357-another-task/   # Another task worktree
+    └── feature/quick-fix/      # No-ticket worktree
 ```
 
 **`main` is not special.** It is a worktree like any other, at `wt/main`. The
@@ -77,15 +77,15 @@ per machine and is never assumed.
 
 ## Core Operations
 
-### Operation 1: Create Worktree from Linear Task
+### Operation 1: Create Worktree from Jira Ticket
 
 **Trigger**: User mentions:
-- English: "create worktree for POS-XXX", "new worktree for POS-XXX"
-- Portuguese: "crie worktree para POS-XXX", "novo worktree para POS-XXX"
+- English: "create worktree for WEB-XXX", "new worktree for WEB-XXX"
+- Portuguese: "crie worktree para WEB-XXX", "novo worktree para WEB-XXX"
 
 **Prerequisites**:
 1. Read CLAUDE.md
-2. Verify Linear MCP server is available
+2. Verify Atlassian MCP server is available
 3. Any worktree works as the starting point — `wt/main` is the conventional one
 
 **Workflow**:
@@ -96,26 +96,26 @@ per machine and is never assumed.
    git pull origin main
    ```
 
-2. **Fetch Linear Task Details** using Linear MCP:
-   - Use `mcp__linear-server__get_issue` with task ID (extract number from "POS-XXX")
-   - Team ID for Positiv: `20a312f9-eb0b-42c0-b61d-6212ca72d7ef`
-   - Extract: title, description, labels, assignee
+2. **Fetch Jira Ticket Details** using the Atlassian MCP:
+   - Use `getJiraIssue` with the key, for example `WEB-314`
+   - cloudId for Positiv: `7a81017b-2b5c-4f1a-9b67-c2ee7f74b3c8`
+   - Extract: summary, description, labels, assignee
 
 3. **Generate Branch Name**:
-   - Format: `pos-{task-number}-{slugified-title}`
+   - Format: `web-{task-number}-{slugified-title}`
    - Slugification rules:
      - Lowercase all characters
      - Replace spaces with hyphens
      - Remove special characters except hyphens
      - Remove Portuguese accents: á→a, ã→a, ç→c, õ→o, é→e, ê→e, í→i, ó→o, ú→u
      - Maximum 50 characters total
-   - Example: "POS-314: Email transacional no dia da abertura do grupo" → `pos-314-email-transacional-no-dia-da-abertura-do-grupo`
+   - Example: "WEB-314: Email transacional no dia da abertura do grupo" → `web-314-email-transacional-no-dia-da-abertura-do-grupo`
 
 4. **Check for Existing Worktree/Branch**:
    ```bash
    cd ../main
-   git worktree list | grep "pos-{task-number}"
-   git branch -a | grep "pos-{task-number}"
+   git worktree list | grep "web-{task-number}"
+   git branch -a | grep "web-{task-number}"
    ```
    - If exists: Ask user if they want to use existing or create new with different name
 
@@ -148,7 +148,7 @@ per machine and is never assumed.
    ```
    ✓ Worktree created: wt/{branch-name}
    ✓ Branch: {branch-name}
-   ✓ Linear Task: POS-{number} - {title}
+   ✓ Jira Ticket: WEB-{number} - {title}
    ✓ Environment configured (.env copied)
    ✓ Dependencies installed (pnpm install complete)
 
@@ -160,16 +160,16 @@ per machine and is never assumed.
    ```
 
 **Error Handling**:
-- Linear API failure: Fall back to manual branch naming, ask user for title
+- Jira API failure: Fall back to manual branch naming, ask user for title
 - .env missing: Warn user, ask if they want to continue without it
 - pnpm install failure: Show error, suggest running manually
 - Worktree already exists: Offer to remove old and recreate, or use different name
 
-### Operation 2: Plan and Start Work on Linear Task (WITH DOCUMENT GENERATION)
+### Operation 2: Plan and Start Work on Jira Ticket (WITH DOCUMENT GENERATION)
 
 **Trigger**: User says:
-- English: "Plan POS-XXX", "Do POS-XXX", "Work on POS-XXX", "Start POS-XXX"
-- Portuguese: "Planeje POS-XXX", "Faça POS-XXX", "Trabalhe em POS-XXX", "Comece POS-XXX"
+- English: "Plan WEB-XXX", "Do WEB-XXX", "Work on WEB-XXX", "Start WEB-XXX"
+- Portuguese: "Planeje WEB-XXX", "Faça WEB-XXX", "Trabalhe em WEB-XXX", "Comece WEB-XXX"
 
 **Purpose**: Enhanced workflow that combines worktree creation with comprehensive plan document generation.
 
@@ -177,11 +177,12 @@ per machine and is never assumed.
 
 1. **Read CLAUDE.md Files** (same as Operation 1, step 1)
 
-2. **Fetch Linear Task Details**:
-   - Use `mcp__linear-server__get_issue` with task ID
-   - Display full task details:
+2. **Fetch Jira Ticket Details**:
+   - Use `getJiraIssue` with the key
+   - Move the ticket to `Fazendo`
+   - Display full ticket details:
      ```
-     Linear Task: POS-{number}
+     Jira Ticket: WEB-{number}
      Title: {title}
      State: {state}
      Assignee: {assignee}
@@ -194,7 +195,7 @@ per machine and is never assumed.
 3. **Check for Existing Worktree**:
    ```bash
    cd ../main
-   git worktree list | grep "pos-{task-number}"
+   git worktree list | grep "web-{task-number}"
    ```
    - If worktree exists:
      ```
@@ -211,11 +212,11 @@ per machine and is never assumed.
 5. **Check for Existing Plan Document**:
    ```bash
    cd ../main
-   ls -la docs/plans/pos-{task-number}-*.md
+   ls -la docs/plans/web-{task-number}-*.md
    ```
    - If plan exists:
      ```
-     ✓ Plan document already exists: docs/plans/POS-{number}-{slug}.md
+     ✓ Plan document already exists: docs/plans/WEB-{number}-{slug}.md
 
      Options:
      1. Use existing plan
@@ -226,7 +227,7 @@ per machine and is never assumed.
      ```
 
 6. **Analyze Task & Generate Plan Document**:
-   - Parse Linear task description carefully
+   - Parse Jira ticket description carefully
    - Search for similar features using Grep/Glob:
      ```bash
      grep -r "{keyword}" app/
@@ -242,11 +243,11 @@ per machine and is never assumed.
      - TDD baby steps breakdown
      - Testing strategy
    - Ensure docs/plans/ directory exists (create if needed)
-   - Save to: `docs/plans/POS-{number}-{slug}.md`
+   - Save to: `docs/plans/WEB-{number}-{slug}.md`
 
 7. **Display Plan for Review**:
    ```
-   ✓ Plan Generated: docs/plans/POS-{number}-{slug}.md
+   ✓ Plan Generated: docs/plans/WEB-{number}-{slug}.md
    ✓ Worktree ready: wt/{branch-name}
 
    Plan Summary:
@@ -255,17 +256,17 @@ per machine and is never assumed.
    - Implementation Steps: {count}
 
    Please review the plan. When ready:
-   - Read full plan: cat docs/plans/POS-{number}-{slug}.md
-   - Approve and post to Linear: "Approve plan for POS-{number}"
-   - Regenerate: "Plan POS-{number}" again
+   - Read full plan: cat docs/plans/WEB-{number}-{slug}.md
+   - Approve and post to Jira: "Approve plan for WEB-{number}"
+   - Regenerate: "Plan WEB-{number}" again
 
    Remember: DELETE plan before pushing PR!
    ```
 
-8. **If User Approves** (triggered by "Approve plan for POS-XXX"):
+8. **If User Approves** (triggered by "Approve plan for WEB-XXX"):
    - Read the generated plan document
-   - Extract summary for Linear comment (keep under 10K chars)
-   - Use `mcp__linear-server__create_comment` with:
+   - Extract summary for Jira comment (keep under 10K chars)
+   - Use `addOrEditJiraIssueComment` with:
      ```markdown
      📋 Implementation Plan Created & Approved
 
@@ -284,25 +285,25 @@ per machine and is never assumed.
 
      ---
 
-     📄 Full plan: `docs/plans/POS-{number}-{slug}.md` in worktree
+     📄 Full plan: `docs/plans/WEB-{number}-{slug}.md` in worktree
 
      ⚠️ **Remember:** Delete plan before creating PR!
      ```
    - If summary too long (>10K chars), truncate intelligently and add footer:
-     "⚠️ Truncated for length. Full plan in docs/plans/POS-{number}-{slug}.md"
+     "⚠️ Truncated for length. Full plan in docs/plans/WEB-{number}-{slug}.md"
    - Display confirmation:
      ```
-     ✓ Plan posted to Linear: https://linear.app/positiv/issue/POS-{number}
+     ✓ Plan posted to Jira: https://partypositiv.atlassian.net/browse/WEB-{number}
 
      Ready to start implementing!
      ```
 
 9. **If User Starts Coding Without Approval**:
    ```
-   ⚠️  Reminder: Plan not yet posted to Linear.
+   ⚠️  Reminder: Plan not yet posted to Jira.
 
    To share plan with team:
-   - Say: "Approve plan for POS-{number}"
+   - Say: "Approve plan for WEB-{number}"
 
    Or continue implementing (plan is local-only)
    ```
@@ -314,8 +315,8 @@ per machine and is never assumed.
 ### Operation 2A: View or Update Existing Plan
 
 **Trigger**: User says:
-- English: "Show plan for POS-XXX", "Update plan for POS-XXX", "Regenerate plan for POS-XXX"
-- Portuguese: "Mostre plano para POS-XXX", "Atualize plano para POS-XXX", "Regenere plano para POS-XXX"
+- English: "Show plan for WEB-XXX", "Update plan for WEB-XXX", "Regenerate plan for WEB-XXX"
+- Portuguese: "Mostre plano para WEB-XXX", "Atualize plano para WEB-XXX", "Regenere plano para WEB-XXX"
 
 **Purpose**: View, update, or regenerate existing plan documents without creating a new worktree.
 
@@ -324,7 +325,7 @@ per machine and is never assumed.
 1. **Find Plan Document**:
    ```bash
    cd ../main
-   find docs/plans -name "pos-{number}-*.md"
+   find docs/plans -name "web-{number}-*.md"
    ```
 
 2. **If Plan Found - Display Summary**:
@@ -337,7 +338,7 @@ per machine and is never assumed.
      - Implementation steps count
    - Display:
      ```
-     Plan: docs/plans/POS-{number}-{slug}.md
+     Plan: docs/plans/WEB-{number}-{slug}.md
      Created: {date}
      Status: {status}
 
@@ -349,7 +350,7 @@ per machine and is never assumed.
      Actions:
      1. Read full plan
      2. Regenerate plan (overwrites)
-     3. Approve and post to Linear
+     3. Approve and post to Jira
      4. Delete plan
 
      Choose (1/2/3/4):
@@ -358,25 +359,25 @@ per machine and is never assumed.
 3. **Handle User Choice**:
    - **Read (1)**: Display full plan content with `cat`
    - **Regenerate (2)**: Re-run Operation 2 analysis, overwrite existing plan
-   - **Approve (3)**: Trigger step 8 from Operation 2 (post to Linear)
+   - **Approve (3)**: Trigger step 8 from Operation 2 (post to Jira)
    - **Delete (4)**: Remove plan file with confirmation
 
 4. **If Plan Not Found**:
    ```
-   ✗ No plan found for POS-{number}
+   ✗ No plan found for WEB-{number}
 
    To create a plan:
-   - Say: "Plan POS-{number}"
+   - Say: "Plan WEB-{number}"
    ```
 
 **Error Handling**:
 - Multiple plans for same task: List all, ask which one
 - Corrupted plan file: Offer to regenerate
-- Linear posting fails: Offer retry or skip
+- Jira posting fails: Offer retry or skip
 
-### Operation 3: Create Quick Worktree (Non-Linear)
+### Operation 3: Create Quick Worktree (No-ticket)
 
-**Trigger**: User says (without mentioning Linear task):
+**Trigger**: User says (without mentioning Jira ticket):
 - English: "create worktree", "quick worktree", "worktree for {description}"
 - Portuguese: "crie worktree", "worktree rápido", "worktree para {description}"
 
@@ -466,33 +467,33 @@ per machine and is never assumed.
    git log -1 --oneline
    ```
 
-3. **Extract Linear Task Info** (if applicable):
-   - If branch name matches `pos-{number}-*`:
-     - Extract task number
-     - Use `mcp__linear-server__get_issue` to fetch current status
+3. **Extract Jira Ticket Info** (if applicable):
+   - If branch name matches `web-{number}-*`:
+     - Extract ticket number
+     - Use `getJiraIssue` to fetch current status
      - Show: title, state, assignee
 
 4. **Display Output**:
    ```
    Active Worktrees:
 
-   1. pos-314-email-transacional-no-dia-da-abertura-do-grupo
-      Path: wt/pos-314-email-transacional-no-dia-da-abertura-do-grupo
-      Linear: POS-314 - Email transacional no dia da abertura do grupo [In Progress]
+   1. web-314-email-transacional-no-dia-da-abertura-do-grupo
+      Path: wt/web-314-email-transacional-no-dia-da-abertura-do-grupo
+      Jira: WEB-314 - Email transacional no dia da abertura do grupo [In Progress]
       Status: 3 files modified, 2 files staged
-      Remote: Pushed to origin/pos-314-email-transacional-no-dia-da-abertura-do-grupo
+      Remote: Pushed to origin/web-314-email-transacional-no-dia-da-abertura-do-grupo
       Last commit: feat(email): add transactional email template
 
-   2. pos-357-auto-createdelete-lists
-      Path: wt/pos-357-auto-createdelete-lists
-      Linear: POS-357 - Auto create/delete lists [Done]
+   2. web-357-auto-createdelete-lists
+      Path: wt/web-357-auto-createdelete-lists
+      Jira: WEB-357 - Auto create/delete lists [Done]
       Status: Clean, no uncommitted changes
-      Remote: Pushed to origin/pos-357-auto-createdelete-lists
+      Remote: Pushed to origin/web-357-auto-createdelete-lists
       Last commit: test: add list deletion tests
 
    3. feature/newsletter-update
       Path: wt/feature/newsletter-update
-      Linear: N/A (non-Linear task)
+      Jira: N/A (no-ticket task)
       Status: 1 file modified
       Remote: Not pushed
       Last commit: feat(newsletter): update email template
@@ -501,8 +502,8 @@ per machine and is never assumed.
 5. **Summary**:
    ```
    Total: 3 active worktrees
-   - 2 Linear tasks (1 In Progress, 1 Done)
-   - 1 non-Linear task
+   - 2 Jira tickets (1 In Progress, 1 Done)
+   - 1 no-ticket task
    ```
 
 ### Operation 5: Remove/Cleanup Worktree
@@ -515,7 +516,7 @@ per machine and is never assumed.
 
 1. **Identify Worktree to Remove**:
    - If user says "merged": Determine current worktree from working directory
-   - If user specifies POS-XXX: Find worktree matching `pos-{number}-*`
+   - If user specifies WEB-XXX: Find worktree matching `web-{number}-*`
    - If user specifies path: Use that path
    - Otherwise: List worktrees and ask which one
 
@@ -635,12 +636,12 @@ per machine and is never assumed.
    e. **Check for Plan Document**:
    ```bash
    cd ../main
-   find docs/plans -name "pos-{number}-*.md"
+   find docs/plans -name "web-{number}-*.md"
    ```
 
    If plan found:
    ```
-   ⚠️  Plan document still exists: docs/plans/POS-{number}-{slug}.md
+   ⚠️  Plan document still exists: docs/plans/WEB-{number}-{slug}.md
 
    This should have been deleted before PR creation.
    Delete now? (yes/no)
@@ -648,7 +649,7 @@ per machine and is never assumed.
 
    If yes:
    ```bash
-   rm docs/plans/pos-{number}-*.md
+   rm docs/plans/web-{number}-*.md
    ```
 
    If no:
@@ -657,17 +658,13 @@ per machine and is never assumed.
 
    Remember: Plans are temporary and should be deleted after PR merge.
    You can delete it later with:
-   - rm docs/plans/POS-{number}-{slug}.md
+   - rm docs/plans/WEB-{number}-{slug}.md
    ```
 
-   f. **Ask About Linear Task** (if applicable):
-   ```
-   Linear task POS-{number} is currently: {current-state}
-   Update to "Done"? (yes/no)
-   ```
-
-   If yes:
-   - Use `mcp__linear-server__update_issue` with `state: "Done"`
+   f. **Check the Jira Ticket** (if applicable):
+   The merge moves a ticket named in the PR title to `Feito` through the
+   `Jira close on merge` Action. Read its status with `getJiraIssue`. If it
+   is not `Feito`, show the failed run and ask before moving it by hand.
 
 7. **Confirmation Output**:
    ```
@@ -675,7 +672,7 @@ per machine and is never assumed.
    ✓ Local branch deleted: {branch-name}
    ✓ Remote branch deleted: origin/{branch-name}
    ✓ Main repository updated (git pull)
-   ✓ Linear task updated to Done
+   ✓ Jira ticket in Feito
 
    Cleanup complete. You're now on main branch in positiv/.
    ```
@@ -698,14 +695,14 @@ per machine and is never assumed.
 1. **Scan for Plan Documents**:
    ```bash
    cd ../main
-   find docs/plans -name "pos-{number}-*.md"
+   find docs/plans -name "web-{number}-*.md"
    ```
 
 2. **If Plan Found**:
    ```
    ⚠️  WARNING: Plan document still exists!
 
-   File: docs/plans/POS-{number}-{slug}.md
+   File: docs/plans/WEB-{number}-{slug}.md
 
    Plans should be deleted before PR creation.
    They are temporary documents for implementation guidance.
@@ -715,7 +712,7 @@ per machine and is never assumed.
 
 3. **If User Says Yes**:
    ```bash
-   rm docs/plans/pos-{number}-*.md
+   rm docs/plans/web-{number}-*.md
    ```
 
    Display:
@@ -731,7 +728,7 @@ per machine and is never assumed.
 
    Remember: Plans are meant to be temporary.
    Consider deleting after PR review:
-   - rm docs/plans/POS-{number}-{slug}.md
+   - rm docs/plans/WEB-{number}-{slug}.md
    ```
 
    Continue with PR creation
@@ -758,8 +755,8 @@ per machine and is never assumed.
 - Never commit .env files
 
 ### Branch Naming Consistency
-- Linear tasks: Always `pos-{number}-{slug}`
-- Non-Linear: Always `feature/{description}` or `fix/{description}`
+- Jira tickets: Always `web-{number}-{slug}`
+- No-ticket: Always `feature/{description}` or `fix/{description}`
 - Everything in English except UI strings (Brazilian Portuguese)
 
 ### Dependency Management
@@ -773,69 +770,75 @@ per machine and is never assumed.
 - Keep the wt/ directory clean
 - No stale or abandoned worktrees
 
-## Integration with Linear MCP
+## Integration with Atlassian MCP
 
-### Linear Server Configuration
-- Server: `linear-server` (from MCP configuration)
-- Team ID: `20a312f9-eb0b-42c0-b61d-6212ca72d7ef`
-- API Key: Configured in `.env` as `LINEAR_API_KEY`
+### Jira Configuration
+- Server: the claude.ai Atlassian connector
+- Site: `partypositiv.atlassian.net`
+- cloudId: `7a81017b-2b5c-4f1a-9b67-c2ee7f74b3c8`
+- Project: `WEB`
+- Statuses: `Esclarecer`, `A fazer`, `Fazendo`, `Em Revisão`, `Feito`, `Cancelado`
+- Types: Epic for a project, Task and Bug for the work under it
+- Priorities: `Highest`, `High`, `Low`, always set explicitly
 
-### Available Linear Operations
+### Available Jira Operations
 
 1. **Get Issue Details**:
    ```
-   Tool: mcp__linear-server__get_issue
-   Parameters: { issueId: "POS-314" } (extract number only, add "POS-" prefix)
-   Returns: { id, title, description, state, assignee, labels, ... }
+   Tool: getJiraIssue
+   Parameters: { cloudId, issueIdOrKey: "WEB-314" }
    ```
 
 2. **Update Issue State**:
    ```
-   Tool: mcp__linear-server__update_issue
-   Parameters: { id: "issue-id", state: "Done" }
+   Tools: listJiraIssueTransitions (through executeRead), then transitionJiraIssue
+   Match the status the transition leads to, not the transition's name.
    ```
+   - `A fazer` → `Fazendo` when work starts
+   - `Fazendo` → `Em Revisão` when the PR opens
+   - `Em Revisão` → `Feito` happens on merge, through the Action. Do not do it by hand.
 
 3. **List Issues** (for searching):
    ```
-   Tool: mcp__linear-server__list_issues
-   Parameters: { team: "team-id", query: "POS-314" }
+   Tool: searchJiraIssuesUsingJql
+   Parameters: { cloudId, jql: "project = WEB AND key = WEB-314" }
    ```
 
-### Linear Error Handling
-- Always catch Linear MCP errors gracefully
-- Provide fallback for when Linear is unavailable
-- Never block worktree creation on Linear failures
-- Inform user about Linear issues but continue workflow
+### Jira Error Handling
+- Always catch Atlassian MCP errors gracefully
+- Provide fallback for when Jira is unavailable
+- Never block worktree creation on Jira failures
+- Inform user about Jira issues but continue workflow
 - Log errors for debugging
 
 ## Edge Cases and Error Handling
 
 ### Edge Case 1: Worktree Already Exists
-**Scenario**: User tries to create worktree for POS-314, but it already exists.
+**Scenario**: User tries to create worktree for WEB-314, but it already exists.
 
 **Resolution**:
 ```
-Worktree already exists for POS-314
+Worktree already exists for WEB-314
 
-Path: wt/pos-314-email-transacional
-Branch: pos-314-email-transacional
+Path: wt/web-314-email-transacional
+Branch: web-314-email-transacional
 Last commit: feat(email): add template
 Status: 2 files modified
 
 Options:
 1. Use existing worktree (cd to it)
 2. Remove and recreate
-3. Create with different name (pos-314-v2-...)
+3. Create with different name (web-314-v2-...)
 
 Choose option (1/2/3):
 ```
 
-### Edge Case 2: Linear API Failure
-**Scenario**: Cannot fetch task details from Linear MCP.
+### Edge Case 2: Jira API Failure
+**Scenario**: Cannot fetch task details from Atlassian MCP.
 
 **Resolution**:
 ```
-⚠️  Unable to fetch task details from Linear
+⚠️  Unable to fetch task details from Jira
 
 Error: {error-message}
 
@@ -889,13 +892,13 @@ Continue anyway? (yes/no)
 
 **Resolution**:
 ```
-Multiple worktrees found for POS-314:
+Multiple worktrees found for WEB-314:
 
-1. pos-314-email-transacional
+1. web-314-email-transacional
    Last commit: feat(email): add template
    Status: Clean
 
-2. pos-314-email-transacional-v2
+2. web-314-email-transacional-v2
    Last commit: fix(email): update template
    Status: 1 file modified
 
@@ -925,7 +928,8 @@ Which worktree do you want to use? (1/2)
 
 The user's global CLAUDE.md defines shortcuts:
 - "merged" / "mesclado" → Trigger worktree removal process
-- "POS-XXX" reference → Linear task, use Linear MCP
+- "WEB-XXX" reference → Jira ticket, use the Atlassian MCP
+- "POS-XXX" reference → old ticket in the archived tracker, read only
 - "PR" → Create PR (worktree should be ready with tests passing)
 
 **Bilingual Support**: User speaks English and Brazilian Portuguese. All trigger phrases work in both languages.
@@ -937,5 +941,5 @@ The user's global CLAUDE.md defines shortcuts:
 - PR Template: `.github/pull_request_template.md`
 
 ### Examples of Existing Worktrees
-- `wt/pos-314-email-transacional-no-dia-da-abertura-do-grupo`
-- `wt/pos-357-auto-createdelete-lists`
+- `wt/web-314-email-transacional-no-dia-da-abertura-do-grupo`
+- `wt/web-357-auto-createdelete-lists`

@@ -17,6 +17,7 @@ ADRs are immutable once accepted - only their status can change (deprecated or s
 | [2025-01-22](./20250122-git-worktree-workflow.md) | Git Worktree Workflow | Accepted |
 | [2025-06-30](./20250630-use-log4brains-to-manage-the-adrs.md) | Use Log4brains | Accepted |
 | [2025-06-30](./20250630-use-markdown-architectural-decision-records.md) | Use Markdown ADRs | Accepted |
+| [2026-10-30](./20261030-track-engineering-work-in-jira.md) | Track engineering work in Jira | Accepted, on trial until 2026-11-27 |
 
 ### Core Architecture
 
