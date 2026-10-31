@@ -1,7 +1,7 @@
 ## Jira Ticket
 
 Fixes WEB-XXX
-<!-- If no Linear ticket exists, use: NO-TICKET -->
+<!-- If no Jira ticket exists, use: NO-TICKET -->
 
 ## Summary
 <!-- What does this PR do? Be concise. -->
