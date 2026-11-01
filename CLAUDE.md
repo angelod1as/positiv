@@ -3,9 +3,10 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 Tasks are often written in Portuguese. Everything you produce is in English —
-branch names, commit messages, comments, PR descriptions. The one exception is
-user- or admin-facing copy in the UI (the news dialog, for example), which is
-Brazilian Portuguese.
+branch names, commit messages, comments, PR descriptions. There are two
+exceptions, both in Brazilian Portuguese: user- or admin-facing copy in the UI
+(the news dialog, for example), and Jira tickets and comments, because Julia
+follows the work there. Tickets migrated from Linear stay as they were written.
 
 ## Non-Negotiable Rules
 
@@ -353,9 +354,14 @@ Whether a change clears the bar, and how to add one: the `news-dialog` skill.
 ## GitHub Workflow
 
 - ⁠Whenever the user has it, use the GitHub CLI to create pull requests
-- ⁠PR titles should not use the Conventional Commit Style. Instead, they should add the Linear ticket(s) to the start of the title, like in "[POS-923, POS-924] Add rake tasks for failed searches import and book brief generation". If no Linear ticket exists, use "[NO-TICKET]" prefix.
-- The Linear tasks should also be in the description using keywords like "Solve POS-123" or "Fixes POS-123". For PRs without Linear tickets, use "Fixes NO-TICKET"
+- ⁠PR titles should not use the Conventional Commit Style. Instead, they should add the Jira ticket(s) to the start of the title, like in "[WEB-923, WEB-924] Add rake tasks for failed searches import and book brief generation". If no Jira ticket exists, use "[NO-TICKET]" prefix.
+- **A `WEB-n` in the PR title closes that ticket on merge.** The `Jira close on merge` Action moves every key in the title to `Feito`. A PR that only advances a ticket keeps the key out of the title and says "Part of WEB-123" in the description.
+- The Jira tickets should also be in the description using keywords like "Solve WEB-123" or "Fixes WEB-123". For PRs without Jira tickets, use "Fixes NO-TICKET"
+- Branches are named `web-123-<slug>`.
+- Move a ticket to `Fazendo` when work starts and to `Em Revisão` when the PR opens, through the Atlassian MCP. Merging does the rest.
 - Follow @.github/pull_request_template.md closely — every heading in it gets filled in
+
+Jira project `WEB` is on trial until 2026-11-27: see [the ADR](docs/architecture/decisions/20261030-track-engineering-work-in-jira.md). `POS-` keys are old Linear tickets, read only.
 
 ## E2E Tests
 

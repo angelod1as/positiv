@@ -1,7 +1,7 @@
-## Linear Ticket
+## Jira Ticket
 
-Fixes POS-XXX
-<!-- If no Linear ticket exists, use: NO-TICKET -->
+Fixes WEB-XXX
+<!-- If no Jira ticket exists, use: NO-TICKET -->
 
 ## Summary
 <!-- What does this PR do? Be concise. -->

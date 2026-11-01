@@ -1,6 +1,6 @@
 import { GENDERS } from "~/lib/constants/constants"
 
-// TODO: POS-244 REFACTOR THIS MESS
+// TODO: WEB-23 REFACTOR THIS MESS
 // - Consolidate fragile string-matching logic into configuration-based utility
 // - Inconsistency: countRaceColor and countGenders only process first array element [0]
 //   while countOrientations processes ALL elements. Should be consistent.

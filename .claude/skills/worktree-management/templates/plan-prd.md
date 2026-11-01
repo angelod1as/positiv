@@ -1,6 +1,6 @@
-# [POS-{task-number}] {task-title}
+# [WEB-{task-number}] {task-title}
 
-**Linear Task**: [{task-number}]({linear-url})
+**Jira Ticket**: [WEB-{task-number}]({jira-url})
 **Created**: {timestamp}
 **Status**: In Progress
 

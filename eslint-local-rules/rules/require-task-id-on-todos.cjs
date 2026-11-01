@@ -1,7 +1,7 @@
 // eslint-local-rules/rules/require-task-id-on-todos.cjs
 
 /**
- * @fileoverview Ensures that specific keywords in line comments (e.g., TODO:) are followed by a POS- task ID.
+ * @fileoverview Ensures that specific keywords in line comments (e.g., TODO:) are followed by a WEB- task ID.
  */
 
 "use strict"
@@ -11,7 +11,7 @@ module.exports = {
     type: "problem",
     docs: {
       description:
-        "Enforce that specific keywords in line comments (e.g., TODO:) are followed by a POS- task ID.",
+        "Enforce that specific keywords in line comments (e.g., TODO:) are followed by a WEB- task ID.",
       category: "Stylistic Issues",
       recommended: false,
       url: "https://example.com/your-rule-docs", // Placeholder for your rule documentation
@@ -19,7 +19,7 @@ module.exports = {
     schema: [], // No options needed for this rule
     messages: {
       missingTaskId:
-        "Comments with '{{ keyword }}' must include a Linear task ID in the format 'POS-[number]'. See README for Linear URL.",
+        "Comments with '{{ keyword }}' must include a Jira task ID in the format 'WEB-[number]'.",
     },
   },
   create(context) {
@@ -27,8 +27,8 @@ module.exports = {
     // Making them case-insensitive for matching flexibility in the comment text.
     const keywords = ["BUG", "TODO", "URGENT", "REFACTOR", "TYPE", "QUESTION"]
 
-    // Regular expression to find "POS-" followed by one or more digits
-    const taskIdPattern = /POS-\d+/
+    // Regular expression to find "WEB-" followed by one or more digits
+    const taskIdPattern = /WEB-\d+/
 
     return {
       // ESLint AST visitor: this function is called for every program (root node of the AST)

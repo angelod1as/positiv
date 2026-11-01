@@ -92,7 +92,7 @@ export async function action({ request, params }: Route.ClientActionArgs) {
     })
 
     if (!result.success) {
-      // TODO: POS-143 Fix "DataWithError". There MUST be a way!!! (Or return "toast" here)
+      // TODO: WEB-24 Fix "DataWithError". There MUST be a way!!! (Or return "toast" here)
       throw new Error(dashboardCopy.cancelFailed)
     }
 

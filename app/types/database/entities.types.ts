@@ -10,7 +10,7 @@ import type {
 } from "~/lib/constants/constants"
 import type { Database } from "./database.types"
 
-// TODO: POS-136 selectable, insertable, updateable types
+// TODO: WEB-25 selectable, insertable, updateable types
 // https://kysely.dev/docs/getting-started
 
 // General Fetcher data from Composables

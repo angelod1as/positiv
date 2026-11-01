@@ -134,6 +134,18 @@
       "WebFetch(domain:vitest.dev)",
       "WebFetch(domain:zod.dev)",
 
+      "mcp__claude_ai_Atlassian_MCP__addOrEditJiraIssueComment",
+      "mcp__claude_ai_Atlassian_MCP__atlassianUserInfo",
+      "mcp__claude_ai_Atlassian_MCP__createJiraIssue",
+      "mcp__claude_ai_Atlassian_MCP__discover",
+      "mcp__claude_ai_Atlassian_MCP__editJiraIssue",
+      "mcp__claude_ai_Atlassian_MCP__executeRead",
+      "mcp__claude_ai_Atlassian_MCP__getAccessibleAtlassianResources",
+      "mcp__claude_ai_Atlassian_MCP__getJiraIssue",
+      "mcp__claude_ai_Atlassian_MCP__listJiraIssueComments",
+      "mcp__claude_ai_Atlassian_MCP__searchJiraIssuesUsingJql",
+      "mcp__claude_ai_Atlassian_MCP__transitionJiraIssue",
+
       "Read(./.env.schema)"
     ],
     "deny": [

@@ -21,11 +21,11 @@ This directory contains templates for generating implementation plans for Linear
 Templates use `{placeholder}` syntax that gets filled during plan generation:
 
 ### Core Placeholders
-- `{task-number}` - Linear task number (e.g., 314)
-- `{task-title}` - Linear task title
+- `{task-number}` - Jira ticket number (e.g., 314)
+- `{task-title}` - Jira ticket title
 - `{slug}` - URL-friendly task title (lowercase, hyphenated)
 - `{timestamp}` - Plan creation timestamp
-- `{linear-url}` - Full Linear task URL
+- `{jira-url}` - Full Jira ticket URL
 
 ### Content Placeholders
 - `{user-stories}` - Derived from task description
@@ -42,7 +42,7 @@ Templates use `{placeholder}` syntax that gets filled during plan generation:
 ## Usage
 
 Templates are used automatically by the worktree-management skill when you say:
-- "Plan POS-XXX" (generates plan-full.md)
+- "Plan WEB-XXX" (generates plan-full.md)
 - Future: Support for specifying template type
 
 ## Maintenance
@@ -56,6 +56,6 @@ When updating templates:
 ## Plan Lifecycle
 
 1. **Generation**: Template filled with task analysis
-2. **Storage**: Saved to `positiv/docs/plans/POS-{number}-{slug}.md`
+2. **Storage**: Saved to `positiv/docs/plans/WEB-{number}-{slug}.md`
 3. **Usage**: Reference during implementation
 4. **Deletion**: MUST be deleted before PR merge (temporary files)
