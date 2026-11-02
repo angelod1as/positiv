@@ -1,16 +1,16 @@
-FROM node:24.22.1-alpine AS development-dependencies-env
+FROM node:24.22.2-alpine AS development-dependencies-env
 RUN corepack enable
 COPY . /app
 WORKDIR /app
 RUN pnpm install --frozen-lockfile
 
-FROM node:24.22.1-alpine AS production-dependencies-env
+FROM node:24.22.2-alpine AS production-dependencies-env
 RUN corepack enable
 COPY ./package.json pnpm-lock.yaml pnpm-workspace.yaml /app/
 WORKDIR /app
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 
-FROM node:24.22.1-alpine AS build-env
+FROM node:24.22.2-alpine AS build-env
 RUN corepack enable
 
 # Public config is inlined into the client bundle, so it has to be present
@@ -36,7 +36,7 @@ COPY --from=development-dependencies-env /app/node_modules /app/node_modules
 WORKDIR /app
 RUN pnpm run build
 
-FROM node:24.22.1-alpine
+FROM node:24.22.2-alpine
 
 # This image is a production artifact, so it says so itself rather than relying
 # on the platform to remember. Without this, the schema defaults would apply and
