@@ -69,14 +69,18 @@ function countGenders(rows: DemographicRow[]) {
     other: { count: number; othersSet: Set<string> }
   }>(
     (acc, row) => {
-      const gender = row.gender?.[0] ?? "Not Provided"
-      const type = classifySingleGender(gender)
+      const genders = row.gender?.length ? row.gender : ["Not Provided"]
+      const types = new Set(genders.map(classifySingleGender))
 
-      if (type === "other") {
-        acc.other.count++
-        acc.other.othersSet.add(gender)
+      if (types.has("trans")) {
+        acc.trans++
+      } else if (types.has("cis")) {
+        acc.cis++
       } else {
-        acc[type]++
+        acc.other.count++
+        for (const gender of genders) {
+          acc.other.othersSet.add(gender)
+        }
       }
       return acc
     },
