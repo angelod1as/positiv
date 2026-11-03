@@ -145,6 +145,57 @@ describe("calculateDemographics", () => {
     })
   })
 
+  describe("gender demographics - every value of a person counts", () => {
+    const person = (gender: string[] | null) => ({
+      date_of_birth: "1990-01-01",
+      gender,
+      is_veteran: false,
+      orientation: ["Hetero"],
+      race_color: null,
+    })
+
+    it("should count a person with cis and non-binary values as trans, once", () => {
+      const result = calculateDemographics([
+        person(["Mulher cis", "Pessoa não binária"]),
+        person(["Homem cis"]),
+      ])
+
+      expect(result.gender.trans).toBe(50)
+      expect(result.gender.cis).toBe(50)
+      expect(result.gender.other.percentage).toBe(0)
+    })
+
+    it("should count a person with a cis value and an unknown value as cis, without listing the unknown value", () => {
+      const result = calculateDemographics([person(["Mulher cis", "Fluída"])])
+
+      expect(result.gender.cis).toBe(100)
+      expect(result.gender.other.percentage).toBe(0)
+      expect(result.gender.other.values).toHaveLength(0)
+    })
+
+    it("should list every unknown value of a person counted as other", () => {
+      const result = calculateDemographics([person(["Fluída", "AMAB"])])
+
+      expect(result.gender.other.percentage).toBe(100)
+      expect(result.gender.other.values).toEqual(["Fluída", "AMAB"])
+    })
+
+    it("should not depend on the order of a person's values", () => {
+      const values = ["Mulher cis", "Pessoa não binária"]
+
+      expect(calculateDemographics([person(values)]).gender).toEqual(
+        calculateDemographics([person([...values].reverse())]).gender,
+      )
+    })
+
+    it("should count an empty gender list as Not Provided", () => {
+      const result = calculateDemographics([person([]), person(null)])
+
+      expect(result.gender.other.percentage).toBe(100)
+      expect(result.gender.other.values).toEqual(["Not Provided"])
+    })
+  })
+
   describe("race_color demographics", () => {
     it("should deduplicate other values using Set (including Not Provided)", () => {
       const testData = [
@@ -287,6 +338,64 @@ describe("calculateDemographics", () => {
       expect(result.race_color.black).toBe(50)
       expect(result.race_color.other.percentage).toBe(0)
       expect(result.race_color.other.values).toHaveLength(0)
+    })
+
+    describe("every value of a person counts", () => {
+      const person = (race_color: string[] | null) => ({
+        date_of_birth: "1990-01-01",
+        gender: ["Homem cis"],
+        is_veteran: false,
+        orientation: ["Hetero"],
+        race_color,
+      })
+
+      it("should count a person once in each category they marked", () => {
+        const result = calculateDemographics([
+          person(["Parda", "Preta"]),
+          person(["Branca"]),
+        ])
+
+        expect(result.race_color.brown).toBe(50)
+        expect(result.race_color.black).toBe(50)
+        expect(result.race_color.white).toBe(50)
+        expect(result.race_color.other.percentage).toBe(0)
+      })
+
+      it("should not depend on the order of a person's values", () => {
+        const values = ["Parda", "Preta", "Semitic"]
+
+        expect(calculateDemographics([person(values)]).race_color).toEqual(
+          calculateDemographics([person([...values].reverse())]).race_color,
+        )
+      })
+
+      it("should count repeated values of a category once", () => {
+        const result = calculateDemographics([person(["Parda", "pardo"])])
+
+        expect(result.race_color.brown).toBe(100)
+      })
+
+      it("should not list unknown values of a person with a known category", () => {
+        const result = calculateDemographics([person(["Branca", "Semitic"])])
+
+        expect(result.race_color.white).toBe(100)
+        expect(result.race_color.other.percentage).toBe(0)
+        expect(result.race_color.other.values).toHaveLength(0)
+      })
+
+      it("should list every unknown value of a person counted as other", () => {
+        const result = calculateDemographics([
+          person(["Ascendência arabe", "Semitic"]),
+          person([]),
+        ])
+
+        expect(result.race_color.other.percentage).toBe(100)
+        expect(result.race_color.other.values).toEqual([
+          "Ascendência arabe",
+          "Semitic",
+          "Not Provided",
+        ])
+      })
     })
   })
 
