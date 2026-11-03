@@ -1,9 +1,43 @@
-import { GENDERS } from "~/lib/constants/constants"
+type CategoryRule<Category extends string> = {
+  category: Category
+  patterns: RegExp[]
+}
 
-// TODO: WEB-23 REFACTOR THIS MESS
-// - Consolidate fragile string-matching logic into configuration-based utility
-// - Inconsistency: countRaceColor and countGenders only process first array element [0]
-//   while countOrientations processes ALL elements. Should be consistent.
+const GENDER_RULES: CategoryRule<"cis" | "trans">[] = [
+  { category: "cis", patterns: [/\bcis\b/] },
+  {
+    category: "trans",
+    patterns: [
+      /\btrans\b/,
+      /\bnao binari[ae]\b/,
+      /\bagener[ao]\b/,
+      /\bagender\b/,
+      /^travesti$/,
+    ],
+  },
+]
+
+const RACE_COLOR_RULES: CategoryRule<
+  "white" | "yellow" | "indigenous" | "black" | "brown"
+>[] = [
+  { category: "white", patterns: [/\bbranc[ao]\b/] },
+  { category: "yellow", patterns: [/\bamarel[ao]\b/] },
+  { category: "indigenous", patterns: [/\bindigena\b/] },
+  { category: "black", patterns: [/\bpret[ao]\b/] },
+  { category: "brown", patterns: [/\bpard[ao]\b/] },
+]
+
+const ORIENTATION_RULES: CategoryRule<
+  "biPan" | "homo" | "straight" | "aceDemi"
+>[] = [
+  { category: "biPan", patterns: [/^bissexual$/, /\bbi\b/, /\bpan\b/] },
+  {
+    category: "homo",
+    patterns: [/\bgay\b/, /\bsapatao\b/, /\blesbica\b/, /\bhomo\b/],
+  },
+  { category: "straight", patterns: [/\bhetero\b/] },
+  { category: "aceDemi", patterns: [/\bace\b/, /\bdemi\b/] },
+]
 
 function normalizeAccents(str: string): string {
   return str
@@ -12,135 +46,46 @@ function normalizeAccents(str: string): string {
     .toLowerCase()
 }
 
-function isCisGender(gender: string): boolean {
-  const normalized = normalizeAccents(gender)
-  return (
-    (GENDERS.includes("Mulher cis") && normalized === "mulher cis") ||
-    (GENDERS.includes("Homem cis") && normalized === "homem cis") ||
-    /\bcis\b/i.test(normalized)
-  )
-}
-
-function isTransGender(gender: string): boolean {
-  const normalized = normalizeAccents(gender)
-
-  return (
-    /\btrans\b/i.test(normalized) ||
-    /\bnao binari[ae]\b/i.test(normalized) ||
-    /\bagenero\b/i.test(normalized) ||
-    /\bagender\b/i.test(normalized) ||
-    /\bagenera\b/i.test(normalized) ||
-    normalized === "travesti"
-  )
+function matchCategories<Category extends string>(
+  value: string,
+  rules: CategoryRule<Category>[],
+): Category[] {
+  const normalized = normalizeAccents(value)
+  return rules
+    .filter(({ patterns }) => patterns.some((p) => p.test(normalized)))
+    .map(({ category }) => category)
 }
 
 export function classifySingleGender(
   genderString: string,
 ): "cis" | "trans" | "other" {
-  if (isCisGender(genderString)) {
-    return "cis"
-  }
-  if (isTransGender(genderString)) {
-    return "trans"
-  }
-  return "other"
-}
-
-function isWhite(raceColor: string): boolean {
-  const lower = raceColor.toLowerCase()
-  return (
-    lower === "branca" || lower === "branco" || /\bbranc[ao]\b/i.test(lower)
-  )
-}
-function isYellow(raceColor: string): boolean {
-  const lower = raceColor.toLowerCase()
-  return (
-    lower === "amarela" || lower === "amarelo" || /\bamarél[ao]\b/i.test(lower)
-  )
-}
-function isIndigenous(raceColor: string): boolean {
-  const lower = raceColor.toLowerCase()
-  return lower === "indígena" || /\bind[ií]gena\b/i.test(lower)
-}
-function isBlack(raceColor: string): boolean {
-  const lower = raceColor.toLowerCase()
-  return lower === "preta" || lower === "preto" || /\bpret[ao]\b/i.test(lower)
-}
-function isBrown(raceColor: string): boolean {
-  const lower = raceColor.toLowerCase()
-  return lower === "parda" || lower === "pardo" || /\bpard[ao]\b/i.test(lower)
+  return matchCategories(genderString, GENDER_RULES)[0] ?? "other"
 }
 
 export function classifySingleRaceColor(
   raceColorString: string,
 ): "white" | "yellow" | "indigenous" | "black" | "brown" | "other" {
-  if (isWhite(raceColorString)) {
-    return "white"
-  }
-  if (isYellow(raceColorString)) {
-    return "yellow"
-  }
-  if (isIndigenous(raceColorString)) {
-    return "indigenous"
-  }
-  if (isBlack(raceColorString)) {
-    return "black"
-  }
-  if (isBrown(raceColorString)) {
-    return "brown"
-  }
-  return "other"
-}
-
-function isBiPan(orientation: string): boolean {
-  const lower = orientation.toLowerCase()
-  return (
-    lower === "bi" ||
-    lower === "pan" ||
-    lower === "bissexual" ||
-    /\bbi\b|\bpan\b/i.test(lower)
-  )
-}
-
-function isHomo(orientation: string): boolean {
-  const lower = orientation.toLowerCase()
-  return (
-    lower === "gay" ||
-    lower === "sapatão" ||
-    lower === "lésbica" ||
-    /\bgay\b|\bsapatão\b|\bl[ée]sbica\b|\bhomo\b/i.test(lower)
-  )
-}
-
-function isStraight(orientation: string): boolean {
-  const lower = orientation.toLowerCase()
-  return (
-    lower === "hétero" || lower === "hetero" || /\bhet[ée]ro\b/i.test(lower)
-  )
-}
-
-function isAceDemi(orientation: string): boolean {
-  const lower = orientation.toLowerCase()
-  return lower === "ace" || lower === "demi" || /\bace\b|\bdemi\b/i.test(lower)
+  return matchCategories(raceColorString, RACE_COLOR_RULES)[0] ?? "other"
 }
 
 export function classifySingleOrientation(
   orientationString: string,
 ): ("straight" | "homo" | "biPan" | "aceDemi" | "other")[] {
+  const matched = new Set(matchCategories(orientationString, ORIENTATION_RULES))
   const result: ("straight" | "homo" | "biPan" | "aceDemi" | "other")[] = []
-  if (isBiPan(orientationString)) {
+  if (matched.has("biPan")) {
     result.push("biPan")
   }
-  if (isHomo(orientationString) && !result.includes("biPan")) {
+  if (matched.has("homo") && !result.includes("biPan")) {
     result.push("homo")
   }
   if (
-    isStraight(orientationString) &&
+    matched.has("straight") &&
     !result.some((c) => c === "biPan" || c === "homo")
   ) {
     result.push("straight")
   }
-  if (isAceDemi(orientationString)) {
+  if (matched.has("aceDemi")) {
     result.push("aceDemi")
   }
   if (result.length === 0) {
