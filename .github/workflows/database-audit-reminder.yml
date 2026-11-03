@@ -5,6 +5,8 @@ on:
     - cron: '0 12 1 * *' # 1st of every month, 9am in São Paulo
   workflow_dispatch: # manual trigger for testing
 
+permissions: {}
+
 jobs:
   remind:
     runs-on: ubuntu-latest

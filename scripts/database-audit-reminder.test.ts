@@ -32,6 +32,10 @@ describe("database audit reminder workflow", () => {
     expect(workflow).toContain("token: ${{ secrets.TELEGRAM_TOKEN }}")
   })
 
+  it("gives the job's GITHUB_TOKEN no permissions, since it never uses it", () => {
+    expect(readWorkflow()).toMatch(/^permissions: \{\}$/m)
+  })
+
   it("links to the checklist doc, which exists", () => {
     expect(readWorkflow()).toContain(`/blob/main/${docPath}`)
     expect(existsSync(join(root, docPath))).toBe(true)
