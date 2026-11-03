@@ -132,9 +132,12 @@ describe("dashboard action — cancellation", () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any)
 
-    await expect(
-      run({ fetchId: "handleConfirmCancel", eventId: "event-123" }),
-    ).rejects.toThrow(dashboardCopy.cancelFailed)
+    const result = await run({
+      fetchId: "handleConfirmCancel",
+      eventId: "event-123",
+    })
+
+    expect(result).toEqual({ error: dashboardCopy.cancelFailed })
   })
 })
 
@@ -324,13 +327,14 @@ describe("dashboard client action — analytics", () => {
   })
 
   it("reports nothing for a cancellation the server refused", async () => {
-    await expect(
-      runInBrowser(
-        { fetchId: "handleConfirmCancel", eventId: "event-123" },
-        () => Promise.reject(new Error(dashboardCopy.cancelFailed)),
-      ),
-    ).rejects.toThrow(dashboardCopy.cancelFailed)
+    const refusal = { error: dashboardCopy.cancelFailed }
 
+    const result = await runInBrowser(
+      { fetchId: "handleConfirmCancel", eventId: "event-123" },
+      () => Promise.resolve(refusal),
+    )
+
+    expect(result).toBe(refusal)
     expect(umamiTrack).not.toHaveBeenCalled()
   })
 
