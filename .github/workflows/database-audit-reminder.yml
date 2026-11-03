@@ -1,0 +1,26 @@
+name: Database Audit Reminder
+
+on:
+  schedule:
+    - cron: '0 12 1 * *' # 1st of every month, 9am in São Paulo
+  workflow_dispatch: # manual trigger for testing
+
+permissions: {}
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send reminder to Telegram
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            🔍 *Monthly production database audit*
+
+            Time to run the checklist: security, grants, performance, Postgres version, backups and applied migrations.
+
+            Checklist: https://github.com/${{ github.repository }}/blob/main/docs/database-audit.md
+          format: markdown

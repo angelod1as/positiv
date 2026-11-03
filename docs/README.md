@@ -29,6 +29,7 @@ To create a new ADR: `pnpm adr:new`
 ### 💳 Operations
 
 - [Payments runbook](./payments-runbook.md) - Asaas webhook queue, inbox, email outbox, refunds, and trying the flow in dev
+- [Database audit](./database-audit.md) - Monthly production database checklist: security, grants, performance, platform
 
 ### 📁 Temporary Plans
 
