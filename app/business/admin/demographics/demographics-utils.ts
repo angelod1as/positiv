@@ -3,8 +3,7 @@ type CategoryRule<Category extends string> = {
   patterns: RegExp[]
 }
 
-const GENDER_RULES: CategoryRule<"cis" | "trans">[] = [
-  { category: "cis", patterns: [/\bcis\b/] },
+const GENDER_RULES: CategoryRule<"trans" | "cis">[] = [
   {
     category: "trans",
     patterns: [
@@ -15,6 +14,7 @@ const GENDER_RULES: CategoryRule<"cis" | "trans">[] = [
       /^travesti$/,
     ],
   },
+  { category: "cis", patterns: [/\bcis\b/] },
 ]
 
 const RACE_COLOR_RULES: CategoryRule<

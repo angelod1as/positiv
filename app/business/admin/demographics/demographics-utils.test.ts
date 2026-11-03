@@ -18,6 +18,7 @@ describe("classifySingleGender", () => {
     ["agênero", "trans"],
     ["agender", "trans"],
     ["Travesti", "trans"],
+    ["cis trans", "trans"],
     ["Fluída", "other"],
     ["Transfeminina", "other"],
     ["Not Provided", "other"],

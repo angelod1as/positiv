@@ -180,6 +180,14 @@ describe("calculateDemographics", () => {
       expect(result.gender.other.values).toEqual(["Fluída", "AMAB"])
     })
 
+    it("should not depend on the order of a person's values", () => {
+      const values = ["Mulher cis", "Pessoa não binária"]
+
+      expect(calculateDemographics([person(values)]).gender).toEqual(
+        calculateDemographics([person([...values].reverse())]).gender,
+      )
+    })
+
     it("should count an empty gender list as Not Provided", () => {
       const result = calculateDemographics([person([]), person(null)])
 
@@ -351,6 +359,14 @@ describe("calculateDemographics", () => {
         expect(result.race_color.black).toBe(50)
         expect(result.race_color.white).toBe(50)
         expect(result.race_color.other.percentage).toBe(0)
+      })
+
+      it("should not depend on the order of a person's values", () => {
+        const values = ["Parda", "Preta", "Semitic"]
+
+        expect(calculateDemographics([person(values)]).race_color).toEqual(
+          calculateDemographics([person([...values].reverse())]).race_color,
+        )
       })
 
       it("should count repeated values of a category once", () => {
