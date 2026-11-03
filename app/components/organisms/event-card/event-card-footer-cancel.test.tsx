@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import userEvent from "@testing-library/user-event"
 import { renderWithRouter, screen } from "~/test/test-utils"
 import { dashboardCopy } from "~/copy/dashboard"
@@ -65,6 +65,10 @@ describe("EventCardFooter cancel dialog", () => {
     mockSubmit.mockResolvedValue(undefined)
     mockToastError.mockReset()
     fetcher.data = null
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it("asks for an optional reason", async () => {
