@@ -93,6 +93,7 @@ describe("seedDocuments", () => {
       "feedback",
       "richTextSection",
       "imageSection",
+      "statsSection",
     ])
   })
 
@@ -111,6 +112,7 @@ describe("seedDocuments", () => {
       "feedback",
       "richTextSection",
       "imageSection",
+      "statsSection",
     ])
     expect(JSON.stringify(testPage)).toContain(E2E_TEST_SENTINEL)
   })
