@@ -43,6 +43,35 @@ first_parties AS (
   GROUP BY ep.profile_id
 ),
 
+-- Age at the person's first party of the year, kept to 18-120 like the
+-- admin dashboard does.
+ages AS (
+  SELECT year, age
+  FROM (
+    SELECT
+      a.year,
+      extract(year FROM age(
+        (min(a.time_event_start) AT TIME ZONE 'America/Sao_Paulo')::date,
+        pr.date_of_birth
+      ))::int AS age
+    FROM attendances a
+    JOIN public.profiles pr ON pr.id = a.profile_id
+    WHERE pr.date_of_birth IS NOT NULL
+    GROUP BY a.year, a.profile_id, pr.date_of_birth
+  ) person_ages
+  WHERE age BETWEEN 18 AND 120
+),
+
+age_ranges (category, low, high) AS (
+  VALUES
+    ('18-24', 18, 24),
+    ('25-29', 25, 29),
+    ('30-34', 30, 34),
+    ('35-39', 35, 39),
+    ('40-49', 40, 49),
+    ('50+', 50, 120)
+),
+
 metrics AS (
   SELECT year, 'parties' AS metric, NULL::text AS category, count(*)::numeric AS value
   FROM report_parties
@@ -64,6 +93,24 @@ metrics AS (
   FROM first_parties fp
   JOIN years y ON y.year = fp.year
   GROUP BY fp.year
+
+  UNION ALL
+  SELECT year, 'age', stat.category, stat.value
+  FROM (
+    SELECT year, min(age)::numeric AS min, round(avg(age), 1) AS avg, max(age)::numeric AS max
+    FROM ages
+    GROUP BY year
+  ) s
+  CROSS JOIN LATERAL (
+    VALUES ('min', s.min), ('avg', s.avg), ('max', s.max)
+  ) AS stat (category, value)
+
+  UNION ALL
+  SELECT y.year, 'age_range', r.category, count(a.age)
+  FROM years y
+  CROSS JOIN age_ranges r
+  LEFT JOIN ages a ON a.year = y.year AND a.age BETWEEN r.low AND r.high
+  GROUP BY y.year, r.category
 )
 
 SELECT year, metric, category, value

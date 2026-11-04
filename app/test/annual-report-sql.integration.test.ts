@@ -16,7 +16,7 @@ const SCRIPT_PATH = resolve(
   "../../scripts/annual-report/annual-report.sql",
 )
 const YEAR_DECLARATION = /\b2026 AS report_year\b/g
-const REPORT_YEAR = 2101
+const REPORT_YEAR = 1951
 
 type ReportRow = {
   year: number
@@ -185,5 +185,36 @@ describe("Annual report SQL script", () => {
 
     expect(valueOf(rows, REPORT_YEAR, "novates")).toBe(2)
     expect(valueOf(rows, REPORT_YEAR - 1, "novates")).toBe(1)
+  })
+
+  it("takes each person's age at their first party of the year", async () => {
+    const june = await partyIn(tracker, kysely, REPORT_YEAR)
+    const december = await partyIn(tracker, kysely, REPORT_YEAR, {
+      time_event_start: `${REPORT_YEAR}-12-20T22:00:00-03:00`,
+    })
+    const twenty = await person(tracker, kysely, { date_of_birth: `${REPORT_YEAR - 20}-01-01` })
+    const turnsThirtyNextDay = await person(tracker, kysely, {
+      date_of_birth: `${REPORT_YEAR - 30}-06-16`,
+    })
+    const fiftyOne = await person(tracker, kysely, { date_of_birth: `${REPORT_YEAR - 51}-01-01` })
+    const tooYoung = await person(tracker, kysely, { date_of_birth: `${REPORT_YEAR - 17}-01-01` })
+    const noBirthDate = await person(tracker, kysely, { date_of_birth: null })
+
+    await attend(tracker, kysely, twenty.id, june.id)
+    await attend(tracker, kysely, turnsThirtyNextDay.id, june.id)
+    await attend(tracker, kysely, turnsThirtyNextDay.id, december.id)
+    await attend(tracker, kysely, fiftyOne.id, june.id)
+    await attend(tracker, kysely, tooYoung.id, june.id)
+    await attend(tracker, kysely, noBirthDate.id, june.id)
+
+    const rows = await runReport(kysely, REPORT_YEAR)
+
+    expect(valueOf(rows, REPORT_YEAR, "age", "min")).toBe(20)
+    expect(valueOf(rows, REPORT_YEAR, "age", "avg")).toBe(33.3)
+    expect(valueOf(rows, REPORT_YEAR, "age", "max")).toBe(51)
+    expect(valueOf(rows, REPORT_YEAR, "age_range", "18-24")).toBe(1)
+    expect(valueOf(rows, REPORT_YEAR, "age_range", "25-29")).toBe(1)
+    expect(valueOf(rows, REPORT_YEAR, "age_range", "30-34")).toBe(0)
+    expect(valueOf(rows, REPORT_YEAR, "age_range", "50+")).toBe(1)
   })
 })
