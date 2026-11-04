@@ -14,7 +14,8 @@ type ChartSectionDrawingProps = {
 const LABEL = "label"
 
 // Recharts gives the labels of a horizontal chart a fixed 60px and cuts the
-// rest, so the column grows with the longest label, up to a limit.
+// rest, so the column grows with the longest label, up to a limit. The
+// width is an estimate, about 7px a character at the axis' text size.
 const labelColumnWidth = (rows: ChartContent["rows"]) => {
   const longest = Math.max(...rows.map((row) => row.label.length))
   return Math.min(200, Math.max(60, longest * 7 + 16))
@@ -60,6 +61,7 @@ export const ChartSectionDrawing = ({
           dataKey: seriesKey(index),
         }))}
         curved={false}
+        className="h-full"
       >
         {highlighted?.values.map((value, index) => (
           <ReferenceDot
@@ -68,7 +70,7 @@ export const ChartSectionDrawing = ({
             y={value}
             r={6}
             fill={chartHighlight}
-            stroke="white"
+            stroke="var(--background)"
             strokeWidth={2}
           />
         ))}
@@ -80,7 +82,7 @@ export const ChartSectionDrawing = ({
     ? content.rows.map((row) => (row.highlight ? chartHighlight : undefined))
     : undefined
 
-  const bars = (
+  return (
     <BarChart
       {...shared}
       series={content.series.map((_, index) => ({
@@ -88,17 +90,8 @@ export const ChartSectionDrawing = ({
         cellColors,
       }))}
       horizontal={chartType === "horizontalBar"}
-      className={chartType === "horizontalBar" ? "h-full" : undefined}
+      className="h-full"
       categoryAxisWidth={labelColumnWidth(content.rows)}
     />
-  )
-
-  // Lying down, each row needs its own height, so the chart grows with them.
-  return chartType === "horizontalBar" ? (
-    <div style={{ height: Math.max(240, content.rows.length * 48 + 60) }}>
-      {bars}
-    </div>
-  ) : (
-    bars
   )
 }

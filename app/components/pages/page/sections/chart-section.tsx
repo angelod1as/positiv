@@ -27,6 +27,13 @@ const ChartSectionDrawing = lazy(() =>
   })),
 )
 
+// Set before Recharts arrives, so the space is held while it loads. Lying
+// down, each row needs its own height, so the chart grows with them.
+const drawingHeight = (content: ChartContent) =>
+  content.chartType === "horizontalBar"
+    ? Math.max(240, content.rows.length * 48 + 60)
+    : 350
+
 // The drawing is hidden from screen readers, which get the title and the
 // Resumo, and holds nothing the keyboard can reach; a mouse still gets its
 // tooltips. Anyone can open the same data as a table.
@@ -42,7 +49,14 @@ export const ChartSection = ({ content }: ChartSectionProps) => {
         <p className="mx-auto max-w-[700px] text-center text-muted-foreground md:text-xl">
           {content.summary}
         </p>
-        <div aria-hidden="true">
+        <div
+          aria-hidden="true"
+          style={
+            content.chartType === "proportion"
+              ? undefined
+              : { height: drawingHeight(content) }
+          }
+        >
           {content.chartType === "proportion" ? (
             <ProportionBar
               format={format}
@@ -54,7 +68,7 @@ export const ChartSection = ({ content }: ChartSectionProps) => {
               }))}
             />
           ) : (
-            <Suspense fallback={<div className="h-[350px]" />}>
+            <Suspense fallback={null}>
               <ChartSectionDrawing
                 content={content}
                 chartType={content.chartType}
@@ -94,7 +108,7 @@ const DataTable = ({
     <TableCaption className="sr-only">{content.title}</TableCaption>
     <TableHeader>
       <TableRow>
-        <TableCell />
+        <TableHead />
         {content.series.map((name, index) => (
           <TableHead key={index} scope="col" className="text-right">
             {name}

@@ -6,7 +6,13 @@ import {
   pageSectionDocumentSchema,
 } from "~/business/cms/page.schema"
 import { sections } from "~/test/page-documents"
-import { render, screen, waitFor, within } from "~/test/test-utils"
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "~/test/test-utils"
 import { ChartSection } from "./chart-section"
 
 vi.mock("recharts", async () => {
@@ -77,13 +83,27 @@ describe("ChartSection", () => {
     expect(drawing?.querySelectorAll('[tabindex="0"], button, a')).toHaveLength(0)
   })
 
-  it("shows a tooltip on hover", async () => {
-    const { container } = render(<ChartSection content={chart()} />)
+  it("shows a row's values, in the unit, on hover", async () => {
+    const { container } = render(
+      <ChartSection content={chart({ unit: "brl" })} />,
+    )
+    await waitFor(() =>
+      expect(
+        container.querySelectorAll(".recharts-bar-rectangle path"),
+      ).toHaveLength(3),
+    )
+
+    const wrapper = container.querySelector(".recharts-wrapper")
+    if (!wrapper) throw new Error("No chart")
+    fireEvent.mouseMove(wrapper, {
+      clientX: 450,
+      clientY: 150,
+    })
 
     await waitFor(() =>
       expect(
         container.querySelector(".recharts-tooltip-wrapper"),
-      ).toBeInTheDocument(),
+      ).toHaveTextContent("R$ 14"),
     )
   })
 
@@ -256,6 +276,32 @@ describe("ChartSection", () => {
       expect(await tickX("Heterossexual")).toBeGreaterThan(await tickX("Gay"))
     })
   })
+
+  it.each([
+    ["bar", "350px"],
+    ["line", "350px"],
+    ["horizontalBar", `${7 * 48 + 60}px`],
+  ] as const)(
+    "sizes a %s chart before Recharts arrives, so nothing below it jumps",
+    (chartType, height) => {
+      const { container } = render(
+        <ChartSection
+          content={chart({
+            chartType,
+            rows: ["a", "b", "c", "d", "e", "f", "g"].map((key) => ({
+              _key: key,
+              label: key,
+              values: [1],
+            })),
+          })}
+        />,
+      )
+
+      expect(
+        container.querySelector<HTMLElement>("[aria-hidden]")?.style.height,
+      ).toBe(height)
+    },
+  )
 
   describe("line", () => {
     it("draws the whole line at once and dots the highlighted row on each line", async () => {
