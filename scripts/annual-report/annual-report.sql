@@ -203,6 +203,8 @@ metrics AS (
   FROM party_sizes
   GROUP BY year
 
+  -- Staff are placed, not applying: left out of the demand numbers here,
+  -- kept in people and retention.
   UNION ALL
   SELECT application.year, a.metric, NULL, a.value
   FROM (
@@ -223,7 +225,7 @@ metrics AS (
     VALUES
       ('applications', application.applications),
       ('applicants', application.applicants),
-      ('people_without_staff', application.admitted),
+      ('admitted_applicants', application.admitted),
       ('acceptance_rate', round(100.0 * application.admitted / application.applicants, 1))
   ) AS a (metric, value)
 
@@ -247,7 +249,7 @@ counts (metric) AS (
   VALUES
     ('parties'), ('people'), ('social_spots'), ('novates'),
     ('repeat_people'), ('attendances'), ('applications'), ('applicants'),
-    ('people_without_staff'), ('returning_people')
+    ('admitted_applicants'), ('returning_people')
 )
 
 SELECT year, metric, category, value

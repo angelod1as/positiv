@@ -158,7 +158,7 @@ describe("Annual report SQL script", () => {
       "attendances",
       "applications",
       "applicants",
-      "people_without_staff",
+      "admitted_applicants",
       "returning_people",
     ]) {
       expect(valueOf(rows, REPORT_YEAR - 2, metric)).toBe(0)
@@ -442,7 +442,7 @@ describe("Annual report SQL script", () => {
 
     expect(valueOf(rows, REPORT_YEAR, "applications")).toBe(4)
     expect(valueOf(rows, REPORT_YEAR, "applicants")).toBe(3)
-    expect(valueOf(rows, REPORT_YEAR, "people_without_staff")).toBe(1)
+    expect(valueOf(rows, REPORT_YEAR, "admitted_applicants")).toBe(1)
     expect(valueOf(rows, REPORT_YEAR, "acceptance_rate")).toBe(33.3)
   })
 
