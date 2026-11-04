@@ -21,7 +21,7 @@ export const StatsSection = ({ content }: StatsSectionProps) => {
           {content.cards.map((card) => (
             <li
               key={card._key}
-              className="flex flex-col gap-4 rounded-xl border bg-card p-5 shadow-sm sm:p-6"
+              className="flex min-w-0 flex-col gap-4 rounded-xl border bg-card p-5 shadow-sm sm:p-6"
             >
               <StatCard card={card} />
             </li>
