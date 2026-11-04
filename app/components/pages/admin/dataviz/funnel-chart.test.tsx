@@ -78,15 +78,14 @@ describe('FunnelChart', () => {
     expect(chart).toHaveAttribute('aria-label', adminDatavizCopy.funnelChart.ariaLabel)
   })
 
-
   it('shades the stages of one hue, strongest for those who attended', () => {
     const { container } = render(<FunnelChart data={mockData} />)
     const style = container.querySelector('style')?.textContent
 
-    expect(style).toContain('--color-compareceram: var(--chart-1);')
-    expect(style).toContain('--color-pagaram: color-mix(in oklab, var(--chart-1) 75%, var(--background));')
-    expect(style).toContain('--color-finalizados: color-mix(in oklab, var(--chart-1) 55%, var(--background));')
-    expect(style).toContain('--color-inscritos: color-mix(in oklab, var(--chart-1) 40%, var(--background));')
+    expect(style).toContain('--color-inscritos: var(--chart-1);')
+    expect(style).toContain('--color-finalizados: color-mix(in oklab, var(--chart-1) 80%, var(--foreground));')
+    expect(style).toContain('--color-pagaram: color-mix(in oklab, var(--chart-1) 60%, var(--foreground));')
+    expect(style).toContain('--color-compareceram: color-mix(in oklab, var(--chart-1) 40%, var(--foreground));')
   })
 
   it('matches the tooltip swatches to the bar colors', () => {

@@ -101,35 +101,32 @@ const SERIES_CONFIG = [
     dataKey: 'compareceram',
     segmentKey: 'compareceram_segment',
     label: funnelCopy.attended,
-    color: 'var(--chart-1)',
+    color: 'color-mix(in oklab, var(--chart-1) 40%, var(--foreground))',
   },
   {
     dataKey: 'pagaram',
     segmentKey: 'pagaram_segment',
     label: funnelCopy.paid,
-    color: 'color-mix(in oklab, var(--chart-1) 75%, var(--background))',
+    color: 'color-mix(in oklab, var(--chart-1) 60%, var(--foreground))',
   },
   {
     dataKey: 'finalizados',
     segmentKey: 'finalizados_segment',
     label: funnelCopy.finalised,
-    color: 'color-mix(in oklab, var(--chart-1) 55%, var(--background))',
+    color: 'color-mix(in oklab, var(--chart-1) 80%, var(--foreground))',
   },
   {
     dataKey: 'inscritos',
     segmentKey: 'inscritos_segment',
     label: funnelCopy.applications,
-    color: 'color-mix(in oklab, var(--chart-1) 40%, var(--background))',
+    color: 'var(--chart-1)',
   },
 ] as const
 
 export function FunnelChart({ data, className }: FunnelChartProps) {
-  const chartConfig: ChartConfig = {
-    compareceram: { label: funnelCopy.attended, color: 'var(--chart-1)' },
-    pagaram: { label: funnelCopy.paid, color: 'color-mix(in oklab, var(--chart-1) 75%, var(--background))' },
-    finalizados: { label: funnelCopy.finalised, color: 'color-mix(in oklab, var(--chart-1) 55%, var(--background))' },
-    inscritos: { label: funnelCopy.applications, color: 'color-mix(in oklab, var(--chart-1) 40%, var(--background))' },
-  }
+  const chartConfig: ChartConfig = Object.fromEntries(
+    SERIES_CONFIG.map(({ dataKey, label, color }) => [dataKey, { label, color }])
+  )
 
   const chartData = useMemo(
     () =>
