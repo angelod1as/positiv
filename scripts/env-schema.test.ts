@@ -129,7 +129,8 @@ describe(".env.schema", () => {
   // GitHub, so one nothing reads is pure cost — and it reads as configuration
   // somebody still has to fill in. WEB-12 found thirteen. A variable counts as
   // read when code, a workflow or a config file names it; prose in Markdown
-  // does not count.
+  // does not count. It is a heuristic: it catches a name nobody mentions, not
+  // one mentioned only in passing, so a short name like CI always passes.
   it("declares only variables something reads", () => {
     const declared = [
       ...readFileSync(".env.schema", "utf8").matchAll(/^([A-Z][A-Z0-9_]*)=/gm),
@@ -154,8 +155,9 @@ describe(".env.schema", () => {
           { encoding: "utf8" },
         )
         return false
-      } catch {
-        return true
+      } catch (error) {
+        if ((error as { status?: number }).status === 1) return true
+        throw error
       }
     })
 

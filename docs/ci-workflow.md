@@ -91,7 +91,7 @@ SUPABASE_SERVICE_ROLE_KEY: (from local instance)
 SUPABASE_CONNECT_URL: (from local instance)
 ```
 
-All other secrets (TEST_USER_PASSWORD, COOKIE_SECRET, etc.) come from GitHub secrets.
+The one other secret, COOKIE_SECRET, comes from GitHub secrets.
 
 ---
 
@@ -258,9 +258,8 @@ supabase stop
 **Cause**: Test user credentials don't match seeded users
 
 **Check**:
-1. Verify `TEST_USER_PASSWORD` secret matches password in `supabase/seed.sql`
-2. Verify `TEST_USER_ADMIN_EMAIL` secret matches admin email in `supabase/seed.sql`
-3. Ensure seeds are being applied (check Supabase startup logs)
+1. Verify the credentials in `e2e/fixtures/test-users.ts` match the users in `supabase/seed.sql`
+2. Ensure seeds are being applied (check Supabase startup logs)
 
 **Debug locally**:
 ```bash
