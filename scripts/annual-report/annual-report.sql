@@ -72,6 +72,25 @@ age_ranges (category, low, high) AS (
     ('50+', 50, 120)
 ),
 
+-- Gender, orientation and race/colour are multi-select: each value counts
+-- once per person, so a year's values add up to more than its people.
+answers AS (
+  SELECT DISTINCT a.year, a.profile_id, f.metric, coalesce(v.value, 'Não informado') AS category
+  FROM attendances a
+  JOIN public.profiles pr ON pr.id = a.profile_id
+  CROSS JOIN LATERAL (
+    VALUES
+      ('gender', pr.gender),
+      ('orientation', pr.orientation),
+      ('race_color', pr.race_color)
+  ) AS f (metric, answer)
+  LEFT JOIN LATERAL (
+    SELECT trim(x) AS value
+    FROM unnest(f.answer) AS x
+    WHERE trim(x) <> ''
+  ) v ON true
+),
+
 metrics AS (
   SELECT year, 'parties' AS metric, NULL::text AS category, count(*)::numeric AS value
   FROM report_parties
@@ -111,6 +130,11 @@ metrics AS (
   CROSS JOIN age_ranges r
   LEFT JOIN ages a ON a.year = y.year AND a.age BETWEEN r.low AND r.high
   GROUP BY y.year, r.category
+
+  UNION ALL
+  SELECT year, metric, category, count(*)
+  FROM answers
+  GROUP BY year, metric, category
 )
 
 SELECT year, metric, category, value

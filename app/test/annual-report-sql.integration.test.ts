@@ -217,4 +217,43 @@ describe("Annual report SQL script", () => {
     expect(valueOf(rows, REPORT_YEAR, "age_range", "30-34")).toBe(0)
     expect(valueOf(rows, REPORT_YEAR, "age_range", "50+")).toBe(1)
   })
+
+  it("counts every value of a multi-select answer once per person", async () => {
+    const first = await partyIn(tracker, kysely, REPORT_YEAR)
+    const second = await partyIn(tracker, kysely, REPORT_YEAR)
+    const several = await person(tracker, kysely, {
+      gender: ["Mulher trans", "Pessoa não binária"],
+      orientation: ["Bi", "Pan", "Bi"],
+      race_color: ["Preta"],
+    })
+    const one = await person(tracker, kysely, {
+      gender: ["Mulher trans"],
+      orientation: ["Lésbica"],
+      race_color: [" Parda ", "Indígena"],
+    })
+    const unanswered = await person(tracker, kysely, {
+      gender: [],
+      orientation: null,
+      race_color: [],
+    })
+
+    await attend(tracker, kysely, several.id, first.id)
+    await attend(tracker, kysely, several.id, second.id)
+    await attend(tracker, kysely, one.id, first.id)
+    await attend(tracker, kysely, unanswered.id, first.id)
+
+    const rows = await runReport(kysely, REPORT_YEAR)
+
+    expect(valueOf(rows, REPORT_YEAR, "gender", "Mulher trans")).toBe(2)
+    expect(valueOf(rows, REPORT_YEAR, "gender", "Pessoa não binária")).toBe(1)
+    expect(valueOf(rows, REPORT_YEAR, "gender", "Não informado")).toBe(1)
+    expect(valueOf(rows, REPORT_YEAR, "orientation", "Bi")).toBe(1)
+    expect(valueOf(rows, REPORT_YEAR, "orientation", "Pan")).toBe(1)
+    expect(valueOf(rows, REPORT_YEAR, "orientation", "Lésbica")).toBe(1)
+    expect(valueOf(rows, REPORT_YEAR, "orientation", "Não informado")).toBe(1)
+    expect(valueOf(rows, REPORT_YEAR, "race_color", "Preta")).toBe(1)
+    expect(valueOf(rows, REPORT_YEAR, "race_color", "Parda")).toBe(1)
+    expect(valueOf(rows, REPORT_YEAR, "race_color", "Indígena")).toBe(1)
+    expect(valueOf(rows, REPORT_YEAR, "race_color", "Não informado")).toBe(1)
+  })
 })
