@@ -11,6 +11,7 @@ import { NextEventsSectionSkeleton } from "./next-events-section-skeleton"
 import { TestimonialsSection } from "./testimonials-section"
 import type { Event } from "~types/database/entities.types"
 import { PagePlaceholder } from "../placeholder/page-placeholder"
+import { ChartSection } from "./chart-section"
 import { ImageSection } from "./image-section"
 import { RichTextSection } from "./rich-text-section"
 import { StatsSection } from "./stats-section"
@@ -90,6 +91,8 @@ const renderSection = (
       return <ImageSection content={section} />
     case "statsSection":
       return <StatsSection content={section} />
+    case "chartSection":
+      return <ChartSection content={section} />
     case "placeholder":
       return <PagePlaceholder variant="section" missing={section.missing} />
   }

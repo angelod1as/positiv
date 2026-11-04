@@ -100,6 +100,24 @@ describe("PageSections", () => {
     ).toBeInTheDocument()
   })
 
+  it("renders a Chart Section", () => {
+    const chartSection = pageSectionDocumentSchema.parse(sections.chartSection)
+    if (chartSection._type !== "chartSection") throw new Error("Not a chart")
+
+    renderWithRouter(
+      <PageSections
+        page="/relatorio/2026"
+        sections={[chartSection]}
+        events={undefined}
+        isLoggedIn={false}
+      />,
+    )
+
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Festas por ano" }),
+    ).toBeInTheDocument()
+  })
+
   it("shows the coming-soon notice when no events are open", async () => {
     const page = await pageFixture("/")
 
