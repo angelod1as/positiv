@@ -129,11 +129,19 @@ describe("EventCardFooter cancel dialog", () => {
     )
   })
 
-  it("shows the message when the cancellation fails", async () => {
+  it("shows the message when the cancellation fails", () => {
     vi.spyOn(console, "error").mockImplementation(() => {})
     fetcher.data = { error: dashboardCopy.cancelFailed }
 
-    await openCancelDialog()
+    renderWithRouter(
+      <EventCardFooter
+        eventId="event-123"
+        event_status="Registration Open"
+        googleLink=""
+        is_applied={true}
+        dataTestId="footer"
+      />,
+    )
 
     expect(mockToastError).toHaveBeenCalledWith(dashboardCopy.cancelFailed)
   })
