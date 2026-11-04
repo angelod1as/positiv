@@ -24,8 +24,9 @@ export function formatStatValue(value: number, unit: StatUnit): string {
       return `${decimal.format(value)}%`
     case "brl": {
       const amount = Math.abs(value)
-      const format = Number.isInteger(amount) ? reais : cents
-      return `${value < 0 ? "-" : ""}R$ ${format.format(amount)}`
+      const written = (Number.isInteger(amount) ? reais : cents).format(amount)
+      const negative = value < 0 && /[1-9]/.test(written)
+      return `${negative ? "-" : ""}R$ ${written}`
     }
   }
 }

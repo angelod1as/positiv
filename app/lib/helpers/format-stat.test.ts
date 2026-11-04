@@ -27,6 +27,7 @@ describe("formatStatValue", () => {
     [12400.5, "R$ 12.400,50"],
     [0.9, "R$ 0,90"],
     [-300, "-R$ 300"],
+    [-0.001, "R$ 0,00"],
   ])("writes %s reais as %s", (value, expected) => {
     expect(formatStatValue(value, "brl")).toBe(expected)
   })
