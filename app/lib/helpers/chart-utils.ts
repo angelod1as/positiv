@@ -33,7 +33,7 @@ export function groupSmallCategories(
 ): DemographicDistribution[] {
   if (data.length === 0) return []
 
-  const mainCategories: DemographicDistribution[] = []
+  let mainCategories: DemographicDistribution[] = []
   const smallCategories: DemographicDistribution[] = []
 
   for (const item of data) {
@@ -45,11 +45,11 @@ export function groupSmallCategories(
   }
 
   if (mainCategories.length + (smallCategories.length > 0 ? 1 : 0) > MAX_CATEGORIES) {
-    const overflow = new Set(
-      [...mainCategories].sort((a, b) => b.count - a.count).slice(MAX_CATEGORIES - 1),
+    const kept = new Set(
+      [...mainCategories].sort((a, b) => b.count - a.count).slice(0, MAX_CATEGORIES - 1),
     )
-    smallCategories.push(...mainCategories.filter((item) => overflow.has(item)))
-    mainCategories.splice(0, mainCategories.length, ...mainCategories.filter((item) => !overflow.has(item)))
+    smallCategories.push(...mainCategories.filter((item) => !kept.has(item)))
+    mainCategories = mainCategories.filter((item) => kept.has(item))
   }
 
   if (smallCategories.length > 0) {
