@@ -443,6 +443,22 @@ describe("Annual report SQL script", () => {
     expect(valueOf(rows, REPORT_YEAR, "applicants")).toBe(3)
   })
 
+  it("drops blank values when the answer also holds a real one", async () => {
+    const party = await partyIn(tracker, kysely, REPORT_YEAR)
+    const partial = await person(tracker, kysely, {
+      orientation: ["  ", "Gay"],
+    })
+
+    await attend(tracker, kysely, partial.id, party.id)
+
+    const rows = await runReport(kysely, REPORT_YEAR)
+    const orientations = rows
+      .filter((r) => r.year === REPORT_YEAR && r.metric === "orientation")
+      .map((r) => [r.category, Number(r.value)])
+
+    expect(orientations).toEqual([["Gay", 1]])
+  })
+
   it("splits the parties by type", async () => {
     await partyIn(tracker, kysely, REPORT_YEAR, { event_type: "regular" })
     await partyIn(tracker, kysely, REPORT_YEAR, { event_type: "regular" })
