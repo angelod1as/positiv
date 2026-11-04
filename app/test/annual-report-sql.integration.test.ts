@@ -140,6 +140,14 @@ describe("Annual report SQL script", () => {
     expect(rows.filter((r) => r.year === REPORT_YEAR - 4)).toEqual([])
   })
 
+  it("reads 0, not a missing row, for a year with nothing in it", async () => {
+    const rows = await runReport(kysely, REPORT_YEAR)
+
+    for (const metric of ["parties", "people", "social_spots", "novates"]) {
+      expect(valueOf(rows, REPORT_YEAR - 2, metric)).toBe(0)
+    }
+  })
+
   it("places a party in its year by São Paulo time, not UTC", async () => {
     await partyIn(tracker, kysely, REPORT_YEAR, {
       time_event_start: `${REPORT_YEAR}-12-31T22:00:00-03:00`,

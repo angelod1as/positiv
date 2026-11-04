@@ -135,8 +135,21 @@ metrics AS (
   SELECT year, metric, category, count(*)
   FROM answers
   GROUP BY year, metric, category
+),
+
+counts (metric) AS (
+  VALUES ('parties'), ('people'), ('social_spots'), ('novates')
 )
 
 SELECT year, metric, category, value
 FROM metrics
+
+UNION ALL
+SELECT y.year, c.metric, NULL, 0
+FROM years y
+CROSS JOIN counts c
+WHERE NOT EXISTS (
+  SELECT 1 FROM metrics m WHERE m.year = y.year AND m.metric = c.metric
+)
+
 ORDER BY year DESC, metric, category
