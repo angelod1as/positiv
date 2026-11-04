@@ -128,6 +128,31 @@ describe("chartSection", () => {
     expect(pathsOf(errors)).toContain("chartSection.rows")
   })
 
+  it.each(["bar", "horizontalBar"])(
+    "rejects a highlighted row on a %s chart with several series, whose bars would all take one colour",
+    async (chartType) => {
+      const errors = await validateValueOf("chartSection", {
+        ...chartSection,
+        chartType,
+        series: ["Novates", "Veteranes"],
+        rows: [row("a", [1, 2], true), row("b", [3, 4])],
+      })
+
+      expect(pathsOf(errors)).toContain("chartSection.rows")
+    },
+  )
+
+  it("accepts a highlighted row on a line chart with several series", async () => {
+    expect(
+      await validateValueOf("chartSection", {
+        ...chartSection,
+        chartType: "line",
+        series: ["Novates", "Veteranes"],
+        rows: [row("a", [1, 2], true), row("b", [3, 4])],
+      }),
+    ).toEqual([])
+  })
+
   describe("as a 100% bar", () => {
     const proportion = { ...chartSection, chartType: "proportion" }
 

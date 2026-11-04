@@ -61,6 +61,13 @@ function rowsProblem(rows: Row[] | undefined, chart: Chart | undefined) {
   if (rows.filter((row) => row.highlight).length > 1) {
     return "Só uma linha pode ser destaque"
   }
+  if (
+    rows.some((row) => row.highlight) &&
+    (chart?.chartType === "bar" || chart?.chartType === "horizontalBar") &&
+    (chart.series?.length ?? 0) > 1
+  ) {
+    return "Nas barras com mais de uma série não há destaque: a cor do destaque apagaria a de cada série"
+  }
   if (isProportion(chart) && rows.length > MAX_PARTS) {
     return `A Barra 100% tem no máximo ${MAX_PARTS} partes`
   }
