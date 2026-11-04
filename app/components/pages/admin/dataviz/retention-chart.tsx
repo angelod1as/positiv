@@ -70,7 +70,7 @@ function CustomTooltipContent({ active, payload }: CustomTooltipProps) {
 const chartConfig: ChartConfig = {
   num_people: {
     label: retentionCopy.people,
-    color: 'hsl(var(--chart-1))',
+    color: 'var(--chart-1)',
   },
 }
 
@@ -115,7 +115,7 @@ export function RetentionChart({ data, className }: RetentionChartProps) {
         label={{
           value: retentionCopy.total(totalAttendees),
           position: 'insideTopRight',
-          fill: 'hsl(var(--muted-foreground))',
+          fill: 'var(--muted-foreground)',
           fontSize: 12,
         }}
       />

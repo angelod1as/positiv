@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react'
+import { cloneElement, type ReactElement } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import type { RetentionDataPoint } from '~/business/admin/dataviz/dataviz.types'
 import { adminDatavizCopy } from '~/copy/admin/dataviz'
@@ -8,9 +9,9 @@ vi.mock('recharts', async () => {
   const actual = await vi.importActual<typeof import('recharts')>('recharts')
   return {
     ...actual,
-    ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
+    ResponsiveContainer: ({ children }: { children: ReactElement<{ width?: number; height?: number }> }) => (
       <div className="recharts-responsive-container" style={{ width: 500, height: 300 }}>
-        {children}
+        {cloneElement(children, { width: 500, height: 300 })}
       </div>
     ),
   }
@@ -82,5 +83,17 @@ describe('RetentionChart', () => {
     ]
     const { container } = render(<RetentionChart data={sparseData} />)
     expect(container.querySelector('[data-chart]')).toBeInTheDocument()
+  })
+
+  it('colors the bars with the first chart token', () => {
+    const { container } = render(<RetentionChart data={mockData} />)
+    expect(container.querySelector('style')?.textContent).toContain('--color-num_people: var(--chart-1);')
+  })
+
+  it('draws the total label in the muted text color', () => {
+    const { container } = render(<RetentionChart data={mockData} />)
+    const total = adminDatavizCopy.retentionChart.total(188)
+    const label = [...container.querySelectorAll('text')].find((t) => t.textContent === total)
+    expect(label).toHaveAttribute('fill', 'var(--muted-foreground)')
   })
 })
