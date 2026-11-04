@@ -37,19 +37,34 @@ const oklchToLinearRgb = (l: number, c: number, h: number): Rgb => {
 
 const inGamut = (rgb: Rgb) => rgb.every((v) => v >= -1e-4 && v <= 1 + 1e-4)
 
-const toDisplayedRgb = (l: number, c: number, h: number): Rgb => {
+type GamutMapping = "reduce chroma" | "clip channels"
+
+const toDisplayedRgb = (
+  l: number,
+  c: number,
+  h: number,
+  gamut: GamutMapping,
+): Rgb => {
   let chroma = c
-  while (chroma > 0 && !inGamut(oklchToLinearRgb(l, chroma, h))) chroma -= 0.001
+  if (gamut === "reduce chroma") {
+    while (chroma > 0 && !inGamut(oklchToLinearRgb(l, chroma, h)))
+      chroma -= 0.001
+  }
   return oklchToLinearRgb(l, Math.max(0, chroma), h).map((v) =>
     Math.min(1, Math.max(0, v)),
   ) as Rgb
 }
 
-const tokenColor = (block: string, name: string): Rgb => {
+const tokenColor = (block: string, name: string, gamut: GamutMapping): Rgb => {
   const value = token(block, name)
   const match = value.match(/^oklch\(([\d.]+)\s+([\d.]+)\s+([\d.]+)\)$/)
   if (!match) throw new Error(`Unsupported color for --${name}: ${value}`)
-  return toDisplayedRgb(Number(match[1]), Number(match[2]), Number(match[3]))
+  return toDisplayedRgb(
+    Number(match[1]),
+    Number(match[2]),
+    Number(match[3]),
+    gamut,
+  )
 }
 
 const luminance = ([r, g, b]: Rgb) => 0.2126 * r + 0.7152 * g + 0.0722 * b
@@ -98,64 +113,74 @@ const deltaE = (x: Rgb, y: Rgb) => {
 
 const SLOTS = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => `chart-${n}`)
 
+it("exposes --chart-highlight to Tailwind", () => {
+  expect(css).toMatch(/--color-chart-highlight:\s*var\(--chart-highlight\);/)
+})
+
 describe.each([
-  { theme: "light", selector: ":root" },
-  { theme: "dark", selector: ".dark" },
-])("chart palette, $theme theme", ({ selector }) => {
-  const block = themeBlock(selector)
-  const surface = tokenColor(block, "background")
-  const card = tokenColor(block, "card")
-  const slots = SLOTS.map((name) => ({ name, color: tokenColor(block, name) }))
-  const neighbours = slots
-    .slice(1)
-    .map((next, i) => ({
+  { theme: "light", selector: ":root", gamut: "reduce chroma" as const },
+  { theme: "light", selector: ":root", gamut: "clip channels" as const },
+  { theme: "dark", selector: ".dark", gamut: "reduce chroma" as const },
+  { theme: "dark", selector: ".dark", gamut: "clip channels" as const },
+])(
+  "chart palette, $theme theme, out-of-gamut colors by $gamut",
+  ({ selector, gamut }) => {
+    const block = themeBlock(selector)
+    const tokenRgb = (name: string) => tokenColor(block, name, gamut)
+    const surface = tokenRgb("background")
+    const card = tokenRgb("card")
+    const slots = SLOTS.map((name) => ({ name, color: tokenRgb(name) }))
+    const neighbours = slots.slice(1).map((next, i) => ({
       name: slots[i].name,
       a: slots[i].color,
       b: next.color,
     }))
 
-  it.each([...SLOTS, "chart-highlight"])(
-    "keeps --%s at 3:1 against background and card",
-    (name) => {
-      const color = tokenColor(block, name)
-      expect(contrast(color, surface)).toBeGreaterThanOrEqual(3)
-      expect(contrast(color, card)).toBeGreaterThanOrEqual(3)
-    },
-  )
+    it.each([...SLOTS, "chart-highlight"])(
+      "keeps --%s at 3:1 against background and card",
+      (name) => {
+        const color = tokenRgb(name)
+        expect(contrast(color, surface)).toBeGreaterThanOrEqual(3)
+        expect(contrast(color, card)).toBeGreaterThanOrEqual(3)
+      },
+    )
 
-  it.each(neighbours)(
-    "tells --$name from its next slot with full color vision",
-    ({ a, b }) => {
-      expect(deltaE(a, b)).toBeGreaterThanOrEqual(15)
-    },
-  )
+    it.each(neighbours)(
+      "tells --$name from its next slot with full color vision",
+      ({ a, b }) => {
+        expect(deltaE(a, b)).toBeGreaterThanOrEqual(15)
+      },
+    )
 
-  it.each(neighbours)(
-    "tells --$name from its next slot under protanopia and deuteranopia",
-    ({ a, b }) => {
-      expect(
-        deltaE(simulate(a, "protan"), simulate(b, "protan")),
-      ).toBeGreaterThanOrEqual(8)
-      expect(
-        deltaE(simulate(a, "deutan"), simulate(b, "deutan")),
-      ).toBeGreaterThanOrEqual(8)
-    },
-  )
+    it.each(neighbours)(
+      "tells --$name from its next slot under protanopia and deuteranopia",
+      ({ a, b }) => {
+        expect(
+          deltaE(simulate(a, "protan"), simulate(b, "protan")),
+        ).toBeGreaterThanOrEqual(8)
+        expect(
+          deltaE(simulate(a, "deutan"), simulate(b, "deutan")),
+        ).toBeGreaterThanOrEqual(8)
+      },
+    )
 
-  it.each(
-    slots.flatMap((a, i) =>
-      slots
-        .slice(i + 1)
-        .map((b) => ({ pair: `${a.name}/${b.name}`, a: a.color, b: b.color })),
-    ),
-  )("tells any two slots apart with full color vision: $pair", ({ a, b }) => {
-    expect(deltaE(a, b)).toBeGreaterThanOrEqual(8)
-  })
+    it.each(
+      slots.flatMap((a, i) =>
+        slots.slice(i + 1).map((b) => ({
+          pair: `${a.name}/${b.name}`,
+          a: a.color,
+          b: b.color,
+        })),
+      ),
+    )("tells any two slots apart with full color vision: $pair", ({ a, b }) => {
+      expect(deltaE(a, b)).toBeGreaterThanOrEqual(8)
+    })
 
-  it("keeps the highlight apart from every slot", () => {
-    const highlight = tokenColor(block, "chart-highlight")
-    for (const slot of slots) {
-      expect(deltaE(highlight, slot.color)).toBeGreaterThanOrEqual(15)
-    }
-  })
-})
+    it("keeps the highlight apart from every slot", () => {
+      const highlight = tokenRgb("chart-highlight")
+      for (const slot of slots) {
+        expect(deltaE(highlight, slot.color)).toBeGreaterThanOrEqual(15)
+      }
+    })
+  },
+)
