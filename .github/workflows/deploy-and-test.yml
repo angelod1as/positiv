@@ -271,10 +271,7 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ steps.supabase-creds.outputs.anon_key }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ steps.supabase-creds.outputs.service_role_key }}
           SUPABASE_CONNECT_URL: ${{ steps.supabase-creds.outputs.db_url }}
-          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
-          TEST_USER_ADMIN_EMAIL: ${{ secrets.TEST_USER_ADMIN_EMAIL }}
           COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
-          UNSUBSCRIBE_SECRET: ${{ secrets.UNSUBSCRIBE_SECRET }}
           # Not secrets. The site key is Cloudflare's published "always passes"
           # test key, which the register page needs to render the widget. The
           # secret is never sent: verification from 127.0.0.1 swaps in the test
