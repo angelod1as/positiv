@@ -233,6 +233,27 @@ describe("Annual report SQL script", () => {
     expect(valueOf(rows, REPORT_YEAR - 1, "novates")).toBe(1)
   })
 
+  it("ignores attendance at a draft or cancelled party when finding novates", async () => {
+    const cancelled = await partyIn(tracker, kysely, REPORT_YEAR - 1, {
+      event_status: "Cancelled",
+    })
+    const draft = await partyIn(tracker, kysely, REPORT_YEAR - 1, {
+      event_status: "Draft",
+    })
+    const thisYear = await partyIn(tracker, kysely, REPORT_YEAR)
+    const afterCancelled = await person(tracker, kysely)
+    const afterDraft = await person(tracker, kysely)
+
+    await attend(tracker, kysely, afterCancelled.id, cancelled.id)
+    await attend(tracker, kysely, afterDraft.id, draft.id)
+    await attend(tracker, kysely, afterCancelled.id, thisYear.id)
+    await attend(tracker, kysely, afterDraft.id, thisYear.id)
+
+    const rows = await runReport(kysely, REPORT_YEAR)
+
+    expect(valueOf(rows, REPORT_YEAR, "novates")).toBe(2)
+  })
+
   it("takes each person's age at their first party of the year", async () => {
     const june = await partyIn(tracker, kysely, REPORT_YEAR)
     const december = await partyIn(tracker, kysely, REPORT_YEAR, {
@@ -268,6 +289,29 @@ describe("Annual report SQL script", () => {
     expect(valueOf(rows, REPORT_YEAR, "age_range", "25-29")).toBe(1)
     expect(valueOf(rows, REPORT_YEAR, "age_range", "30-34")).toBe(0)
     expect(valueOf(rows, REPORT_YEAR, "age_range", "50+")).toBe(1)
+  })
+
+  it("splits 49 from 50 and leaves ages over 120 out", async () => {
+    const party = await partyIn(tracker, kysely, REPORT_YEAR)
+    const fortyNine = await person(tracker, kysely, {
+      date_of_birth: `${REPORT_YEAR - 49}-01-01`,
+    })
+    const fifty = await person(tracker, kysely, {
+      date_of_birth: `${REPORT_YEAR - 50}-01-01`,
+    })
+    const tooOld = await person(tracker, kysely, {
+      date_of_birth: `${REPORT_YEAR - 121}-01-01`,
+    })
+
+    await attend(tracker, kysely, fortyNine.id, party.id)
+    await attend(tracker, kysely, fifty.id, party.id)
+    await attend(tracker, kysely, tooOld.id, party.id)
+
+    const rows = await runReport(kysely, REPORT_YEAR)
+
+    expect(valueOf(rows, REPORT_YEAR, "age_range", "40-49")).toBe(1)
+    expect(valueOf(rows, REPORT_YEAR, "age_range", "50+")).toBe(1)
+    expect(valueOf(rows, REPORT_YEAR, "age", "max")).toBe(50)
   })
 
   it("counts every value of a multi-select answer once per person", async () => {
