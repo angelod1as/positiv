@@ -28,8 +28,8 @@ describe("database audit reminder workflow", () => {
     const workflow = readWorkflow()
 
     expect(workflow).toContain("uses: appleboy/telegram-action@")
-    expect(workflow).toContain("to: ${{ secrets.TELEGRAM_TO }}")
-    expect(workflow).toContain("token: ${{ secrets.TELEGRAM_TOKEN }}")
+    expect(workflow).toContain("to: ${{ secrets.TELEGRAM_CHAT_ID }}")
+    expect(workflow).toContain("token: ${{ secrets.TELEGRAM_BOT_TOKEN }}")
   })
 
   it("gives the job's GITHUB_TOKEN no permissions, since it never uses it", () => {
