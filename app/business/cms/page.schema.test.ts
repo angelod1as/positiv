@@ -88,6 +88,13 @@ describe("pageDocumentSchema", () => {
       accepts(page({ sections: [{ ...sections.imageSection, caption: null }] }))
     })
 
+    it.each(["bar", "horizontalBar", "line", "proportion"])(
+      "accepts a %s Chart Section",
+      (chartType) => {
+        accepts(page({ sections: [{ ...sections.chartSection, chartType }] }))
+      },
+    )
+
     it("accepts a Stats Section without a title", () => {
       accepts(page({ sections: [{ ...sections.statsSection, title: null }] }))
     })
@@ -193,6 +200,35 @@ describe("pageDocumentSchema", () => {
       [
         "an Image Section without an image",
         [{ ...sections.imageSection, image: null }],
+      ],
+      [
+        "a Chart Section without a summary",
+        [{ ...sections.chartSection, summary: null }],
+      ],
+      [
+        "a Chart Section of an unknown type",
+        [{ ...sections.chartSection, chartType: "pie" }],
+      ],
+      [
+        "a Chart Section in an unknown unit",
+        [{ ...sections.chartSection, unit: "usd" }],
+      ],
+      [
+        "a Chart Section without series",
+        [{ ...sections.chartSection, series: [] }],
+      ],
+      [
+        "a Chart Section without rows",
+        [{ ...sections.chartSection, rows: [] }],
+      ],
+      [
+        "a chart row with a value that is not a number",
+        [
+          {
+            ...sections.chartSection,
+            rows: [{ ...sections.chartSection.rows[0], values: ["6"] }],
+          },
+        ],
       ],
       [
         "a Stats Section without cards",

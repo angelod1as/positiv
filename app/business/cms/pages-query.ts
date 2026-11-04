@@ -56,6 +56,14 @@ export const pagesQuery = `*[_type == "page"]{
         _type == "statRange" => { min, average, max },
         _type == "statComparison" => { before, beforeLabel, after, afterLabel }
       }
+    },
+    _type == "chartSection" => {
+      title,
+      summary,
+      chartType,
+      unit,
+      series,
+      rows[]{ _key, label, values, highlight }
     }
   },
   seo{ title, description, image{ alt, hotspot, crop, asset }, noIndex }

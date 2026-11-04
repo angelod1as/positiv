@@ -13,6 +13,11 @@ const fieldLabels = {
   videoTitle: "o título do vídeo",
   ctaLabel: "o texto do botão",
   caption: "a legenda",
+  summary: "o resumo",
+  chartType: "o tipo do gráfico",
+  unit: "a unidade",
+  series: "as séries",
+  rows: "as linhas",
   _type: "o tipo",
 } as const
 

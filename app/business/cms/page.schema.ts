@@ -79,6 +79,20 @@ export const statCardSchema = zod.discriminatedUnion("_type", [
   }),
 ])
 
+export const chartTypeSchema = zod.enum([
+  "bar",
+  "horizontalBar",
+  "line",
+  "proportion",
+])
+
+const chartRowSchema = zod.object({
+  _key: zod.string(),
+  label: zod.string(),
+  values: zod.array(zod.number()),
+  highlight: zod.boolean().nullish(),
+})
+
 const sharedSections = [
   section("nextEvents", sectionsFields.nextEvents.shape),
   section("about", sectionsFields.about.shape),
@@ -92,6 +106,14 @@ const sharedSections = [
   section("statsSection", {
     title: zod.string().nullish(),
     cards: zod.array(statCardSchema).min(1),
+  }),
+  section("chartSection", {
+    title: zod.string(),
+    summary: zod.string(),
+    chartType: chartTypeSchema,
+    unit: statUnitSchema,
+    series: zod.array(zod.string()).min(1),
+    rows: zod.array(chartRowSchema).min(1),
   }),
 ] as const
 
