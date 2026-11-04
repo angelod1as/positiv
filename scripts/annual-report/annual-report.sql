@@ -209,7 +209,10 @@ metrics AS (
     SELECT
       rp.year,
       count(DISTINCT (ep.event_id, ep.profile_id)) AS applications,
-      count(DISTINCT ep.profile_id) AS applicants
+      count(DISTINCT ep.profile_id) AS applicants,
+      count(DISTINCT ep.profile_id) FILTER (
+        WHERE ep.attendance_status = 'attended'
+      ) AS admitted
     FROM public.event_participants ep
     JOIN report_parties rp ON rp.id = ep.event_id
     WHERE ep.spot_type <> 'staff'
@@ -219,7 +222,9 @@ metrics AS (
   CROSS JOIN LATERAL (
     VALUES
       ('applications', application.applications),
-      ('applicants', application.applicants)
+      ('applicants', application.applicants),
+      ('people_without_staff', application.admitted),
+      ('acceptance_rate', round(100.0 * application.admitted / application.applicants, 1))
   ) AS a (metric, value)
 
   UNION ALL
@@ -242,7 +247,7 @@ counts (metric) AS (
   VALUES
     ('parties'), ('people'), ('social_spots'), ('novates'),
     ('repeat_people'), ('attendances'), ('applications'), ('applicants'),
-    ('returning_people')
+    ('people_without_staff'), ('returning_people')
 )
 
 SELECT year, metric, category, value

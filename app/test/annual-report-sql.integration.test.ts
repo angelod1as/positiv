@@ -158,6 +158,7 @@ describe("Annual report SQL script", () => {
       "attendances",
       "applications",
       "applicants",
+      "people_without_staff",
       "returning_people",
     ]) {
       expect(valueOf(rows, REPORT_YEAR - 2, metric)).toBe(0)
@@ -441,6 +442,8 @@ describe("Annual report SQL script", () => {
 
     expect(valueOf(rows, REPORT_YEAR, "applications")).toBe(4)
     expect(valueOf(rows, REPORT_YEAR, "applicants")).toBe(3)
+    expect(valueOf(rows, REPORT_YEAR, "people_without_staff")).toBe(1)
+    expect(valueOf(rows, REPORT_YEAR, "acceptance_rate")).toBe(33.3)
   })
 
   it("drops blank values when the answer also holds a real one", async () => {
