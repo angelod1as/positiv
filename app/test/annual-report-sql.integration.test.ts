@@ -3,7 +3,10 @@ import { resolve } from "node:path"
 import { describe, expect, it, beforeEach, afterEach } from "vitest"
 import { sql, type Kysely } from "kysely"
 import type { Database } from "~/types/database/kysely.types"
-import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
+import {
+  setupIntegrationTest,
+  cleanupAfterTest,
+} from "~/test/integration-setup"
 import {
   createTestEvent,
   createTestEventParticipant,
@@ -213,9 +216,15 @@ describe("Annual report SQL script", () => {
     await attend(tracker, kysely, returning.id, lastYear.id)
     await attend(tracker, kysely, returning.id, thisYear.id)
     await attend(tracker, kysely, novate.id, thisYear.id)
-    await attend(tracker, kysely, novateWhoSkippedBefore.id, lastYearNoShow.id, {
-      attendance_status: "not-attended",
-    })
+    await attend(
+      tracker,
+      kysely,
+      novateWhoSkippedBefore.id,
+      lastYearNoShow.id,
+      {
+        attendance_status: "not-attended",
+      },
+    )
     await attend(tracker, kysely, novateWhoSkippedBefore.id, thisYear.id)
 
     const rows = await runReport(kysely, REPORT_YEAR)
@@ -229,12 +238,18 @@ describe("Annual report SQL script", () => {
     const december = await partyIn(tracker, kysely, REPORT_YEAR, {
       time_event_start: `${REPORT_YEAR}-12-20T22:00:00-03:00`,
     })
-    const twenty = await person(tracker, kysely, { date_of_birth: `${REPORT_YEAR - 20}-01-01` })
+    const twenty = await person(tracker, kysely, {
+      date_of_birth: `${REPORT_YEAR - 20}-01-01`,
+    })
     const turnsThirtyNextDay = await person(tracker, kysely, {
       date_of_birth: `${REPORT_YEAR - 30}-06-16`,
     })
-    const fiftyOne = await person(tracker, kysely, { date_of_birth: `${REPORT_YEAR - 51}-01-01` })
-    const tooYoung = await person(tracker, kysely, { date_of_birth: `${REPORT_YEAR - 17}-01-01` })
+    const fiftyOne = await person(tracker, kysely, {
+      date_of_birth: `${REPORT_YEAR - 51}-01-01`,
+    })
+    const tooYoung = await person(tracker, kysely, {
+      date_of_birth: `${REPORT_YEAR - 17}-01-01`,
+    })
     const noBirthDate = await person(tracker, kysely, { date_of_birth: null })
 
     await attend(tracker, kysely, twenty.id, june.id)
