@@ -9,6 +9,7 @@ describe("formatStatValue", () => {
     [31.4, "31,4"],
     [31.37, "31,37"],
     [0, "0"],
+    [-0.001, "0"],
   ])("writes %s without a unit as %s", (value, expected) => {
     expect(formatStatValue(value, "none")).toBe(expected)
   })
@@ -18,6 +19,7 @@ describe("formatStatValue", () => {
     [12.5, "12,5%"],
     [12.34, "12,34%"],
     [100, "100%"],
+    [-0.001, "0%"],
   ])("writes %s percent as %s", (value, expected) => {
     expect(formatStatValue(value, "percent")).toBe(expected)
   })

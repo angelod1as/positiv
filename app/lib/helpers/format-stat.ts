@@ -19,9 +19,9 @@ const cents = new Intl.NumberFormat("pt-BR", {
 export function formatStatValue(value: number, unit: StatUnit): string {
   switch (unit) {
     case "none":
-      return decimal.format(value)
+      return written(value)
     case "percent":
-      return `${decimal.format(value)}%`
+      return `${written(value)}%`
     case "brl": {
       const amount = Math.abs(value)
       const written = (Number.isInteger(amount) ? reais : cents).format(amount)
@@ -29,6 +29,11 @@ export function formatStatValue(value: number, unit: StatUnit): string {
       return `${negative ? "-" : ""}R$ ${written}`
     }
   }
+}
+
+function written(value: number) {
+  const rounded = decimal.format(value)
+  return rounded === "-0" ? "0" : rounded
 }
 
 export function formatStatChange(
