@@ -47,7 +47,7 @@ export const ChartSectionDrawing = ({
     config,
     xAxisKey: LABEL,
     animated: false,
-    showTooltip: false,
+    accessibilityLayer: false,
     showLegend: content.series.length > 1,
     valueFormatter: format,
   }

@@ -32,13 +32,14 @@ export function LineChart({
   showValues = false,
   tooltipAnimated = false,
   animated = true,
+  accessibilityLayer = true,
   valueFormatter,
   tooltipContent,
   children,
 }: LineChartProps) {
   return (
     <ChartContainer config={config} className={className} role="img" aria-label={ariaLabel}>
-      <RechartsLineChart data={data}>
+      <RechartsLineChart data={data} accessibilityLayer={accessibilityLayer}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey={xAxisKey}
@@ -58,7 +59,11 @@ export function LineChart({
         {showTooltip && (
           <ChartTooltip
             isAnimationActive={tooltipAnimated}
-            content={tooltipContent ?? <ChartTooltipContent />}
+            content={
+              tooltipContent ?? (
+                <ChartTooltipContent valueFormatter={valueFormatter} />
+              )
+            }
           />
         )}
         {showLegend && (

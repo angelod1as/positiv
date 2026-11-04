@@ -202,3 +202,28 @@ describe('BarChart category axis', () => {
     )
   })
 })
+
+describe('BarChart keyboard layer', () => {
+  const focusable = (container: HTMLElement) =>
+    container.querySelectorAll('[tabindex="0"]')
+
+  it('lets the keyboard into the chart by default', () => {
+    const { container } = render(
+      <BarChart data={mockData} config={mockConfig} series={mockSeries} xAxisKey="event" />
+    )
+    expect(focusable(container).length).toBeGreaterThan(0)
+  })
+
+  it('keeps the keyboard out when the accessibility layer is off', () => {
+    const { container } = render(
+      <BarChart
+        data={mockData}
+        config={mockConfig}
+        series={mockSeries}
+        xAxisKey="event"
+        accessibilityLayer={false}
+      />
+    )
+    expect(focusable(container)).toHaveLength(0)
+  })
+})

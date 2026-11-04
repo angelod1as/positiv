@@ -59,12 +59,32 @@ describe("ChartSection", () => {
     ).toBeVisible()
   })
 
-  it("hides the drawing from screen readers and keyboards", () => {
+  it("hides the drawing from screen readers", () => {
     render(<ChartSection content={budget} />)
 
-    const drawing = screen.getByText("Espaço").closest("[aria-hidden]")
+    expect(screen.getByText("Espaço").closest("[aria-hidden]")).toHaveAttribute(
+      "aria-hidden",
+      "true",
+    )
+  })
+
+  it("leaves nothing in the drawing for the keyboard to reach", async () => {
+    const { container } = render(<ChartSection content={chart()} />)
+
+    await waitFor(() => expect(chartFrame(container)).toBeInTheDocument())
+    const drawing = chartFrame(container)?.closest("[aria-hidden]")
     expect(drawing).toHaveAttribute("aria-hidden", "true")
-    expect(drawing).toHaveAttribute("inert")
+    expect(drawing?.querySelectorAll('[tabindex="0"], button, a')).toHaveLength(0)
+  })
+
+  it("shows a tooltip on hover", async () => {
+    const { container } = render(<ChartSection content={chart()} />)
+
+    await waitFor(() =>
+      expect(
+        container.querySelector(".recharts-tooltip-wrapper"),
+      ).toBeInTheDocument(),
+    )
   })
 
   describe("Ver dados", () => {

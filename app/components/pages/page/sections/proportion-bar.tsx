@@ -34,6 +34,7 @@ export const ProportionBar = ({ parts, format }: ProportionBarProps) => {
           <div
             key={part.key}
             data-part
+            title={`${part.label}: ${format(part.value)}`}
             className="flex min-h-0 min-w-0 flex-col items-center justify-center gap-0.5 p-1 text-center text-sm leading-tight text-white"
             style={{
               flexBasis: `${Math.round(part.share * 1000) / 10}%`,

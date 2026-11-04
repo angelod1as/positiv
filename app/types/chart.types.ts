@@ -22,6 +22,7 @@ export interface BaseChartProps {
   showValues?: boolean
   tooltipAnimated?: boolean
   animated?: boolean
+  accessibilityLayer?: boolean
   valueFormatter?: (value: number) => string
   tooltipContent?: ReactElement | ((props: Record<string, unknown>) => ReactNode)
   children?: ReactNode

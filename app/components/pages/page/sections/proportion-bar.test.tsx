@@ -32,6 +32,16 @@ describe("ProportionBar", () => {
     ).toEqual(["var(--chart-1)", "var(--chart-highlight)", "var(--chart-3)"])
   })
 
+  it("names each part and its value on hover", () => {
+    const { container } = render(<ProportionBar parts={parts} format={format} />)
+
+    expect(segments(container).map((part) => part.title)).toEqual([
+      "Bar: R$ 60",
+      "Espaço: R$ 35",
+      "Gorjetas: R$ 5",
+    ])
+  })
+
   it("writes a part of 8% or more inside its segment", () => {
     const { container } = render(<ProportionBar parts={parts} format={format} />)
     const [bar, venue] = segments(container)

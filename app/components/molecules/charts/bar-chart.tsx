@@ -35,6 +35,7 @@ export function BarChart({
   showValues = false,
   tooltipAnimated = false,
   animated = true,
+  accessibilityLayer = true,
   valueFormatter,
   tooltipContent,
   children,
@@ -43,6 +44,7 @@ export function BarChart({
     <ChartContainer config={config} className={className} role="img" aria-label={ariaLabel}>
       <RechartsBarChart
         data={data}
+        accessibilityLayer={accessibilityLayer}
         layout={horizontal ? 'vertical' : 'horizontal'}
       >
         <CartesianGrid vertical={false} />
@@ -86,7 +88,11 @@ export function BarChart({
         {showTooltip && (
           <ChartTooltip
             isAnimationActive={tooltipAnimated}
-            content={tooltipContent ?? <ChartTooltipContent />}
+            content={
+              tooltipContent ?? (
+                <ChartTooltipContent valueFormatter={valueFormatter} />
+              )
+            }
           />
         )}
         {showLegend && (

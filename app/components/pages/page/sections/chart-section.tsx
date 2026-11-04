@@ -27,8 +27,9 @@ const ChartSectionDrawing = lazy(() =>
   })),
 )
 
-// The drawing is hidden from screen readers and keyboards: they get the
-// title and the Resumo, and anyone can open the same data as a table.
+// The drawing is hidden from screen readers, which get the title and the
+// Resumo, and holds nothing the keyboard can reach; a mouse still gets its
+// tooltips. Anyone can open the same data as a table.
 export const ChartSection = ({ content }: ChartSectionProps) => {
   const [showData, setShowData] = useState(false)
   const tableId = useId()
@@ -41,7 +42,7 @@ export const ChartSection = ({ content }: ChartSectionProps) => {
         <p className="mx-auto max-w-[700px] text-center text-muted-foreground md:text-xl">
           {content.summary}
         </p>
-        <div aria-hidden="true" inert>
+        <div aria-hidden="true">
           {content.chartType === "proportion" ? (
             <ProportionBar
               format={format}

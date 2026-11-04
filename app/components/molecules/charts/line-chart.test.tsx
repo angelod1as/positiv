@@ -114,3 +114,18 @@ describe('LineChart drawing', () => {
     expect(getByText('200%')).toBeInTheDocument()
   })
 })
+
+describe('LineChart keyboard layer', () => {
+  it('keeps the keyboard out when the accessibility layer is off', () => {
+    const { container } = render(
+      <LineChart
+        data={mockData}
+        config={mockConfig}
+        series={mockSeries}
+        xAxisKey="month"
+        accessibilityLayer={false}
+      />
+    )
+    expect(container.querySelectorAll('[tabindex="0"]')).toHaveLength(0)
+  })
+})
