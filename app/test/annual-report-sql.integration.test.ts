@@ -182,6 +182,7 @@ describe("Annual report SQL script", () => {
 
     await attend(tracker, kysely, social.id, first.id, { spot_type: "social" })
     await attend(tracker, kysely, social.id, second.id, { spot_type: "social" })
+    await attend(tracker, kysely, social.id, second.id, { spot_type: "social" })
     await attend(tracker, kysely, socialNoShow.id, first.id, {
       spot_type: "social",
       attendance_status: "withdrew",
