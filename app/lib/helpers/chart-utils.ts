@@ -25,6 +25,7 @@ export function buildEventLabel({
 }
 
 const DEFAULT_SMALL_CATEGORY_THRESHOLD = 2
+const MAX_CATEGORIES = 8
 
 export function groupSmallCategories(
   data: DemographicDistribution[],
@@ -41,6 +42,14 @@ export function groupSmallCategories(
     } else {
       mainCategories.push(item)
     }
+  }
+
+  if (mainCategories.length + (smallCategories.length > 0 ? 1 : 0) > MAX_CATEGORIES) {
+    const overflow = new Set(
+      [...mainCategories].sort((a, b) => b.count - a.count).slice(MAX_CATEGORIES - 1),
+    )
+    smallCategories.push(...mainCategories.filter((item) => overflow.has(item)))
+    mainCategories.splice(0, mainCategories.length, ...mainCategories.filter((item) => !overflow.has(item)))
   }
 
   if (smallCategories.length > 0) {
