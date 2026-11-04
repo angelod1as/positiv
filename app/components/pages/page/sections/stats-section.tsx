@@ -170,6 +170,7 @@ const PeriodBar = ({
     <span className="text-muted-foreground">{label}</span>
     <div aria-hidden className="h-6">
       {share !== null && (
+        // A zero still gets a sliver, so its row reads as a bar, not a gap.
         <div
           className={cn(
             "h-full rounded-md",

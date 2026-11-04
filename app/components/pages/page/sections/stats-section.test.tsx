@@ -108,7 +108,7 @@ describe("StatsSection", () => {
     expect(card?.textContent).toMatch(/^\+9 p\.p\.de novates/)
   })
 
-  it("leads a comparison from zero with the current value", () => {
+  it("leads a comparison from zero with the current value and no change", () => {
     render(
       <StatsSection
         content={{
@@ -128,6 +128,7 @@ describe("StatsSection", () => {
 
     const card = screen.getByText("vagas sociais").closest("li")
     expect(card?.textContent).toMatch(/^40vagas sociais/)
+    expect(card?.textContent).not.toMatch(/[+%]|p\.p\./)
   })
 
   it("puts every card's caption right after its headline value", () => {
@@ -140,29 +141,6 @@ describe("StatsSection", () => {
     expect(
       screen.getByText("anos de idade").closest("li")?.textContent,
     ).toMatch(/31,4anos de idade/)
-  })
-
-  it("leaves the change out when it cannot be measured from zero", () => {
-    render(
-      <StatsSection
-        content={{
-          ...content,
-          cards: [
-            {
-              ...comparison,
-              unit: "none",
-              before: 0,
-              after: 40,
-              caption: "vagas sociais",
-            },
-          ],
-        }}
-      />,
-    )
-
-    const card = cardFor("vagas sociais")
-    expect(card.getAllByText("40")).not.toHaveLength(0)
-    expect(card.queryByText(/%$/)).toBeNull()
   })
 
   const markerOf = (caption: string) =>
@@ -206,9 +184,13 @@ describe("StatsSection", () => {
       />,
     )
 
-    const card = screen.getByText("de resultado").closest("li")
-    expect(card?.querySelector("[style*='width']")).toBeNull()
-    expect(within(card as HTMLElement).getByText("-R$ 2.000")).toBeInTheDocument()
-    expect(within(card as HTMLElement).getByText("R$ 3.000")).toBeInTheDocument()
+    expect(
+      screen.getByText("de resultado").closest("li")?.querySelector(
+        "[style*='width']",
+      ),
+    ).toBeNull()
+    const card = cardFor("de resultado")
+    expect(card.getByText("-R$ 2.000")).toBeInTheDocument()
+    expect(card.getByText("R$ 3.000")).toBeInTheDocument()
   })
 })
