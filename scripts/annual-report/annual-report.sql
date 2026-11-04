@@ -26,9 +26,28 @@ report_parties AS (
   JOIN years y ON y.year = p.year
 ),
 
+attendances AS (
+  SELECT rp.year, ep.profile_id, ep.spot_type, rp.time_event_start
+  FROM public.event_participants ep
+  JOIN report_parties rp ON rp.id = ep.event_id
+  WHERE ep.attendance_status = 'attended'
+    AND ep.profile_id IS NOT NULL
+),
+
 metrics AS (
   SELECT year, 'parties' AS metric, NULL::text AS category, count(*)::numeric AS value
   FROM report_parties
+  GROUP BY year
+
+  UNION ALL
+  SELECT year, 'people', NULL, count(DISTINCT profile_id)
+  FROM attendances
+  GROUP BY year
+
+  UNION ALL
+  SELECT year, 'social_spots', NULL, count(*)
+  FROM attendances
+  WHERE spot_type = 'social'
   GROUP BY year
 )
 

@@ -125,4 +125,43 @@ describe("Annual report SQL script", () => {
 
     expect(valueOf(rows, REPORT_YEAR, "parties")).toBe(2)
   })
+
+  it("counts each person who attended once, whatever their spot", async () => {
+    const first = await partyIn(tracker, kysely, REPORT_YEAR)
+    const second = await partyIn(tracker, kysely, REPORT_YEAR)
+    const regular = await person(tracker, kysely)
+    const staff = await person(tracker, kysely)
+    const noShow = await person(tracker, kysely)
+
+    await attend(tracker, kysely, regular.id, first.id)
+    await attend(tracker, kysely, regular.id, second.id)
+    await attend(tracker, kysely, staff.id, first.id, { spot_type: "staff" })
+    await attend(tracker, kysely, noShow.id, first.id, {
+      attendance_status: "not-attended",
+    })
+
+    const rows = await runReport(kysely, REPORT_YEAR)
+
+    expect(valueOf(rows, REPORT_YEAR, "people")).toBe(2)
+  })
+
+  it("counts the social spots people used", async () => {
+    const first = await partyIn(tracker, kysely, REPORT_YEAR)
+    const second = await partyIn(tracker, kysely, REPORT_YEAR)
+    const social = await person(tracker, kysely)
+    const socialNoShow = await person(tracker, kysely)
+    const regular = await person(tracker, kysely)
+
+    await attend(tracker, kysely, social.id, first.id, { spot_type: "social" })
+    await attend(tracker, kysely, social.id, second.id, { spot_type: "social" })
+    await attend(tracker, kysely, socialNoShow.id, first.id, {
+      spot_type: "social",
+      attendance_status: "withdrew",
+    })
+    await attend(tracker, kysely, regular.id, first.id)
+
+    const rows = await runReport(kysely, REPORT_YEAR)
+
+    expect(valueOf(rows, REPORT_YEAR, "social_spots")).toBe(2)
+  })
 })
