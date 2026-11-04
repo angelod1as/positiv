@@ -151,11 +151,7 @@ export async function cleanupTestData(
   tracker.clear()
 }
 
-interface TestProfileData {
-  user_id: string | null
-  email: string
-  [key: string]: unknown
-}
+type TestProfileData = Insertable<Database["profiles"]>
 
 /**
  * Runs `run` as if a signed-in user had made the request: the authenticated
@@ -197,7 +193,7 @@ export async function createTestProfile(
   }
   const profile = await kysely
     .insertInto("profiles")
-    .values(profileData as Insertable<Database["profiles"]>)
+    .values(profileData)
     .returningAll()
     .executeTakeFirstOrThrow()
   
@@ -205,10 +201,7 @@ export async function createTestProfile(
   return profile
 }
 
-interface TestEventData {
-  title: string
-  [key: string]: unknown
-}
+type TestEventData = Insertable<Database["events"]>
 
 export async function createTestEvent(
   tracker: TestDataTracker,
@@ -217,7 +210,7 @@ export async function createTestEvent(
 ): Promise<Selectable<Database["events"]>> {
   const event = await kysely
     .insertInto("events")
-    .values(data as Insertable<Database["events"]>)
+    .values(data)
     .returningAll()
     .executeTakeFirstOrThrow()
   
@@ -228,15 +221,11 @@ export async function createTestEvent(
 export async function createTestEventParticipant(
   tracker: TestDataTracker,
   kysely: Kysely<Database>,
-  data: {
-    profile_id: string
-    event_id: string
-    [key: string]: unknown
-  }
+  data: Insertable<Database["event_participants"]>
 ): Promise<Selectable<Database["event_participants"]>> {
   const participant = await kysely
     .insertInto("event_participants")
-    .values(data as Insertable<Database["event_participants"]>)
+    .values(data)
     .returningAll()
     .executeTakeFirstOrThrow()
   
@@ -247,16 +236,11 @@ export async function createTestEventParticipant(
 export async function createTestEventInvite(
   tracker: TestDataTracker,
   kysely: Kysely<Database>,
-  data: {
-    event_id: string
-    profile_id: string
-    token: string
-    [key: string]: unknown
-  }
+  data: Insertable<Database["event_invites"]>
 ): Promise<Selectable<Database["event_invites"]>> {
   const invite = await kysely
     .insertInto("event_invites")
-    .values(data as Insertable<Database["event_invites"]>)
+    .values(data)
     .returningAll()
     .executeTakeFirstOrThrow()
 
@@ -264,10 +248,7 @@ export async function createTestEventInvite(
   return invite
 }
 
-interface TestPaymentData {
-  event_participant_id: string
-  [key: string]: unknown
-}
+type TestPaymentData = Partial<Insertable<Database["payments"]>> & { event_participant_id: string }
 
 /**
  * A payments row for a fixture. Defaults describe the common case — a manual
@@ -291,7 +272,7 @@ export async function createTestPayment(
 
   const payment = await kysely
     .insertInto("payments")
-    .values({ ...defaults, ...data } as Insertable<Database["payments"]>)
+    .values({ ...defaults, ...data })
     .returningAll()
     .executeTakeFirstOrThrow()
 
