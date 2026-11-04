@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import type { Selectable } from "kysely"
 import {
   cleanupAfterTest,
   setupIntegrationTest,
@@ -64,6 +65,7 @@ vi.mock("~/business/settings/app-settings.server", async (importOriginal) => ({
 }))
 
 import { paymentsCopy } from "~/copy/payments"
+import type { Database } from "~/types/database/kysely.types"
 import { AsaasError } from "./provider/asaas/asaas-client.server"
 import { registerManualPayment } from "./manual-payment.server"
 import { createPaymentOffer, resendPaymentOffer } from "./payment-offer.server"
@@ -724,7 +726,7 @@ describe("resendPaymentOffer", () => {
     await cleanupAfterTest(tracker, kysely)
   })
 
-  const chargeWith = (status: string) =>
+  const chargeWith = (status: Selectable<Database["payments"]>["status"]) =>
     createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
       kind: "online",

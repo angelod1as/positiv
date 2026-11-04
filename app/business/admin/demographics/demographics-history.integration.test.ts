@@ -38,7 +38,7 @@ describe("Demographics History - Integration Tests", () => {
       user_id: veteranUserId,
       email: `${testPrefix}-vet@test.com`,
       is_veteran: true,
-      became_veteran_date: new Date("2024-01-01T10:00:00Z"),
+      became_veteran_date: "2024-01-01T10:00:00Z",
     })
 
     const newbieUserId = await createTestAuthUser(`${testPrefix}-new@test.com`, 'test1234', tracker)
@@ -133,7 +133,7 @@ describe("Demographics History - Integration Tests", () => {
       email: `${testPrefix}-veteran@test.com`,
       full_name: "Veteran User",
       is_veteran: true,
-      became_veteran_date: new Date("2024-01-01T10:00:00Z"),
+      became_veteran_date: "2024-01-01T10:00:00Z",
       date_of_birth: "1990-01-01",
       gender: ["Cis Woman"],
       orientation: ["Straight"],
@@ -405,7 +405,7 @@ describe("Demographics History - Integration Tests", () => {
       email: `${testPrefix}-attended@test.com`,
       full_name: "Attended User",
       is_veteran: true,
-      became_veteran_date: new Date("2024-01-01T10:00:00Z"),
+      became_veteran_date: "2024-01-01T10:00:00Z",
     })
 
     const skippedProfile = await createTestProfile(tracker, kysely, {
@@ -502,7 +502,7 @@ describe("Demographics History - Integration Tests", () => {
       email: `${testPrefix}-historical-veteran@test.com`,
       full_name: "Historical Veteran",
       is_veteran: true,
-      became_veteran_date: new Date("2024-01-01T10:00:00Z"),
+      became_veteran_date: "2024-01-01T10:00:00Z",
       date_of_birth: "1990-01-01",
       gender: ["Cis Woman"],
       orientation: ["Straight"],

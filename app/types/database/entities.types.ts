@@ -9,9 +9,7 @@ import type {
   RACE_COLOR,
 } from "~/lib/constants/constants"
 import type { Database } from "./database.types"
-
-// TODO: WEB-25 selectable, insertable, updateable types
-// https://kysely.dev/docs/getting-started
+import type { Database as KyselyDatabase } from "./kysely.types"
 
 // General Fetcher data from Composables
 export type ComposableFetcherData =
@@ -116,9 +114,7 @@ export type RaceColor = (typeof RACE_COLOR)[number]
 // Kysely helpers
 /////
 
-export type EventParticipant = Selectable<
-  Database["public"]["Tables"]["event_participants"]["Row"]
->
+export type EventParticipant = Selectable<KyselyDatabase["event_participants"]>
 
 /**
  * What `event_participant_payments` reports for one participant. Every query
