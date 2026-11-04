@@ -153,18 +153,15 @@ describe("StatsSection", () => {
     ["above its maximum", { min: 10, average: 80, max: 40 }, "100%"],
     ["below its minimum", { min: 10, average: 2, max: 40 }, "0%"],
     ["with no span", { min: 30, average: 30, max: 30 }, "50%"],
-  ])(
-    "keeps the marker of a range %s on the track",
-    (_, values, left) => {
-      render(
-        <StatsSection
-          content={{ ...content, cards: [{ ...range, ...values }] }}
-        />,
-      )
+  ])("keeps the marker of a range %s on the track", (_, values, left) => {
+    render(
+      <StatsSection
+        content={{ ...content, cards: [{ ...range, ...values }] }}
+      />,
+    )
 
-      expect(markerOf("anos de idade")?.style.left).toBe(left)
-    },
-  )
+    expect(markerOf("anos de idade")?.style.left).toBe(left)
+  })
 
   it("draws no bars for a comparison with a negative value", () => {
     render(
@@ -185,9 +182,10 @@ describe("StatsSection", () => {
     )
 
     expect(
-      screen.getByText("de resultado").closest("li")?.querySelector(
-        "[style*='width']",
-      ),
+      screen
+        .getByText("de resultado")
+        .closest("li")
+        ?.querySelector("[style*='width']"),
     ).toBeNull()
     const card = cardFor("de resultado")
     expect(card.getByText("-R$ 2.000")).toBeInTheDocument()
@@ -202,19 +200,22 @@ describe("StatsSection", () => {
     [123750.5, "R$ 123.750,50", "text-2xl"],
     [1234567.89, "R$ 1.234.567,89", "text-2xl"],
     [-1234567.89, "-R$ 1.234.567,89", "text-xl"],
-  ])(
-    "sizes the headline %s to fit its card",
-    (value, written, size) => {
-      render(
-        <StatsSection
-          content={{
-            ...content,
-            cards: [{ ...bigNumber, unit: written.includes("R$") ? "brl" : "none", value }],
-          }}
-        />,
-      )
+  ])("sizes the headline %s to fit its card", (value, written, size) => {
+    render(
+      <StatsSection
+        content={{
+          ...content,
+          cards: [
+            {
+              ...bigNumber,
+              unit: written.includes("R$") ? "brl" : "none",
+              value,
+            },
+          ],
+        }}
+      />,
+    )
 
-      expect(screen.getByText(written)).toHaveClass(size)
-    },
-  )
+    expect(screen.getByText(written)).toHaveClass(size)
+  })
 })

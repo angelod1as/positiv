@@ -31,7 +31,10 @@ describe("statsSection", () => {
     "accepts a card in the %s unit",
     async (unit) => {
       expect(
-        await validateValueOf("statsSection", withCards({ ...bigNumber, unit })),
+        await validateValueOf(
+          "statsSection",
+          withCards({ ...bigNumber, unit }),
+        ),
       ).toEqual([])
     },
   )
@@ -66,7 +69,9 @@ describe("statsSection", () => {
       withCards({ ...bigNumber, unit: "usd" }),
     )
 
-    expect(pathsOf(errors)).toContain(`statsSection.cards.${bigNumber._key}.unit`)
+    expect(pathsOf(errors)).toContain(
+      `statsSection.cards.${bigNumber._key}.unit`,
+    )
   })
 
   it.each([
