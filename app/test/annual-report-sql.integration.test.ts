@@ -18,7 +18,7 @@ const SCRIPT_PATH = resolve(
   __dirname,
   "../../scripts/annual-report/annual-report.sql",
 )
-const YEAR_DECLARATION = /\b2026 AS report_year\b/g
+const YEAR_DECLARATION = /\b\d{4} AS report_year\b/g
 const REPORT_YEAR = 1951
 
 type ReportRow = {
