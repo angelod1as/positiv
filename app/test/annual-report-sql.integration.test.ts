@@ -384,4 +384,30 @@ describe("Annual report SQL script", () => {
     expect(valueOf(rows, REPORT_YEAR, "max_people_per_party")).toBe(3)
     expect(valueOf(rows, REPORT_YEAR, "avg_people_per_party")).toBe(2)
   })
+
+  it("counts the people who came back from the year before", async () => {
+    const beforeWindow = await partyIn(tracker, kysely, REPORT_YEAR - 4)
+    const firstInWindow = await partyIn(tracker, kysely, REPORT_YEAR - 3)
+    const lastYear = await partyIn(tracker, kysely, REPORT_YEAR - 1)
+    const thisYear = await partyIn(tracker, kysely, REPORT_YEAR)
+    const [stays, alsoStays, leaves, arrives, old] = await Promise.all(
+      Array.from({ length: 5 }, () => person(tracker, kysely)),
+    )
+
+    for (const p of [stays, alsoStays, leaves]) {
+      await attend(tracker, kysely, p.id, lastYear.id)
+    }
+    for (const p of [stays, alsoStays, arrives]) {
+      await attend(tracker, kysely, p.id, thisYear.id)
+    }
+    await attend(tracker, kysely, old.id, beforeWindow.id)
+    await attend(tracker, kysely, old.id, firstInWindow.id)
+
+    const rows = await runReport(kysely, REPORT_YEAR)
+
+    expect(valueOf(rows, REPORT_YEAR, "returning_people")).toBe(2)
+    expect(valueOf(rows, REPORT_YEAR, "retention_rate")).toBe(66.7)
+    expect(valueOf(rows, REPORT_YEAR - 3, "returning_people")).toBe(1)
+    expect(valueOf(rows, REPORT_YEAR - 3, "retention_rate")).toBe(100)
+  })
 })

@@ -51,13 +51,32 @@ parties_per_person AS (
   GROUP BY year, profile_id
 ),
 
-first_parties AS (
-  SELECT ep.profile_id, min(p.year) AS year
+-- Every year, not only the report's: novates and retention look back
+-- before the window.
+yearly_people AS (
+  SELECT DISTINCT p.year, ep.profile_id
   FROM public.event_participants ep
   JOIN parties p ON p.id = ep.event_id
   WHERE ep.attendance_status = 'attended'
     AND ep.profile_id IS NOT NULL
-  GROUP BY ep.profile_id
+),
+
+first_parties AS (
+  SELECT profile_id, min(year) AS year
+  FROM yearly_people
+  GROUP BY profile_id
+),
+
+retention AS (
+  SELECT
+    y.year,
+    count(this_year.profile_id) AS came_back,
+    round(100.0 * count(this_year.profile_id) / count(*), 1) AS rate
+  FROM years y
+  JOIN yearly_people last_year ON last_year.year = y.year - 1
+  LEFT JOIN yearly_people this_year
+    ON this_year.year = y.year AND this_year.profile_id = last_year.profile_id
+  GROUP BY y.year
 ),
 
 -- Age at the person's first party of the year, kept to 18-120 like the
@@ -177,6 +196,14 @@ metrics AS (
   SELECT year, 'max_people_per_party', NULL, max(people)
   FROM party_sizes
   GROUP BY year
+
+  UNION ALL
+  SELECT year, 'returning_people', NULL, came_back
+  FROM retention
+
+  UNION ALL
+  SELECT year, 'retention_rate', NULL, rate
+  FROM retention
 ),
 
 counts (metric) AS (
