@@ -361,6 +361,12 @@ Whether a change clears the bar, and how to add one: the `news-dialog` skill.
 - Move a ticket to `Fazendo` when work starts and to `Em Revisão` when the PR opens, through the Atlassian MCP. Merging does the rest.
 - Follow @.github/pull_request_template.md closely — every heading in it gets filled in
 
+### Follow-up work
+
+Resolve it in the PR at hand. A ticket is only for work that is both
+actionable and critical and does not fit the current PR. Anything optional is
+either done in the same PR or dropped - never handed out as a ticket by default.
+
 Jira project `WEB` is on trial until 2026-11-27: see [the ADR](docs/architecture/decisions/20261030-track-engineering-work-in-jira.md). `POS-` keys are old Linear tickets, read only.
 
 ## E2E Tests
