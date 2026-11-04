@@ -444,6 +444,207 @@
           }
         ],
         "title": "Números de exemplo"
+      },
+      {
+        "_key": "chart-bar",
+        "_type": "chartSection",
+        "chartType": "bar",
+        "rows": [
+          {
+            "_key": "y2023",
+            "highlight": false,
+            "label": "2023",
+            "values": [
+              6
+            ]
+          },
+          {
+            "_key": "y2024",
+            "highlight": false,
+            "label": "2024",
+            "values": [
+              9
+            ]
+          },
+          {
+            "_key": "y2025",
+            "highlight": false,
+            "label": "2025",
+            "values": [
+              12
+            ]
+          },
+          {
+            "_key": "y2026",
+            "highlight": true,
+            "label": "2026",
+            "values": [
+              14
+            ]
+          }
+        ],
+        "series": [
+          "Festas"
+        ],
+        "summary": "As festas mais que dobraram desde 2023.",
+        "title": "Festas por ano",
+        "unit": "none"
+      },
+      {
+        "_key": "chart-horizontal-bar",
+        "_type": "chartSection",
+        "chartType": "horizontalBar",
+        "rows": [
+          {
+            "_key": "bi",
+            "highlight": false,
+            "label": "Bissexual",
+            "values": [
+              38
+            ]
+          },
+          {
+            "_key": "gay",
+            "highlight": false,
+            "label": "Gay",
+            "values": [
+              34
+            ]
+          },
+          {
+            "_key": "pan",
+            "highlight": false,
+            "label": "Pansexual",
+            "values": [
+              17
+            ]
+          },
+          {
+            "_key": "lesbian",
+            "highlight": false,
+            "label": "Lésbica",
+            "values": [
+              9
+            ]
+          },
+          {
+            "_key": "hetero",
+            "highlight": false,
+            "label": "Heterossexual",
+            "values": [
+              6
+            ]
+          }
+        ],
+        "series": [
+          "Participantes"
+        ],
+        "summary": "Cada pessoa pode marcar mais de uma resposta, então a soma passa de 100%.",
+        "title": "Sexualidade",
+        "unit": "percent"
+      },
+      {
+        "_key": "chart-line",
+        "_type": "chartSection",
+        "chartType": "line",
+        "rows": [
+          {
+            "_key": "y2023",
+            "highlight": false,
+            "label": "2023",
+            "values": [
+              40,
+              10
+            ]
+          },
+          {
+            "_key": "y2024",
+            "highlight": false,
+            "label": "2024",
+            "values": [
+              55,
+              30
+            ]
+          },
+          {
+            "_key": "y2025",
+            "highlight": false,
+            "label": "2025",
+            "values": [
+              60,
+              52
+            ]
+          },
+          {
+            "_key": "y2026",
+            "highlight": true,
+            "label": "2026",
+            "values": [
+              70,
+              80
+            ]
+          }
+        ],
+        "series": [
+          "Novates",
+          "Veteranes"
+        ],
+        "summary": "Em 2026, pela primeira vez, vieram mais veteranes do que novates.",
+        "title": "Novates e veteranes",
+        "unit": "none"
+      },
+      {
+        "_key": "chart-proportion",
+        "_type": "chartSection",
+        "chartType": "proportion",
+        "rows": [
+          {
+            "_key": "venue",
+            "highlight": true,
+            "label": "Espaço",
+            "values": [
+              12400
+            ]
+          },
+          {
+            "_key": "staff",
+            "highlight": false,
+            "label": "Equipe",
+            "values": [
+              6000
+            ]
+          },
+          {
+            "_key": "infrastructure",
+            "highlight": false,
+            "label": "Infraestrutura",
+            "values": [
+              3200
+            ]
+          },
+          {
+            "_key": "promotion",
+            "highlight": false,
+            "label": "Divulgação",
+            "values": [
+              800
+            ]
+          },
+          {
+            "_key": "tips",
+            "highlight": false,
+            "label": "Gorjetas",
+            "values": [
+              400
+            ]
+          }
+        ],
+        "series": [
+          "Gastos"
+        ],
+        "summary": "Mais da metade foi para o aluguel do espaço.",
+        "title": "Para onde foi o dinheiro",
+        "unit": "brl"
       }
     ],
     "seo": {
@@ -1408,6 +1609,207 @@
           }
         ],
         "title": "Números de exemplo"
+      },
+      {
+        "_key": "chart-bar",
+        "_type": "chartSection",
+        "chartType": "bar",
+        "rows": [
+          {
+            "_key": "y2023",
+            "highlight": false,
+            "label": "2023",
+            "values": [
+              6
+            ]
+          },
+          {
+            "_key": "y2024",
+            "highlight": false,
+            "label": "2024",
+            "values": [
+              9
+            ]
+          },
+          {
+            "_key": "y2025",
+            "highlight": false,
+            "label": "2025",
+            "values": [
+              12
+            ]
+          },
+          {
+            "_key": "y2026",
+            "highlight": true,
+            "label": "2026",
+            "values": [
+              14
+            ]
+          }
+        ],
+        "series": [
+          "Festas"
+        ],
+        "summary": "As festas mais que dobraram desde 2023.",
+        "title": "Festas por ano",
+        "unit": "none"
+      },
+      {
+        "_key": "chart-horizontal-bar",
+        "_type": "chartSection",
+        "chartType": "horizontalBar",
+        "rows": [
+          {
+            "_key": "bi",
+            "highlight": false,
+            "label": "Bissexual",
+            "values": [
+              38
+            ]
+          },
+          {
+            "_key": "gay",
+            "highlight": false,
+            "label": "Gay",
+            "values": [
+              34
+            ]
+          },
+          {
+            "_key": "pan",
+            "highlight": false,
+            "label": "Pansexual",
+            "values": [
+              17
+            ]
+          },
+          {
+            "_key": "lesbian",
+            "highlight": false,
+            "label": "Lésbica",
+            "values": [
+              9
+            ]
+          },
+          {
+            "_key": "hetero",
+            "highlight": false,
+            "label": "Heterossexual",
+            "values": [
+              6
+            ]
+          }
+        ],
+        "series": [
+          "Participantes"
+        ],
+        "summary": "Cada pessoa pode marcar mais de uma resposta, então a soma passa de 100%.",
+        "title": "Sexualidade",
+        "unit": "percent"
+      },
+      {
+        "_key": "chart-line",
+        "_type": "chartSection",
+        "chartType": "line",
+        "rows": [
+          {
+            "_key": "y2023",
+            "highlight": false,
+            "label": "2023",
+            "values": [
+              40,
+              10
+            ]
+          },
+          {
+            "_key": "y2024",
+            "highlight": false,
+            "label": "2024",
+            "values": [
+              55,
+              30
+            ]
+          },
+          {
+            "_key": "y2025",
+            "highlight": false,
+            "label": "2025",
+            "values": [
+              60,
+              52
+            ]
+          },
+          {
+            "_key": "y2026",
+            "highlight": true,
+            "label": "2026",
+            "values": [
+              70,
+              80
+            ]
+          }
+        ],
+        "series": [
+          "Novates",
+          "Veteranes"
+        ],
+        "summary": "Em 2026, pela primeira vez, vieram mais veteranes do que novates.",
+        "title": "Novates e veteranes",
+        "unit": "none"
+      },
+      {
+        "_key": "chart-proportion",
+        "_type": "chartSection",
+        "chartType": "proportion",
+        "rows": [
+          {
+            "_key": "venue",
+            "highlight": true,
+            "label": "Espaço",
+            "values": [
+              12400
+            ]
+          },
+          {
+            "_key": "staff",
+            "highlight": false,
+            "label": "Equipe",
+            "values": [
+              6000
+            ]
+          },
+          {
+            "_key": "infrastructure",
+            "highlight": false,
+            "label": "Infraestrutura",
+            "values": [
+              3200
+            ]
+          },
+          {
+            "_key": "promotion",
+            "highlight": false,
+            "label": "Divulgação",
+            "values": [
+              800
+            ]
+          },
+          {
+            "_key": "tips",
+            "highlight": false,
+            "label": "Gorjetas",
+            "values": [
+              400
+            ]
+          }
+        ],
+        "series": [
+          "Gastos"
+        ],
+        "summary": "Mais da metade foi para o aluguel do espaço.",
+        "title": "Para onde foi o dinheiro",
+        "unit": "brl"
       }
     ],
     "seo": {

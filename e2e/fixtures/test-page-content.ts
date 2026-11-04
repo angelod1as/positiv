@@ -10,6 +10,8 @@ export const testPageContent = {
   founderName: 'Ana Exemplo',
   imageAlt: 'Imagem de exemplo dos testes end-to-end',
   statsTitle: 'Números de exemplo',
+  chartTitle: 'Para onde foi o dinheiro',
+  chartSummary: 'Mais da metade foi para o aluguel do espaço.',
   seoDescription: 'Página exclusiva dos testes end-to-end.',
 } as const
 

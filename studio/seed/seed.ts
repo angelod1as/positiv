@@ -205,6 +205,79 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
     ],
   }
 
+  const chartRow = (
+    _key: string,
+    label: string,
+    values: number[],
+    highlight = false,
+  ) => ({ _type: "chartRow", _key, label, values, highlight })
+
+  const chartSections = [
+    {
+      _type: "chartSection",
+      _key: "chart-bar",
+      title: "Festas por ano",
+      summary: "As festas mais que dobraram desde 2023.",
+      chartType: "bar",
+      unit: "none",
+      series: ["Festas"],
+      rows: [
+        chartRow("y2023", "2023", [6]),
+        chartRow("y2024", "2024", [9]),
+        chartRow("y2025", "2025", [12]),
+        chartRow("y2026", "2026", [14], true),
+      ],
+    },
+    {
+      _type: "chartSection",
+      _key: "chart-horizontal-bar",
+      title: "Sexualidade",
+      summary:
+        "Cada pessoa pode marcar mais de uma resposta, então a soma passa de 100%.",
+      chartType: "horizontalBar",
+      unit: "percent",
+      series: ["Participantes"],
+      rows: [
+        chartRow("bi", "Bissexual", [38]),
+        chartRow("gay", "Gay", [34]),
+        chartRow("pan", "Pansexual", [17]),
+        chartRow("lesbian", "Lésbica", [9]),
+        chartRow("hetero", "Heterossexual", [6]),
+      ],
+    },
+    {
+      _type: "chartSection",
+      _key: "chart-line",
+      title: "Novates e veteranes",
+      summary: "Em 2026, pela primeira vez, vieram mais veteranes do que novates.",
+      chartType: "line",
+      unit: "none",
+      series: ["Novates", "Veteranes"],
+      rows: [
+        chartRow("y2023", "2023", [40, 10]),
+        chartRow("y2024", "2024", [55, 30]),
+        chartRow("y2025", "2025", [60, 52]),
+        chartRow("y2026", "2026", [70, 80], true),
+      ],
+    },
+    {
+      _type: "chartSection",
+      _key: "chart-proportion",
+      title: "Para onde foi o dinheiro",
+      summary: "Mais da metade foi para o aluguel do espaço.",
+      chartType: "proportion",
+      unit: "brl",
+      series: ["Gastos"],
+      rows: [
+        chartRow("venue", "Espaço", [12400], true),
+        chartRow("staff", "Equipe", [6000]),
+        chartRow("infrastructure", "Infraestrutura", [3200]),
+        chartRow("promotion", "Divulgação", [800]),
+        chartRow("tips", "Gorjetas", [400]),
+      ],
+    },
+  ]
+
   return [
     ...people,
     {
@@ -322,6 +395,7 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
           caption: "Uma legenda de exemplo",
         },
         statsSection,
+        ...chartSections,
       ],
       seo: seo(
         "Eventos naturistas para pessoas queer: conteúdo de exemplo do ambiente de desenvolvimento.",
@@ -442,6 +516,7 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
           caption: "Uma legenda de exemplo",
         },
         statsSection,
+        ...chartSections,
       ],
       seo: {
         _type: "seo",

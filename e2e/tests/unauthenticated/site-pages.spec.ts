@@ -14,10 +14,14 @@ const {
   founderName: FOUNDER_NAME,
   imageAlt: IMAGE_SECTION_ALT,
   statsTitle: STATS_SECTION_TITLE,
+  chartTitle: CHART_SECTION_TITLE,
+  chartSummary: CHART_SECTION_SUMMARY,
   seoDescription: SEO_DESCRIPTION,
 } = testPageContent
 // Computed by the app from the seeded comparison, 22% in 2025 to 31% in 2026.
 const STATS_SECTION_CHANGE = '+9 p.p.'
+// The seeded 100% bar's largest part, written in full by the data table.
+const CHART_SECTION_VALUE = 'R$ 12.400'
 const CANONICAL = `https://www.positivparty.com${TEST_PAGE_ADDRESS}`
 
 test.describe('Pages from Sanity', () => {
@@ -37,6 +41,19 @@ test.describe('Pages from Sanity', () => {
     await expect(page.getByRole('img', { name: IMAGE_SECTION_ALT })).toBeVisible()
     await expect(sitePage.sectionTitle(STATS_SECTION_TITLE)).toBeVisible()
     await expect(page.getByText(STATS_SECTION_CHANGE)).toBeVisible()
+
+    const chartSection = page
+      .locator('section')
+      .filter({ has: sitePage.sectionTitle(CHART_SECTION_TITLE) })
+    await expect(chartSection.getByText(CHART_SECTION_SUMMARY)).toBeVisible()
+    await chartSection
+      .getByRole('button', { name: homepageCopy.chart.viewData })
+      .click()
+    await expect(
+      chartSection
+        .getByRole('table', { name: CHART_SECTION_TITLE })
+        .getByRole('cell', { name: CHART_SECTION_VALUE }),
+    ).toBeVisible()
   })
 
   test('the Next Events Section renders the events it loads from the backend', async ({
