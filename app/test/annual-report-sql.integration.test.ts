@@ -146,7 +146,14 @@ describe("Annual report SQL script", () => {
   it("reads 0, not a missing row, for a year with nothing in it", async () => {
     const rows = await runReport(kysely, REPORT_YEAR)
 
-    for (const metric of ["parties", "people", "social_spots", "novates"]) {
+    for (const metric of [
+      "parties",
+      "people",
+      "social_spots",
+      "novates",
+      "repeat_people",
+      "attendances",
+    ]) {
       expect(valueOf(rows, REPORT_YEAR - 2, metric)).toBe(0)
     }
   })
@@ -351,5 +358,30 @@ describe("Annual report SQL script", () => {
     expect(valueOf(rows, REPORT_YEAR, "race_color", "Parda")).toBe(1)
     expect(valueOf(rows, REPORT_YEAR, "race_color", "Indígena")).toBe(1)
     expect(valueOf(rows, REPORT_YEAR, "race_color", "Não informado")).toBe(1)
+  })
+
+  it("measures how often people came and how full the parties were", async () => {
+    const first = await partyIn(tracker, kysely, REPORT_YEAR)
+    const second = await partyIn(tracker, kysely, REPORT_YEAR)
+    const third = await partyIn(tracker, kysely, REPORT_YEAR)
+    const everyParty = await person(tracker, kysely)
+    const twoParties = await person(tracker, kysely)
+    const oneParty = await person(tracker, kysely)
+
+    await attend(tracker, kysely, everyParty.id, first.id)
+    await attend(tracker, kysely, everyParty.id, second.id)
+    await attend(tracker, kysely, everyParty.id, third.id)
+    await attend(tracker, kysely, everyParty.id, third.id)
+    await attend(tracker, kysely, twoParties.id, first.id)
+    await attend(tracker, kysely, twoParties.id, second.id)
+    await attend(tracker, kysely, oneParty.id, first.id)
+
+    const rows = await runReport(kysely, REPORT_YEAR)
+
+    expect(valueOf(rows, REPORT_YEAR, "repeat_people")).toBe(2)
+    expect(valueOf(rows, REPORT_YEAR, "max_parties_per_person")).toBe(3)
+    expect(valueOf(rows, REPORT_YEAR, "attendances")).toBe(6)
+    expect(valueOf(rows, REPORT_YEAR, "max_people_per_party")).toBe(3)
+    expect(valueOf(rows, REPORT_YEAR, "avg_people_per_party")).toBe(2)
   })
 })

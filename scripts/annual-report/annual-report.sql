@@ -34,6 +34,23 @@ attendances AS (
     AND ep.profile_id IS NOT NULL
 ),
 
+party_people AS (
+  SELECT DISTINCT year, event_id, profile_id
+  FROM attendances
+),
+
+party_sizes AS (
+  SELECT year, event_id, count(*) AS people
+  FROM party_people
+  GROUP BY year, event_id
+),
+
+parties_per_person AS (
+  SELECT year, profile_id, count(*) AS parties
+  FROM party_people
+  GROUP BY year, profile_id
+),
+
 first_parties AS (
   SELECT ep.profile_id, min(p.year) AS year
   FROM public.event_participants ep
@@ -135,10 +152,37 @@ metrics AS (
   SELECT year, metric, category, count(*)
   FROM answers
   GROUP BY year, metric, category
+
+  UNION ALL
+  SELECT year, 'repeat_people', NULL, count(*) FILTER (WHERE parties >= 2)
+  FROM parties_per_person
+  GROUP BY year
+
+  UNION ALL
+  SELECT year, 'max_parties_per_person', NULL, max(parties)
+  FROM parties_per_person
+  GROUP BY year
+
+  UNION ALL
+  SELECT year, 'attendances', NULL, sum(people)
+  FROM party_sizes
+  GROUP BY year
+
+  UNION ALL
+  SELECT year, 'avg_people_per_party', NULL, round(avg(people), 1)
+  FROM party_sizes
+  GROUP BY year
+
+  UNION ALL
+  SELECT year, 'max_people_per_party', NULL, max(people)
+  FROM party_sizes
+  GROUP BY year
 ),
 
 counts (metric) AS (
-  VALUES ('parties'), ('people'), ('social_spots'), ('novates')
+  VALUES
+    ('parties'), ('people'), ('social_spots'), ('novates'),
+    ('repeat_people'), ('attendances')
 )
 
 SELECT year, metric, category, value
