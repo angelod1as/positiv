@@ -44,6 +44,18 @@ export const pagesQuery = `*[_type == "page"]{
         "dimensions": asset->metadata.dimensions{ width, height }
       },
       caption
+    },
+    _type == "statsSection" => {
+      title,
+      cards[]{
+        _type,
+        _key,
+        unit,
+        caption,
+        _type == "statNumber" => { value },
+        _type == "statRange" => { min, average, max },
+        _type == "statComparison" => { before, beforeLabel, after, afterLabel }
+      }
     }
   },
   seo{ title, description, image{ alt, hotspot, crop, asset }, noIndex }
