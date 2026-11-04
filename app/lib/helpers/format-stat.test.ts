@@ -7,7 +7,7 @@ describe("formatStatValue", () => {
     [1250, "1.250"],
     [1000000, "1.000.000"],
     [31.4, "31,4"],
-    [31.37, "31,4"],
+    [31.37, "31,37"],
     [0, "0"],
   ])("writes %s without a unit as %s", (value, expected) => {
     expect(formatStatValue(value, "none")).toBe(expected)
@@ -16,6 +16,7 @@ describe("formatStatValue", () => {
   it.each([
     [14, "14%"],
     [12.5, "12,5%"],
+    [12.34, "12,34%"],
     [100, "100%"],
   ])("writes %s percent as %s", (value, expected) => {
     expect(formatStatValue(value, "percent")).toBe(expected)
@@ -37,6 +38,8 @@ describe("formatStatChange", () => {
     [31, 22, "-9 p.p."],
     [10, 12.5, "+2,5 p.p."],
     [14, 14, "0 p.p."],
+    [14, 13.96, "0 p.p."],
+    [10, 10.333, "+0,3 p.p."],
   ])(
     "measures a percent going from %s to %s in percentage points: %s",
     (before, after, expected) => {
@@ -50,6 +53,8 @@ describe("formatStatChange", () => {
     ["none", 3, 4, "+33,3%"],
     ["brl", 8000, 12400, "+55%"],
     ["none", 14, 14, "0%"],
+    ["none", 10000, 9999, "0%"],
+    ["none", -100, -50, "+50%"],
   ] as const)(
     "measures %s going from %s to %s as a relative change: %s",
     (unit, before, after, expected) => {

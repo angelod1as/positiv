@@ -21,5 +21,6 @@ export const homepageCopy = {
     min: "mín.",
     average: "média",
     max: "máx.",
+    percentagePoints: (change: string) => `${change} p.p.`,
   },
 } as const
