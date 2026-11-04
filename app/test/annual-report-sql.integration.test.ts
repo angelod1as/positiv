@@ -153,6 +153,9 @@ describe("Annual report SQL script", () => {
       "novates",
       "repeat_people",
       "attendances",
+      "applications",
+      "applicants",
+      "returning_people",
     ]) {
       expect(valueOf(rows, REPORT_YEAR - 2, metric)).toBe(0)
     }
@@ -409,5 +412,31 @@ describe("Annual report SQL script", () => {
     expect(valueOf(rows, REPORT_YEAR, "retention_rate")).toBe(66.7)
     expect(valueOf(rows, REPORT_YEAR - 3, "returning_people")).toBe(1)
     expect(valueOf(rows, REPORT_YEAR - 3, "retention_rate")).toBe(100)
+  })
+
+  it("counts applications whatever their outcome, leaving staff out", async () => {
+    const first = await partyIn(tracker, kysely, REPORT_YEAR)
+    const second = await partyIn(tracker, kysely, REPORT_YEAR)
+    const [attended, pending, twice, staff] = await Promise.all(
+      Array.from({ length: 4 }, () => person(tracker, kysely)),
+    )
+
+    await attend(tracker, kysely, attended.id, first.id)
+    await attend(tracker, kysely, pending.id, first.id, {
+      application_status: "pending",
+      attendance_status: "pending",
+    })
+    await attend(tracker, kysely, twice.id, first.id, {
+      attendance_status: "not-selected",
+    })
+    await attend(tracker, kysely, twice.id, second.id, {
+      attendance_status: "withdrew",
+    })
+    await attend(tracker, kysely, staff.id, first.id, { spot_type: "staff" })
+
+    const rows = await runReport(kysely, REPORT_YEAR)
+
+    expect(valueOf(rows, REPORT_YEAR, "applications")).toBe(4)
+    expect(valueOf(rows, REPORT_YEAR, "applicants")).toBe(3)
   })
 })

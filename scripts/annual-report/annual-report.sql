@@ -198,6 +198,25 @@ metrics AS (
   GROUP BY year
 
   UNION ALL
+  SELECT application.year, a.metric, NULL, a.value
+  FROM (
+    SELECT
+      rp.year,
+      count(DISTINCT (ep.event_id, ep.profile_id)) AS applications,
+      count(DISTINCT ep.profile_id) AS applicants
+    FROM public.event_participants ep
+    JOIN report_parties rp ON rp.id = ep.event_id
+    WHERE ep.spot_type <> 'staff'
+      AND ep.profile_id IS NOT NULL
+    GROUP BY rp.year
+  ) application
+  CROSS JOIN LATERAL (
+    VALUES
+      ('applications', application.applications),
+      ('applicants', application.applicants)
+  ) AS a (metric, value)
+
+  UNION ALL
   SELECT year, 'returning_people', NULL, came_back
   FROM retention
 
@@ -209,7 +228,8 @@ metrics AS (
 counts (metric) AS (
   VALUES
     ('parties'), ('people'), ('social_spots'), ('novates'),
-    ('repeat_people'), ('attendances')
+    ('repeat_people'), ('attendances'), ('applications'), ('applicants'),
+    ('returning_people')
 )
 
 SELECT year, metric, category, value
