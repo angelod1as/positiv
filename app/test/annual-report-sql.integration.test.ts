@@ -18,7 +18,7 @@ const SCRIPT_PATH = resolve(
   __dirname,
   "../../scripts/annual-report/annual-report.sql",
 )
-const YEAR_DECLARATION = /\b\d{4} AS report_year\b/g
+const YEAR_DECLARATION = /\bSELECT \d{4} AS report_year\b/g
 const REPORT_YEAR = 1951
 
 type ReportRow = {
@@ -35,7 +35,7 @@ function scriptForYear(year: number): string {
     declarations,
     "annual-report.sql must declare the year exactly once, as `SELECT 2026 AS report_year`",
   ).toHaveLength(1)
-  return script.replace(YEAR_DECLARATION, `${year} AS report_year`)
+  return script.replace(YEAR_DECLARATION, `SELECT ${year} AS report_year`)
 }
 
 async function runReport(
