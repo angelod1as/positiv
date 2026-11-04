@@ -1,9 +1,12 @@
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { portableTextSchema } from "~/business/cms/content.schema"
-import type { PageSection } from "~/business/cms/page.schema"
+import {
+  type PageSection,
+  pageSectionDocumentSchema,
+} from "~/business/cms/page.schema"
 import { homepageCopy } from "~/copy/homepage"
-import { paragraph } from "~/test/page-documents"
+import { paragraph, sections } from "~/test/page-documents"
 import { pageFixture } from "~/test/pages-snapshot-fixture"
 import { renderWithRouter, screen, waitFor } from "~/test/test-utils"
 import type { Event } from "~types/database/entities.types"
@@ -76,6 +79,24 @@ describe("PageSections", () => {
       screen.getByRole("img", {
         name: "Imagem de exemplo do ambiente de desenvolvimento",
       }),
+    ).toBeInTheDocument()
+  })
+
+  it("renders a Stats Section", () => {
+    const statsSection = pageSectionDocumentSchema.parse(sections.statsSection)
+    if (statsSection._type !== "statsSection") throw new Error("Not stats")
+
+    renderWithRouter(
+      <PageSections
+        page="/relatorio/2026"
+        sections={[statsSection]}
+        events={undefined}
+        isLoggedIn={false}
+      />,
+    )
+
+    expect(
+      screen.getByRole("heading", { level: 2, name: "O ano em números" }),
     ).toBeInTheDocument()
   })
 

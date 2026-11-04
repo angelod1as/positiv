@@ -13,6 +13,7 @@ import type { Event } from "~types/database/entities.types"
 import { PagePlaceholder } from "../placeholder/page-placeholder"
 import { ImageSection } from "./image-section"
 import { RichTextSection } from "./rich-text-section"
+import { StatsSection } from "./stats-section"
 
 type PageSectionsProps = {
   page: string
@@ -87,6 +88,8 @@ const renderSection = (
       return <RichTextSection content={section} />
     case "imageSection":
       return <ImageSection content={section} />
+    case "statsSection":
+      return <StatsSection content={section} />
     case "placeholder":
       return <PagePlaceholder variant="section" missing={section.missing} />
   }
