@@ -15,6 +15,7 @@ import { dashboardCopy } from "~/copy/dashboard"
 import { eventListCopy } from "~/copy/events"
 import { metaCopy } from "~/copy/meta"
 import { trackEvent } from "~/lib/analytics/umami"
+import { logger } from "~/lib/logger/logger.server"
 import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
 import type { Event } from "~types/database/entities.types"
@@ -92,6 +93,11 @@ export async function action({ request, params }: Route.ClientActionArgs) {
     })
 
     if (!result.success) {
+      logger.error("Could not cancel an application", {
+        eventId,
+        profileId: currentProfile?.id,
+        errors: result.errors.map((e) => e.message),
+      })
       return { error: dashboardCopy.cancelFailed }
     }
 

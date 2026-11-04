@@ -25,12 +25,17 @@ vi.mock("../page/fetch/get-next-events", () => ({
   getNextEvents: vi.fn(),
 }))
 
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { error: vi.fn() },
+}))
+
 import { getContext, getUserContext } from "~/business/auth/auth.server"
 import { applyToEvent } from "~/business/participant/apply-to-event.server"
 import { cancelApplicationToEvent } from "~/business/participant/cancel-application-to-event.server"
 import { hasEverApplied } from "~/business/participant/has-ever-applied.server"
 import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
 import { getNextEvents } from "../page/fetch/get-next-events"
+import { logger } from "~/lib/logger/logger.server"
 import { action, clientAction, loader } from "./dashboard-page"
 import { PERMISSIONS } from "~/business/auth/permissions"
 import { dashboardCopy } from "~/copy/dashboard"
@@ -138,6 +143,27 @@ describe("dashboard action — cancellation", () => {
     })
 
     expect(result).toEqual({ error: dashboardCopy.cancelFailed })
+  })
+
+  it("logs why the cancellation failed", async () => {
+    mockCancelApplicationToEvent.mockResolvedValue({
+      success: false,
+      errors: [
+        new Error("A paid registration cannot be cancelled by the participant"),
+      ],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)
+
+    await run({ fetchId: "handleConfirmCancel", eventId: "event-123" })
+
+    expect(logger.error).toHaveBeenCalledWith(
+      "Could not cancel an application",
+      {
+        eventId: "event-123",
+        profileId: "profile-123",
+        errors: ["A paid registration cannot be cancelled by the participant"],
+      },
+    )
   })
 })
 
