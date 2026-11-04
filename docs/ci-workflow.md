@@ -91,7 +91,7 @@ SUPABASE_SERVICE_ROLE_KEY: (from local instance)
 SUPABASE_CONNECT_URL: (from local instance)
 ```
 
-All other secrets (TEST_USER_PASSWORD, COOKIE_SECRET, etc.) come from GitHub secrets.
+The one other secret, COOKIE_SECRET, comes from GitHub secrets.
 
 ---
 
@@ -258,9 +258,8 @@ supabase stop
 **Cause**: Test user credentials don't match seeded users
 
 **Check**:
-1. Verify `TEST_USER_PASSWORD` secret matches password in `supabase/seed.sql`
-2. Verify `TEST_USER_ADMIN_EMAIL` secret matches admin email in `supabase/seed.sql`
-3. Ensure seeds are being applied (check Supabase startup logs)
+1. Verify the credentials in `e2e/fixtures/test-users.ts` match the users in `supabase/seed.sql`
+2. Ensure seeds are being applied (check Supabase startup logs)
 
 **Debug locally**:
 ```bash
@@ -281,30 +280,11 @@ SELECT email FROM auth.users;
 
 ### For PRs (E2E Tests)
 ```
-TEST_USER_PASSWORD
-TEST_USER_ADMIN_EMAIL
 COOKIE_SECRET
-UNSUBSCRIBE_SECRET
-LISTMONK_API_URL
-LISTMONK_API_USERNAME
-LISTMONK_API_PASSWORD
 ```
 
 Note: Supabase credentials are NOT needed for PRs! They come from the local instance.
 Turnstile uses Cloudflare's public "always passes" test keys, written into the workflow, so it needs no secret either.
-
-**Important**: The following secrets MUST match the seed data in `supabase/seed.sql`:
-
-- `TEST_USER_PASSWORD` - Must match the password for test users created in seeds
-- `TEST_USER_ADMIN_EMAIL` - Must match the email of the admin user created in seeds
-
-To verify seed users:
-```sql
--- Check seed.sql for user creation
--- Look for INSERT INTO auth.users or profile creation
-```
-
-If E2E tests fail with authentication errors, verify these secrets match the seeded users.
 
 ---
 
@@ -312,9 +292,6 @@ If E2E tests fail with authentication errors, verify these secrets match the see
 ```
 SUPABASE_ACCESS_TOKEN
 PRODUCTION_PROJECT_ID
-PRODUCTION_SUPABASE_URL
-PRODUCTION_SUPABASE_ANON_KEY
-PRODUCTION_SUPABASE_SERVICE_ROLE_KEY
 PRODUCTION_SUPABASE_CONNECT_URL
 ```
 

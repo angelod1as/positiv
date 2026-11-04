@@ -124,6 +124,45 @@ describe(".env.schema", () => {
 
     expect(misclassified).toEqual([])
   })
+
+  // Every declared variable has to be set by hand in a .env, Coolify or
+  // GitHub, so one nothing reads is pure cost — and it reads as configuration
+  // somebody still has to fill in. WEB-12 found thirteen. A variable counts as
+  // read when code, a workflow or a config file names it; prose in Markdown
+  // does not count. It is a heuristic: it catches a name nobody mentions, not
+  // one mentioned only in passing, so a short name like CI always passes.
+  it("declares only variables something reads", () => {
+    const declared = [
+      ...readFileSync(".env.schema", "utf8").matchAll(/^([A-Z][A-Z0-9_]*)=/gm),
+    ].map(([, key]) => key)
+
+    const unread = declared.filter((key) => {
+      try {
+        execFileSync(
+          "git",
+          [
+            "grep",
+            "--quiet",
+            "--word-regexp",
+            key,
+            "--",
+            ".",
+            ":!.env.schema",
+            ":!env.d.ts",
+            ":!scripts/env-schema.test.ts",
+            ":!*.md",
+          ],
+          { encoding: "utf8" },
+        )
+        return false
+      } catch (error) {
+        if ((error as { status?: number }).status === 1) return true
+        throw error
+      }
+    })
+
+    expect(unread).toEqual([])
+  })
 })
 
 // Production's values do not live in one place: some are GitHub secrets, some
