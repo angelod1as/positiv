@@ -1,10 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import userEvent from "@testing-library/user-event"
 import { renderWithRouter, screen } from "~/test/test-utils"
+import { dashboardCopy } from "~/copy/dashboard"
 import { eventCardCopy } from "~/copy/events"
 import { EventCardFooter } from "./event-card-footer"
 
-const { mockSubmit, fetcher } = vi.hoisted(() => {
+const { mockSubmit, mockToastError, fetcher } = vi.hoisted(() => {
   const mockSubmit = vi.fn()
   // One object for every render, as the real hook gives: a new Form component
   // on each render would remount the dialog and close it while typing.
@@ -14,10 +15,14 @@ const { mockSubmit, fetcher } = vi.hoisted(() => {
     ),
     submit: mockSubmit,
     state: "idle",
-    data: null,
+    data: null as { error?: string } | null,
   }
-  return { mockSubmit, fetcher }
+  return { mockSubmit, mockToastError: vi.fn(), fetcher }
 })
+
+vi.mock("sonner", () => ({
+  toast: { error: mockToastError },
+}))
 
 vi.mock("~/lib/hooks/use-analytics", () => ({
   useAnalytics: () => ({ track: vi.fn() }),
@@ -58,6 +63,12 @@ describe("EventCardFooter cancel dialog", () => {
   beforeEach(() => {
     mockSubmit.mockReset()
     mockSubmit.mockResolvedValue(undefined)
+    mockToastError.mockReset()
+    fetcher.data = null
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it("asks for an optional reason", async () => {
@@ -116,5 +127,22 @@ describe("EventCardFooter cancel dialog", () => {
       expect.objectContaining({ fetchId: "handleConfirmCancel", reason: "" }),
       { method: "POST" },
     )
+  })
+
+  it("shows the message when the cancellation fails", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    fetcher.data = { error: dashboardCopy.cancelFailed }
+
+    renderWithRouter(
+      <EventCardFooter
+        eventId="event-123"
+        event_status="Registration Open"
+        googleLink=""
+        is_applied={true}
+        dataTestId="footer"
+      />,
+    )
+
+    expect(mockToastError).toHaveBeenCalledWith(dashboardCopy.cancelFailed)
   })
 })
