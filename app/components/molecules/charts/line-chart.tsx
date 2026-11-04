@@ -31,6 +31,8 @@ export function LineChart({
   showLegend = true,
   showValues = false,
   tooltipAnimated = false,
+  animated = true,
+  valueFormatter,
   tooltipContent,
   children,
 }: LineChartProps) {
@@ -47,7 +49,12 @@ export function LineChart({
           tick={xAxisTickComponent}
           height={xAxisHeight}
         />
-        <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+        <YAxis
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+          tickFormatter={valueFormatter}
+        />
         {showTooltip && (
           <ChartTooltip
             isAnimationActive={tooltipAnimated}
@@ -65,6 +72,7 @@ export function LineChart({
             stroke={s.color ?? `var(--color-${s.dataKey})`}
             strokeWidth={2}
             dot={showValues ? { r: 3 } : false}
+            isAnimationActive={animated}
           >
             {showValues && (
               <LabelList

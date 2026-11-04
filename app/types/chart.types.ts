@@ -9,6 +9,7 @@ export interface ChartSeries {
   dataKey: string
   color?: string
   stackId?: string
+  cellColors?: (string | undefined)[]
 }
 
 export interface BaseChartProps {
@@ -20,6 +21,8 @@ export interface BaseChartProps {
   showLegend?: boolean
   showValues?: boolean
   tooltipAnimated?: boolean
+  animated?: boolean
+  valueFormatter?: (value: number) => string
   tooltipContent?: ReactElement | ((props: Record<string, unknown>) => ReactNode)
   children?: ReactNode
 }

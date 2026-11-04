@@ -2,6 +2,7 @@ import {
   Bar,
   BarChart as RechartsBarChart,
   CartesianGrid,
+  Cell,
   LabelList,
   XAxis,
   YAxis,
@@ -32,6 +33,8 @@ export function BarChart({
   showLegend = true,
   showValues = false,
   tooltipAnimated = false,
+  animated = true,
+  valueFormatter,
   tooltipContent,
   children,
 }: BarChartProps) {
@@ -52,7 +55,12 @@ export function BarChart({
               tickMargin={8}
               tickFormatter={xAxisFormatter}
             />
-            <XAxis type="number" tickLine={false} axisLine={false} />
+            <XAxis
+              type="number"
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={valueFormatter}
+            />
           </>
         ) : (
           <>
@@ -65,7 +73,12 @@ export function BarChart({
               tick={xAxisTickComponent}
               height={xAxisHeight}
             />
-            <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              tickFormatter={valueFormatter}
+            />
           </>
         )}
         {showTooltip && (
@@ -84,7 +97,14 @@ export function BarChart({
             fill={s.color ?? `var(--color-${s.dataKey})`}
             radius={4}
             stackId={stacked ? 'stack' : s.stackId}
+            isAnimationActive={animated}
           >
+            {s.cellColors?.map((color, index) => (
+              <Cell
+                key={index}
+                fill={color ?? s.color ?? `var(--color-${s.dataKey})`}
+              />
+            ))}
             {showValues && (
               <LabelList
                 dataKey={s.dataKey}

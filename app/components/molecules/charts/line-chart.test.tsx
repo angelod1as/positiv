@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react'
+import { cloneElement, isValidElement } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import type { ChartConfig } from '~/components/ui/chart'
 import { LineChart } from './line-chart'
@@ -9,7 +10,9 @@ vi.mock('recharts', async () => {
     ...actual,
     ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
       <div className="recharts-responsive-container" style={{ width: 500, height: 300 }}>
-        {children}
+        {isValidElement<{ width?: number; height?: number }>(children)
+          ? cloneElement(children, { width: 500, height: 300 })
+          : children}
       </div>
     ),
   }
@@ -71,5 +74,43 @@ describe('LineChart', () => {
     const chart = container.querySelector('[data-chart]')
     expect(chart).toHaveAttribute('role', 'img')
     expect(chart).toHaveAttribute('aria-label', 'Monthly desktop and mobile visitors')
+  })
+})
+
+describe('LineChart drawing', () => {
+  const desktop = [{ dataKey: 'desktop' }]
+
+  it('draws the line out on first render by default', () => {
+    const { container } = render(
+      <LineChart data={mockData} config={mockConfig} series={desktop} xAxisKey="month" />
+    )
+    expect(container.querySelector('.recharts-line-curve')).toHaveAttribute('stroke-dasharray')
+  })
+
+  it('draws the whole line at once when animation is off', () => {
+    const { container } = render(
+      <LineChart
+        data={mockData}
+        config={mockConfig}
+        series={desktop}
+        xAxisKey="month"
+        animated={false}
+      />
+    )
+    expect(container.querySelector('.recharts-line-curve')).not.toHaveAttribute('stroke-dasharray')
+  })
+
+  it('writes the value axis with the value formatter', () => {
+    const { getByText } = render(
+      <LineChart
+        data={mockData}
+        config={mockConfig}
+        series={desktop}
+        xAxisKey="month"
+        animated={false}
+        valueFormatter={(value) => `${value}%`}
+      />
+    )
+    expect(getByText('200%')).toBeInTheDocument()
   })
 })

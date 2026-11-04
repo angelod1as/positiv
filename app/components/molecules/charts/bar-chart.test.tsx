@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react'
+import { cloneElement, isValidElement } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import type { ChartConfig } from '~/components/ui/chart'
 import { BarChart } from './bar-chart'
@@ -9,7 +10,9 @@ vi.mock('recharts', async () => {
     ...actual,
     ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
       <div className="recharts-responsive-container" style={{ width: 500, height: 300 }}>
-        {children}
+        {isValidElement<{ width?: number; height?: number }>(children)
+          ? cloneElement(children, { width: 500, height: 300 })
+          : children}
       </div>
     ),
   }
@@ -82,5 +85,85 @@ describe('BarChart', () => {
       />
     )
     expect(container.querySelector('[data-chart]')).toBeInTheDocument()
+  })
+})
+
+describe('BarChart drawing', () => {
+  const revenue = [{ dataKey: 'revenue' }]
+  const bars = (container: HTMLElement) =>
+    container.querySelectorAll('.recharts-bar-rectangle path')
+
+  it('grows the bars in on first render by default', () => {
+    const { container } = render(
+      <BarChart data={mockData} config={mockConfig} series={revenue} xAxisKey="event" />
+    )
+    expect(bars(container)).toHaveLength(0)
+  })
+
+  it('draws every bar at once when animation is off', () => {
+    const { container } = render(
+      <BarChart
+        data={mockData}
+        config={mockConfig}
+        series={revenue}
+        xAxisKey="event"
+        animated={false}
+      />
+    )
+    expect(bars(container)).toHaveLength(3)
+  })
+
+  it('writes the value axis with the value formatter', () => {
+    const { getByText } = render(
+      <BarChart
+        data={mockData}
+        config={mockConfig}
+        series={revenue}
+        xAxisKey="event"
+        animated={false}
+        valueFormatter={(value) => `R$ ${value}`}
+      />
+    )
+    expect(getByText('R$ 8000')).toBeInTheDocument()
+  })
+
+  it('writes the value axis of a horizontal chart with the value formatter', () => {
+    const { getByText } = render(
+      <BarChart
+        data={mockData}
+        config={mockConfig}
+        series={revenue}
+        xAxisKey="event"
+        horizontal
+        animated={false}
+        valueFormatter={(value) => `R$ ${value}`}
+      />
+    )
+    expect(getByText('R$ 8000')).toBeInTheDocument()
+  })
+
+  it('colours a single bar from the series cell colours', () => {
+    const { container } = render(
+      <BarChart
+        data={mockData}
+        config={mockConfig}
+        series={[
+          {
+            dataKey: 'revenue',
+            cellColors: [undefined, 'var(--chart-highlight)', undefined],
+          },
+        ]}
+        xAxisKey="event"
+        animated={false}
+      />
+    )
+    const fills = Array.from(bars(container)).map((bar) =>
+      bar.getAttribute('fill')
+    )
+    expect(fills).toEqual([
+      'var(--color-revenue)',
+      'var(--chart-highlight)',
+      'var(--color-revenue)',
+    ])
   })
 })
