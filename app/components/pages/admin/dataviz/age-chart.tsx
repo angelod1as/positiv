@@ -46,7 +46,7 @@ export function AgeChart({
             color: `var(--chart-${index + 1})`,
           },
         }),
-        {} as ChartConfig,
+        { count: { color: 'var(--chart-1)' } } as ChartConfig,
       ),
     [sortedData],
   )
@@ -74,6 +74,7 @@ export function AgeChart({
           series={[{ dataKey: 'count' }]}
           xAxisKey="ageRange"
           horizontal={true}
+          showLegend={false}
           ariaLabel={ageCopy.ariaLabel}
           showValues
           className="h-[400px]"
