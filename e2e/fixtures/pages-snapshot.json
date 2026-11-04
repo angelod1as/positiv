@@ -394,6 +394,56 @@
           },
           "hotspot": null
         }
+      },
+      {
+        "_key": "stats",
+        "_type": "statsSection",
+        "cards": [
+          {
+            "_key": "parties",
+            "_type": "statNumber",
+            "caption": "festas",
+            "unit": "none",
+            "value": 14
+          },
+          {
+            "_key": "surubagres",
+            "_type": "statNumber",
+            "caption": "surubagres morreram",
+            "unit": "none",
+            "value": 0
+          },
+          {
+            "_key": "age",
+            "_type": "statRange",
+            "average": 31.4,
+            "caption": "anos de idade",
+            "max": 64,
+            "min": 19,
+            "unit": "none"
+          },
+          {
+            "_key": "newcomers",
+            "_type": "statComparison",
+            "after": 31,
+            "afterLabel": "2026",
+            "before": 22,
+            "beforeLabel": "2025",
+            "caption": "de novates em cada festa",
+            "unit": "percent"
+          },
+          {
+            "_key": "infrastructure",
+            "_type": "statComparison",
+            "after": 12400,
+            "afterLabel": "2026",
+            "before": 8000,
+            "beforeLabel": "2025",
+            "caption": "investidos em infraestrutura",
+            "unit": "brl"
+          }
+        ],
+        "title": "Números de exemplo"
       }
     ],
     "seo": {
@@ -1308,6 +1358,56 @@
           },
           "hotspot": null
         }
+      },
+      {
+        "_key": "stats",
+        "_type": "statsSection",
+        "cards": [
+          {
+            "_key": "parties",
+            "_type": "statNumber",
+            "caption": "festas",
+            "unit": "none",
+            "value": 14
+          },
+          {
+            "_key": "surubagres",
+            "_type": "statNumber",
+            "caption": "surubagres morreram",
+            "unit": "none",
+            "value": 0
+          },
+          {
+            "_key": "age",
+            "_type": "statRange",
+            "average": 31.4,
+            "caption": "anos de idade",
+            "max": 64,
+            "min": 19,
+            "unit": "none"
+          },
+          {
+            "_key": "newcomers",
+            "_type": "statComparison",
+            "after": 31,
+            "afterLabel": "2026",
+            "before": 22,
+            "beforeLabel": "2025",
+            "caption": "de novates em cada festa",
+            "unit": "percent"
+          },
+          {
+            "_key": "infrastructure",
+            "_type": "statComparison",
+            "after": 12400,
+            "afterLabel": "2026",
+            "before": 8000,
+            "beforeLabel": "2025",
+            "caption": "investidos em infraestrutura",
+            "unit": "brl"
+          }
+        ],
+        "title": "Números de exemplo"
       }
     ],
     "seo": {

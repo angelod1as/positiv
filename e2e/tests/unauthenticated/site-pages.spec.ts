@@ -13,8 +13,11 @@ const {
   richTextHeading: RICH_TEXT_HEADING,
   founderName: FOUNDER_NAME,
   imageAlt: IMAGE_SECTION_ALT,
+  statsTitle: STATS_SECTION_TITLE,
   seoDescription: SEO_DESCRIPTION,
 } = testPageContent
+// Computed by the app from the seeded comparison, 22% in 2025 to 31% in 2026.
+const STATS_SECTION_CHANGE = '+9 p.p.'
 const CANONICAL = `https://www.positivparty.com${TEST_PAGE_ADDRESS}`
 
 test.describe('Pages from Sanity', () => {
@@ -32,6 +35,8 @@ test.describe('Pages from Sanity', () => {
     await expect(sitePage.sectionTitle(RICH_TEXT_HEADING)).toBeVisible()
     await expect(sitePage.personName(FOUNDER_NAME)).toBeVisible()
     await expect(page.getByRole('img', { name: IMAGE_SECTION_ALT })).toBeVisible()
+    await expect(sitePage.sectionTitle(STATS_SECTION_TITLE)).toBeVisible()
+    await expect(page.getByText(STATS_SECTION_CHANGE)).toBeVisible()
   })
 
   test('the Next Events Section renders the events it loads from the backend', async ({

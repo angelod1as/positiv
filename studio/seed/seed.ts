@@ -154,6 +154,57 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
     ctaLabel: "Deixar feedback",
   }
 
+  const statsSection = {
+    _type: "statsSection",
+    _key: "stats",
+    title: "Números de exemplo",
+    cards: [
+      {
+        _type: "statNumber",
+        _key: "parties",
+        unit: "none",
+        value: 14,
+        caption: "festas",
+      },
+      {
+        _type: "statNumber",
+        _key: "surubagres",
+        unit: "none",
+        value: 0,
+        caption: "surubagres morreram",
+      },
+      {
+        _type: "statRange",
+        _key: "age",
+        unit: "none",
+        min: 19,
+        average: 31.4,
+        max: 64,
+        caption: "anos de idade",
+      },
+      {
+        _type: "statComparison",
+        _key: "newcomers",
+        unit: "percent",
+        before: 22,
+        beforeLabel: "2025",
+        after: 31,
+        afterLabel: "2026",
+        caption: "de novates em cada festa",
+      },
+      {
+        _type: "statComparison",
+        _key: "infrastructure",
+        unit: "brl",
+        before: 8000,
+        beforeLabel: "2025",
+        after: 12400,
+        afterLabel: "2026",
+        caption: "investidos em infraestrutura",
+      },
+    ],
+  }
+
   return [
     ...people,
     {
@@ -270,6 +321,7 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
           },
           caption: "Uma legenda de exemplo",
         },
+        statsSection,
       ],
       seo: seo(
         "Eventos naturistas para pessoas queer: conteúdo de exemplo do ambiente de desenvolvimento.",
@@ -389,6 +441,7 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
           },
           caption: "Uma legenda de exemplo",
         },
+        statsSection,
       ],
       seo: {
         _type: "seo",

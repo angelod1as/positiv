@@ -9,6 +9,7 @@ export const testPageContent = {
   richTextHeading: 'Seção de teste',
   founderName: 'Ana Exemplo',
   imageAlt: 'Imagem de exemplo dos testes end-to-end',
+  statsTitle: 'Números de exemplo',
   seoDescription: 'Página exclusiva dos testes end-to-end.',
 } as const
 

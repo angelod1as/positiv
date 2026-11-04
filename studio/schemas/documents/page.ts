@@ -135,6 +135,7 @@ export const page = defineType({
         defineArrayMember({ type: "feedback" }),
         defineArrayMember({ type: "richTextSection" }),
         defineArrayMember({ type: "imageSection" }),
+        defineArrayMember({ type: "statsSection" }),
       ],
       validation: (rule) =>
         rule

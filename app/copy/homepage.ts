@@ -17,4 +17,10 @@ export const homepageCopy = {
     pronounsLabel: (pronouns: string) => `(${pronouns})`,
     instagramIconAlt: "Instagram icon",
   },
+  stats: {
+    min: "mín.",
+    average: "média",
+    max: "máx.",
+    percentagePoints: (change: string) => `${change} p.p.`,
+  },
 } as const

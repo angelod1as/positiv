@@ -49,6 +49,36 @@ function section<Type extends string, Shape extends z.ZodRawShape>(
   return zod.object({ _type: zod.literal(type), _key: zod.string(), ...shape })
 }
 
+export const statUnitSchema = zod.enum(["none", "percent", "brl"])
+
+function statCard<Type extends string, Shape extends z.ZodRawShape>(
+  type: Type,
+  shape: Shape,
+) {
+  return zod.object({
+    _type: zod.literal(type),
+    _key: zod.string(),
+    unit: statUnitSchema,
+    caption: zod.string(),
+    ...shape,
+  })
+}
+
+export const statCardSchema = zod.discriminatedUnion("_type", [
+  statCard("statNumber", { value: zod.number() }),
+  statCard("statRange", {
+    min: zod.number(),
+    average: zod.number(),
+    max: zod.number(),
+  }),
+  statCard("statComparison", {
+    before: zod.number(),
+    beforeLabel: zod.string(),
+    after: zod.number(),
+    afterLabel: zod.string(),
+  }),
+])
+
 const sharedSections = [
   section("nextEvents", sectionsFields.nextEvents.shape),
   section("about", sectionsFields.about.shape),
@@ -58,6 +88,10 @@ const sharedSections = [
   section("richTextSection", {
     title: zod.string().nullish(),
     body: longPortableTextSchema,
+  }),
+  section("statsSection", {
+    title: zod.string().nullish(),
+    cards: zod.array(statCardSchema).min(1),
   }),
 ] as const
 

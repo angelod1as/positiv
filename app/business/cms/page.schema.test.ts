@@ -88,6 +88,29 @@ describe("pageDocumentSchema", () => {
       accepts(page({ sections: [{ ...sections.imageSection, caption: null }] }))
     })
 
+    it("accepts a Stats Section without a title", () => {
+      accepts(page({ sections: [{ ...sections.statsSection, title: null }] }))
+    })
+
+    it.each(["none", "percent", "brl"])(
+      "accepts a stat card in the %s unit",
+      (unit) => {
+        accepts(
+          page({
+            sections: [
+              {
+                ...sections.statsSection,
+                cards: sections.statsSection.cards.map((card) => ({
+                  ...card,
+                  unit,
+                })),
+              },
+            ],
+          }),
+        )
+      },
+    )
+
     it.each([
       ["no Sections", []],
       ["an unknown Section type", [{ ...sections.feedback, _type: "video" }]],
@@ -170,6 +193,55 @@ describe("pageDocumentSchema", () => {
       [
         "an Image Section without an image",
         [{ ...sections.imageSection, image: null }],
+      ],
+      [
+        "a Stats Section without cards",
+        [{ ...sections.statsSection, cards: [] }],
+      ],
+      [
+        "a stat card of an unknown type",
+        [
+          {
+            ...sections.statsSection,
+            cards: [{ ...sections.statsSection.cards[0], _type: "statPie" }],
+          },
+        ],
+      ],
+      [
+        "a stat card in an unknown unit",
+        [
+          {
+            ...sections.statsSection,
+            cards: [{ ...sections.statsSection.cards[0], unit: "usd" }],
+          },
+        ],
+      ],
+      [
+        "a big number without a value",
+        [
+          {
+            ...sections.statsSection,
+            cards: [{ ...sections.statsSection.cards[0], value: null }],
+          },
+        ],
+      ],
+      [
+        "a range without an average",
+        [
+          {
+            ...sections.statsSection,
+            cards: [{ ...sections.statsSection.cards[1], average: null }],
+          },
+        ],
+      ],
+      [
+        "a comparison without the label of its earlier period",
+        [
+          {
+            ...sections.statsSection,
+            cards: [{ ...sections.statsSection.cards[2], beforeLabel: null }],
+          },
+        ],
       ],
     ])("rejects %s", (_, pageSections) => {
       rejects(page({ sections: pageSections }))
