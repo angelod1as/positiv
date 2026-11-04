@@ -126,6 +126,20 @@ describe("Annual report SQL script", () => {
     expect(valueOf(rows, REPORT_YEAR, "parties")).toBe(2)
   })
 
+  it("reports the three years before the report year, and no earlier", async () => {
+    for (let year = REPORT_YEAR - 4; year <= REPORT_YEAR; year++) {
+      await partyIn(tracker, kysely, year)
+    }
+
+    const rows = await runReport(kysely, REPORT_YEAR)
+
+    expect(valueOf(rows, REPORT_YEAR, "parties")).toBe(1)
+    expect(valueOf(rows, REPORT_YEAR - 1, "parties")).toBe(1)
+    expect(valueOf(rows, REPORT_YEAR - 2, "parties")).toBe(1)
+    expect(valueOf(rows, REPORT_YEAR - 3, "parties")).toBe(1)
+    expect(rows.filter((r) => r.year === REPORT_YEAR - 4)).toEqual([])
+  })
+
   it("counts each person who attended once, whatever their spot", async () => {
     const first = await partyIn(tracker, kysely, REPORT_YEAR)
     const second = await partyIn(tracker, kysely, REPORT_YEAR)
