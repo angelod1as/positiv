@@ -1,0 +1,128 @@
+import { readFileSync } from "node:fs"
+import { resolve } from "node:path"
+import { describe, expect, it, beforeEach, afterEach } from "vitest"
+import { sql, type Kysely } from "kysely"
+import type { Database } from "~/types/database/kysely.types"
+import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
+import {
+  createTestEvent,
+  createTestEventParticipant,
+  createTestProfile,
+  type TestDataTracker,
+} from "~/test/db-test-utils"
+
+const SCRIPT_PATH = resolve(
+  __dirname,
+  "../../scripts/annual-report/annual-report.sql",
+)
+const YEAR_DECLARATION = /\b2026 AS report_year\b/g
+const REPORT_YEAR = 2101
+
+type ReportRow = {
+  year: number
+  metric: string
+  category: string | null
+  value: string
+}
+
+function scriptForYear(year: number): string {
+  const script = readFileSync(SCRIPT_PATH, "utf8")
+  const declarations = script.match(YEAR_DECLARATION) ?? []
+  expect(declarations).toHaveLength(1)
+  return script.replace(YEAR_DECLARATION, `${year} AS report_year`)
+}
+
+async function runReport(
+  kysely: Kysely<Database>,
+  year: number,
+): Promise<ReportRow[]> {
+  const script = scriptForYear(year)
+  return kysely
+    .transaction()
+    .setAccessMode("read only")
+    .execute(async (trx) => {
+      const result = await sql.raw<ReportRow>(script).execute(trx)
+      return result.rows
+    })
+}
+
+function valueOf(
+  rows: ReportRow[],
+  year: number,
+  metric: string,
+  category: string | null = null,
+): number | undefined {
+  const row = rows.find(
+    (r) => r.year === year && r.metric === metric && r.category === category,
+  )
+  return row === undefined ? undefined : Number(row.value)
+}
+
+function partyIn(
+  tracker: TestDataTracker,
+  kysely: Kysely<Database>,
+  year: number,
+  overrides: Record<string, unknown> = {},
+) {
+  return createTestEvent(tracker, kysely, {
+    title: `Annual report party ${year}`,
+    event_status: "Completed",
+    time_event_start: `${year}-06-15T22:00:00-03:00`,
+    ...overrides,
+  })
+}
+
+let profileCounter = 0
+
+function person(
+  tracker: TestDataTracker,
+  kysely: Kysely<Database>,
+  data: Record<string, unknown> = {},
+) {
+  profileCounter++
+  return createTestProfile(tracker, kysely, {
+    user_id: null,
+    email: `annual-report-${Date.now()}-${profileCounter}@example.com`,
+    ...data,
+  })
+}
+
+function attend(
+  tracker: TestDataTracker,
+  kysely: Kysely<Database>,
+  profileId: string,
+  eventId: string,
+  data: Record<string, unknown> = {},
+) {
+  return createTestEventParticipant(tracker, kysely, {
+    profile_id: profileId,
+    event_id: eventId,
+    application_status: "finalised",
+    attendance_status: "attended",
+    ...data,
+  })
+}
+
+describe("Annual report SQL script", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+
+  beforeEach(() => {
+    tracker.clear()
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  it("counts the year's parties, leaving drafts and cancelled ones out", async () => {
+    await partyIn(tracker, kysely, REPORT_YEAR)
+    await partyIn(tracker, kysely, REPORT_YEAR, { event_status: "Scheduled" })
+    await partyIn(tracker, kysely, REPORT_YEAR, { event_status: "Draft" })
+    await partyIn(tracker, kysely, REPORT_YEAR, { event_status: "Cancelled" })
+    await partyIn(tracker, kysely, REPORT_YEAR + 1)
+
+    const rows = await runReport(kysely, REPORT_YEAR)
+
+    expect(valueOf(rows, REPORT_YEAR, "parties")).toBe(2)
+  })
+})
