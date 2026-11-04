@@ -164,4 +164,51 @@ describe("StatsSection", () => {
     expect(card.getAllByText("40")).not.toHaveLength(0)
     expect(card.queryByText(/%$/)).toBeNull()
   })
+
+  const markerOf = (caption: string) =>
+    screen
+      .getByText(caption)
+      .closest("li")
+      ?.querySelector<HTMLElement>("[style*='left']")
+
+  it.each([
+    ["above its maximum", { min: 10, average: 80, max: 40 }, "100%"],
+    ["below its minimum", { min: 10, average: 2, max: 40 }, "0%"],
+    ["with no span", { min: 30, average: 30, max: 30 }, "50%"],
+  ])(
+    "keeps the marker of a range %s on the track",
+    (_, values, left) => {
+      render(
+        <StatsSection
+          content={{ ...content, cards: [{ ...range, ...values }] }}
+        />,
+      )
+
+      expect(markerOf("anos de idade")?.style.left).toBe(left)
+    },
+  )
+
+  it("draws no bars for a comparison with a negative value", () => {
+    render(
+      <StatsSection
+        content={{
+          ...content,
+          cards: [
+            {
+              ...comparison,
+              unit: "brl",
+              before: -2000,
+              after: 3000,
+              caption: "de resultado",
+            },
+          ],
+        }}
+      />,
+    )
+
+    const card = screen.getByText("de resultado").closest("li")
+    expect(card?.querySelector("[style*='width']")).toBeNull()
+    expect(within(card as HTMLElement).getByText("-R$ 2.000")).toBeInTheDocument()
+    expect(within(card as HTMLElement).getByText("R$ 3.000")).toBeInTheDocument()
+  })
 })

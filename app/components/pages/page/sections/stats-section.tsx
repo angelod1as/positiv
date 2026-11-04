@@ -75,7 +75,12 @@ const Headline = ({
 
 const Range = ({ card }: { card: CardOf<"statRange"> }) => {
   const span = card.max - card.min
-  const position = span > 0 ? ((card.average - card.min) / span) * 100 : 50
+  // Studio keeps the average between the two, but the contract does not, so
+  // content that slips through still keeps the marker on the track.
+  const position =
+    span > 0
+      ? Math.min(100, Math.max(0, ((card.average - card.min) / span) * 100))
+      : 50
 
   return (
     <>
@@ -121,10 +126,12 @@ const RangeEnd = ({
 )
 
 // The change leads, and two bars show both periods to scale, the earlier one
-// in grey. With no change to measure (from zero) the current value leads.
+// in grey. With no change to measure (from zero) the current value leads. A
+// bar cannot show a negative value honestly, so then only the numbers remain.
 const Comparison = ({ card }: { card: CardOf<"statComparison"> }) => {
   const change = formatStatChange(card.before, card.after, card.unit)
-  const largest = Math.max(Math.abs(card.before), Math.abs(card.after)) || 1
+  const largest = Math.max(card.before, card.after) || 1
+  const showBars = card.before >= 0 && card.after >= 0
 
   return (
     <>
@@ -135,12 +142,12 @@ const Comparison = ({ card }: { card: CardOf<"statComparison"> }) => {
         <PeriodBar
           label={card.beforeLabel}
           value={formatStatValue(card.before, card.unit)}
-          share={Math.abs(card.before) / largest}
+          share={showBars ? card.before / largest : null}
         />
         <PeriodBar
           label={card.afterLabel}
           value={formatStatValue(card.after, card.unit)}
-          share={Math.abs(card.after) / largest}
+          share={showBars ? card.after / largest : null}
           current
         />
       </div>
@@ -156,19 +163,21 @@ const PeriodBar = ({
 }: {
   label: string
   value: string
-  share: number
+  share: number | null
   current?: boolean
 }) => (
   <>
     <span className="text-muted-foreground">{label}</span>
     <div aria-hidden className="h-6">
-      <div
-        className={cn(
-          "h-full rounded-md",
-          current ? "bg-purple" : "bg-muted-foreground/30",
-        )}
-        style={{ width: `${Math.max(share * 100, 2)}%` }}
-      />
+      {share !== null && (
+        <div
+          className={cn(
+            "h-full rounded-md",
+            current ? "bg-purple" : "bg-muted-foreground/30",
+          )}
+          style={{ width: `${Math.max(share * 100, 2)}%` }}
+        />
+      )}
     </div>
     <span
       className={cn(
