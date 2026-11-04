@@ -439,4 +439,38 @@ describe("Annual report SQL script", () => {
     expect(valueOf(rows, REPORT_YEAR, "applications")).toBe(4)
     expect(valueOf(rows, REPORT_YEAR, "applicants")).toBe(3)
   })
+
+  it("splits the parties by type", async () => {
+    await partyIn(tracker, kysely, REPORT_YEAR, { event_type: "regular" })
+    await partyIn(tracker, kysely, REPORT_YEAR, { event_type: "regular" })
+    await partyIn(tracker, kysely, REPORT_YEAR, { event_type: "bdsm" })
+    await partyIn(tracker, kysely, REPORT_YEAR - 1, { event_type: "regular" })
+
+    const rows = await runReport(kysely, REPORT_YEAR)
+
+    expect(valueOf(rows, REPORT_YEAR, "parties_by_type", "regular")).toBe(2)
+    expect(valueOf(rows, REPORT_YEAR, "parties_by_type", "bdsm")).toBe(1)
+    expect(valueOf(rows, REPORT_YEAR - 1, "parties_by_type", "bdsm")).toBe(0)
+  })
+
+  it("counts where people live once per person, as they wrote it", async () => {
+    const first = await partyIn(tracker, kysely, REPORT_YEAR)
+    const second = await partyIn(tracker, kysely, REPORT_YEAR)
+    const twice = await person(tracker, kysely, { where_lives: "São Paulo" })
+    const spaced = await person(tracker, kysely, { where_lives: " São Paulo " })
+    const elsewhere = await person(tracker, kysely, { where_lives: "Santos" })
+    const blank = await person(tracker, kysely, { where_lives: "  " })
+
+    await attend(tracker, kysely, twice.id, first.id)
+    await attend(tracker, kysely, twice.id, second.id)
+    await attend(tracker, kysely, spaced.id, first.id)
+    await attend(tracker, kysely, elsewhere.id, first.id)
+    await attend(tracker, kysely, blank.id, first.id)
+
+    const rows = await runReport(kysely, REPORT_YEAR)
+
+    expect(valueOf(rows, REPORT_YEAR, "where_lives", "São Paulo")).toBe(2)
+    expect(valueOf(rows, REPORT_YEAR, "where_lives", "Santos")).toBe(1)
+    expect(valueOf(rows, REPORT_YEAR, "where_lives", "Não informado")).toBe(1)
+  })
 })

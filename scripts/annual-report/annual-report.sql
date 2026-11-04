@@ -13,6 +13,7 @@ years AS (
 parties AS (
   SELECT
     e.id,
+    e.event_type,
     e.time_event_start,
     extract(year FROM e.time_event_start AT TIME ZONE 'America/Sao_Paulo')::int AS year
   FROM public.events e
@@ -110,6 +111,7 @@ age_ranges (category, low, high) AS (
 
 -- Gender, orientation and race/colour are multi-select: each value counts
 -- once per person, so a year's values add up to more than its people.
+-- where_lives is a single free-text answer, counted the same way.
 answers AS (
   SELECT DISTINCT a.year, a.profile_id, f.metric, coalesce(v.value, 'Não informado') AS category
   FROM attendances a
@@ -118,7 +120,8 @@ answers AS (
     VALUES
       ('gender', pr.gender),
       ('orientation', pr.orientation),
-      ('race_color', pr.race_color)
+      ('race_color', pr.race_color),
+      ('where_lives', ARRAY[pr.where_lives])
   ) AS f (metric, answer)
   LEFT JOIN LATERAL (
     SELECT trim(x) AS value
@@ -215,6 +218,13 @@ metrics AS (
       ('applications', application.applications),
       ('applicants', application.applicants)
   ) AS a (metric, value)
+
+  UNION ALL
+  SELECT y.year, 'parties_by_type', t.event_type::text, count(rp.id)
+  FROM years y
+  CROSS JOIN unnest(enum_range(NULL::public.event_type_enum)) AS t (event_type)
+  LEFT JOIN report_parties rp ON rp.year = y.year AND rp.event_type = t.event_type
+  GROUP BY y.year, t.event_type
 
   UNION ALL
   SELECT year, 'returning_people', NULL, came_back
