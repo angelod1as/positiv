@@ -1,15 +1,16 @@
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { readFileSync } from "node:fs"
+import { join } from "node:path"
+import { describe, expect, it } from "vitest"
 
 type Rgb = [number, number, number]
 
-const css = readFileSync(join(__dirname, 'app.css'), 'utf8')
+const css = readFileSync(join(__dirname, "app.css"), "utf8")
 
 const themeBlock = (selector: string): string => {
   const blocks = [...css.matchAll(/(^|\n)([^\n{]+)\{([^}]*)\}/g)]
   const block = blocks.find(
-    ([, , head, body]) => head.trim() === selector && body.includes('--background:'),
+    ([, , head, body]) =>
+      head.trim() === selector && body.includes("--background:"),
   )
   if (!block) throw new Error(`No theme block for ${selector}`)
   return block[3]
@@ -31,13 +32,24 @@ const oklchToLinearRgb = (l: number, c: number, h: number): Rgb => {
     4.0767416621 * lp - 3.3077115913 * mp + 0.2309699292 * sp,
     -1.2684380046 * lp + 2.6097574011 * mp - 0.3413193965 * sp,
     -0.0041960863 * lp - 0.7034186147 * mp + 1.707614701 * sp,
-  ].map((v) => Math.min(1, Math.max(0, v))) as Rgb
+  ]
 }
 
-const parseColor = (value: string): Rgb => {
+const inGamut = (rgb: Rgb) => rgb.every((v) => v >= -1e-4 && v <= 1 + 1e-4)
+
+const toDisplayedRgb = (l: number, c: number, h: number): Rgb => {
+  let chroma = c
+  while (chroma > 0 && !inGamut(oklchToLinearRgb(l, chroma, h))) chroma -= 0.001
+  return oklchToLinearRgb(l, Math.max(0, chroma), h).map((v) =>
+    Math.min(1, Math.max(0, v)),
+  ) as Rgb
+}
+
+const tokenColor = (block: string, name: string): Rgb => {
+  const value = token(block, name)
   const match = value.match(/^oklch\(([\d.]+)\s+([\d.]+)\s+([\d.]+)\)$/)
-  if (!match) throw new Error(`Unsupported color ${value}`)
-  return oklchToLinearRgb(Number(match[1]), Number(match[2]), Number(match[3]))
+  if (!match) throw new Error(`Unsupported color for --${name}: ${value}`)
+  return toDisplayedRgb(Number(match[1]), Number(match[2]), Number(match[3]))
 }
 
 const luminance = ([r, g, b]: Rgb) => 0.2126 * r + 0.7152 * g + 0.0722 * b
@@ -62,7 +74,10 @@ const MACHADO = {
 
 const simulate = (rgb: Rgb, kind: keyof typeof MACHADO): Rgb =>
   MACHADO[kind].map((row) =>
-    Math.min(1, Math.max(0, row[0] * rgb[0] + row[1] * rgb[1] + row[2] * rgb[2])),
+    Math.min(
+      1,
+      Math.max(0, row[0] * rgb[0] + row[1] * rgb[1] + row[2] * rgb[2]),
+    ),
   ) as Rgb
 
 const toOklab = ([r, g, b]: Rgb): Rgb => {
@@ -84,32 +99,61 @@ const deltaE = (x: Rgb, y: Rgb) => {
 const SLOTS = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => `chart-${n}`)
 
 describe.each([
-  { theme: 'light', selector: ':root' },
-  { theme: 'dark', selector: '.dark' },
-])('chart palette, $theme theme', ({ selector }) => {
+  { theme: "light", selector: ":root" },
+  { theme: "dark", selector: ".dark" },
+])("chart palette, $theme theme", ({ selector }) => {
   const block = themeBlock(selector)
-  const surface = parseColor(token(block, 'background'))
-  const card = parseColor(token(block, 'card'))
-  const slots = SLOTS.map((name) => ({ name, color: parseColor(token(block, name)) }))
-  const neighbours = slots.slice(1).map((next, i) => ({ name: slots[i].name, a: slots[i].color, b: next.color }))
+  const surface = tokenColor(block, "background")
+  const card = tokenColor(block, "card")
+  const slots = SLOTS.map((name) => ({ name, color: tokenColor(block, name) }))
+  const neighbours = slots
+    .slice(1)
+    .map((next, i) => ({
+      name: slots[i].name,
+      a: slots[i].color,
+      b: next.color,
+    }))
 
-  it.each([...SLOTS, 'chart-highlight'])('keeps --%s at 3:1 against background and card', (name) => {
-    const color = parseColor(token(block, name))
-    expect(contrast(color, surface)).toBeGreaterThanOrEqual(3)
-    expect(contrast(color, card)).toBeGreaterThanOrEqual(3)
+  it.each([...SLOTS, "chart-highlight"])(
+    "keeps --%s at 3:1 against background and card",
+    (name) => {
+      const color = tokenColor(block, name)
+      expect(contrast(color, surface)).toBeGreaterThanOrEqual(3)
+      expect(contrast(color, card)).toBeGreaterThanOrEqual(3)
+    },
+  )
+
+  it.each(neighbours)(
+    "tells --$name from its next slot with full color vision",
+    ({ a, b }) => {
+      expect(deltaE(a, b)).toBeGreaterThanOrEqual(15)
+    },
+  )
+
+  it.each(neighbours)(
+    "tells --$name from its next slot under protanopia and deuteranopia",
+    ({ a, b }) => {
+      expect(
+        deltaE(simulate(a, "protan"), simulate(b, "protan")),
+      ).toBeGreaterThanOrEqual(8)
+      expect(
+        deltaE(simulate(a, "deutan"), simulate(b, "deutan")),
+      ).toBeGreaterThanOrEqual(8)
+    },
+  )
+
+  it.each(
+    slots.flatMap((a, i) =>
+      slots
+        .slice(i + 1)
+        .map((b) => ({ pair: `${a.name}/${b.name}`, a: a.color, b: b.color })),
+    ),
+  )("tells any two slots apart with full color vision: $pair", ({ a, b }) => {
+    expect(deltaE(a, b)).toBeGreaterThanOrEqual(8)
   })
 
-  it.each(neighbours)('tells --$name from its next slot with full color vision', ({ a, b }) => {
-    expect(deltaE(a, b)).toBeGreaterThanOrEqual(15)
-  })
-
-  it.each(neighbours)('tells --$name from its next slot under protanopia and deuteranopia', ({ a, b }) => {
-    expect(deltaE(simulate(a, 'protan'), simulate(b, 'protan'))).toBeGreaterThanOrEqual(8)
-    expect(deltaE(simulate(a, 'deutan'), simulate(b, 'deutan'))).toBeGreaterThanOrEqual(8)
-  })
-
-  it('keeps the highlight apart from every slot', () => {
-    const highlight = parseColor(token(block, 'chart-highlight'))
+  it("keeps the highlight apart from every slot", () => {
+    const highlight = tokenColor(block, "chart-highlight")
     for (const slot of slots) {
       expect(deltaE(highlight, slot.color)).toBeGreaterThanOrEqual(15)
     }
