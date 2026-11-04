@@ -34,6 +34,15 @@ attendances AS (
     AND ep.profile_id IS NOT NULL
 ),
 
+first_parties AS (
+  SELECT ep.profile_id, min(p.year) AS year
+  FROM public.event_participants ep
+  JOIN parties p ON p.id = ep.event_id
+  WHERE ep.attendance_status = 'attended'
+    AND ep.profile_id IS NOT NULL
+  GROUP BY ep.profile_id
+),
+
 metrics AS (
   SELECT year, 'parties' AS metric, NULL::text AS category, count(*)::numeric AS value
   FROM report_parties
@@ -49,6 +58,12 @@ metrics AS (
   FROM attendances
   WHERE spot_type = 'social'
   GROUP BY year
+
+  UNION ALL
+  SELECT fp.year, 'novates', NULL, count(*)
+  FROM first_parties fp
+  JOIN years y ON y.year = fp.year
+  GROUP BY fp.year
 )
 
 SELECT year, metric, category, value

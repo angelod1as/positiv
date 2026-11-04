@@ -164,4 +164,26 @@ describe("Annual report SQL script", () => {
 
     expect(valueOf(rows, REPORT_YEAR, "social_spots")).toBe(2)
   })
+
+  it("counts as novates only the people whose first party was that year", async () => {
+    const lastYear = await partyIn(tracker, kysely, REPORT_YEAR - 1)
+    const lastYearNoShow = await partyIn(tracker, kysely, REPORT_YEAR - 1)
+    const thisYear = await partyIn(tracker, kysely, REPORT_YEAR)
+    const returning = await person(tracker, kysely)
+    const novate = await person(tracker, kysely)
+    const novateWhoSkippedBefore = await person(tracker, kysely)
+
+    await attend(tracker, kysely, returning.id, lastYear.id)
+    await attend(tracker, kysely, returning.id, thisYear.id)
+    await attend(tracker, kysely, novate.id, thisYear.id)
+    await attend(tracker, kysely, novateWhoSkippedBefore.id, lastYearNoShow.id, {
+      attendance_status: "not-attended",
+    })
+    await attend(tracker, kysely, novateWhoSkippedBefore.id, thisYear.id)
+
+    const rows = await runReport(kysely, REPORT_YEAR)
+
+    expect(valueOf(rows, REPORT_YEAR, "novates")).toBe(2)
+    expect(valueOf(rows, REPORT_YEAR - 1, "novates")).toBe(1)
+  })
 })
