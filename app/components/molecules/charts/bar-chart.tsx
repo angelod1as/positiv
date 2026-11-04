@@ -26,6 +26,7 @@ export function BarChart({
   xAxisTickComponent,
   xAxisHeight,
   horizontal = false,
+  categoryAxisWidth,
   stacked = false,
   className,
   ariaLabel,
@@ -54,6 +55,7 @@ export function BarChart({
               axisLine={false}
               tickMargin={8}
               tickFormatter={xAxisFormatter}
+              width={categoryAxisWidth}
             />
             <XAxis
               type="number"

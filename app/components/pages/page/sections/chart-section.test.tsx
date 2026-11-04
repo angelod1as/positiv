@@ -208,10 +208,37 @@ describe("ChartSection", () => {
         "2023",
       )
     })
+
+    it("widens the label column for a long label", async () => {
+      const tickX = async (label: string) => {
+        const { container, unmount } = render(
+          <ChartSection
+            content={chart({
+              chartType: "horizontalBar",
+              rows: [{ _key: "a", label, values: [3] }],
+            })}
+          />,
+        )
+        await waitFor(() =>
+          expect(
+            container.querySelector(".recharts-yAxis-tick-labels tspan"),
+          ).toBeInTheDocument(),
+        )
+        const x = Number(
+          container
+            .querySelector(".recharts-yAxis-tick-labels tspan")
+            ?.getAttribute("x"),
+        )
+        unmount()
+        return x
+      }
+
+      expect(await tickX("Heterossexual")).toBeGreaterThan(await tickX("Gay"))
+    })
   })
 
   describe("line", () => {
-    it("draws the whole line at once and marks the highlighted row", async () => {
+    it("draws the whole line at once and dots the highlighted row on each line", async () => {
       const { container } = render(
         <ChartSection content={chart({ chartType: "line" })} />,
       )
@@ -225,8 +252,11 @@ describe("ChartSection", () => {
         "stroke-dasharray",
       )
       expect(
-        container.querySelector(".recharts-reference-line line"),
-      ).toHaveAttribute("stroke", "var(--chart-highlight)")
+        Array.from(container.querySelectorAll(".recharts-reference-dot circle")),
+      ).toHaveLength(1)
+      expect(
+        container.querySelector(".recharts-reference-dot circle"),
+      ).toHaveAttribute("fill", "var(--chart-highlight)")
     })
   })
 })

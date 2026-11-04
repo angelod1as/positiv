@@ -51,6 +51,7 @@ export interface BarChartProps extends BaseChartProps, XAxisCustomProps {
   xAxisFormatter?: (value: string) => string
   horizontal?: boolean
   stacked?: boolean
+  categoryAxisWidth?: number
 }
 
 export interface DonutChartProps extends BaseChartProps {

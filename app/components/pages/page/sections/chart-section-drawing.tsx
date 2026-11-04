@@ -1,4 +1,4 @@
-import { ReferenceLine } from "recharts"
+import { ReferenceDot } from "recharts"
 import { BarChart } from "~/components/molecules/charts/bar-chart"
 import { LineChart } from "~/components/molecules/charts/line-chart"
 import type { ChartConfig, ChartDataPoint } from "~/types/chart.types"
@@ -12,6 +12,13 @@ type ChartSectionDrawingProps = {
 }
 
 const LABEL = "label"
+
+// Recharts gives the labels of a horizontal chart a fixed 60px and cuts the
+// rest, so the column grows with the longest label, up to a limit.
+const labelColumnWidth = (rows: ChartContent["rows"]) => {
+  const longest = Math.max(...rows.map((row) => row.label.length))
+  return Math.min(200, Math.max(60, longest * 7 + 16))
+}
 const seriesKey = (index: number) => `s${index}`
 
 // Loaded on demand by the Chart Section, so Recharts reaches the browser
@@ -54,14 +61,17 @@ export const ChartSectionDrawing = ({
         }))}
         curved={false}
       >
-        {highlighted && (
-          <ReferenceLine
+        {highlighted?.values.map((value, index) => (
+          <ReferenceDot
+            key={index}
             x={highlighted.label}
-            stroke={chartHighlight}
+            y={value}
+            r={6}
+            fill={chartHighlight}
+            stroke="white"
             strokeWidth={2}
-            strokeDasharray="4 4"
           />
-        )}
+        ))}
       </LineChart>
     )
   }
@@ -79,6 +89,7 @@ export const ChartSectionDrawing = ({
       }))}
       horizontal={chartType === "horizontalBar"}
       className={chartType === "horizontalBar" ? "h-full" : undefined}
+      categoryAxisWidth={labelColumnWidth(content.rows)}
     />
   )
 

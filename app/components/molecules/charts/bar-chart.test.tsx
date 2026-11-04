@@ -167,3 +167,38 @@ describe('BarChart drawing', () => {
     ])
   })
 })
+
+describe('BarChart category axis', () => {
+  const categoryTicks = (container: HTMLElement) =>
+    Array.from(
+      container.querySelectorAll('.recharts-yAxis-tick-labels tspan')
+    ).map((tick) => Number(tick.getAttribute('x')))
+
+  it('gives a horizontal chart’s labels the width it is asked for', () => {
+    const narrow = render(
+      <BarChart
+        data={mockData}
+        config={mockConfig}
+        series={[{ dataKey: 'revenue' }]}
+        xAxisKey="event"
+        horizontal
+        animated={false}
+      />
+    )
+    const wide = render(
+      <BarChart
+        data={mockData}
+        config={mockConfig}
+        series={[{ dataKey: 'revenue' }]}
+        xAxisKey="event"
+        horizontal
+        animated={false}
+        categoryAxisWidth={160}
+      />
+    )
+
+    expect(categoryTicks(wide.container)[0]).toBe(
+      categoryTicks(narrow.container)[0] + 100
+    )
+  })
+})
