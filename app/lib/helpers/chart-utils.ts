@@ -25,6 +25,7 @@ export function buildEventLabel({
 }
 
 const DEFAULT_SMALL_CATEGORY_THRESHOLD = 2
+const MAX_CATEGORIES = 8
 
 export function groupSmallCategories(
   data: DemographicDistribution[],
@@ -32,7 +33,7 @@ export function groupSmallCategories(
 ): DemographicDistribution[] {
   if (data.length === 0) return []
 
-  const mainCategories: DemographicDistribution[] = []
+  let mainCategories: DemographicDistribution[] = []
   const smallCategories: DemographicDistribution[] = []
 
   for (const item of data) {
@@ -41,6 +42,14 @@ export function groupSmallCategories(
     } else {
       mainCategories.push(item)
     }
+  }
+
+  if (mainCategories.length + (smallCategories.length > 0 ? 1 : 0) > MAX_CATEGORIES) {
+    const kept = new Set(
+      [...mainCategories].sort((a, b) => b.count - a.count).slice(0, MAX_CATEGORIES - 1),
+    )
+    smallCategories.push(...mainCategories.filter((item) => !kept.has(item)))
+    mainCategories = mainCategories.filter((item) => kept.has(item))
   }
 
   if (smallCategories.length > 0) {

@@ -39,7 +39,7 @@ interface CustomTooltipProps {
   label?: string
 }
 
-function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
+export function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length) return null
 
   const [firstLine, secondLine] = (label || '').split('\n')
@@ -55,14 +55,14 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
       </div>
       <div className="grid gap-1.5">
         <div className="chart-tooltip-row">
-          <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--chart-1)' }} />
+          <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--color-inscritos)' }} />
           <span className="chart-tooltip-label">
             {funnelCopy.applications}
           </span>
           <span className="chart-tooltip-value">{dataPoint.inscritos}</span>
         </div>
         <div className="chart-tooltip-row">
-          <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--chart-2)' }} />
+          <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--color-finalizados)' }} />
           <span className="chart-tooltip-label">{funnelCopy.finalised}</span>
           <span className="chart-tooltip-value">
             {funnelCopy.shareOfApplications(
@@ -72,7 +72,7 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
           </span>
         </div>
         <div className="chart-tooltip-row">
-          <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--chart-3)' }} />
+          <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--color-pagaram)' }} />
           <span className="chart-tooltip-label">{funnelCopy.paid}</span>
           <span className="chart-tooltip-value">
             {funnelCopy.shareOfApplications(
@@ -82,7 +82,7 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
           </span>
         </div>
         <div className="chart-tooltip-row">
-          <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--chart-4)' }} />
+          <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--color-compareceram)' }} />
           <span className="chart-tooltip-label">{funnelCopy.attended}</span>
           <span className="chart-tooltip-value">
             {funnelCopy.shareOfApplications(
@@ -101,19 +101,19 @@ const SERIES_CONFIG = [
     dataKey: 'compareceram',
     segmentKey: 'compareceram_segment',
     label: funnelCopy.attended,
-    color: 'var(--chart-4)',
+    color: 'color-mix(in oklab, var(--chart-1) 40%, var(--foreground))',
   },
   {
     dataKey: 'pagaram',
     segmentKey: 'pagaram_segment',
     label: funnelCopy.paid,
-    color: 'var(--chart-3)',
+    color: 'color-mix(in oklab, var(--chart-1) 60%, var(--foreground))',
   },
   {
     dataKey: 'finalizados',
     segmentKey: 'finalizados_segment',
     label: funnelCopy.finalised,
-    color: 'var(--chart-2)',
+    color: 'color-mix(in oklab, var(--chart-1) 80%, var(--foreground))',
   },
   {
     dataKey: 'inscritos',
@@ -124,12 +124,9 @@ const SERIES_CONFIG = [
 ] as const
 
 export function FunnelChart({ data, className }: FunnelChartProps) {
-  const chartConfig: ChartConfig = {
-    compareceram: { label: funnelCopy.attended, color: 'var(--chart-4)' },
-    pagaram: { label: funnelCopy.paid, color: 'var(--chart-3)' },
-    finalizados: { label: funnelCopy.finalised, color: 'var(--chart-2)' },
-    inscritos: { label: funnelCopy.applications, color: 'var(--chart-1)' },
-  }
+  const chartConfig: ChartConfig = Object.fromEntries(
+    SERIES_CONFIG.map(({ dataKey, label, color }) => [dataKey, { label, color }])
+  )
 
   const chartData = useMemo(
     () =>

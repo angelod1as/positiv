@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import { cloneElement, type ReactElement } from 'react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { DemographicDistribution } from '~/business/admin/dataviz/dataviz.types'
@@ -9,9 +10,9 @@ vi.mock('recharts', async () => {
   const actual = await vi.importActual<typeof import('recharts')>('recharts')
   return {
     ...actual,
-    ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
+    ResponsiveContainer: ({ children }: { children: ReactElement<{ width?: number; height?: number }> }) => (
       <div className="recharts-responsive-container" style={{ width: 500, height: 300 }}>
-        {children}
+        {cloneElement(children, { width: 500, height: 300 })}
       </div>
     ),
   }
@@ -193,5 +194,34 @@ describe('AgeChart', () => {
     expect(styleTag?.textContent).toContain('--color-18-24')
     expect(styleTag?.textContent).toContain('--color-30-34')
     expect(styleTag?.textContent).toContain('--color-50+')
+  })
+
+  it('colors the bars with the first chart token', () => {
+    const { container } = render(
+      <AgeChart
+        data={mockAgeData}
+        mode="all"
+        onModeChange={vi.fn()}
+        totalProfiles={945}
+        filledProfiles={405}
+      />
+    )
+
+    expect(container.querySelector('style')?.textContent).toContain('--color-count: var(--chart-1);')
+  })
+
+  it('shows no legend for its single series', () => {
+    const { container } = render(
+      <AgeChart
+        data={mockAgeData}
+        mode="all"
+        onModeChange={vi.fn()}
+        totalProfiles={945}
+        filledProfiles={405}
+      />
+    )
+
+    expect(container.querySelector('svg.recharts-surface')).toBeInTheDocument()
+    expect(container.querySelector('.recharts-legend-wrapper')).not.toBeInTheDocument()
   })
 })

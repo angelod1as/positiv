@@ -2,7 +2,7 @@ import { render } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { ConversionFunnelDataPoint } from '~/business/admin/dataviz/dataviz.types'
 import { adminDatavizCopy } from '~/copy/admin/dataviz'
-import { FunnelChart } from './funnel-chart'
+import { CustomTooltipContent, FunnelChart } from './funnel-chart'
 
 vi.mock('recharts', async () => {
   const actual = await vi.importActual<typeof import('recharts')>('recharts')
@@ -78,4 +78,29 @@ describe('FunnelChart', () => {
     expect(chart).toHaveAttribute('aria-label', adminDatavizCopy.funnelChart.ariaLabel)
   })
 
+  it('shades the stages of one hue, strongest for those who attended', () => {
+    const { container } = render(<FunnelChart data={mockData} />)
+    const style = container.querySelector('style')?.textContent
+
+    expect(style).toContain('--color-inscritos: var(--chart-1);')
+    expect(style).toContain('--color-finalizados: color-mix(in oklab, var(--chart-1) 80%, var(--foreground));')
+    expect(style).toContain('--color-pagaram: color-mix(in oklab, var(--chart-1) 60%, var(--foreground));')
+    expect(style).toContain('--color-compareceram: color-mix(in oklab, var(--chart-1) 40%, var(--foreground));')
+  })
+
+  it('matches the tooltip swatches to the bar colors', () => {
+    const { container } = render(
+      <CustomTooltipContent active payload={[{ payload: { ...mockData[0], label: 'Evento' } }]} />
+    )
+    const swatches = [...container.querySelectorAll('.chart-tooltip-swatch')].map((el) =>
+      (el as HTMLElement).style.backgroundColor
+    )
+
+    expect(swatches).toEqual([
+      'var(--color-inscritos)',
+      'var(--color-finalizados)',
+      'var(--color-pagaram)',
+      'var(--color-compareceram)',
+    ])
+  })
 })

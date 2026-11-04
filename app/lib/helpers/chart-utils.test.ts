@@ -92,6 +92,52 @@ describe('groupSmallCategories', () => {
   it('handles empty data', () => {
     expect(groupSmallCategories([])).toEqual([])
   })
+
+  it('keeps at most eight categories, one per chart color, folding the smallest into Outros', () => {
+    const data = [
+      { category: 'A', count: 20, percentage: 20 },
+      { category: 'B', count: 15, percentage: 15 },
+      { category: 'C', count: 12, percentage: 12 },
+      { category: 'D', count: 11, percentage: 11 },
+      { category: 'E', count: 10, percentage: 10 },
+      { category: 'F', count: 9, percentage: 9 },
+      { category: 'G', count: 8, percentage: 8 },
+      { category: 'H', count: 6, percentage: 6 },
+      { category: 'I', count: 5, percentage: 5 },
+      { category: 'J', count: 4, percentage: 4 },
+    ]
+
+    const result = groupSmallCategories(data)
+    expect(result.map((r) => r.category)).toEqual(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'Outros'])
+    expect(result.at(-1)).toEqual({ category: 'Outros', count: 15, percentage: 15 })
+  })
+
+  it('folds the overflow into the same Outros as the small categories', () => {
+    const data = [
+      { category: 'A', count: 30, percentage: 30 },
+      { category: 'B', count: 14, percentage: 14 },
+      { category: 'C', count: 12, percentage: 12 },
+      { category: 'D', count: 10, percentage: 10 },
+      { category: 'E', count: 9, percentage: 9 },
+      { category: 'F', count: 8, percentage: 8 },
+      { category: 'G', count: 7, percentage: 7 },
+      { category: 'H', count: 6, percentage: 6 },
+      { category: 'I', count: 3, percentage: 3 },
+      { category: 'J', count: 1, percentage: 1 },
+    ]
+
+    const result = groupSmallCategories(data)
+    expect(result).toHaveLength(8)
+    expect(result.filter((r) => r.category === 'Outros')).toEqual([
+      { category: 'Outros', count: 10, percentage: 10 },
+    ])
+  })
+
+  it('keeps eight categories without an Outros when nothing is small', () => {
+    const data = 'ABCDEFGH'.split('').map((category) => ({ category, count: 10, percentage: 12.5 }))
+
+    expect(groupSmallCategories(data).map((r) => r.category)).toEqual('ABCDEFGH'.split(''))
+  })
 })
 
 describe('sanitizeCssKey', () => {
