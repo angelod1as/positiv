@@ -124,6 +124,7 @@ interface ChartTooltipContentProps {
   hideLabel?: boolean
   hideIndicator?: boolean
   labelFormatter?: (label: unknown, payload: unknown[]) => React.ReactNode
+  valueFormatter?: (value: number) => string
   formatter?: (
     value: unknown,
     name: unknown,
@@ -148,6 +149,7 @@ function ChartTooltipContent({
   labelFormatter,
   labelClassName,
   formatter,
+  valueFormatter,
   color,
   nameKey,
   labelKey,
@@ -248,7 +250,7 @@ function ChartTooltipContent({
                   )}
                   <div
                     className={cn(
-                      "flex flex-1 justify-between leading-none",
+                      "flex flex-1 justify-between gap-4 leading-none",
                       nestLabel ? "items-end" : "items-center",
                     )}
                   >
@@ -261,7 +263,8 @@ function ChartTooltipContent({
                     {item.value !== undefined && (
                       <span className="font-mono font-medium tabular-nums text-foreground">
                         {typeof item.value === "number"
-                          ? item.value.toLocaleString()
+                          ? (valueFormatter?.(item.value) ??
+                            item.value.toLocaleString())
                           : item.value}
                       </span>
                     )}

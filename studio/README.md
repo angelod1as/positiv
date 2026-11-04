@@ -211,7 +211,10 @@ it. `scripts/production-workflow.test.ts` fails if either goes missing. Nobody
 needs to deploy by hand.
 
 The Studio and the app deploy separately, so the Studio's schema is live
-minutes before or after the app that reads it.
+minutes before or after the app that reads it. A new Section type can reach
+Editors before the app knows it, and the app's contract rejects a Page holding
+a Section it does not know: publish a Page using the new type only once the
+production deploy of the app is green.
 
 ## Change the schema
 

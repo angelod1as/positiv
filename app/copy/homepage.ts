@@ -23,4 +23,8 @@ export const homepageCopy = {
     max: "máx.",
     percentagePoints: (change: string) => `${change} p.p.`,
   },
+  chart: {
+    viewData: "Ver dados",
+    hideData: "Esconder dados",
+  },
 } as const

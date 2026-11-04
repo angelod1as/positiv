@@ -94,6 +94,10 @@ describe("seedDocuments", () => {
       "richTextSection",
       "imageSection",
       "statsSection",
+      "chartSection",
+      "chartSection",
+      "chartSection",
+      "chartSection",
     ])
   })
 
@@ -113,8 +117,22 @@ describe("seedDocuments", () => {
       "richTextSection",
       "imageSection",
       "statsSection",
+      "chartSection",
+      "chartSection",
+      "chartSection",
+      "chartSection",
     ])
     expect(JSON.stringify(testPage)).toContain(E2E_TEST_SENTINEL)
+  })
+
+  it("seeds one Chart Section of each chart type on the e2e test page", () => {
+    const testPage = pages.find((page) => page._id === E2E_TEST_PAGE_ID)
+
+    expect(
+      testPage?.sections
+        ?.filter((section) => section._type === "chartSection")
+        .map((section) => (section as { chartType?: string }).chartType),
+    ).toEqual(["bar", "horizontalBar", "line", "proportion"])
   })
 
   it("seeds a nested Page with a Hero and a Page with a Title", () => {

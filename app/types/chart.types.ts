@@ -9,6 +9,7 @@ export interface ChartSeries {
   dataKey: string
   color?: string
   stackId?: string
+  cellColors?: (string | undefined)[]
 }
 
 export interface BaseChartProps {
@@ -20,6 +21,9 @@ export interface BaseChartProps {
   showLegend?: boolean
   showValues?: boolean
   tooltipAnimated?: boolean
+  animated?: boolean
+  accessibilityLayer?: boolean
+  valueFormatter?: (value: number) => string
   tooltipContent?: ReactElement | ((props: Record<string, unknown>) => ReactNode)
   children?: ReactNode
 }
@@ -48,6 +52,7 @@ export interface BarChartProps extends BaseChartProps, XAxisCustomProps {
   xAxisFormatter?: (value: string) => string
   horizontal?: boolean
   stacked?: boolean
+  categoryAxisWidth?: number
 }
 
 export interface DonutChartProps extends BaseChartProps {

@@ -2,6 +2,7 @@ import {
   Bar,
   BarChart as RechartsBarChart,
   CartesianGrid,
+  Cell,
   LabelList,
   XAxis,
   YAxis,
@@ -25,6 +26,7 @@ export function BarChart({
   xAxisTickComponent,
   xAxisHeight,
   horizontal = false,
+  categoryAxisWidth,
   stacked = false,
   className,
   ariaLabel,
@@ -32,6 +34,9 @@ export function BarChart({
   showLegend = true,
   showValues = false,
   tooltipAnimated = false,
+  animated = true,
+  accessibilityLayer = true,
+  valueFormatter,
   tooltipContent,
   children,
 }: BarChartProps) {
@@ -39,6 +44,7 @@ export function BarChart({
     <ChartContainer config={config} className={className} role="img" aria-label={ariaLabel}>
       <RechartsBarChart
         data={data}
+        accessibilityLayer={accessibilityLayer}
         layout={horizontal ? 'vertical' : 'horizontal'}
       >
         <CartesianGrid vertical={false} />
@@ -51,8 +57,14 @@ export function BarChart({
               axisLine={false}
               tickMargin={8}
               tickFormatter={xAxisFormatter}
+              width={categoryAxisWidth}
             />
-            <XAxis type="number" tickLine={false} axisLine={false} />
+            <XAxis
+              type="number"
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={valueFormatter}
+            />
           </>
         ) : (
           <>
@@ -65,13 +77,22 @@ export function BarChart({
               tick={xAxisTickComponent}
               height={xAxisHeight}
             />
-            <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              tickFormatter={valueFormatter}
+            />
           </>
         )}
         {showTooltip && (
           <ChartTooltip
             isAnimationActive={tooltipAnimated}
-            content={tooltipContent ?? <ChartTooltipContent />}
+            content={
+              tooltipContent ?? (
+                <ChartTooltipContent valueFormatter={valueFormatter} />
+              )
+            }
           />
         )}
         {showLegend && (
@@ -84,7 +105,14 @@ export function BarChart({
             fill={s.color ?? `var(--color-${s.dataKey})`}
             radius={4}
             stackId={stacked ? 'stack' : s.stackId}
+            isAnimationActive={animated}
           >
+            {s.cellColors?.map((color, index) => (
+              <Cell
+                key={index}
+                fill={color ?? s.color ?? `var(--color-${s.dataKey})`}
+              />
+            ))}
             {showValues && (
               <LabelList
                 dataKey={s.dataKey}

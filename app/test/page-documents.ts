@@ -125,6 +125,20 @@ export const sections = {
       },
     ],
   },
+  chartSection: {
+    _type: "chartSection",
+    _key: "chart",
+    title: "Festas por ano",
+    summary: "As festas mais que dobraram de 2023 para 2025.",
+    chartType: "bar",
+    unit: "none",
+    series: ["Festas"],
+    rows: [
+      { _key: "y2023", label: "2023", values: [6], highlight: null },
+      { _key: "y2024", label: "2024", values: [9], highlight: false },
+      { _key: "y2025", label: "2025", values: [14], highlight: true },
+    ],
+  },
 }
 
 export const headers = {

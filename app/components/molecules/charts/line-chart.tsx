@@ -31,12 +31,15 @@ export function LineChart({
   showLegend = true,
   showValues = false,
   tooltipAnimated = false,
+  animated = true,
+  accessibilityLayer = true,
+  valueFormatter,
   tooltipContent,
   children,
 }: LineChartProps) {
   return (
     <ChartContainer config={config} className={className} role="img" aria-label={ariaLabel}>
-      <RechartsLineChart data={data}>
+      <RechartsLineChart data={data} accessibilityLayer={accessibilityLayer}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey={xAxisKey}
@@ -47,11 +50,20 @@ export function LineChart({
           tick={xAxisTickComponent}
           height={xAxisHeight}
         />
-        <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+        <YAxis
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+          tickFormatter={valueFormatter}
+        />
         {showTooltip && (
           <ChartTooltip
             isAnimationActive={tooltipAnimated}
-            content={tooltipContent ?? <ChartTooltipContent />}
+            content={
+              tooltipContent ?? (
+                <ChartTooltipContent valueFormatter={valueFormatter} />
+              )
+            }
           />
         )}
         {showLegend && (
@@ -65,6 +77,7 @@ export function LineChart({
             stroke={s.color ?? `var(--color-${s.dataKey})`}
             strokeWidth={2}
             dot={showValues ? { r: 3 } : false}
+            isAnimationActive={animated}
           >
             {showValues && (
               <LabelList

@@ -15,6 +15,7 @@ import { pageTitle } from "./page-header/page-title"
 import { about } from "./sections/about"
 import { ctaBanner } from "./sections/cta-banner"
 import { feedback } from "./sections/feedback"
+import { chartSection } from "./sections/chart-section"
 import { founders } from "./sections/founders"
 import { imageSection } from "./sections/image-section"
 import { nextEvents } from "./sections/next-events"
@@ -37,6 +38,7 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   richTextSection,
   imageSection,
   statsSection,
+  chartSection,
   homepageHero,
   pageHero,
   pageTitle,

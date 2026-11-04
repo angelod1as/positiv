@@ -242,6 +242,7 @@ describe("page", () => {
         "richTextSection",
         "imageSection",
         "statsSection",
+        "chartSection",
       ])
     })
 
@@ -287,6 +288,24 @@ describe("page", () => {
       })
 
       expect(pathsOf(errors)).toContain("sections.about.title")
+    })
+
+    it("checks a Chart Section's rows against that section's series", async () => {
+      const [row] = sections.chartSection.rows
+      const errors = await validateDocumentOf("page", {
+        ...page,
+        sections: [
+          {
+            ...sections.chartSection,
+            series: ["Novates", "Veteranes"],
+            rows: [row],
+          },
+        ],
+      })
+
+      expect(pathsOf(errors)).toContain(
+        `sections.chart.rows.${row._key}.values`,
+      )
     })
   })
 
