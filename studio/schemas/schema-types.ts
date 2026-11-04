@@ -19,6 +19,7 @@ import { founders } from "./sections/founders"
 import { imageSection } from "./sections/image-section"
 import { nextEvents } from "./sections/next-events"
 import { richTextSection } from "./sections/rich-text-section"
+import { statsSection } from "./sections/stats-section"
 import { testimonials } from "./sections/testimonials"
 
 export const schemaTypes: SchemaTypeDefinition[] = [
@@ -35,6 +36,7 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   feedback,
   richTextSection,
   imageSection,
+  statsSection,
   homepageHero,
   pageHero,
   pageTitle,

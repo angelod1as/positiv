@@ -91,4 +91,37 @@ export const sections = {
     },
     caption: "O primeiro evento da Positiv",
   },
+  statsSection: {
+    _type: "statsSection",
+    _key: "stats",
+    title: "O ano em números",
+    cards: [
+      {
+        _type: "statNumber",
+        _key: "parties",
+        unit: "none",
+        value: 14,
+        caption: "festas",
+      },
+      {
+        _type: "statRange",
+        _key: "age",
+        unit: "none",
+        min: 19,
+        average: 31.4,
+        max: 64,
+        caption: "anos de idade",
+      },
+      {
+        _type: "statComparison",
+        _key: "newcomers",
+        unit: "percent",
+        before: 22,
+        beforeLabel: "2025",
+        after: 31,
+        afterLabel: "2026",
+        caption: "de novates",
+      },
+    ],
+  },
 }

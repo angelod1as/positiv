@@ -241,6 +241,7 @@ describe("page", () => {
         "feedback",
         "richTextSection",
         "imageSection",
+        "statsSection",
       ])
     })
 
