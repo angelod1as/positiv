@@ -31,7 +31,10 @@ type ReportRow = {
 function scriptForYear(year: number): string {
   const script = readFileSync(SCRIPT_PATH, "utf8")
   const declarations = script.match(YEAR_DECLARATION) ?? []
-  expect(declarations).toHaveLength(1)
+  expect(
+    declarations,
+    "annual-report.sql must declare the year exactly once, as `SELECT 2026 AS report_year`",
+  ).toHaveLength(1)
   return script.replace(YEAR_DECLARATION, `${year} AS report_year`)
 }
 

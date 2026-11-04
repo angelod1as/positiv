@@ -1,6 +1,9 @@
 -- Annual report audience numbers. Read only: one SELECT, no writes.
 -- Set the report year below; the three years before it come out too, for
 -- the comparisons. Never reads demographics_history (see WEB-23).
+-- Counts read 0 for an empty year; a stat with nothing to measure (an
+-- age, an average, a rate) has no row, as it is undefined rather than 0.
+-- Tested by app/test/annual-report-sql.integration.test.ts.
 WITH params AS (
   SELECT 2026 AS report_year
 ),
