@@ -1,4 +1,3 @@
-import type { ReactNode } from "react"
 import type { PageSection } from "~/business/cms/page.schema"
 import { homepageCopy } from "~/copy/homepage"
 import { formatStatChange, formatStatValue } from "~/lib/helpers/format-stat"
@@ -22,7 +21,7 @@ export const StatsSection = ({ content }: StatsSectionProps) => {
           {content.cards.map((card) => (
             <li
               key={card._key}
-              className="flex flex-col gap-4 rounded-xl border bg-card p-6 shadow-sm"
+              className="flex flex-col gap-4 rounded-xl border bg-card p-5 shadow-sm sm:p-6"
             >
               <StatCard card={card} />
             </li>
@@ -48,6 +47,16 @@ const StatCard = ({ card }: { card: Card }) => {
   }
 }
 
+// Values never wrap, so a long one steps down a size. The steps fit the
+// narrowest card, two columns on a 640px screen, about 9 characters wide at
+// the largest size.
+const headlineSize = (value: string) => {
+  if (value.length <= 9) return "text-4xl"
+  if (value.length <= 12) return "text-3xl"
+  if (value.length <= 15) return "text-2xl"
+  return "text-xl"
+}
+
 // Every card opens the same way, value then caption, and anything else goes
 // below: cards in a row stretch to the tallest, so the spare room falls at
 // the bottom instead of between a number and what it counts.
@@ -58,7 +67,7 @@ const Headline = ({
 }: {
   label?: string
   caption: string
-  children: ReactNode
+  children: string
 }) => (
   <div className="flex flex-col gap-2">
     {label && (
@@ -66,7 +75,12 @@ const Headline = ({
         {label}
       </span>
     )}
-    <p className="whitespace-nowrap text-4xl font-bold leading-none tracking-tight tabular-nums text-purple">
+    <p
+      className={cn(
+        "whitespace-nowrap font-bold leading-none tracking-tight tabular-nums text-purple",
+        headlineSize(children),
+      )}
+    >
       {children}
     </p>
     <p className="text-muted-foreground">{caption}</p>

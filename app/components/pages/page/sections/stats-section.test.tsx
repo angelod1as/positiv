@@ -193,4 +193,28 @@ describe("StatsSection", () => {
     expect(card.getByText("-R$ 2.000")).toBeInTheDocument()
     expect(card.getByText("R$ 3.000")).toBeInTheDocument()
   })
+
+  it.each([
+    [1250, "1.250", "text-4xl"],
+    [12400, "R$ 12.400", "text-4xl"],
+    [123750, "R$ 123.750", "text-3xl"],
+    [23750.5, "R$ 23.750,50", "text-3xl"],
+    [123750.5, "R$ 123.750,50", "text-2xl"],
+    [1234567.89, "R$ 1.234.567,89", "text-2xl"],
+    [-1234567.89, "-R$ 1.234.567,89", "text-xl"],
+  ])(
+    "sizes the headline %s to fit its card",
+    (value, written, size) => {
+      render(
+        <StatsSection
+          content={{
+            ...content,
+            cards: [{ ...bigNumber, unit: written.includes("R$") ? "brl" : "none", value }],
+          }}
+        />,
+      )
+
+      expect(screen.getByText(written)).toHaveClass(size)
+    },
+  )
 })
