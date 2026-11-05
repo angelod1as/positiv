@@ -4,16 +4,25 @@ import type {
   EventAttendanceDataPoint,
   EventRevenueDataPoint,
   OccupancyDataPoint,
+  SeasonalityDataPoint,
+  VeteranRookieDataPoint,
 } from "~/business/admin/dataviz/dataviz.types"
-import { ChartSection } from "~/components/atoms/charts/chart-section"
 import { adminDatavizCopy } from "~/copy/admin/dataviz"
 import { buildEventLabel } from "~/lib/helpers/chart-utils"
 import { useBrushState } from "~/lib/hooks/use-brush-state"
-import { AttendanceChart } from "./attendance-chart"
+import { DatavizChart } from "./dataviz-chart"
+import {
+  attendanceChart,
+  conversionChart,
+  funnelChart,
+  occupancyChart,
+  revenueChart,
+  seasonalityChart,
+  ticketChart,
+  veteranRookieChart,
+} from "./dataviz-charts"
+import { DatavizHeading } from "./dataviz-heading"
 import { EventRangeSelector } from "./event-range-selector"
-import { FunnelChart } from "./funnel-chart"
-import { OccupancyChart } from "./occupancy-chart"
-import { RevenueChart } from "./revenue-chart"
 
 const eventsCopy = adminDatavizCopy.eventsSection
 
@@ -22,6 +31,8 @@ interface EventsSectionProps {
   revenue: EventRevenueDataPoint[]
   funnel: ConversionFunnelDataPoint[]
   occupancy: OccupancyDataPoint[]
+  veteranRookie: VeteranRookieDataPoint[]
+  seasonality: SeasonalityDataPoint[]
 }
 
 export function EventsSection({
@@ -29,6 +40,8 @@ export function EventsSection({
   revenue,
   funnel,
   occupancy,
+  veteranRookie,
+  seasonality,
 }: EventsSectionProps) {
   const { startIndex, endIndex, onChange } = useBrushState(attendance.length)
 
@@ -41,59 +54,36 @@ export function EventsSection({
     [attendance],
   )
 
-  const slicedAttendance = useMemo(
-    () => attendance.slice(startIndex, endIndex + 1),
-    [attendance, startIndex, endIndex],
-  )
-
-  const slicedRevenue = useMemo(
-    () => revenue.slice(startIndex, endIndex + 1),
-    [revenue, startIndex, endIndex],
-  )
-
-  const slicedFunnel = useMemo(
-    () => funnel.slice(startIndex, endIndex + 1),
-    [funnel, startIndex, endIndex],
-  )
-
-  const slicedOccupancy = useMemo(
-    () => occupancy.slice(startIndex, endIndex + 1),
-    [occupancy, startIndex, endIndex],
-  )
+  const charts = useMemo(() => {
+    const from = attendance[startIndex]?.date
+    const to = attendance[endIndex]?.date
+    const inRange = <T extends { date: string }>(data: T[]) =>
+      from && to ? data.filter((item) => item.date >= from && item.date <= to) : []
+    return [
+      attendanceChart(inRange(attendance)),
+      revenueChart(inRange(revenue)),
+      ticketChart(inRange(revenue)),
+      funnelChart(inRange(funnel)),
+      conversionChart(inRange(funnel)),
+      occupancyChart(inRange(occupancy)),
+      veteranRookieChart(inRange(veteranRookie)),
+      seasonalityChart(seasonality),
+    ]
+  }, [attendance, revenue, funnel, occupancy, veteranRookie, seasonality, startIndex, endIndex])
 
   return (
-    <section className="space-y-8">
-      <h2 className="text-2xl font-semibold">{eventsCopy.title}</h2>
-      <EventRangeSelector
-        data={brushPreviewData}
-        startIndex={startIndex}
-        endIndex={endIndex}
-        onChange={onChange}
-      />
-      <ChartSection
-        title={eventsCopy.attendance.title}
-        description={eventsCopy.attendance.description}
-      >
-        <AttendanceChart data={slicedAttendance} />
-      </ChartSection>
-      <ChartSection
-        title={eventsCopy.revenue.title}
-        description={eventsCopy.revenue.description}
-      >
-        <RevenueChart data={slicedRevenue} />
-      </ChartSection>
-      <ChartSection
-        title={eventsCopy.funnel.title}
-        description={eventsCopy.funnel.description}
-      >
-        <FunnelChart data={slicedFunnel} />
-      </ChartSection>
-      <ChartSection
-        title={eventsCopy.occupancy.title}
-        description={eventsCopy.occupancy.description}
-      >
-        <OccupancyChart data={slicedOccupancy} />
-      </ChartSection>
-    </section>
+    <div>
+      <DatavizHeading title={eventsCopy.title}>
+        <EventRangeSelector
+          data={brushPreviewData}
+          startIndex={startIndex}
+          endIndex={endIndex}
+          onChange={onChange}
+        />
+      </DatavizHeading>
+      {charts.map((content) => (
+        <DatavizChart key={content._key} content={content} />
+      ))}
+    </div>
   )
 }

@@ -22,8 +22,6 @@ export function LineChart({
   series,
   xAxisKey,
   xAxisFormatter,
-  xAxisTickComponent,
-  xAxisHeight,
   curved = true,
   className,
   ariaLabel,
@@ -31,7 +29,7 @@ export function LineChart({
   showLegend = true,
   showValues = false,
   tooltipAnimated = false,
-  animated = true,
+  animated = false,
   accessibilityLayer = true,
   valueFormatter,
   tooltipContent,
@@ -46,9 +44,7 @@ export function LineChart({
           tickLine={false}
           axisLine={false}
           tickMargin={8}
-          tickFormatter={xAxisTickComponent ? undefined : xAxisFormatter}
-          tick={xAxisTickComponent}
-          height={xAxisHeight}
+          tickFormatter={xAxisFormatter}
         />
         <YAxis
           tickLine={false}

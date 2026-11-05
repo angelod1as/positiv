@@ -3,15 +3,18 @@ import type {
   GrowthDataPoint,
   RetentionDataPoint,
 } from '~/business/admin/dataviz/dataviz.types'
-import { ChartSection } from '~/components/atoms/charts/chart-section'
+import { DemographicFilterToggle } from '~/components/atoms/charts/demographic-filter-toggle'
 import type { FilterMode } from '~/components/atoms/charts/demographic-filter-toggle'
 import { adminDatavizCopy } from '~/copy/admin/dataviz'
-import { AgeChart } from './age-chart'
-import { GenderChart } from './gender-chart'
-import { GrowthChart } from './growth-chart'
-import { OrientationChart } from './orientation-chart'
-import { RaceChart } from './race-chart'
-import { RetentionChart } from './retention-chart'
+import { DatavizChart } from './dataviz-chart'
+import {
+  ageChart,
+  cumulativeGrowthChart,
+  demographicChart,
+  newProfilesChart,
+  retentionChart,
+} from './dataviz-charts'
+import { DatavizHeading } from './dataviz-heading'
 
 const communityCopy = adminDatavizCopy.communitySection
 
@@ -34,69 +37,24 @@ export function CommunitySection({
   totalProfiles,
   filledProfilesAge,
 }: CommunitySectionProps) {
+  const charts = [
+    demographicChart('gender', demographics.gender),
+    demographicChart('orientation', demographics.orientation),
+    ageChart(demographics.age, { filled: filledProfilesAge, total: totalProfiles }),
+    demographicChart('race', demographics.race),
+    newProfilesChart(growth),
+    cumulativeGrowthChart(growth),
+    retentionChart(retention),
+  ]
+
   return (
-    <section className="space-y-8">
-      <h2 className="text-2xl font-semibold">{communityCopy.title}</h2>
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <ChartSection
-          title={communityCopy.gender.title}
-          description={communityCopy.gender.description}
-        >
-          <GenderChart
-            data={demographics.gender}
-            mode={demographicsMode}
-            onModeChange={onModeChange}
-          />
-        </ChartSection>
-        <ChartSection
-          title={communityCopy.orientation.title}
-          description={communityCopy.orientation.description}
-        >
-          <OrientationChart
-            data={demographics.orientation}
-            mode={demographicsMode}
-            onModeChange={onModeChange}
-          />
-        </ChartSection>
-      </div>
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <ChartSection
-          title={communityCopy.age.title}
-          description={communityCopy.age.description}
-        >
-          <AgeChart
-            data={demographics.age}
-            mode={demographicsMode}
-            onModeChange={onModeChange}
-            totalProfiles={totalProfiles}
-            filledProfiles={filledProfilesAge}
-          />
-        </ChartSection>
-        <ChartSection
-          title={communityCopy.race.title}
-          description={communityCopy.race.description}
-        >
-          <RaceChart
-            data={demographics.race}
-            mode={demographicsMode}
-            onModeChange={onModeChange}
-          />
-        </ChartSection>
-      </div>
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <ChartSection
-          title={communityCopy.growth.title}
-          description={communityCopy.growth.description}
-        >
-          <GrowthChart data={growth} />
-        </ChartSection>
-        <ChartSection
-          title={communityCopy.retention.title}
-          description={communityCopy.retention.description}
-        >
-          <RetentionChart data={retention} />
-        </ChartSection>
-      </div>
-    </section>
+    <div>
+      <DatavizHeading title={communityCopy.title}>
+        <DemographicFilterToggle mode={demographicsMode} onModeChange={onModeChange} />
+      </DatavizHeading>
+      {charts.map((content) => (
+        <DatavizChart key={content._key} content={content} />
+      ))}
+    </div>
   )
 }
