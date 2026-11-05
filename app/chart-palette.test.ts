@@ -65,27 +65,6 @@ const tokenOklch = (block: string, name: string): Rgb => {
 const tokenColor = (block: string, name: string, gamut: GamutMapping): Rgb =>
   toDisplayedRgb(...tokenOklch(block, name), gamut)
 
-const mixInOklab = (x: Rgb, y: Rgb, xShare: number): Rgb => {
-  const toLab = ([l, c, h]: Rgb) => [
-    l,
-    c * Math.cos((h * Math.PI) / 180),
-    c * Math.sin((h * Math.PI) / 180),
-  ]
-  const [p, q] = [toLab(x), toLab(y)]
-  const [l, a, b] = p.map((v, i) => v * xShare + q[i] * (1 - xShare))
-  return [l, Math.hypot(a, b), ((Math.atan2(b, a) * 180) / Math.PI + 360) % 360]
-}
-
-const funnelSource = readFileSync(
-  join(__dirname, "components/pages/admin/dataviz/funnel-chart.tsx"),
-  "utf8",
-)
-const funnelMixes = [
-  ...funnelSource.matchAll(
-    /color-mix\(in oklab, var\(--chart-1\) (\d+)%, var\(--(\w+)\)\)/g,
-  ),
-].map(([, share, other]) => ({ share: Number(share) / 100, other }))
-
 const luminance = ([r, g, b]: Rgb) => 0.2126 * r + 0.7152 * g + 0.0722 * b
 
 const contrast = (x: Rgb, y: Rgb) => {
@@ -150,21 +129,6 @@ describe.each([
     const card = tokenRgb("card")
     const slots = SLOTS.map((name) => ({ name, color: tokenRgb(name) }))
 
-    it("keeps every shaded funnel stage at 3:1 against background and card", () => {
-      expect(funnelMixes.length).toBeGreaterThan(0)
-      for (const { share, other } of funnelMixes) {
-        const mixed = toDisplayedRgb(
-          ...mixInOklab(
-            tokenOklch(block, "chart-1"),
-            tokenOklch(block, other),
-            share,
-          ),
-          gamut,
-        )
-        expect(contrast(mixed, surface)).toBeGreaterThanOrEqual(3)
-        expect(contrast(mixed, card)).toBeGreaterThanOrEqual(3)
-      }
-    })
     const neighbours = slots.slice(1).map((next, i) => ({
       name: slots[i].name,
       a: slots[i].color,

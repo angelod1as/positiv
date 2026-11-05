@@ -54,19 +54,3 @@ export interface BarChartProps extends BaseChartProps, XAxisCustomProps {
   stacked?: boolean
   categoryAxisWidth?: number
 }
-
-export interface DonutChartProps extends BaseChartProps {
-  dataKey: string
-  nameKey: string
-  innerRadius?: number
-  outerRadius?: number
-  centerLabel?: ReactNode
-  showLabel?: boolean
-}
-
-export interface AreaChartProps extends BaseChartProps, XAxisCustomProps {
-  series: ChartSeries[]
-  xAxisKey: string
-  xAxisFormatter?: (value: string) => string
-  stacked?: boolean
-}
