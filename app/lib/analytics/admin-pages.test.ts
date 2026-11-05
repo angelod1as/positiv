@@ -48,6 +48,31 @@ describe("umamiBeforeSendScript", () => {
     expect(beforeSend("event", payload)).toBe(payload)
   })
 
+  // A token in the URL is the whole authorization for that page, and Umami
+  // would keep it for anyone with analytics access to read.
+  it.each([
+    ["/pagamento/t/abc123", "/pagamento/t/:token"],
+    ["/pagamento/t/abc123/obrigado", "/pagamento/t/:token/obrigado"],
+    ["https://positivparty.com/pagamento/t/abc123?x=1", "https://positivparty.com/pagamento/t/:token?x=1"],
+    ["/convite/abc123", "/convite/:token"],
+  ])("masks the token in %s", (sent, masked) => {
+    const beforeSend = installHook()
+    window.history.replaceState(null, "", "/pagamento/t/abc123")
+
+    expect(beforeSend("event", { url: sent, referrer: sent })).toEqual({
+      url: masked,
+      referrer: masked,
+    })
+  })
+
+  it("leaves a payment id link alone", () => {
+    const beforeSend = installHook()
+
+    expect(beforeSend("event", { url: "/pagamento/123" })).toEqual({
+      url: "/pagamento/123",
+    })
+  })
+
   it.each([
     "/",
     "/admin",
