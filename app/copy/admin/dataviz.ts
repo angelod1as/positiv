@@ -51,6 +51,15 @@ export const adminDatavizCopy = {
       title: "Ocupação",
       description: "Percentual de ocupação das vagas em cada evento.",
     },
+    veteranRookie: {
+      title: "Veteranos e Novatos",
+      description: "Quantas pessoas veteranas e novatas compareceram a cada evento.",
+    },
+    seasonality: {
+      title: "Sazonalidade",
+      description:
+        "Média de candidaturas e comparecimentos por evento em cada mês do ano, somando todos os eventos.",
+    },
   },
   communitySection: {
     title: "Comunidade",
@@ -78,6 +87,19 @@ export const adminDatavizCopy = {
       title: "Retenção",
       description: "Quantas pessoas participaram de N ou mais eventos.",
     },
+  },
+  charts: {
+    share: "Percentual",
+    people: (total: number) => `${total} pessoas`,
+    answer: (category: string, count: number) => `${category} · ${count}`,
+    newProfilesSummary: "Novos cadastros por mês.",
+    migrationNote:
+      "Em destaque, julho de 2025: Migração do sistema anterior.",
+    cumulativeSummary: "Total acumulado de perfis cadastrados, mês a mês.",
+    revenueSummary:
+      "Faturamento líquido, com reembolsos descontados, e bruto de cada evento.",
+    ticketSummary:
+      "Preço do ingresso e quanto cada pagante pagou em média, por evento.",
   },
   eventRangeSelector: {
     label: "Selecionar intervalo de eventos",

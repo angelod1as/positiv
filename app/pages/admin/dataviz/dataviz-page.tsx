@@ -25,7 +25,6 @@ import type { FilterMode } from "~/components/atoms/charts/demographic-filter-to
 import { CommunitySection } from "~/components/pages/admin/dataviz/community-section"
 import { EventsSection } from "~/components/pages/admin/dataviz/events-section"
 import { KpiScores } from "~/components/pages/admin/dataviz/kpi-scores"
-import { Separator } from "~/components/ui/separator"
 import { adminDatavizCopy } from "~/copy/admin/dataviz"
 import paths from "~/lib/paths"
 
@@ -95,23 +94,23 @@ export default function NumerosPage() {
   )
 
   return (
-    <div className="space-y-12">
-      <h1 className="text-3xl font-bold">{adminDatavizCopy.title}</h1>
+    <div>
+      <header className="w-full px-4 pt-12 pb-4 md:px-6 md:pt-16">
+        <div className="mx-auto max-w-3xl">
+          <h1>{adminDatavizCopy.title}</h1>
+        </div>
+      </header>
 
-      <section>
-        <KpiScores data={data.kpiScores} />
-      </section>
-
-      <Separator />
+      <KpiScores data={data.kpiScores} />
 
       <EventsSection
         attendance={data.eventAttendance}
         revenue={data.eventRevenue}
         funnel={data.conversionFunnel}
         occupancy={data.occupancy}
+        veteranRookie={data.veteranRookie}
+        seasonality={data.seasonality}
       />
-
-      <Separator />
 
       <CommunitySection
         demographics={demographics}
