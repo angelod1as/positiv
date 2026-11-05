@@ -37,11 +37,10 @@ all three variables look set.
 ### Charges are created but the invoice offers no payment method
 
 The invoice page says "Não há formas de pagamento disponíveis no momento". The
-Asaas account has not been approved: the production account was approved in
-October 2026, but a new account, or one Asaas puts back under review, behaves
-this way. Until Asaas finishes its activation review, the API creates charges but the invoice offers nothing to
-pay with, and a registered Pix key does not change that. It is not a code or
-environment problem. Finish the pending documents and the "Informações" section
+Asaas account is new or under review and has not been approved. Until Asaas
+finishes its activation review, the API creates charges but the invoice offers
+nothing to pay with, and a registered Pix key does not change that. It is not a
+code or environment problem. Finish the pending documents and the "Informações" section
 in the Asaas dashboard (an unregistered site domain also makes
 `POST /payments` fail), then wait for approval, up to two business days.
 
