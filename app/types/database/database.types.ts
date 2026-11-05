@@ -618,6 +618,7 @@ export type Database = {
       }
       payments: {
         Row: {
+          access_token: string
           amount: number | null
           base_amount: number
           created_at: string
@@ -649,6 +650,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          access_token?: string
           amount?: number | null
           base_amount: number
           created_at?: string
@@ -680,6 +682,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          access_token?: string
           amount?: number | null
           base_amount?: number
           created_at?: string

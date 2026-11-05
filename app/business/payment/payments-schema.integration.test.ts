@@ -543,6 +543,32 @@ describe("payments schema", () => {
 
       expect(rows).toEqual([])
     })
+
+    it("gives every new payment its own 192-bit access token", async () => {
+      const first = await createTestPayment(tracker, kysely, {
+        event_participant_id: participantId,
+      })
+      const second = await createTestPayment(tracker, kysely, {
+        event_participant_id: otherParticipantId,
+      })
+
+      expect(first.access_token).toMatch(/^[0-9a-f]{48}$/)
+      expect(second.access_token).toMatch(/^[0-9a-f]{48}$/)
+      expect(second.access_token).not.toBe(first.access_token)
+    })
+
+    it("refuses two payments sharing an access token", async () => {
+      const first = await createTestPayment(tracker, kysely, {
+        event_participant_id: participantId,
+      })
+
+      await expect(
+        createTestPayment(tracker, kysely, {
+          event_participant_id: otherParticipantId,
+          access_token: first.access_token,
+        }),
+      ).rejects.toThrow(/payments_access_token_key/)
+    })
   })
 
   describe("event_participants", () => {
