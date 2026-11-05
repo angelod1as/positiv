@@ -232,7 +232,11 @@ pnpm test:e2e --ui
 
 ## Adding New Tests
 
-1. Determine if the test fits into an existing journey or needs its own
+1. Determine if the test fits into an existing journey or needs its own.
+   Extend an existing spec that already walks the same page and fixtures, even
+   when the ticket asks for a new one: every new spec adds setup time to a
+   suite that holds the shared database lock. Add a spec only when folding the
+   coverage in is impossible, and say why in the PR
 2. Place in appropriate directory (authenticated/unauthenticated)
 3. Follow naming convention: `{feature}-{action}.spec.ts` or `{journey-name}.spec.ts`
 4. Consider the authentication context needed
