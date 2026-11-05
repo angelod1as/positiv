@@ -102,6 +102,7 @@ export class UserManagementPage extends BasePage {
     // Use exact: true to avoid matching partial names (e.g., "Compareceu" vs "Não compareceu")
     const option = this.page.getByRole("option", { name: value, exact: true })
     await option.waitFor({ state: "visible", timeout: 5000 })
+    // Picking the value the cell already holds saves nothing and times out
     const [saved] = await Promise.all([
       this.page.waitForResponse(
         (response) =>
@@ -209,7 +210,8 @@ export class UserManagementPage extends BasePage {
 
   // A detail-view save is done once the action answers and the loader data
   // that follows it is back: the success toast fires on the first alone, so
-  // waiting on it leaves the page's props stale for the next edit
+  // waiting on it leaves the page's props stale for the next edit. An edit
+  // that changes nothing sends no request, so it times out here on purpose
   async saveDetailField(action: () => Promise<void>): Promise<void> {
     const detailData = `${new URL(this.page.url()).pathname}.data`
     const isDetailData = (response: Response, method: string) =>
