@@ -1,4 +1,4 @@
-import { expect, type Locator, type Page } from "@playwright/test"
+import { expect, type Locator, type Page, type Response } from "@playwright/test"
 import { BasePage } from "../BasePage"
 
 export class UserManagementPage extends BasePage {
@@ -271,10 +271,19 @@ export class UserManagementPage extends BasePage {
     }
   }
 
-  async saveDetailViewChanges(): Promise<void> {
-    // Auto-save is now in place - wait for network idle to ensure save completes
-    // Note: We don't wait for sonner toast as it's unreliable in E2E tests
-    await this.page.waitForLoadState("networkidle")
+  // A detail-view save is done once the action answers and the loader data
+  // that follows it is back: the success toast fires on the first alone, so
+  // waiting on it leaves the page's props stale for the next edit
+  async saveDetailField(action: () => Promise<void>): Promise<void> {
+    const detailData = `${new URL(this.page.url()).pathname}.data`
+    const isDetailData = (response: Response, method: string) =>
+      new URL(response.url()).pathname === detailData &&
+      response.request().method() === method
+    const saved = this.page.waitForResponse((r) => isDetailData(r, "POST"))
+    const revalidated = this.page.waitForResponse((r) => isDetailData(r, "GET"))
+    await action()
+    expect((await saved).ok()).toBe(true)
+    expect((await revalidated).ok()).toBe(true)
   }
 
   async expectToastAfter(

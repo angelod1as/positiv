@@ -267,11 +267,14 @@ test.describe("Admin User Management", () => {
       participantIndex === 0 ? "João Test - indicação formal" : "ninguém"
     await expect(page.getByText(expectedReferredValue)).toBeVisible()
 
-    // Edit a field in detail view (use display name for Radix UI Select)
-    await userManagement.editDetailField("application_status", "Finalizado")
-
-    // Save changes
-    await userManagement.saveDetailViewChanges()
+    // Edit a field in detail view (use display name for Radix UI Select).
+    // Neither fixture participant starts with this status, so it is a real save
+    await userManagement.saveDetailField(() =>
+      userManagement.editDetailField("application_status", "Pensar melhor"),
+    )
+    await expect(page.locator("#application_status")).toContainText(
+      "Pensar melhor",
+    )
 
     // Test Google Contacts integration if visible
     const googleContactsVisible =
@@ -291,13 +294,19 @@ test.describe("Admin User Management", () => {
       expect(openedUrl).toContain("contacts.google.com")
     }
 
-    // Both fixture participants start flagged, one of them with notes
-    await userManagement.expectToastAfter("success", () =>
+    // Both fixture participants start flagged, only Participant 1 with notes.
+    // Each save waits for the reloaded data on screen: the next edit reads it
+    await userManagement.saveDetailField(() =>
       userManagement.editDetailField("flag", "Sem flag"),
     )
-    await userManagement.editDetailField("flag_notes", "")
-    await page.locator("#flag_notes").blur()
-    await userManagement.saveDetailViewChanges()
+    await expect(page.locator("#flag")).toContainText("Sem flag")
+    if (participantIndex === 0) {
+      await userManagement.saveDetailField(async () => {
+        await userManagement.editDetailField("flag_notes", "")
+        await page.locator("#flag_notes").blur()
+      })
+    }
+    await expect(page.locator("#flag_notes")).toHaveValue("")
 
     // A flag needs notes: without them nothing is saved
     await userManagement.expectToastAfter("warning", () =>
@@ -306,22 +315,27 @@ test.describe("Admin User Management", () => {
     await expect(page.locator("#flag")).toContainText("Sem flag")
 
     const flagNotes = `E2E flag notes ${timestamp}`
-    await userManagement.expectToastAfter("success", async () => {
+    await userManagement.saveDetailField(async () => {
       await userManagement.editDetailField("flag_notes", flagNotes)
       await page.locator("#flag_notes").blur()
     })
-    await userManagement.expectToastAfter("success", () =>
+    await userManagement.saveDetailField(() =>
       userManagement.editDetailField("flag", "Flag amarela"),
     )
+    await expect(page.locator("#flag")).toContainText("Flag amarela")
 
     const wasVeteran = await userManagement.veteranCheckbox.isChecked()
-    await userManagement.expectToastAfter("success", () =>
+    await userManagement.saveDetailField(() =>
       userManagement.veteranLabel.click(),
     )
+    await expect(userManagement.veteranCheckbox).toBeChecked({
+      checked: !wasVeteran,
+    })
 
-    await userManagement.expectToastAfter("success", () =>
+    await userManagement.saveDetailField(() =>
       userManagement.editDetailField("attendance_status", "Desistiu"),
     )
+    await expect(page.locator("#attendance_status")).toContainText("Desistiu")
 
     // One reload proves every save above reached the database
     await page.reload()
@@ -340,7 +354,7 @@ test.describe("Admin User Management", () => {
     // Verify detail view change reflected in table - search for cell with our value
     const updatedStatusCell = userManagement.participantsTable
       .locator('.ag-cell[col-id="application_status"]')
-      .filter({ hasText: "Finalizado" })
+      .filter({ hasText: "Pensar melhor" })
       .first()
     await expect(updatedStatusCell).toBeVisible()
   })
