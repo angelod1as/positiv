@@ -8,6 +8,7 @@ import type {
 } from '~/business/admin/dataviz/dataviz.types'
 import {
   ageChart,
+  approvalChart,
   attendanceChart,
   conversionChart,
   cumulativeGrowthChart,
@@ -276,5 +277,32 @@ describe('seasonalityChart', () => {
     expect(content.chartType).toBe('bar')
     expect(content.series).toEqual(['Candidaturas', 'Compareceram'])
     expect(rowsOf(content)).toEqual([['Março', 120, 80]])
+  })
+})
+
+describe('approvalChart', () => {
+  it('splits the profiles so the two shares add up to 100%', () => {
+    const content = approvalChart({
+      total_profiles: 8,
+      total_veterans: 0,
+      total_approved: 1,
+      total_events_completed: 0,
+      total_unique_attendees: 0,
+      avg_attendance_per_event: 0,
+      avg_occupancy_pct: 0,
+      total_revenue: 0,
+      avg_revenue_per_event: 0,
+      avg_ticket_price: 0,
+      total_flagged: 0,
+      attended_3_plus: 0,
+      attended_5_plus: 0,
+      avg_no_show_rate: 0,
+    })
+
+    expect(content.chartType).toBe('proportion')
+    expect(rowsOf(content)).toEqual([
+      ['Aprovades · 13%', 1],
+      ['Não aprovades · 87%', 7],
+    ])
   })
 })

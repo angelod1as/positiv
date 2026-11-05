@@ -283,6 +283,8 @@ const profileSplit = (
 ): ChartContent => {
   const [label, value] = part
   const others = Math.max(total - value, 0)
+  const valueShare = share(value, total)
+  const othersShare = total === 0 ? 0 : 100 - valueShare
 
   return chart(
     _key,
@@ -294,8 +296,8 @@ const profileSplit = (
       series: [copy.kpiScores.community.profiles],
     },
     [
-      { label: withShare(label, value, total), values: [value] },
-      { label: withShare(rest, others, total), values: [others] },
+      { label: copy.kpiScores.withNote(label, `${valueShare}%`), values: [value] },
+      { label: copy.kpiScores.withNote(rest, `${othersShare}%`), values: [others] },
     ],
   )
 }
