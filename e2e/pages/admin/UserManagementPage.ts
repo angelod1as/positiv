@@ -102,13 +102,15 @@ export class UserManagementPage extends BasePage {
     // Use exact: true to avoid matching partial names (e.g., "Compareceu" vs "Não compareceu")
     const option = this.page.getByRole("option", { name: value, exact: true })
     await option.waitFor({ state: "visible", timeout: 5000 })
-    const saved = this.page.waitForResponse(
-      (response) =>
-        new URL(response.url()).pathname === "/api/admin/event-participant" &&
-        response.request().method() === "POST",
-    )
-    await option.click()
-    expect((await saved).ok()).toBe(true)
+    const [saved] = await Promise.all([
+      this.page.waitForResponse(
+        (response) =>
+          new URL(response.url()).pathname === "/api/admin/event-participant" &&
+          response.request().method() === "POST",
+      ),
+      option.click(),
+    ])
+    expect(saved.ok()).toBe(true)
   }
 
   async verifyCellContent(
@@ -213,11 +215,13 @@ export class UserManagementPage extends BasePage {
     const isDetailData = (response: Response, method: string) =>
       new URL(response.url()).pathname === detailData &&
       response.request().method() === method
-    const saved = this.page.waitForResponse((r) => isDetailData(r, "POST"))
-    const revalidated = this.page.waitForResponse((r) => isDetailData(r, "GET"))
-    await action()
-    expect((await saved).ok()).toBe(true)
-    expect((await revalidated).ok()).toBe(true)
+    const [saved, revalidated] = await Promise.all([
+      this.page.waitForResponse((r) => isDetailData(r, "POST")),
+      this.page.waitForResponse((r) => isDetailData(r, "GET")),
+      action(),
+    ])
+    expect(saved.ok()).toBe(true)
+    expect(revalidated.ok()).toBe(true)
   }
 
   async expectToastAfter(
