@@ -1,20 +1,22 @@
-import type { KpiScores as KpiScoresData } from '~/business/admin/dataviz/dataviz.types'
+import type {
+  EventAttendanceDataPoint,
+  KpiScores as KpiScoresData,
+} from '~/business/admin/dataviz/dataviz.types'
 import type { PageSection } from '~/business/cms/page.schema'
 import { StatsSection } from '~/components/pages/page/sections/stats-section'
 import { adminDatavizCopy } from '~/copy/admin/dataviz'
+import { DatavizChart } from './dataviz-chart'
+import { approvalChart, veteranShareChart } from './dataviz-charts'
 
 const kpiCopy = adminDatavizCopy.kpiScores
 
 type StatsContent = Extract<PageSection, { _type: 'statsSection' }>
-type StatNumber = Extract<StatsContent['cards'][number], { _type: 'statNumber' }>
+type StatCard = StatsContent['cards'][number]
+type StatNumber = Extract<StatCard, { _type: 'statNumber' }>
 
 type KpiScoresProps = {
   data: KpiScoresData
-}
-
-function calculatePercentage(value: number, total: number): string {
-  if (total === 0) return '0%'
-  return `${Math.round((value / total) * 100)}%`
+  attendance: Pick<EventAttendanceDataPoint, 'compareceram'>[]
 }
 
 const stat = (
@@ -24,41 +26,44 @@ const stat = (
   unit: StatNumber['unit'] = 'none',
 ): StatNumber => ({ _type: 'statNumber', _key, value, caption, unit })
 
-const group = (_key: string, title: string, cards: StatNumber[]): StatsContent => ({
+const group = (_key: string, title: string, cards: StatCard[]): StatsContent => ({
   _type: 'statsSection',
   _key,
   title,
   cards,
 })
 
-export function KpiScores({ data }: KpiScoresProps) {
-  const veteranPercentage = calculatePercentage(data.total_veterans, data.total_profiles)
-  const approvedPercentage = calculatePercentage(data.total_approved, data.total_profiles)
+function averageAttendance(
+  average: number,
+  attendance: KpiScoresProps['attendance'],
+): StatCard {
+  const caption = kpiCopy.withNote(
+    kpiCopy.engagement.averageAttendance,
+    kpiCopy.engagement.averageAttendanceDescription,
+  )
+  if (attendance.length === 0) return stat('average-attendance', average, caption)
+
+  const attended = attendance.map((event) => event.compareceram)
+  return {
+    _type: 'statRange',
+    _key: 'average-attendance',
+    min: Math.min(...attended),
+    average,
+    max: Math.max(...attended),
+    caption,
+    unit: 'none',
+  }
+}
+
+export function KpiScores({ data, attendance }: KpiScoresProps) {
+  const community = group('community', kpiCopy.community.title, [
+    stat('profiles', data.total_profiles, kpiCopy.community.totalProfiles),
+  ])
 
   const groups = [
-    group('community', kpiCopy.community.title, [
-      stat('profiles', data.total_profiles, kpiCopy.community.totalProfiles),
-      stat(
-        'veterans',
-        data.total_veterans,
-        kpiCopy.withNote(kpiCopy.community.veterans, veteranPercentage),
-      ),
-      stat(
-        'approved',
-        data.total_approved,
-        kpiCopy.withNote(kpiCopy.community.approved, approvedPercentage),
-      ),
-    ]),
     group('engagement', kpiCopy.engagement.title, [
       stat('attendees', data.total_unique_attendees, kpiCopy.engagement.uniqueAttendees),
-      stat(
-        'average-attendance',
-        data.avg_attendance_per_event,
-        kpiCopy.withNote(
-          kpiCopy.engagement.averageAttendance,
-          kpiCopy.engagement.averageAttendanceDescription,
-        ),
-      ),
+      averageAttendance(data.avg_attendance_per_event, attendance),
       stat('three-plus', data.attended_3_plus, kpiCopy.engagement.attendedThreePlus),
       stat('five-plus', data.attended_5_plus, kpiCopy.engagement.attendedFivePlus),
     ]),
@@ -83,6 +88,9 @@ export function KpiScores({ data }: KpiScoresProps) {
 
   return (
     <div>
+      <StatsSection content={community} />
+      <DatavizChart content={veteranShareChart(data)} />
+      <DatavizChart content={approvalChart(data)} />
       {groups.map((content) => (
         <StatsSection key={content._key} content={content} />
       ))}

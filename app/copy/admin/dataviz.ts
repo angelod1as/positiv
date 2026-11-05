@@ -7,7 +7,18 @@ export const adminDatavizCopy = {
       title: "Comunidade",
       totalProfiles: "Total de perfis",
       veterans: "Veteranos",
+      rookies: "Novatos",
+      veteranShare: {
+        title: "Veteranos entre os perfis",
+        description: "Quantos perfis já são veteranos.",
+      },
       approved: "Aprovados",
+      notApproved: "Não aprovados",
+      approval: {
+        title: "Aprovação",
+        description: "Quantos perfis estão aprovados para participar.",
+      },
+      profiles: "Perfis",
     },
     engagement: {
       title: "Engajamento",
@@ -44,7 +55,12 @@ export const adminDatavizCopy = {
     funnel: {
       title: "Funil de Conversão",
       description:
-        "Proporção das candidaturas que finalizaram cadastro, pagaram e compareceram.",
+        "Quantas candidaturas chegaram a cada etapa, somando os eventos do intervalo, com o percentual sobre as candidaturas.",
+    },
+    conversion: {
+      title: "Conversão por Evento",
+      description:
+        "Percentual das candidaturas de cada evento que finalizaram cadastro, pagaram e compareceram.",
     },
     occupancy: {
       title: "Ocupação",

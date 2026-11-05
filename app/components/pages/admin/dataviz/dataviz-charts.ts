@@ -6,6 +6,7 @@ import type {
   EventAttendanceDataPoint,
   EventRevenueDataPoint,
   GrowthDataPoint,
+  KpiScores,
   OccupancyDataPoint,
   RetentionDataPoint,
   SeasonalityDataPoint,
@@ -41,6 +42,12 @@ function formatMonth(monthString: string): string {
 }
 
 const reais = (cents: number) => cents / 100
+
+const share = (value: number, total: number) =>
+  total === 0 ? 0 : Math.round((value / total) * 100)
+
+const withShare = (label: string, value: number, total: number) =>
+  copy.kpiScores.withNote(label, `${share(value, total)}%`)
 
 const community = copy.communitySection
 const events = copy.eventsSection
@@ -222,25 +229,97 @@ export function ticketChart(data: EventRevenueDataPoint[]): ChartContent {
   )
 }
 
+const funnelSteps = [
+  ['inscritos', copy.funnelChart.applications],
+  ['finalizados', copy.funnelChart.finalised],
+  ['pagaram', copy.funnelChart.paid],
+  ['compareceram', copy.funnelChart.attended],
+] as const
+
 export function funnelChart(data: ConversionFunnelDataPoint[]): ChartContent {
+  const totals = funnelSteps.map(([key]) => data.reduce((sum, item) => sum + item[key], 0))
+  const applications = totals[0] ?? 0
+
   return chart(
     'funnel',
     {
       title: events.funnel.title,
       summary: events.funnel.description,
-      chartType: 'bar',
+      chartType: 'horizontalBar',
       unit: 'none',
-      series: [
-        copy.funnelChart.applications,
-        copy.funnelChart.finalised,
-        copy.funnelChart.paid,
-        copy.funnelChart.attended,
-      ],
+      series: [copy.retentionChart.people],
+    },
+    data.length === 0
+      ? []
+      : funnelSteps.map(([, label], index) => ({
+          label: withShare(label, totals[index] ?? 0, applications),
+          values: [totals[index] ?? 0],
+        })),
+  )
+}
+
+export function conversionChart(data: ConversionFunnelDataPoint[]): ChartContent {
+  return chart(
+    'conversion',
+    {
+      title: events.conversion.title,
+      summary: events.conversion.description,
+      chartType: 'line',
+      unit: 'percent',
+      series: [copy.funnelChart.finalised, copy.funnelChart.paid, copy.funnelChart.attended],
     },
     data.map((item) => ({
       label: eventLabel(item),
-      values: [item.inscritos, item.finalizados, item.pagaram, item.compareceram],
+      values: [item.pct_finalizados, item.pct_pagaram, item.pct_compareceram],
     })),
+  )
+}
+
+const profileSplit = (
+  _key: string,
+  text: { title: string; description: string },
+  part: [string, number],
+  rest: string,
+  total: number,
+): ChartContent => {
+  const [label, value] = part
+  const others = Math.max(total - value, 0)
+
+  return chart(
+    _key,
+    {
+      title: text.title,
+      summary: text.description,
+      chartType: 'proportion',
+      unit: 'none',
+      series: [copy.kpiScores.community.profiles],
+    },
+    [
+      { label: withShare(label, value, total), values: [value] },
+      { label: withShare(rest, others, total), values: [others] },
+    ],
+  )
+}
+
+export function veteranShareChart(data: KpiScores): ChartContent {
+  const community = copy.kpiScores.community
+  return profileSplit(
+    'veteran-share',
+    community.veteranShare,
+    [community.veterans, data.total_veterans],
+    community.rookies,
+    data.total_profiles,
+  )
+}
+
+export function approvalChart(data: KpiScores): ChartContent {
+  const community = copy.kpiScores.community
+  return profileSplit(
+    'approval',
+    community.approval,
+    [community.approved, data.total_approved],
+    community.notApproved,
+    data.total_profiles,
   )
 }
 

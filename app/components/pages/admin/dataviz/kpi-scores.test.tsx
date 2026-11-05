@@ -20,6 +20,11 @@ const mockKpiData: KpiScoresData = {
   avg_no_show_rate: 5,
 }
 
+const attendance = [{ compareceram: 30 }, { compareceram: 72 }, { compareceram: 51 }]
+
+const renderScores = (data: KpiScoresData = mockKpiData) =>
+  render(<KpiScores data={data} attendance={attendance} />)
+
 const cardFor = (caption: string) => {
   const card = screen.getByText(caption).closest('li')
   if (!card) throw new Error(`No card captioned ${caption}`)
@@ -34,24 +39,34 @@ const groupFor = (title: string) => {
 
 describe('KpiScores', () => {
   it('groups the cards under one Stats Section per area', () => {
-    render(<KpiScores data={mockKpiData} />)
+    renderScores()
 
-    expect(groupFor('Comunidade').getAllByRole('listitem')).toHaveLength(3)
+    expect(groupFor('Comunidade').getAllByRole('listitem')).toHaveLength(1)
     expect(groupFor('Engajamento').getAllByRole('listitem')).toHaveLength(4)
     expect(groupFor('Receita').getAllByRole('listitem')).toHaveLength(2)
     expect(groupFor('Saúde').getAllByRole('listitem')).toHaveLength(2)
   })
 
-  it('shows the community counts, with each share of all profiles', () => {
-    render(<KpiScores data={mockKpiData} />)
+  it('shows the total of profiles', () => {
+    renderScores()
 
     expect(cardFor('Total de perfis').getByText('945')).toBeInTheDocument()
-    expect(cardFor('Veteranos · 22%').getByText('207')).toBeInTheDocument()
-    expect(cardFor('Aprovados · 30%').getByText('280')).toBeInTheDocument()
+  })
+
+  it('splits the profiles into veterans and rookies, and approved and not', () => {
+    renderScores()
+
+    expect(groupFor('Veteranos entre os perfis').getByText('Veteranos · 22%')).toBeInTheDocument()
+    expect(groupFor('Veteranos entre os perfis').getByText('207')).toBeInTheDocument()
+    expect(groupFor('Veteranos entre os perfis').getByText('Novatos · 78%')).toBeInTheDocument()
+    expect(groupFor('Veteranos entre os perfis').getByText('738')).toBeInTheDocument()
+    expect(groupFor('Aprovação').getByText('Aprovados · 30%')).toBeInTheDocument()
+    expect(groupFor('Aprovação').getByText('Não aprovados · 70%')).toBeInTheDocument()
+    expect(groupFor('Aprovação').getByText('665')).toBeInTheDocument()
   })
 
   it('shows the engagement counts', () => {
-    render(<KpiScores data={mockKpiData} />)
+    renderScores()
 
     expect(cardFor('Participantes únicos').getByText('188')).toBeInTheDocument()
     expect(cardFor('Média de presença · Por evento').getByText('51')).toBeInTheDocument()
@@ -59,15 +74,31 @@ describe('KpiScores', () => {
     expect(cardFor('Compareceram 5+ vezes').getByText('11')).toBeInTheDocument()
   })
 
+  it('shows the average attendance between the smallest and the largest event', () => {
+    renderScores()
+
+    const average = cardFor('Média de presença · Por evento')
+    expect(average.getByText('51')).toBeInTheDocument()
+    expect(average.getByText('30')).toBeInTheDocument()
+    expect(average.getByText('72')).toBeInTheDocument()
+  })
+
+  it('shows the average alone when no event has been held', () => {
+    render(<KpiScores data={mockKpiData} attendance={[]} />)
+
+    expect(cardFor('Média de presença · Por evento').getByText('51')).toBeInTheDocument()
+    expect(screen.queryByText('mín.')).toBeNull()
+  })
+
   it('writes the revenue in reais, keeping the cents when there are any', () => {
-    render(<KpiScores data={mockKpiData} />)
+    renderScores()
 
     expect(cardFor('Receita total').getByText('R$ 74.955,50')).toBeInTheDocument()
     expect(cardFor('Média por evento').getByText('R$ 10.708')).toBeInTheDocument()
   })
 
   it('shows the health figures', () => {
-    render(<KpiScores data={mockKpiData} />)
+    renderScores()
 
     expect(cardFor('Taxa média de no-show').getByText('5%')).toBeInTheDocument()
     expect(
@@ -76,8 +107,8 @@ describe('KpiScores', () => {
   })
 
   it('counts no share when there are no profiles yet', () => {
-    render(<KpiScores data={{ ...mockKpiData, total_profiles: 0 }} />)
+    renderScores({ ...mockKpiData, total_profiles: 0 })
 
-    expect(cardFor('Veteranos · 0%').getByText('207')).toBeInTheDocument()
+    expect(groupFor('Veteranos entre os perfis').getByText('Veteranos · 0%')).toBeInTheDocument()
   })
 })

@@ -136,6 +136,7 @@ describe('EventsSection', () => {
       'Faturamento por Evento',
       'Preço do ingresso',
       'Funil de Conversão',
+      'Conversão por Evento',
       'Ocupação',
       'Veteranos e Novatos',
       'Sazonalidade',
@@ -145,7 +146,7 @@ describe('EventsSection', () => {
   it('opens every event in range as a table row', async () => {
     renderSection(3)
 
-    const funnel = chartTitled('Funil de Conversão')
+    const funnel = chartTitled('Conversão por Evento')
     await userEvent.click(funnel.getByRole('button', { name: 'Ver dados' }))
 
     expect(funnel.getAllByRole('rowheader').map((cell) => cell.textContent)).toEqual([

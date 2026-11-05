@@ -13,6 +13,7 @@ import { useBrushState } from "~/lib/hooks/use-brush-state"
 import { DatavizChart } from "./dataviz-chart"
 import {
   attendanceChart,
+  conversionChart,
   funnelChart,
   occupancyChart,
   revenueChart,
@@ -60,6 +61,7 @@ export function EventsSection({
       revenueChart(inRange(revenue)),
       ticketChart(inRange(revenue)),
       funnelChart(inRange(funnel)),
+      conversionChart(inRange(funnel)),
       occupancyChart(inRange(occupancy)),
       veteranRookieChart(inRange(veteranRookie)),
       seasonalityChart(seasonality),

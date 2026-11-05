@@ -101,7 +101,7 @@ export default function NumerosPage() {
         </div>
       </header>
 
-      <KpiScores data={data.kpiScores} />
+      <KpiScores data={data.kpiScores} attendance={data.eventAttendance} />
 
       <EventsSection
         attendance={data.eventAttendance}

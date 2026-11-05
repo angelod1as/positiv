@@ -9,6 +9,7 @@ import type {
 import {
   ageChart,
   attendanceChart,
+  conversionChart,
   cumulativeGrowthChart,
   demographicChart,
   funnelChart,
@@ -192,22 +193,44 @@ describe('event charts', () => {
     ])
   })
 
-  it('draws each funnel step as its own bar', () => {
-    const funnel: ConversionFunnelDataPoint = {
-      ...event,
-      inscritos: 100,
-      finalizados: 80,
-      pagaram: 60,
-      compareceram: 50,
-      pct_finalizados: 80,
-      pct_pagaram: 60,
-      pct_compareceram: 50,
-    }
-    const content = funnelChart([funnel])
+  const funnel: ConversionFunnelDataPoint = {
+    ...event,
+    inscritos: 100,
+    finalizados: 80,
+    pagaram: 60,
+    compareceram: 50,
+    pct_finalizados: 80,
+    pct_pagaram: 60,
+    pct_compareceram: 50,
+  }
 
-    expect(content.chartType).toBe('bar')
-    expect(content.series).toEqual(['Candidaturas', 'Finalizados', 'Pagaram', 'Compareceram'])
-    expect(content.rows[0]?.values).toEqual([100, 80, 60, 50])
+  it('narrows the funnel step by step, summed over every event drawn', () => {
+    const content = funnelChart([
+      funnel,
+      { ...funnel, inscritos: 300, finalizados: 200, pagaram: 140, compareceram: 130 },
+    ])
+
+    expect(content.chartType).toBe('horizontalBar')
+    expect(rowsOf(content)).toEqual([
+      ['Candidaturas · 100%', 400],
+      ['Finalizados · 70%', 280],
+      ['Pagaram · 50%', 200],
+      ['Compareceram · 45%', 180],
+    ])
+  })
+
+  it('counts no share when the funnel is empty', () => {
+    expect(funnelChart([{ ...funnel, inscritos: 0 }]).rows[1]?.label).toBe('Finalizados · 0%')
+    expect(funnelChart([]).rows).toEqual([])
+  })
+
+  it('draws the conversion of each step at each event, in percent', () => {
+    const content = conversionChart([funnel])
+
+    expect(content.chartType).toBe('line')
+    expect(content.unit).toBe('percent')
+    expect(content.series).toEqual(['Finalizados', 'Pagaram', 'Compareceram'])
+    expect(content.rows[0]?.values).toEqual([80, 60, 50])
   })
 
   it('draws the occupancy in percent, with the average over every spot', () => {
