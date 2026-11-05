@@ -102,79 +102,13 @@ export class UserManagementPage extends BasePage {
     // Use exact: true to avoid matching partial names (e.g., "Compareceu" vs "Não compareceu")
     const option = this.page.getByRole("option", { name: value, exact: true })
     await option.waitFor({ state: "visible", timeout: 5000 })
+    const saved = this.page.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === "/api/admin/event-participant" &&
+        response.request().method() === "POST",
+    )
     await option.click()
-
-    // Wait for edit mode to close and auto-save to trigger
-    await this.page.waitForLoadState("networkidle")
-  }
-
-  async editCheckboxCell(
-    row: Locator,
-    fieldName: string,
-    checked: boolean,
-  ): Promise<void> {
-    // Get the row-index from the row element
-    const rowIndex = await row.getAttribute("row-index")
-    if (!rowIndex) {
-      throw new Error("Could not get row-index attribute from row")
-    }
-
-    // Find the cell with the given field in the same row (using row-index)
-    const cell = this.participantsTable
-      .locator(`.ag-row[row-index="${rowIndex}"] .ag-cell[col-id="${fieldName}"]`)
-      .first()
-
-    // AG Grid checkbox renderer uses this wrapper structure
-    const checkbox = cell.locator(".ag-checkbox-input").first()
-
-    const isChecked = await checkbox.isChecked()
-    if (isChecked !== checked) {
-      await checkbox.click()
-      await this.page.waitForLoadState("networkidle")
-    }
-  }
-
-  async editNumberCell(
-    row: Locator,
-    fieldName: string,
-    value: string,
-  ): Promise<void> {
-    // Get the row-index from the row element
-    const rowIndex = await row.getAttribute("row-index")
-    if (!rowIndex) {
-      throw new Error("Could not get row-index attribute from row")
-    }
-
-    // Find the cell with the given field in the same row (using row-index)
-    const cell = this.participantsTable
-      .locator(`.ag-row[row-index="${rowIndex}"] .ag-cell[col-id="${fieldName}"]`)
-      .first()
-
-    // Scroll cell into view if needed
-    await cell.scrollIntoViewIfNeeded()
-
-    // Double-click to enter edit mode in AG Grid
-    await cell.dblclick()
-
-    // Wait for AG Grid number editor input to appear (in cell or popup)
-    const input = cell
-      .locator("input")
-      .first()
-      .or(this.page.locator(".ag-popup-editor input").first())
-    await input.waitFor({ state: "visible", timeout: 5000 })
-    await input.clear()
-    await input.fill(value)
-
-    // Press Tab to trigger save (more reliable than Enter for number inputs)
-    await this.page.keyboard.press("Tab")
-
-    // Wait for the auto-save to complete by waiting for network idle with timeout
-    try {
-      await this.page.waitForLoadState("networkidle", { timeout: 3000 })
-    } catch {
-      // Fallback: wait for any pending save requests
-      await this.page.waitForTimeout(1500)
-    }
+    expect((await saved).ok()).toBe(true)
   }
 
   async verifyCellContent(
