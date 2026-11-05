@@ -37,6 +37,7 @@ ADRs are immutable once accepted - only their status can change (deprecated or s
 |------|-------|--------|
 | [2025-01-27](./20250127-use-tailwind-css-v4.md) | Use Tailwind CSS v4 | Accepted |
 | [2025-01-28](./20250128-use-atomic-design-for-components.md) | Use Atomic Design for Components | Accepted |
+| [2026-10-08](./20261008-the-dual-price-is-shown-stacked-pix-first.md) | The dual price is shown stacked, Pix first | Accepted |
 
 ### Patterns & Libraries
 
