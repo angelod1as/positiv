@@ -37,6 +37,7 @@ ADRs are immutable once accepted - only their status can change (deprecated or s
 |------|-------|--------|
 | [2025-01-27](./20250127-use-tailwind-css-v4.md) | Use Tailwind CSS v4 | Accepted |
 | [2025-01-28](./20250128-use-atomic-design-for-components.md) | Use Atomic Design for Components | Accepted |
+| [2026-10-08](./20261008-the-dual-price-is-shown-stacked-pix-first.md) | The dual price is shown stacked, Pix first | Accepted |
 
 ### Patterns & Libraries
 
@@ -61,6 +62,7 @@ ADRs are immutable once accepted - only their status can change (deprecated or s
 | Date | Title | Status |
 |------|-------|--------|
 | [2026-09-01](./20260901-a-payment-can-be-zero.md) | A payment can be zero | Accepted |
+| [2026-09-29](./20260929-prices-are-flat-and-asaas-owns-the-money.md) | Prices are flat and Asaas owns the money | Accepted |
 | [2026-09-30](./20260930-payments-go-through-a-provider-connector.md) | Payments go through a provider connector | Accepted |
 
 ### Public Site
