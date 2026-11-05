@@ -208,8 +208,9 @@ test.describe("Admin User Management", () => {
     await userManagement.navigate(testEventIdDetail)
     await userManagement.waitForTableToLoad()
 
-    // Get the first participant row - need to get name from pinned left section
-    const firstRow = await userManagement.tableRows.first()
+    // Always Participant 1: the row order changes between runs, and this one
+    // starts with a flag and notes, so it takes every step below
+    const firstRow = await userManagement.findRowByParticipantName("Participant 1")
     const rowIndex = await firstRow.getAttribute("row-index")
     // social_name is in the left pinned section, so we need to look there
     const participantName =
@@ -250,12 +251,7 @@ test.describe("Admin User Management", () => {
     await expect(page.getByText("Notas (Participante):")).toBeVisible()
 
     // Verify the referred field value is displayed
-    // We know the first participant (index 0) has 'João Test - indicação formal'
-    // and the second (index 1) has 'ninguém'
-    const participantIndex = participantName.includes("Participant 1") ? 0 : 1
-    const expectedReferredValue =
-      participantIndex === 0 ? "João Test - indicação formal" : "ninguém"
-    await expect(page.getByText(expectedReferredValue)).toBeVisible()
+    await expect(page.getByText("João Test - indicação formal")).toBeVisible()
 
     // Edit a field in detail view (use display name for Radix UI Select).
     // Neither fixture participant starts with this status, so it is a real save
@@ -284,18 +280,16 @@ test.describe("Admin User Management", () => {
       expect(openedUrl).toContain("contacts.google.com")
     }
 
-    // Both fixture participants start flagged, only Participant 1 with notes.
-    // Each save waits for the reloaded data on screen: the next edit reads it
+    // Participant 1 starts flagged, with notes. Each save waits for the
+    // reloaded data on screen: the next edit reads it
     await userManagement.saveDetailField(() =>
       userManagement.editDetailField("flag", "Sem flag"),
     )
     await expect(page.locator("#flag")).toContainText("Sem flag")
-    if (participantIndex === 0) {
-      await userManagement.saveDetailField(async () => {
-        await userManagement.editDetailField("flag_notes", "")
-        await page.locator("#flag_notes").blur()
-      })
-    }
+    await userManagement.saveDetailField(async () => {
+      await userManagement.editDetailField("flag_notes", "")
+      await page.locator("#flag_notes").blur()
+    })
     await expect(page.locator("#flag_notes")).toHaveValue("")
 
     // A flag needs notes: without them nothing is saved
