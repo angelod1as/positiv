@@ -27,6 +27,23 @@ payments are on is the admin switch (section 8).
 | `ASAAS_API_KEY` | API key, shown once by Asaas when generated | differs |
 | `ASAAS_WEBHOOK_TOKEN` | At least 32 characters; Asaas echoes it in `asaas-access-token` | use a fresh one per environment |
 
+An Asaas API key starts with a literal `$`, which every shell and env loader
+reads as a variable and silently expands to nothing. In Coolify, set
+`ASAAS_API_KEY` to "Literal (keep $ characters as-is)"; quotes do not help
+there, they get stripped. In a local `.env`, wrap the value in single quotes.
+The symptom of an emptied key is the admin saying Asaas is not configured while
+all three variables look set.
+
+### Charges are created but the invoice offers no payment method
+
+The invoice page says "Não há formas de pagamento disponíveis no momento". The
+production account has not been approved yet: until Asaas finishes its
+activation review, the API creates charges but the invoice offers nothing to
+pay with, and a registered Pix key does not change that. It is not a code or
+environment problem. Finish the pending documents and the "Informações" section
+in the Asaas dashboard (an unregistered site domain also makes
+`POST /payments` fail), then wait for approval, up to two business days.
+
 ## 2. Registering the webhook
 
 ```bash
@@ -85,6 +102,13 @@ SELECT event_type, provider_charge_id, received_at, processed_at, error
 A row with `error` was answered 500, so Asaas will retry it. A row with
 `processed_at` and no error was applied, or was about a charge that is not ours,
 such as one created by hand in the Asaas dashboard.
+
+`provider_plan_id`, on `payments` and on `payment_webhook_events`, holds the
+Asaas installment id of a card plan, not a subscription. The connector fills it
+from `payment.installmentId`, and the webhook filters on it by equality to find
+every installment of a plan and its refunds. Few rows carry it while card
+installments are rare, so a zero-scan reading on its partial indexes is no
+reason to drop them.
 
 ## 5. The payment email outbox
 
