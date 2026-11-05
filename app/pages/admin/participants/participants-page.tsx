@@ -16,6 +16,7 @@ import { createMetaArray } from "~/lib/helpers/meta"
 import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/participants-page"
+import { readFormData } from "~/lib/helpers/read-form-data.server"
 
 const {
   admin: { ADMIN_DASHBOARD },
@@ -43,7 +44,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 export async function action({ request, params }: ActionFunctionArgs) {
   const { currentProfile } = await getAdminContext(request, params)
 
-  const formData = await request.formData()
+  const formData = await readFormData(request)
   const intent = formData.get("intent")
 
   if (intent === "update-profile-admin-notes") {

@@ -22,6 +22,7 @@ import { createMetaArray } from "~/lib/helpers/meta"
 import { zod } from "~/lib/helpers/zod"
 import { MAX_REGISTRATION_LIMIT } from "~/lib/constants/constants"
 import type { Route } from "./+types/settings-page"
+import { readFormData } from "~/lib/helpers/read-form-data.server"
 
 export function meta({}: Route.MetaArgs) {
   return createMetaArray(metaCopy.adminSettings.title)
@@ -30,7 +31,7 @@ export function meta({}: Route.MetaArgs) {
 export async function action({ request, params }: Route.ActionArgs) {
   const { currentProfile } = await getAdminContext(request, params)
 
-  const formData = await request.formData()
+  const formData = await readFormData(request)
   const intent = formData.get("intent")
 
   if (intent === "set-online-payments") {

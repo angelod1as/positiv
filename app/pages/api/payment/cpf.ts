@@ -3,6 +3,7 @@ import { getUserContext } from "~/business/auth/auth.server"
 import { savePaymentCpf } from "~/business/payment/payment-cpf.server"
 import { errorsCopy } from "~/copy/errors"
 import { paymentsCopy } from "~/copy/payments"
+import { readFormData } from "~/lib/helpers/read-form-data.server"
 
 /**
  * A route of its own rather than the page's action: the page's action creates
@@ -19,7 +20,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
     )
   }
 
-  const formData = await request.formData()
+  const formData = await readFormData(request)
   const result = await savePaymentCpf({
     profileId: currentProfile.id,
     cpf: String(formData.get("cpf") ?? ""),

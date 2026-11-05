@@ -29,6 +29,7 @@ import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event-participant"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
 import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
+import { readFormData } from "~/lib/helpers/read-form-data.server"
 
 const {
   admin: {
@@ -53,7 +54,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   const context = await getAdminContext(request, params)
 
-  const formData = await request.formData()
+  const formData = await readFormData(request)
   const intent = formData.get("intent")
 
   if (intent === "update-profile-approval-status") {

@@ -22,6 +22,7 @@ import type { Event } from "~types/database/entities.types"
 import { getNextEvents } from "../page/fetch/get-next-events"
 import type { Route } from "./+types/dashboard-page"
 import { splitEvents } from "./utils/split-events"
+import { readFormData } from "~/lib/helpers/read-form-data.server"
 
 export function meta({}: Route.MetaArgs) {
   return createMetaArray(metaCopy.dashboard.title)
@@ -79,7 +80,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 }
 
 export async function action({ request, params }: Route.ClientActionArgs) {
-  const formData = await request.clone().formData()
+  const formData = await readFormData(request.clone())
   const fetchId = formData.get("fetchId")?.toString()
   const eventId = formData.get("eventId")?.toString()
 

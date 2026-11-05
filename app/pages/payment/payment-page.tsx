@@ -32,6 +32,7 @@ import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/payment-page"
 import { loadPaymentPage, type PaymentPageData } from "./payment-page.server"
+import { readFormData } from "~/lib/helpers/read-form-data.server"
 
 const { page, errors } = paymentsCopy
 
@@ -65,7 +66,7 @@ export async function action({ params, request }: Route.ActionArgs) {
     throw await redirectWithError(paths.dash.DASHBOARD, page.notYours)
   }
 
-  const formData = await request.formData()
+  const formData = await readFormData(request)
   const result = await pickOption({
     paymentId: params.paymentId,
     profileId: currentProfile.id,
