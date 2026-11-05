@@ -156,6 +156,29 @@ describe('EventsSection', () => {
     ])
   })
 
+  it('keeps each chart to the selected events, even when one leaves an event out', async () => {
+    localStorage.setItem('dataviz-brush-events', JSON.stringify({ startIndex: 0, endIndex: 1 }))
+    const withoutTheSecond = makeVeteranRookie(3).filter((_, index) => index !== 1)
+    render(
+      <EventsSection
+        attendance={makeAttendance(3)}
+        revenue={makeRevenue(3)}
+        funnel={makeFunnel(3)}
+        occupancy={makeOccupancy(3)}
+        veteranRookie={withoutTheSecond}
+        seasonality={seasonality}
+      />
+    )
+    localStorage.removeItem('dataviz-brush-events')
+
+    const veterans = chartTitled('Veteranes e Novates')
+    await userEvent.click(veterans.getByRole('button', { name: 'Ver dados' }))
+
+    expect(veterans.getAllByRole('rowheader').map((cell) => cell.textContent)).toEqual([
+      '🎉 Evento 1 · 15/01/24',
+    ])
+  })
+
   it('says so when there are no events to draw', () => {
     renderSection(0)
 

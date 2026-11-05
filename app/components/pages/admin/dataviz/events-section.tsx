@@ -55,7 +55,10 @@ export function EventsSection({
   )
 
   const charts = useMemo(() => {
-    const inRange = <T,>(data: T[]) => data.slice(startIndex, endIndex + 1)
+    const from = attendance[startIndex]?.date
+    const to = attendance[endIndex]?.date
+    const inRange = <T extends { date: string }>(data: T[]) =>
+      from && to ? data.filter((item) => item.date >= from && item.date <= to) : []
     return [
       attendanceChart(inRange(attendance)),
       revenueChart(inRange(revenue)),
