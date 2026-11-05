@@ -59,6 +59,7 @@ describe("loadWhatsappPaymentMessage", () => {
 
 const activeCharge = {
   id: "abc",
+  access_token: "tok-abc",
   due_at: "2026-09-01T12:00:00Z",
   base_amount: 25000,
 } as PaymentRow
@@ -99,7 +100,7 @@ describe("buildWhatsappPaymentMessage", () => {
     expect(message).toContain("Ana")
     expect(message).toContain("Festa de Setembro")
     expect(message).toContain(
-      "https://www.positivparty.com/pagamento/abc",
+      "https://www.positivparty.com/pagamento/t/tok-abc",
     )
     expect(message).toContain("01/09/2026")
     expect(message).toContain(formas)
@@ -113,7 +114,7 @@ describe("buildWhatsappPaymentMessage", () => {
     })
 
     expect(message).toBe(
-      "https://www.positivparty.com/pagamento/abc vence 01/09/2026",
+      "https://www.positivparty.com/pagamento/t/tok-abc vence 01/09/2026",
     )
   })
 
@@ -124,7 +125,7 @@ describe("buildWhatsappPaymentMessage", () => {
       ...context,
     })
 
-    expect(message).toContain("https://www.positivparty.com/pagamento/abc")
+    expect(message).toContain("https://www.positivparty.com/pagamento/t/tok-abc")
     expect(message).not.toContain("{{boleto}}")
   })
 })

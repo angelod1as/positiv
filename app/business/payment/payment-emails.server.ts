@@ -61,6 +61,7 @@ export async function sendPaymentLinkEmail({
     .innerJoin("profiles as pr", "pr.id", "ep.profile_id")
     .select([
       "p.id",
+      "p.access_token",
       "p.base_amount",
       "p.amount",
       "p.method",
@@ -112,7 +113,7 @@ export async function sendPaymentLinkEmail({
       eventTitle: payment.event_title ?? "",
       eventEmoji: payment.event_emoji,
       paymentUrl: emailLink(
-        `${appOrigin(null)}${paths.payment.PAYMENT(payment.id)}`,
+        `${appOrigin(null)}${paths.payment.PAYMENT_TOKEN(payment.access_token)}`,
         { medium: "transactional", campaign: "payment-link" },
       ),
       dueAt: payment.due_at,

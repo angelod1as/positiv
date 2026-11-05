@@ -125,7 +125,7 @@ describe("view event page loader", () => {
     } as unknown as Awaited<ReturnType<typeof getProfilesWithExtraDataById>>)
     vi.mocked(getPaymentsForEvent).mockResolvedValue({
       "ep-1": [
-        { id: "pay-1", due_at: "2026-09-01T12:00:00Z", base_amount: 25000 },
+        { id: "pay-1", access_token: "tok-1", due_at: "2026-09-01T12:00:00Z", base_amount: 25000 },
       ],
     } as unknown as Awaited<ReturnType<typeof getPaymentsForEvent>>)
 
@@ -135,7 +135,7 @@ describe("view event page loader", () => {
 
     // The active charge's message, named by social_name over full_name.
     expect(whatsappMessageByParticipant["ep-1"]).toContain("Ana Social")
-    expect(whatsappMessageByParticipant["ep-1"]).toContain("/pagamento/pay-1")
+    expect(whatsappMessageByParticipant["ep-1"]).toContain("/pagamento/t/tok-1")
     // No active charge: no message to copy.
     expect(whatsappMessageByParticipant["ep-2"]).toBeNull()
   })

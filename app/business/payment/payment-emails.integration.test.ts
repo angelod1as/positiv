@@ -116,7 +116,8 @@ describe("sendPaymentLinkEmail", () => {
     const [options] = sendEmail.mock.calls[0]
     expect(options.to).toContain("-link@example.com")
     expect(options.subject).toContain("Link Event")
-    expect(options.html).toContain(`/pagamento/${payment.id}`)
+    expect(options.html).toContain(`/pagamento/t/${payment.access_token}`)
+    expect(options.html).not.toContain(`/pagamento/${payment.id}`)
     expect(options.html).toContain("No Pix")
     expect(options.text).toContain("No Pix")
   })
@@ -128,7 +129,7 @@ describe("sendPaymentLinkEmail", () => {
 
     const [options] = sendEmail.mock.calls[0]
     expect(options.html).toContain(
-      `/pagamento/${payment.id}?utm_source=email&amp;utm_medium=transactional&amp;utm_campaign=payment-link"`,
+      `/pagamento/t/${payment.access_token}?utm_source=email&amp;utm_medium=transactional&amp;utm_campaign=payment-link"`,
     )
   })
 
