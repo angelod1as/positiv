@@ -56,12 +56,12 @@ describe('KpiScores', () => {
   it('splits the profiles into veterans and rookies, and approved and not', () => {
     renderScores()
 
-    expect(groupFor('Veteranos entre os perfis').getByText('Veteranos · 22%')).toBeInTheDocument()
-    expect(groupFor('Veteranos entre os perfis').getByText('207')).toBeInTheDocument()
-    expect(groupFor('Veteranos entre os perfis').getByText('Novatos · 78%')).toBeInTheDocument()
-    expect(groupFor('Veteranos entre os perfis').getByText('738')).toBeInTheDocument()
-    expect(groupFor('Aprovação').getByText('Aprovados · 30%')).toBeInTheDocument()
-    expect(groupFor('Aprovação').getByText('Não aprovados · 70%')).toBeInTheDocument()
+    expect(groupFor('Veteranes entre os perfis').getByText('Veteranes · 22%')).toBeInTheDocument()
+    expect(groupFor('Veteranes entre os perfis').getByText('207')).toBeInTheDocument()
+    expect(groupFor('Veteranes entre os perfis').getByText('Novates · 78%')).toBeInTheDocument()
+    expect(groupFor('Veteranes entre os perfis').getByText('738')).toBeInTheDocument()
+    expect(groupFor('Aprovação').getByText('Aprovades · 30%')).toBeInTheDocument()
+    expect(groupFor('Aprovação').getByText('Não aprovades · 70%')).toBeInTheDocument()
     expect(groupFor('Aprovação').getByText('665')).toBeInTheDocument()
   })
 
@@ -109,6 +109,6 @@ describe('KpiScores', () => {
   it('counts no share when there are no profiles yet', () => {
     renderScores({ ...mockKpiData, total_profiles: 0 })
 
-    expect(groupFor('Veteranos entre os perfis').getByText('Veteranos · 0%')).toBeInTheDocument()
+    expect(groupFor('Veteranes entre os perfis').getByText('Veteranes · 0%')).toBeInTheDocument()
   })
 })

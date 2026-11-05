@@ -16,9 +16,6 @@ import type { ChartContent } from '~/components/pages/page/sections/chart-sectio
 import { adminDatavizCopy as copy } from '~/copy/admin/dataviz'
 import { buildEventLabel, groupSmallCategories, sortByAgeRange } from '~/lib/helpers/chart-utils'
 
-// The Números page draws its charts with the Page's Chart Section, so each
-// one is built here from the database figures in the shape Sanity would send.
-
 type Row = ChartContent['rows'][number]
 type Fields = Pick<ChartContent, 'title' | 'summary' | 'chartType' | 'unit' | 'series'>
 
@@ -32,7 +29,7 @@ const chart = (_key: string, fields: Fields, rows: Omit<Row, '_key'>[]): ChartCo
 const withNote = (text: string, note: string) => `${text} ${note}.`
 
 const eventLabel = (event: { emoji: string; title: string; date: string }) =>
-  buildEventLabel(event).replace('\n', ' · ')
+  buildEventLabel(event).replaceAll('\n', ' · ')
 
 const MIGRATION_MONTH = '2025-07'
 
@@ -109,7 +106,7 @@ export function retentionChart(data: RetentionDataPoint[]): ChartContent {
       ? [
           ...fewer,
           {
-            label: '7+',
+            label: copy.retentionChart.sevenPlus,
             values: [sevenAndUp.reduce((sum, point) => sum + point.num_people, 0)],
           },
         ]

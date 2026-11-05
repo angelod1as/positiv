@@ -96,6 +96,10 @@ describe('retentionChart', () => {
       'Quantas pessoas participaram de N ou mais eventos. Total: 135 pessoas únicas.',
     )
   })
+
+  it('leaves the 7+ bar out when nobody came that often', () => {
+    expect(rowsOf(retentionChart([{ events_attended: 1, num_people: 10 }]))).toEqual([['1', 10]])
+  })
 })
 
 describe('growth charts', () => {
@@ -247,12 +251,18 @@ describe('event charts', () => {
     )
   })
 
+  it('averages no occupancy when no event had spots', () => {
+    expect(
+      occupancyChart([{ ...event, compareceram: 0, total_spots: 0, occupancy_pct: 0 }]).summary,
+    ).toBe('Percentual de ocupação das vagas em cada evento. Média: 0%.')
+  })
+
   it('draws veterans beside rookies at each event', () => {
     const veteranRookie: VeteranRookieDataPoint = { ...event, veterans: 30, rookies: 20 }
     const content = veteranRookieChart([veteranRookie])
 
     expect(content.chartType).toBe('bar')
-    expect(content.series).toEqual(['Veteranos', 'Novatos'])
+    expect(content.series).toEqual(['Veteranes', 'Novates'])
     expect(content.rows[0]?.values).toEqual([30, 20])
   })
 })

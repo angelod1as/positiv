@@ -6,17 +6,17 @@ export const adminDatavizCopy = {
     community: {
       title: "Comunidade",
       totalProfiles: "Total de perfis",
-      veterans: "Veteranos",
-      rookies: "Novatos",
+      veterans: "Veteranes",
+      rookies: "Novates",
       veteranShare: {
-        title: "Veteranos entre os perfis",
-        description: "Quantos perfis já são veteranos.",
+        title: "Veteranes entre os perfis",
+        description: "Quantas pessoas cadastradas já são veteranes.",
       },
-      approved: "Aprovados",
-      notApproved: "Não aprovados",
+      approved: "Aprovades",
+      notApproved: "Não aprovades",
       approval: {
         title: "Aprovação",
-        description: "Quantos perfis estão aprovados para participar.",
+        description: "Quantas pessoas cadastradas estão aprovades para participar.",
       },
       profiles: "Perfis",
     },
@@ -67,7 +67,7 @@ export const adminDatavizCopy = {
       description: "Percentual de ocupação das vagas em cada evento.",
     },
     veteranRookie: {
-      title: "Veteranos e Novatos",
+      title: "Veteranes e Novates",
       description: "Quantas pessoas veteranas e novatas compareceram a cada evento.",
     },
     seasonality: {
@@ -133,6 +133,7 @@ export const adminDatavizCopy = {
   },
   retentionChart: {
     people: "Pessoas",
+    sevenPlus: "7+",
     total: (total: number) => `Total: ${total} pessoas únicas`,
   },
   attendanceChart: {
@@ -168,7 +169,7 @@ export const adminDatavizCopy = {
     attended: "Compareceram",
   },
   veteranRookieChart: {
-    veterans: "Veteranos",
-    rookies: "Novatos",
+    veterans: "Veteranes",
+    rookies: "Novates",
   },
 } as const

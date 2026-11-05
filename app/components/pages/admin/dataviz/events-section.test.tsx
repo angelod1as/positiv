@@ -138,7 +138,7 @@ describe('EventsSection', () => {
       'Funil de Conversão',
       'Conversão por Evento',
       'Ocupação',
-      'Veteranos e Novatos',
+      'Veteranes e Novates',
       'Sazonalidade',
     ])
   })

@@ -5,7 +5,6 @@ type DatavizHeadingProps = {
   children?: ReactNode
 }
 
-// Laid out like a Rich Text section's title, so the page reads as a Page.
 export function DatavizHeading({ title, children }: DatavizHeadingProps) {
   return (
     <section className="w-full px-4 py-8 md:px-6">
