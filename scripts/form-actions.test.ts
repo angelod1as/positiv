@@ -9,8 +9,8 @@ import { describe, expect, it } from "vitest"
 // of our own forms, so it keeps calling formData() directly.
 const READER = "app/lib/helpers/read-form-data.server.ts"
 const DIRECT_READ = /\.formData\(\)|\binputFromForm\(/
-const EXPORTED_FUNCTION =
-  /^export (?:async )?function (\w+)|^export const (\w+)/
+const TOP_LEVEL_DECLARATION =
+  /^(?:export )?(?:async )?function (\w+)|^(?:export )?const (\w+)/
 
 function sourceFiles() {
   return execFileSync("git", ["ls-files", "app/*.ts", "app/*.tsx"], {
@@ -27,8 +27,8 @@ function directReadsOutsideClientActions(file: string) {
   return readFileSync(file, "utf8")
     .split("\n")
     .flatMap((line, index) => {
-      const exported = EXPORTED_FUNCTION.exec(line)
-      if (exported) enclosing = exported[1] ?? exported[2]
+      const declared = TOP_LEVEL_DECLARATION.exec(line)
+      if (declared) enclosing = declared[1] ?? declared[2]
       if (!DIRECT_READ.test(line) || enclosing === "clientAction") return []
       return [`${file}:${index + 1} (${enclosing ?? "module"})`]
     })
