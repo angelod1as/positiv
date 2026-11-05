@@ -27,7 +27,11 @@ export function headers({}: Route.HeadersArgs) {
 export async function loader({ params }: Route.LoaderArgs) {
   const data = await loadPaymentThanksByToken({ token: params.token })
 
-  return { ...data, betaNotice: await isOnlinePaymentsEnabled() }
+  return {
+    ...data,
+    betaNotice: await isOnlinePaymentsEnabled(),
+    viaToken: true,
+  }
 }
 
 export default PaymentThanksPage

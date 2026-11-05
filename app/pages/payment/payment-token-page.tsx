@@ -41,11 +41,13 @@ export function headers({}: Route.HeadersArgs) {
  * so a signed-out payer, or somebody else signed in, can still pay the bill.
  */
 export async function loader({ params }: Route.LoaderArgs) {
-  return loadPaymentPageByToken({
+  const data = await loadPaymentPageByToken({
     token: params.token,
     onlinePaymentsEnabled: await isOnlinePaymentsEnabled(),
     cardPaymentsEnabled: await isCardPaymentsEnabled(),
   })
+
+  return { ...data, viaToken: true }
 }
 
 export async function action({ params, request }: Route.ActionArgs) {

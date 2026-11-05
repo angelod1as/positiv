@@ -69,8 +69,7 @@ describe("payment token page", () => {
     vi.mocked(isOnlinePaymentsEnabled).mockResolvedValue(true)
     vi.mocked(isCardPaymentsEnabled).mockResolvedValue(false)
 
-    await load()
-
+    expect(await load()).toMatchObject({ state: "closed", viaToken: true })
     expect(loadPaymentPageByToken).toHaveBeenCalledWith({
       token,
       onlinePaymentsEnabled: true,

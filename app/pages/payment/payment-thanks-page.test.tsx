@@ -8,11 +8,13 @@ import type { PaymentThanksData } from "./payment-page.server"
 // The page reads one prop of the many a route component is handed, and a test
 // that built the rest would be describing React Router, not this page.
 const Page = PaymentThanksPage as unknown as (props: {
-  loaderData: PaymentThanksData & { betaNotice: boolean }
+  loaderData: PaymentThanksData & { betaNotice: boolean; viaToken?: boolean }
 }) => React.ReactNode
 
-const renderPage = (loaderData: PaymentThanksData, betaNotice = false) =>
-  renderWithRouter(<Page loaderData={{ ...loaderData, betaNotice }} />)
+const renderPage = (
+  loaderData: PaymentThanksData & { viaToken?: boolean },
+  betaNotice = false,
+) => renderWithRouter(<Page loaderData={{ ...loaderData, betaNotice }} />)
 
 describe("PaymentThanksPage", () => {
   it("says so when the payment has already landed", () => {
@@ -29,6 +31,24 @@ describe("PaymentThanksPage", () => {
     expect(
       screen.getByText(paymentsCopy.page.thanksPaidBody),
     ).toBeInTheDocument()
+  })
+
+  it("points the signed-in participant back to the dashboard", () => {
+    renderPage({ state: "waiting", eventTitle: "Encontro de Maio" })
+
+    expect(
+      screen.getByRole("link", { name: paymentsCopy.page.backToDashboard }),
+    ).toBeInTheDocument()
+  })
+
+  // Asaas sends a signed-out payer here too, and the dashboard would only put
+  // the login wall back in front of them.
+  it("offers no dashboard link on a token link", () => {
+    renderPage({ state: "waiting", eventTitle: "Encontro de Maio", viaToken: true })
+
+    expect(
+      screen.queryByRole("link", { name: paymentsCopy.page.backToDashboard }),
+    ).not.toBeInTheDocument()
   })
 
   it("says the confirmation is on its way while the payment is still in flight", () => {

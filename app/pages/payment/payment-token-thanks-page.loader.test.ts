@@ -36,7 +36,11 @@ describe("payment token thanks page", () => {
   it("reads the charge from the token alone, never from the session", async () => {
     vi.mocked(isOnlinePaymentsEnabled).mockResolvedValue(true)
 
-    expect(await load()).toMatchObject({ state: "waiting", betaNotice: true })
+    expect(await load()).toMatchObject({
+      state: "waiting",
+      betaNotice: true,
+      viaToken: true,
+    })
     expect(loadPaymentThanksByToken).toHaveBeenCalledWith({ token })
     expect(authServer.getUserContext).not.toHaveBeenCalled()
     expect(authServer.getContext).not.toHaveBeenCalled()

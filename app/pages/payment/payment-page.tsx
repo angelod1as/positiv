@@ -84,7 +84,7 @@ export async function action({ params, request }: Route.ActionArgs) {
 }
 
 const PaymentPage = ({ loaderData }: Route.ComponentProps) => {
-  const data = loaderData as PaymentPageData
+  const data = loaderData as PaymentPageData & { viaToken?: boolean }
 
   useEffect(() => {
     trackEvent("payment_page_opened", { state: data.state })
@@ -102,17 +102,25 @@ const PaymentPage = ({ loaderData }: Route.ComponentProps) => {
           <PaymentBetaNotice eventTitle={data.eventTitle} />
         </CardContent>
       )}
-      {renderState(data)}
+      {renderState(data, !data.viaToken)}
     </Card>
   )
 }
 
-function renderState(data: PaymentPageData) {
+// A token link may be opened signed out, and the dashboard would only put the
+// login wall back in front of the visitor.
+function renderState(data: PaymentPageData, showDashboard: boolean) {
   switch (data.state) {
     case "paid":
-      return <Receipt amount={data.amount} paidAt={data.paidAt} />
+      return (
+        <Receipt
+          amount={data.amount}
+          paidAt={data.paidAt}
+          showDashboard={showDashboard}
+        />
+      )
     case "closed":
-      return <Closed />
+      return <Closed showDashboard={showDashboard} />
     case "needs_cpf":
       return <CpfGate providerName={data.providerName} />
     case "ready":
@@ -120,7 +128,15 @@ function renderState(data: PaymentPageData) {
   }
 }
 
-const Receipt = ({ amount, paidAt }: { amount: number; paidAt: string }) => (
+const Receipt = ({
+  amount,
+  paidAt,
+  showDashboard,
+}: {
+  amount: number
+  paidAt: string
+  showDashboard: boolean
+}) => (
   <>
     <CardContent className="flex flex-col gap-4">
       <h2 className="font-bold">{page.paidTitle}</h2>
@@ -131,25 +147,29 @@ const Receipt = ({ amount, paidAt }: { amount: number; paidAt: string }) => (
         )}
       </Copy>
     </CardContent>
-    <CardFooter>
-      <Button to={paths.dash.DASHBOARD} variant="outline">
-        {page.backToDashboard}
-      </Button>
-    </CardFooter>
+    {showDashboard && (
+      <CardFooter>
+        <Button to={paths.dash.DASHBOARD} variant="outline">
+          {page.backToDashboard}
+        </Button>
+      </CardFooter>
+    )}
   </>
 )
 
-const Closed = () => (
+const Closed = ({ showDashboard }: { showDashboard: boolean }) => (
   <>
     <CardContent className="flex flex-col gap-4">
       <h2 className="font-bold">{page.closedTitle}</h2>
       <Copy>{page.closedBody}</Copy>
     </CardContent>
-    <CardFooter>
-      <Button to={paths.dash.DASHBOARD} variant="outline">
-        {page.backToDashboard}
-      </Button>
-    </CardFooter>
+    {showDashboard && (
+      <CardFooter>
+        <Button to={paths.dash.DASHBOARD} variant="outline">
+          {page.backToDashboard}
+        </Button>
+      </CardFooter>
+    )}
   </>
 )
 
