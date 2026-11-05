@@ -3,6 +3,7 @@ export const adminDatavizCopy = {
   noData: "Nenhum dado disponível",
   people: "pessoas",
   kpiScores: {
+    withNote: (label: string, note: string) => `${label} · ${note}`,
     community: {
       title: "Comunidade",
       totalProfiles: "Total de perfis",

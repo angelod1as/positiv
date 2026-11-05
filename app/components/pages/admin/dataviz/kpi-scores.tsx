@@ -1,30 +1,15 @@
-import {
-  AlertCircle,
-  Award,
-  BarChart3,
-  CheckCircle,
-  DollarSign,
-  Flag,
-  Receipt,
-  Shield,
-  TrendingUp,
-  UserCheck,
-  Users,
-} from 'lucide-react'
 import type { KpiScores as KpiScoresData } from '~/business/admin/dataviz/dataviz.types'
-import { ScoreCard } from '~/components/molecules/scores/score-card'
+import type { PageSection } from '~/business/cms/page.schema'
+import { StatsSection } from '~/components/pages/page/sections/stats-section'
 import { adminDatavizCopy } from '~/copy/admin/dataviz'
-import { ScoreGrid } from '~/components/molecules/scores/score-grid'
-import { formatCurrency } from '~/lib/helpers/format-currency'
 
 const kpiCopy = adminDatavizCopy.kpiScores
 
+type StatsContent = Extract<PageSection, { _type: 'statsSection' }>
+type StatNumber = Extract<StatsContent['cards'][number], { _type: 'statNumber' }>
+
 type KpiScoresProps = {
   data: KpiScoresData
-}
-
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat('pt-BR').format(value)
 }
 
 function calculatePercentage(value: number, total: number): string {
@@ -32,94 +17,75 @@ function calculatePercentage(value: number, total: number): string {
   return `${Math.round((value / total) * 100)}%`
 }
 
+const stat = (
+  _key: string,
+  value: number,
+  caption: string,
+  unit: StatNumber['unit'] = 'none',
+): StatNumber => ({ _type: 'statNumber', _key, value, caption, unit })
+
+const group = (_key: string, title: string, cards: StatNumber[]): StatsContent => ({
+  _type: 'statsSection',
+  _key,
+  title,
+  cards,
+})
+
 export function KpiScores({ data }: KpiScoresProps) {
   const veteranPercentage = calculatePercentage(data.total_veterans, data.total_profiles)
   const approvedPercentage = calculatePercentage(data.total_approved, data.total_profiles)
 
+  const groups = [
+    group('community', kpiCopy.community.title, [
+      stat('profiles', data.total_profiles, kpiCopy.community.totalProfiles),
+      stat(
+        'veterans',
+        data.total_veterans,
+        kpiCopy.withNote(kpiCopy.community.veterans, veteranPercentage),
+      ),
+      stat(
+        'approved',
+        data.total_approved,
+        kpiCopy.withNote(kpiCopy.community.approved, approvedPercentage),
+      ),
+    ]),
+    group('engagement', kpiCopy.engagement.title, [
+      stat('attendees', data.total_unique_attendees, kpiCopy.engagement.uniqueAttendees),
+      stat(
+        'average-attendance',
+        data.avg_attendance_per_event,
+        kpiCopy.withNote(
+          kpiCopy.engagement.averageAttendance,
+          kpiCopy.engagement.averageAttendanceDescription,
+        ),
+      ),
+      stat('three-plus', data.attended_3_plus, kpiCopy.engagement.attendedThreePlus),
+      stat('five-plus', data.attended_5_plus, kpiCopy.engagement.attendedFivePlus),
+    ]),
+    group('revenue', kpiCopy.revenue.title, [
+      stat('total', data.total_revenue / 100, kpiCopy.revenue.total, 'brl'),
+      stat(
+        'per-event',
+        data.avg_revenue_per_event / 100,
+        kpiCopy.revenue.averagePerEvent,
+        'brl',
+      ),
+    ]),
+    group('health', kpiCopy.health.title, [
+      stat('no-show', data.avg_no_show_rate, kpiCopy.health.noShowRate, 'percent'),
+      stat(
+        'flagged',
+        data.total_flagged,
+        kpiCopy.withNote(kpiCopy.health.flagged, kpiCopy.health.flaggedDescription),
+      ),
+    ]),
+  ]
+
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="mb-4 text-lg font-semibold">{kpiCopy.community.title}</h2>
-        <ScoreGrid>
-          <ScoreCard
-            value={formatNumber(data.total_profiles)}
-            label={kpiCopy.community.totalProfiles}
-            icon={Users}
-          />
-          <ScoreCard
-            value={formatNumber(data.total_veterans)}
-            label={kpiCopy.community.veterans}
-            description={veteranPercentage}
-            icon={Shield}
-          />
-          <ScoreCard
-            value={formatNumber(data.total_approved)}
-            label={kpiCopy.community.approved}
-            description={approvedPercentage}
-            icon={CheckCircle}
-          />
-        </ScoreGrid>
-      </div>
-
-      <div>
-        <h2 className="mb-4 text-lg font-semibold">{kpiCopy.engagement.title}</h2>
-        <ScoreGrid>
-          <ScoreCard
-            value={formatNumber(data.total_unique_attendees)}
-            label={kpiCopy.engagement.uniqueAttendees}
-            icon={UserCheck}
-          />
-          <ScoreCard
-            value={formatNumber(data.avg_attendance_per_event)}
-            label={kpiCopy.engagement.averageAttendance}
-            description={kpiCopy.engagement.averageAttendanceDescription}
-            icon={BarChart3}
-          />
-          <ScoreCard
-            value={formatNumber(data.attended_3_plus)}
-            label={kpiCopy.engagement.attendedThreePlus}
-            icon={TrendingUp}
-          />
-          <ScoreCard
-            value={formatNumber(data.attended_5_plus)}
-            label={kpiCopy.engagement.attendedFivePlus}
-            icon={Award}
-          />
-        </ScoreGrid>
-      </div>
-
-      <div>
-        <h2 className="mb-4 text-lg font-semibold">{kpiCopy.revenue.title}</h2>
-        <ScoreGrid>
-          <ScoreCard
-            value={formatCurrency(data.total_revenue)}
-            label={kpiCopy.revenue.total}
-            icon={DollarSign}
-          />
-          <ScoreCard
-            value={formatCurrency(data.avg_revenue_per_event)}
-            label={kpiCopy.revenue.averagePerEvent}
-            icon={Receipt}
-          />
-        </ScoreGrid>
-      </div>
-
-      <div>
-        <h2 className="mb-4 text-lg font-semibold">{kpiCopy.health.title}</h2>
-        <ScoreGrid>
-          <ScoreCard
-            value={`${data.avg_no_show_rate}%`}
-            label={kpiCopy.health.noShowRate}
-            icon={AlertCircle}
-          />
-          <ScoreCard
-            value={formatNumber(data.total_flagged)}
-            label={kpiCopy.health.flagged}
-            description={kpiCopy.health.flaggedDescription}
-            icon={Flag}
-          />
-        </ScoreGrid>
-      </div>
+    <div>
+      {groups.map((content) => (
+        <StatsSection key={content._key} content={content} />
+      ))}
     </div>
   )
 }
