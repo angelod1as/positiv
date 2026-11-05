@@ -33,6 +33,8 @@ const eventLabel = (event: { emoji: string; title: string; date: string }) =>
 
 const MIGRATION_MONTH = '2025-07'
 
+const RETENTION_GROUPED_FROM = 7
+
 function formatMonth(monthString: string): string {
   const date = parse(monthString, 'yyyy-MM', new Date())
   return isValid(date) ? format(date, 'MMM/yy', { locale: ptBR }) : monthString
@@ -97,10 +99,10 @@ export function ageChart(
 export function retentionChart(data: RetentionDataPoint[]): ChartContent {
   const total = data.reduce((sum, point) => sum + point.num_people, 0)
   const fewer = data
-    .filter((point) => point.events_attended < 7)
+    .filter((point) => point.events_attended < RETENTION_GROUPED_FROM)
     .sort((a, b) => a.events_attended - b.events_attended)
     .map((point) => ({ label: String(point.events_attended), values: [point.num_people] }))
-  const sevenAndUp = data.filter((point) => point.events_attended >= 7)
+  const sevenAndUp = data.filter((point) => point.events_attended >= RETENTION_GROUPED_FROM)
   const rows =
     sevenAndUp.length > 0
       ? [
