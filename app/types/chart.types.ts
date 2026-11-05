@@ -28,25 +28,14 @@ export interface BaseChartProps {
   children?: ReactNode
 }
 
-export interface XAxisTickProps {
-  x?: string | number
-  y?: string | number
-  payload?: { value: string }
-}
-
-export interface XAxisCustomProps {
-  xAxisTickComponent?: (props: XAxisTickProps) => ReactElement | null
-  xAxisHeight?: number
-}
-
-export interface LineChartProps extends BaseChartProps, XAxisCustomProps {
+export interface LineChartProps extends BaseChartProps {
   series: ChartSeries[]
   xAxisKey: string
   xAxisFormatter?: (value: string) => string
   curved?: boolean
 }
 
-export interface BarChartProps extends BaseChartProps, XAxisCustomProps {
+export interface BarChartProps extends BaseChartProps {
   series: ChartSeries[]
   xAxisKey: string
   xAxisFormatter?: (value: string) => string

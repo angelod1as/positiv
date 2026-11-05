@@ -23,8 +23,6 @@ export function BarChart({
   series,
   xAxisKey,
   xAxisFormatter,
-  xAxisTickComponent,
-  xAxisHeight,
   horizontal = false,
   categoryAxisWidth,
   stacked = false,
@@ -73,9 +71,7 @@ export function BarChart({
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={xAxisTickComponent ? undefined : xAxisFormatter}
-              tick={xAxisTickComponent}
-              height={xAxisHeight}
+              tickFormatter={xAxisFormatter}
             />
             <YAxis
               tickLine={false}
