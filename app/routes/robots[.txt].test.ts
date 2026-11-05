@@ -30,6 +30,13 @@ describe("robots.txt loader", () => {
     expect(body).toContain("Disallow: /admin")
   })
 
+  it("disallows payment token links", async () => {
+    const response = loader()
+    const body = await response.text()
+
+    expect(body).toContain("Disallow: /pagamento/t/")
+  })
+
   it("includes a Sitemap directive pointing to sitemap.xml", async () => {
     const response = loader()
     const body = await response.text()

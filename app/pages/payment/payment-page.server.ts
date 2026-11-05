@@ -218,7 +218,8 @@ export async function findPaymentByToken(token: string) {
         .selectFrom("payments as p")
         .innerJoin("event_participants as ep", "ep.id", "p.event_participant_id")
         .innerJoin("events as e", "e.id", "ep.event_id")
-        .select(["p.id", "ep.profile_id", "e.time_event_start"])
+        .innerJoin("profiles as pr", "pr.id", "ep.profile_id")
+        .select(["p.id", "pr.id as profile_id", "e.time_event_start"])
         .where("p.access_token", "=", token)
         .executeTakeFirst()
     : undefined
