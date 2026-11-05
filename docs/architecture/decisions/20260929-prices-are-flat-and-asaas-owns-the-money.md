@@ -14,7 +14,7 @@ Later, on POS-646, a page computed the per-installment figure itself with `Math.
 
 **Prices are flat** (POS-577):
 
-- Online payments on and card on: card is the event price, in 1x to 6x, no interest. Pix is the event price minus 10% (`PIX_DISCOUNT_PERCENT`, `pixPrice()` in `app/business/payment/pricing.ts`).
+- Online payments on and card on: card is the event price, in 1x to 6x, no interest. Pix is the event price minus 10%, rounded down to the cent (`PIX_DISCOUNT_PERCENT`, `pixPrice()` in `app/business/payment/pricing.ts`).
 - Card off, or online payments off: the full event price.
 - Positiv absorbs every fee. The site does no fee maths and does not track anticipation.
 
