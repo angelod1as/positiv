@@ -31,7 +31,7 @@ export function LineChart({
   showLegend = true,
   showValues = false,
   tooltipAnimated = false,
-  animated = true,
+  animated = false,
   accessibilityLayer = true,
   valueFormatter,
   tooltipContent,

@@ -80,22 +80,16 @@ describe('LineChart', () => {
 describe('LineChart drawing', () => {
   const desktop = [{ dataKey: 'desktop' }]
 
-  it('draws the line out on first render by default', () => {
+  it('draws the line out on first render when animated', () => {
     const { container } = render(
-      <LineChart data={mockData} config={mockConfig} series={desktop} xAxisKey="month" />
+      <LineChart data={mockData} config={mockConfig} series={desktop} xAxisKey="month" animated />
     )
     expect(container.querySelector('.recharts-line-curve')).toHaveAttribute('stroke-dasharray')
   })
 
-  it('draws the whole line at once when animation is off', () => {
+  it('draws the whole line at once by default', () => {
     const { container } = render(
-      <LineChart
-        data={mockData}
-        config={mockConfig}
-        series={desktop}
-        xAxisKey="month"
-        animated={false}
-      />
+      <LineChart data={mockData} config={mockConfig} series={desktop} xAxisKey="month" />
     )
     expect(container.querySelector('.recharts-line-curve')).not.toHaveAttribute('stroke-dasharray')
   })

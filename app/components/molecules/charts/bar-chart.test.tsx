@@ -93,22 +93,16 @@ describe('BarChart drawing', () => {
   const bars = (container: HTMLElement) =>
     container.querySelectorAll('.recharts-bar-rectangle path')
 
-  it('grows the bars in on first render by default', () => {
+  it('grows the bars in on first render when animated', () => {
     const { container } = render(
-      <BarChart data={mockData} config={mockConfig} series={revenue} xAxisKey="event" />
+      <BarChart data={mockData} config={mockConfig} series={revenue} xAxisKey="event" animated />
     )
     expect(bars(container)).toHaveLength(0)
   })
 
-  it('draws every bar at once when animation is off', () => {
+  it('draws every bar at once by default', () => {
     const { container } = render(
-      <BarChart
-        data={mockData}
-        config={mockConfig}
-        series={revenue}
-        xAxisKey="event"
-        animated={false}
-      />
+      <BarChart data={mockData} config={mockConfig} series={revenue} xAxisKey="event" />
     )
     expect(bars(container)).toHaveLength(3)
   })
