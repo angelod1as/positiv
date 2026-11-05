@@ -42,7 +42,7 @@ vi.mock("./business/newsletter/auto-subscribe.server", () => ({
 }))
 
 vi.mock("composable-functions", () => ({
-  inputFromForm: vi.fn(),
+  inputFromFormData: vi.fn(),
 }))
 
 const isDraftModeEnabled = vi.hoisted(() => vi.fn())

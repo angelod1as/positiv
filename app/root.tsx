@@ -1,4 +1,4 @@
-import { inputFromForm } from "composable-functions"
+import { inputFromFormData } from "composable-functions"
 import { lazy, Suspense, useEffect, useState, type ReactNode } from "react"
 import {
   data,
@@ -20,6 +20,7 @@ import {
   umamiBeforeSendScript,
 } from "~/lib/analytics/admin-pages"
 import { isValidCpf } from "~/lib/helpers/cpf"
+import { readFormData } from "~/lib/helpers/read-form-data.server"
 import { isValidPhone } from "~/lib/helpers/phone"
 import { useMarkHydrated } from "~/lib/hooks/use-mark-hydrated"
 import { useTrackEmailConfirmed } from "~/lib/hooks/use-track-email-confirmed"
@@ -260,7 +261,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 export async function action({ params, request }: Route.ActionArgs) {
   const cookieHeader = request.headers.get("Cookie")
   const cookie = (await newsCookie.parse(cookieHeader)) || {}
-  const formData = await inputFromForm(request)
+  const formData = inputFromFormData(await readFormData(request.clone()))
   const { intent, thisUrl, newsVersion: submittedNewsVersion } = formData
 
   if (intent === "newsletter-subscribe") {
