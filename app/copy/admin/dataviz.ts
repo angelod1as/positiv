@@ -6,7 +6,7 @@ export const adminDatavizCopy = {
     community: {
       title: "Comunidade",
       totalProfiles: "Total de perfis",
-      veterans: "Veterans",
+      veterans: "Veteranos",
       approved: "Aprovados",
     },
     engagement: {

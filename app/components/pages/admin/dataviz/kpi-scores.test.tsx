@@ -46,7 +46,7 @@ describe('KpiScores', () => {
     render(<KpiScores data={mockKpiData} />)
 
     expect(cardFor('Total de perfis').getByText('945')).toBeInTheDocument()
-    expect(cardFor('Veterans · 22%').getByText('207')).toBeInTheDocument()
+    expect(cardFor('Veteranos · 22%').getByText('207')).toBeInTheDocument()
     expect(cardFor('Aprovados · 30%').getByText('280')).toBeInTheDocument()
   })
 
@@ -78,6 +78,6 @@ describe('KpiScores', () => {
   it('counts no share when there are no profiles yet', () => {
     render(<KpiScores data={{ ...mockKpiData, total_profiles: 0 }} />)
 
-    expect(cardFor('Veterans · 0%').getByText('207')).toBeInTheDocument()
+    expect(cardFor('Veteranos · 0%').getByText('207')).toBeInTheDocument()
   })
 })
