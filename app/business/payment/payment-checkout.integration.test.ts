@@ -441,7 +441,9 @@ describe("pickOption", () => {
     )
   })
 
-  it("sends the thank-you page as the callback in production", async () => {
+  // The token thanks page, so a payer who came in signed out is not met by a
+  // login wall, and an owner who is signed in lands just as well.
+  it("sends the token thank-you page as the callback in production", async () => {
     prod.value = true
     const payment = await openCharge()
 
@@ -449,7 +451,7 @@ describe("pickOption", () => {
 
     const [call] = createAsaasPayment.mock.calls.at(-1) ?? []
     expect(call.successUrl).toMatch(
-      new RegExp(`/pagamento/${payment.id}/obrigado$`),
+      new RegExp(`/pagamento/t/${payment.access_token}/obrigado$`),
     )
   })
 

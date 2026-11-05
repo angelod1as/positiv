@@ -69,6 +69,10 @@ export default [
   route("/convite/:token", "pages/invite/invite-page.tsx"),
   layout("pages/payment/layout.tsx", { id: "payment-token-layout" }, [
     route("/pagamento/t/:token", "pages/payment/payment-token-page.tsx"),
+    route(
+      "/pagamento/t/:token/obrigado",
+      "pages/payment/payment-token-thanks-page.tsx",
+    ),
   ]),
   route("/newsletter/unsubscribe", "pages/newsletter/unsubscribe.tsx"),
   layout("pages/auth/layout.tsx", [
