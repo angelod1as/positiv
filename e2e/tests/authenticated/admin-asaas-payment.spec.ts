@@ -23,6 +23,7 @@ import { readSetupUser } from '../../utils/setup-user'
 import { uniqueValidCpf } from '../../utils/unique-cpf'
 
 const PARTICIPANT_STATE = path.resolve(import.meta.dirname, '../../.auth/user.json')
+const SIGNED_OUT = { cookies: [], origins: [] }
 
 async function openPaymentModal(page: Page, eventId: string, name: string) {
   await page.goto(`/admin/eventos/${eventId}`)
@@ -33,7 +34,8 @@ async function openPaymentModal(page: Page, eventId: string, name: string) {
   return { grid, modal: page.getByRole('dialog') }
 }
 
-// The admin sends a R$ 220 charge and the participant opens the link.
+// The admin sends a R$ 220 charge and the participant opens the emailed link,
+// signed out: the token in it is the whole authorization.
 async function chargeAndOpenLink(page: Page, browser: Browser) {
   const event = await createSoonOpenEvent(`Asaas payment ${Date.now()}`)
   const payer = await readSetupUser()
@@ -54,17 +56,34 @@ async function chargeAndOpenLink(page: Page, browser: Browser) {
   const linkEmail = await waitForEmail({
     to: payer.email,
     subject: 'Seu pagamento da',
-    containing: `/pagamento/${pending.id}`,
+    containing: `/pagamento/t/${pending.access_token}`,
   })
-  expect(extractEmailBody(linkEmail)).toContain(`/pagamento/${pending.id}`)
+  expect(extractEmailBody(linkEmail)).not.toContain(`/pagamento/${pending.id}`)
 
-  const participantContext = await browser.newContext({ storageState: PARTICIPANT_STATE })
+  // The id route still works with login. The CPF is asked for there, once,
+  // because the token link never writes one without a session.
+  const ownerContext = await browser.newContext({ storageState: PARTICIPANT_STATE })
+  const ownerPage = new PaymentPage(await ownerContext.newPage())
+  await ownerPage.navigate(pending.id)
+  await ownerPage.fillCpfIfAsked(uniqueValidCpf())
+
+  const participantContext = await browser.newContext({ storageState: SIGNED_OUT })
   const participantPage = await participantContext.newPage()
   const paymentPage = new PaymentPage(participantPage)
-  await paymentPage.navigate(pending.id)
-  await paymentPage.fillCpfIfAsked(uniqueValidCpf())
+  await paymentPage.openLink(pending.access_token)
+  await expect(participantPage.getByRole('heading', { name: 'Como você quer pagar?' })).toBeVisible()
 
-  return { event, payer, participant, pending, participantContext, participantPage, paymentPage }
+  return {
+    event,
+    payer,
+    participant,
+    pending,
+    ownerContext,
+    ownerPage,
+    participantContext,
+    participantPage,
+    paymentPage,
+  }
 }
 
 function createdCharges() {
@@ -88,8 +107,17 @@ test.describe('POS-577: flat prices, and refunds done in the Asaas dashboard', (
     test.setTimeout(180_000)
     await setCardPayments(true)
 
-    const { event, payer, participant, pending, participantContext, participantPage, paymentPage } =
-      await chargeAndOpenLink(page, browser)
+    const {
+      event,
+      payer,
+      participant,
+      pending,
+      ownerContext,
+      ownerPage,
+      participantContext,
+      participantPage,
+      paymentPage,
+    } = await chargeAndOpenLink(page, browser)
 
     // Pix at 10% off, the card at the event price in 1x to 6x.
     const pix = participantPage.getByRole('radio', { name: /^Pix R\$\s?198,00$/ })
@@ -146,9 +174,17 @@ test.describe('POS-577: flat prices, and refunds done in the Asaas dashboard', (
     expect(paid.status).toBe('paid')
     await waitForEmail({ to: payer.email, subject: 'Pagamento confirmado' })
 
-    await paymentPage.navigate(pending.id)
-    await paymentPage.expectPaid()
+    // Signed out, Asaas's return page opens; the payment link itself is closed
+    // once paid. The owner, logged in, still sees the receipt.
+    await participantPage.goto(`/pagamento/t/${pending.access_token}/obrigado`)
+    await expect(participantPage.getByRole('heading', { name: 'Pagamento confirmado' })).toBeVisible()
+    await paymentPage.openLink(pending.access_token)
+    await paymentPage.expectClosed()
     await participantContext.close()
+
+    await ownerPage.navigate(pending.id)
+    await ownerPage.expectPaid()
+    await ownerContext.close()
 
     const { grid, modal } = await openPaymentModal(page, event.id, participant.name)
     await expect(grid.getByText('Pago', { exact: true }).first()).toBeVisible()
@@ -197,8 +233,9 @@ test.describe('POS-577: flat prices, and refunds done in the Asaas dashboard', (
     test.setTimeout(120_000)
     await setCardPayments(false)
 
-    const { event, participant, pending, participantContext, participantPage, paymentPage } =
+    const { event, participant, pending, ownerContext, participantContext, participantPage, paymentPage } =
       await chargeAndOpenLink(page, browser)
+    await ownerContext.close()
 
     await expect(participantPage.getByRole('radio')).toHaveCount(1)
     await paymentPage.chooseOption(/^Pix R\$\s?220,00$/)

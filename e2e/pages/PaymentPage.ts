@@ -8,6 +8,14 @@ export class PaymentPage extends BasePage {
     await this.waitForHydration()
   }
 
+  // The link the participant is sent: the token is the authorization, so it
+  // opens without a session.
+  async openLink(token: string): Promise<void> {
+    await this.page.goto(`/pagamento/t/${token}`)
+    await this.waitForPageLoad()
+    await this.waitForHydration()
+  }
+
   async fillCpfIfAsked(cpf: string): Promise<void> {
     const cpfField = this.page.getByLabel('CPF')
     if (!(await cpfField.isVisible())) return
