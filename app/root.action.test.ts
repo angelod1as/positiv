@@ -56,9 +56,7 @@ describe("root action", () => {
       body: JSON.stringify({ intent: "news-update", thisUrl: "/" }),
     })
 
-    const response = await rejection(
-      action({ request, params: {} } as never),
-    )
+    const response = await rejection(action({ request, params: {} } as never))
 
     expect(response.status).toBe(415)
   })
@@ -75,5 +73,68 @@ describe("root action", () => {
 
     expect(response.status).toBe(302)
     expect(response.headers.get("Location")).toBe("/eventos")
+  })
+
+  it.each(["https://evil.example", "//evil.example", "/\\evil.example"])(
+    "sends a news-update back home instead of to %s",
+    async (thisUrl) => {
+      const response = (await action({
+        request: postForm({ intent: "news-update", thisUrl, newsVersion: "2" }),
+        params: {},
+      } as never)) as Response
+
+      expect(response.headers.get("Location")).toBe("/")
+    },
+  )
+
+  it("sends a newsletter-subscribe without a session back home instead of off-site", async () => {
+    const { getContext } = await import("./business/auth/auth.server")
+    const { redirectWithError } = await import("remix-toast")
+    vi.mocked(getContext).mockResolvedValue({
+      currentProfile: null,
+    } as never)
+    vi.mocked(redirectWithError).mockResolvedValue(new Response(null))
+
+    await action({
+      request: postForm({
+        intent: "newsletter-subscribe",
+        thisUrl: "https://evil.example",
+      }),
+      params: {},
+    } as never)
+
+    expect(redirectWithError).toHaveBeenCalledWith("/", expect.anything())
+  })
+
+  it("sends a newsletter-subscribe back to a same-site page", async () => {
+    const { getContext } = await import("./business/auth/auth.server")
+    const { redirectWithSuccess } = await import("remix-toast")
+    const { subscribeProfileToNewsletter } =
+      await import("./business/newsletter/auto-subscribe.server")
+    const { newsletterPreferenceCookie } =
+      await import("./business/session.server")
+    vi.mocked(getContext).mockResolvedValue({
+      currentProfile: { id: "profile-1" },
+    } as never)
+    vi.mocked(subscribeProfileToNewsletter).mockResolvedValue({
+      success: true,
+      data: { syncStatus: "synced" },
+    } as never)
+    vi.mocked(newsletterPreferenceCookie.serialize).mockResolvedValue("pref=1")
+    vi.mocked(redirectWithSuccess).mockResolvedValue(new Response(null))
+
+    await action({
+      request: postForm({
+        intent: "newsletter-subscribe",
+        thisUrl: "/eventos",
+      }),
+      params: {},
+    } as never)
+
+    expect(redirectWithSuccess).toHaveBeenCalledWith(
+      "/eventos",
+      expect.anything(),
+      expect.anything(),
+    )
   })
 })
