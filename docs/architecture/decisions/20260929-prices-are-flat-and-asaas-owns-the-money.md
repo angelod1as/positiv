@@ -1,7 +1,7 @@
 # Prices are flat and Asaas owns the money
 
 - Status: accepted
-- Date: 2026-09-29
+- Date: 2026-09-29, amended 2026-10-29 by POS-646; recorded 2026-11-05 (WEB-10)
 - Tags: payments, architecture
 
 ## Context
@@ -22,7 +22,7 @@ Later, on POS-646, a page computed the per-installment figure itself with `Math.
 
 - The site decides the price and records what the participant paid and what was refunded. Fees, anticipation and net amounts are read in Asaas, never on the site.
 - Every money figure shown to a participant, on a page or in an email, comes from the `PaymentProvider` connector (`splitInstallments`, the charge data) or from Asaas itself. No template or component does its own arithmetic on an amount.
-- Amounts are integer cents everywhere; the connector converts to reais at the API boundary. A card plan sends `totalValue` and `installmentCount`, and Asaas puts the remainder on the last installment.
+- Amounts are integer cents everywhere; the connector converts to reais at the API boundary. A card plan sends `totalValue` and `installmentCount`, and Asaas puts the remainder on the last installment (observed behaviour, checked against the sandbox by `pnpm asaas:smoke`).
 - Refunds are made in the Asaas dashboard, through "Reembolsar no Asaas". The site records them from webhooks and from "Atualizar do Asaas", and only a `DONE` refund counts.
 
 ## Consequences

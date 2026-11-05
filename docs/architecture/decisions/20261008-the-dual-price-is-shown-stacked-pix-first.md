@@ -1,7 +1,7 @@
 # The dual price is shown stacked, Pix first
 
 - Status: accepted
-- Date: 2026-10-08
+- Date: 2026-10-08, recorded 2026-11-05 (WEB-10)
 - Tags: frontend, payments, ui
 
 ## Context
