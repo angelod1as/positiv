@@ -111,16 +111,11 @@ test.describe("Admin User Management", () => {
     )
 
     // Edit application status - use display name that appears in dropdown
-    // Wait for the POST response to ensure auto-save completes before proceeding
-    const saveResponsePromise1 = page.waitForResponse(
-      (resp) => resp.request().method() === "POST" && resp.status() === 200,
-    )
     await userManagement.editSelectCell(
       firstRow,
       "application_status",
       "Regras enviadas",
     )
-    await saveResponsePromise1
 
     // Verify the change shows immediately - look for the cell in the grid that has our value
     // AG Grid renders rows in multiple containers, so we search the whole grid for the status
@@ -136,16 +131,11 @@ test.describe("Admin User Management", () => {
       secondParticipant.socialName,
     )
 
-    // Wait for the POST response to ensure auto-save completes before page reload
-    const saveResponsePromise2 = page.waitForResponse(
-      (resp) => resp.request().method() === "POST" && resp.status() === 200,
-    )
     await userManagement.editSelectCell(
       secondRow,
       "attendance_status",
       "Compareceu",
     )
-    await saveResponsePromise2
 
     // Test 3: Data persistence - Refresh page and verify changes persist
     await page.reload()
@@ -218,8 +208,9 @@ test.describe("Admin User Management", () => {
     await userManagement.navigate(testEventIdDetail)
     await userManagement.waitForTableToLoad()
 
-    // Get the first participant row - need to get name from pinned left section
-    const firstRow = await userManagement.tableRows.first()
+    // Always Participant 1: the row order changes between runs, and this one
+    // starts with a flag and notes, so it takes every step below
+    const firstRow = await userManagement.findRowByParticipantName("Participant 1")
     const rowIndex = await firstRow.getAttribute("row-index")
     // social_name is in the left pinned section, so we need to look there
     const participantName =
@@ -260,18 +251,16 @@ test.describe("Admin User Management", () => {
     await expect(page.getByText("Notas (Participante):")).toBeVisible()
 
     // Verify the referred field value is displayed
-    // We know the first participant (index 0) has 'João Test - indicação formal'
-    // and the second (index 1) has 'ninguém'
-    const participantIndex = participantName.includes("Participant 1") ? 0 : 1
-    const expectedReferredValue =
-      participantIndex === 0 ? "João Test - indicação formal" : "ninguém"
-    await expect(page.getByText(expectedReferredValue)).toBeVisible()
+    await expect(page.getByText("João Test - indicação formal")).toBeVisible()
 
-    // Edit a field in detail view (use display name for Radix UI Select)
-    await userManagement.editDetailField("application_status", "Finalizado")
-
-    // Save changes
-    await userManagement.saveDetailViewChanges()
+    // Edit a field in detail view (use display name for Radix UI Select).
+    // Neither fixture participant starts with this status, so it is a real save
+    await userManagement.saveDetailField(() =>
+      userManagement.editDetailField("application_status", "Pensar melhor"),
+    )
+    await expect(page.locator("#application_status")).toContainText(
+      "Pensar melhor",
+    )
 
     // Test Google Contacts integration if visible
     const googleContactsVisible =
@@ -291,13 +280,17 @@ test.describe("Admin User Management", () => {
       expect(openedUrl).toContain("contacts.google.com")
     }
 
-    // Both fixture participants start flagged, one of them with notes
-    await userManagement.expectToastAfter("success", () =>
+    // Participant 1 starts flagged, with notes. Each save waits for the
+    // reloaded data on screen: the next edit reads it
+    await userManagement.saveDetailField(() =>
       userManagement.editDetailField("flag", "Sem flag"),
     )
-    await userManagement.editDetailField("flag_notes", "")
-    await page.locator("#flag_notes").blur()
-    await userManagement.saveDetailViewChanges()
+    await expect(page.locator("#flag")).toContainText("Sem flag")
+    await userManagement.saveDetailField(async () => {
+      await userManagement.editDetailField("flag_notes", "")
+      await page.locator("#flag_notes").blur()
+    })
+    await expect(page.locator("#flag_notes")).toHaveValue("")
 
     // A flag needs notes: without them nothing is saved
     await userManagement.expectToastAfter("warning", () =>
@@ -306,22 +299,27 @@ test.describe("Admin User Management", () => {
     await expect(page.locator("#flag")).toContainText("Sem flag")
 
     const flagNotes = `E2E flag notes ${timestamp}`
-    await userManagement.expectToastAfter("success", async () => {
+    await userManagement.saveDetailField(async () => {
       await userManagement.editDetailField("flag_notes", flagNotes)
       await page.locator("#flag_notes").blur()
     })
-    await userManagement.expectToastAfter("success", () =>
+    await userManagement.saveDetailField(() =>
       userManagement.editDetailField("flag", "Flag amarela"),
     )
+    await expect(page.locator("#flag")).toContainText("Flag amarela")
 
     const wasVeteran = await userManagement.veteranCheckbox.isChecked()
-    await userManagement.expectToastAfter("success", () =>
+    await userManagement.saveDetailField(() =>
       userManagement.veteranLabel.click(),
     )
+    await expect(userManagement.veteranCheckbox).toBeChecked({
+      checked: !wasVeteran,
+    })
 
-    await userManagement.expectToastAfter("success", () =>
+    await userManagement.saveDetailField(() =>
       userManagement.editDetailField("attendance_status", "Desistiu"),
     )
+    await expect(page.locator("#attendance_status")).toContainText("Desistiu")
 
     // One reload proves every save above reached the database
     await page.reload()
@@ -340,7 +338,7 @@ test.describe("Admin User Management", () => {
     // Verify detail view change reflected in table - search for cell with our value
     const updatedStatusCell = userManagement.participantsTable
       .locator('.ag-cell[col-id="application_status"]')
-      .filter({ hasText: "Finalizado" })
+      .filter({ hasText: "Pensar melhor" })
       .first()
     await expect(updatedStatusCell).toBeVisible()
   })
