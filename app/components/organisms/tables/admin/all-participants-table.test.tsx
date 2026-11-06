@@ -194,6 +194,38 @@ describe("AllParticipantsTable", () => {
     })
   })
 
+  describe("search by profile ID", () => {
+    it("finds a profile by the ID a participant sends on WhatsApp", async () => {
+      const user = userEvent.setup()
+      renderWithDataRouter(
+        <AllParticipantsTable
+          profiles={[
+            createMockProfile({
+              id: "4f7a2c1e-0000-4000-8000-000000000001",
+              social_name: "João",
+            }),
+            createMockProfile({
+              id: "9b3d5e7f-0000-4000-8000-000000000002",
+              social_name: "Maria",
+            }),
+          ]}
+        />,
+      )
+
+      await waitFor(() => expect(screen.getByText("João")).toBeInTheDocument())
+
+      await user.type(
+        screen.getByPlaceholderText("Buscar..."),
+        "9b3d5e7f-0000-4000-8000-000000000002",
+      )
+
+      await waitFor(() => {
+        expect(screen.queryByText("João")).not.toBeInTheDocument()
+      })
+      expect(screen.getByText("Maria")).toBeInTheDocument()
+    })
+  })
+
   describe("session storage integration", () => {
     it("persists filter state to session storage", async () => {
       renderWithDataRouter(<AllParticipantsTable profiles={mockProfiles} />)

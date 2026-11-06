@@ -422,7 +422,7 @@ describe("root loader", () => {
 
       expect(cpfExemptionLink).toMatch(/^https:\/\/wa\.me\//)
       expect(decodeURIComponent(cpfExemptionLink ?? "")).toContain(
-        "/admin/participantes/profile-1",
+        "ID: profile-1",
       )
     })
 
