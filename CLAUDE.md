@@ -194,11 +194,22 @@ The "Default privileges on new objects in public" test in
 
 `ls` gives you the tree. These are the parts it does not:
 
-- `app/business/` — domain logic, split by actor (`admin`, `auth`, `email`,
-  `participant`). Route files stay thin and call into it.
-- `app/pages/` — the routes themselves, mirroring the URL structure. Not to be
-  confused with `app/components/pages/`, which holds the components a given
-  page renders.
+- `app/business/` — domain logic and every database query, split by domain,
+  never by actor: `auth`, `profile`, `event`, `application`, `payment`,
+  `newsletter`, `email`, `cms`, `feedback`, `settings`, `reporting`. A vendor
+  SDK (Asaas, Listmonk, Sanity, nodemailer) is imported only by the domain
+  that owns it. Domains may import each other, never in a cycle.
+- `app/lib/` — shared infrastructure with no domain knowledge; it never
+  imports `app/business/`. The database is reached only through
+  `~/lib/supabase/db.server`.
+- `app/pages/` — the routes themselves, mirroring the URL structure, API
+  routes included (`app/pages/api/`). Route modules stay thin: a loader or
+  action parses the request and calls `app/business/`, and never imports
+  Kysely, `db.server` or the Supabase server client. Not to be confused with
+  `app/components/pages/`, which holds the components a given page renders.
+- Dependencies point one way: `pages → business → lib`. Full rule:
+  [the ADR](docs/architecture/decisions/20261106-server-side-code-is-organized-by-domain.md).
+  The code is still moving into this layout (WEB-42); new code follows it now.
 - `app/components/` — atomic design (`atoms`, `molecules`, `organisms`), plus
   `ui` for ShadcN and `forms` for the form layer.
 - `app/copy/` — every user-visible string; see Site Copy below.
@@ -225,7 +236,7 @@ The "Default privileges on new objects in public" test in
 2. **Components**: atomic design. New UI extends ShadcN UI where possible.
 
 3. **Server-only code**: the `.server.ts` suffix keeps a module out of the
-   client bundle.
+   client bundle. Any file that imports a server-only module carries it.
 
 4. **Environment variables**: Every variable the project reads is declared in `.env.schema`, with its type and whether it is required — read that file, never `.env`, which holds the values. Application code reads them through `ENV` from `varlock/env`, not `process.env`. Every variable resolves at runtime; the handful the browser reads carry `@static` and are inlined into the bundle at build time. Adding `@static` to a server-only variable freezes its build-time value into the artifact and lets the bundler delete any `if (ENV.FLAG)` around it — `scripts/env-schema.test.ts` guards that line. The replacement matches `ENV.X` and not `const { X } = ENV`, so the two forms do not behave alike for a `@static` variable: destructuring keeps the runtime read that dot access gives up. Local development requires Supabase setup.
 
