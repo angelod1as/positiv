@@ -1,4 +1,4 @@
-import { inputFromForm } from "composable-functions"
+import { inputFromFormData } from "composable-functions"
 import { lazy, Suspense, useEffect, useState, type ReactNode } from "react"
 import {
   data,
@@ -20,6 +20,8 @@ import {
   umamiBeforeSendScript,
 } from "~/lib/analytics/admin-pages"
 import { isValidCpf } from "~/lib/helpers/cpf"
+import { readFormData } from "~/lib/helpers/read-form-data.server"
+import { safeRedirect } from "~/lib/helpers/safe-redirect"
 import { isValidPhone } from "~/lib/helpers/phone"
 import { useMarkHydrated } from "~/lib/hooks/use-mark-hydrated"
 import { useTrackEmailConfirmed } from "~/lib/hooks/use-track-email-confirmed"
@@ -260,7 +262,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 export async function action({ params, request }: Route.ActionArgs) {
   const cookieHeader = request.headers.get("Cookie")
   const cookie = (await newsCookie.parse(cookieHeader)) || {}
-  const formData = await inputFromForm(request)
+  const formData = inputFromFormData(await readFormData(request.clone()))
   const { intent, thisUrl, newsVersion: submittedNewsVersion } = formData
 
   if (intent === "newsletter-subscribe") {
@@ -268,7 +270,7 @@ export async function action({ params, request }: Route.ActionArgs) {
 
     if (!currentProfile) {
       return redirectWithError(
-        thisUrl as string,
+        safeRedirect(thisUrl as string, "/"),
         newsletterSubscribeCopy.loginRequired,
       )
     }
@@ -279,7 +281,10 @@ export async function action({ params, request }: Route.ActionArgs) {
     )
 
     if (!result.success) {
-      return redirectWithError(thisUrl as string, newsletterSubscribeCopy.failed)
+      return redirectWithError(
+        safeRedirect(thisUrl as string, "/"),
+        newsletterSubscribeCopy.failed,
+      )
     }
 
     const headers = new Headers()
@@ -296,7 +301,11 @@ export async function action({ params, request }: Route.ActionArgs) {
         ? newsletterSubscribeCopy.successWithSyncFailure
         : newsletterSubscribeCopy.success
 
-    return redirectWithSuccess(thisUrl as string, successMessage, { headers })
+    return redirectWithSuccess(
+      safeRedirect(thisUrl as string, "/"),
+      successMessage,
+      { headers },
+    )
   }
 
   if (
@@ -312,7 +321,7 @@ export async function action({ params, request }: Route.ActionArgs) {
       cookie.newsVersion = submittedNewsVersion
     }
 
-    return redirect(thisUrl as string, {
+    return redirect(safeRedirect(thisUrl as string, "/"), {
       headers: {
         "Set-Cookie": await newsCookie.serialize(cookie),
       },

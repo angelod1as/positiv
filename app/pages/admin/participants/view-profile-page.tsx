@@ -14,6 +14,7 @@ import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-profile-page"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
+import { readFormData } from "~/lib/helpers/read-form-data.server"
 
 const {
   admin: { ADMIN_PARTICIPANTS },
@@ -77,7 +78,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   await getAdminContext(request, params)
 
-  const formData = await request.formData()
+  const formData = await readFormData(request)
   const intent = formData.get("intent")
 
   if (intent === "update-profile-approval-status") {

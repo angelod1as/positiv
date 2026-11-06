@@ -149,3 +149,23 @@ describe("SettingsPage action", () => {
     },
   )
 })
+
+describe("SettingsPage action - non-form body", () => {
+  it("answers a JSON body with 415", async () => {
+    vi.mocked(getAdminContext).mockResolvedValue(
+      {} as Awaited<ReturnType<typeof getAdminContext>>,
+    )
+
+    const thrown = await action({
+      request: new Request("http://localhost/admin/configuracoes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      }),
+      params: {},
+    } as Parameters<typeof action>[0]).catch((error: unknown) => error)
+
+    expect(thrown).toBeInstanceOf(Response)
+    expect((thrown as Response).status).toBe(415)
+  })
+})

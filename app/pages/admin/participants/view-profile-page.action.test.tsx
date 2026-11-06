@@ -84,3 +84,23 @@ describe("ViewProfilePage action", () => {
     })
   })
 })
+
+describe("ViewProfilePage action - non-form body", () => {
+  it("answers a JSON body with 415", async () => {
+    vi.mocked(getAdminContext).mockResolvedValue(
+      {} as Awaited<ReturnType<typeof getAdminContext>>,
+    )
+
+    const thrown = await action({
+      request: new Request("http://localhost/admin/perfis/7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      }),
+      params: { profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f" },
+    } as Parameters<typeof action>[0]).catch((error: unknown) => error)
+
+    expect(thrown).toBeInstanceOf(Response)
+    expect((thrown as Response).status).toBe(415)
+  })
+})

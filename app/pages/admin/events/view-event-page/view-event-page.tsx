@@ -42,6 +42,7 @@ import paths from "~/lib/paths"
 import type { ComposableFetcherData } from "~types/database/entities.types"
 import type { Route } from "./+types/view-event-page"
 import { sendToast } from "./send-toast"
+import { readFormData } from "~/lib/helpers/read-form-data.server"
 
 const {
   admin: { ADMIN_DASHBOARD },
@@ -53,7 +54,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   const context = await getAdminContext(request, params)
 
-  const formData = await request.formData()
+  const formData = await readFormData(request)
   const intent = String(formData.get("intent") ?? "")
 
   const paymentResult = await handlePaymentIntent(

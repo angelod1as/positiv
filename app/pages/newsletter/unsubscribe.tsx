@@ -17,6 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card"
+import { readFormData } from "~/lib/helpers/read-form-data.server"
 
 const {
   root: { HOME },
@@ -59,7 +60,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const formData = await request.formData()
+  const formData = await readFormData(request)
   const profileId = formData.get("profileId") as string
 
   if (!profileId) {
