@@ -134,6 +134,15 @@ Estamos pedindo informação de raça ou cor para acompanhar nossos dados demogr
 
 export const cpfExemptionCopy = {
   requestLink: "Não tenho CPF ou sou pessoa estrangeira",
+  pending:
+    "Aguardando liberação da administração. Continue preenchendo o resto: ao salvar, conferimos se já foi liberado.",
+  undo: "Tenho CPF",
+  exempt: "Estrangeira ou sem CPF.",
+  changeLink: "Para mudar isso, fale com a administração",
+  notYetExempt:
+    "A administração ainda não liberou o cadastro sem CPF. Aguarde ou informe um CPF.",
+  rgLabel: "RG ou passaporte",
+  rgIssuerLabel: "Emissor ou país",
   requestMessage: (profileUrl: string) =>
     `Olá! Não tenho CPF (ou sou pessoa estrangeira) e preciso de liberação para continuar meu cadastro na Positiv. Meu perfil: ${profileUrl}`,
   changeMessage: (profileUrl: string) =>

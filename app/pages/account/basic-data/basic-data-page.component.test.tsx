@@ -34,6 +34,7 @@ const filledProfile = {
 type LoaderData = {
   profile: unknown
   orphanedProfile: unknown
+  cpfExemptionLinks?: { request: string; change: string } | null
 }
 
 // The page reads one prop of the many a route component is handed, and a test
@@ -241,6 +242,65 @@ describe("BasicDataPage", () => {
         expect(screen.getByText("CPF já cadastrado")).toBeInTheDocument(),
       )
       expect(navigate).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("someone without a CPF", () => {
+    const links = {
+      request: "https://wa.me/55?text=request",
+      change: "https://wa.me/55?text=change",
+    }
+    const withoutCpf = { ...filledProfile, cpf: null, basic_data_filled: false }
+
+    const sentAnswers = () => {
+      const [, init] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit]
+      return JSON.parse(String(init.body)) as Record<string, unknown>
+    }
+
+    it("asks for an exemption without losing what was typed, and lets the server decide", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          json: async () => ({
+            ok: false,
+            errors: [{ questionId: "cpf", message: "Ainda não liberou" }],
+          }),
+        }),
+      )
+      const user = userEvent.setup()
+      draw({ profile: withoutCpf, orphanedProfile: null, cpfExemptionLinks: links })
+
+      await user.clear(screen.getByLabelText("Nome completo"))
+      await user.type(screen.getByLabelText("Nome completo"), "Anna Müller")
+      await user.click(
+        screen.getByRole("link", {
+          name: "Não tenho CPF ou sou pessoa estrangeira",
+        }),
+      )
+      await user.click(screen.getByRole("button", { name: "Continuar" }))
+
+      await waitFor(() => expect(fetch).toHaveBeenCalled())
+      expect(sentAnswers()).toMatchObject({
+        full_name: "Anna Müller",
+        cpf_exempt_requested: true,
+      })
+      expect(await screen.findByText("Ainda não liberou")).toBeInTheDocument()
+      expect(screen.getByLabelText("Nome completo")).toHaveValue("Anna Müller")
+      expect(navigate).not.toHaveBeenCalled()
+    })
+
+    it("asks an exempt profile for no CPF and its passport instead", () => {
+      draw({
+        profile: { ...withoutCpf, cpf_exempt: true },
+        orphanedProfile: null,
+        cpfExemptionLinks: links,
+      })
+
+      expect(screen.queryByLabelText("CPF")).not.toBeInTheDocument()
+      expect(screen.getByLabelText("RG ou passaporte")).toBeInTheDocument()
+      expect(
+        screen.getByRole("link", { name: /fale com a administração/i }),
+      ).toHaveAttribute("href", links.change)
     })
   })
 

@@ -6,9 +6,14 @@ import { toCommitErrors } from "~/lib/helpers/to-commit-errors"
 import { logger } from "~/lib/logger/logger.server"
 import { db } from "~/lib/supabase/db.server"
 import { participantCopy } from "~/copy/participant"
-import { basicDataValidation } from "~/copy/account"
+import { basicDataValidation, cpfExemptionCopy } from "~/copy/account"
 import { isUniqueViolation } from "~/lib/helpers/is-unique-violation"
-import { basicDataSchema, ExtraBasicDataSchema, userContextSchema } from "../common"
+import {
+  basicDataSchema,
+  cpfExemptBasicDataSchema,
+  ExtraBasicDataSchema,
+  userContextSchema,
+} from "../common"
 import { refreshNewsletterSubscriber } from "../newsletter/auto-subscribe.server"
 
 type SaveBasicDataProps = {
@@ -32,14 +37,31 @@ export async function saveBasicData({
   if (!currentUser.email) return { ok: false, errors: [] }
   const email = currentUser.email
 
-  const basic = basicDataSchema.safeParse(answers)
+  // Read from the profile the request loaded, never from the answers: only an
+  // admin grants the exemption, and the form asking for one proves nothing.
+  const cpfExempt = context.currentProfile?.cpf_exempt === true
+
+  const basic = (cpfExempt ? cpfExemptBasicDataSchema : basicDataSchema).safeParse(
+    answers,
+  )
   const extra = ExtraBasicDataSchema.safeParse(answers)
 
   if (!basic.success || !extra.success) {
+    // Someone who asked for the exemption is told it has not been granted yet,
+    // rather than that their CPF is missing -- they know it is.
+    const waiting = answers.cpf_exempt_requested === true
+    const basicErrors = basic.success ? [] : toCommitErrors(basic.error)
+    const cpfRefused = basicErrors.some((error) => error.questionId === "cpf")
+
     return {
       ok: false,
       errors: [
-        ...(basic.success ? [] : toCommitErrors(basic.error)),
+        ...(waiting && cpfRefused
+          ? [
+              ...basicErrors.filter((error) => error.questionId !== "cpf"),
+              { questionId: "cpf", message: cpfExemptionCopy.notYetExempt },
+            ]
+          : basicErrors),
         ...(extra.success ? [] : toCommitErrors(extra.error)),
       ],
     }
@@ -73,6 +95,7 @@ export async function saveBasicData({
     ...values,
     ...extra.data,
     date_of_birth: dateToString(values.date_of_birth),
+    ...(cpfExempt && { cpf: null }),
     user_id: currentUser.id,
     email,
     basic_data_filled: true,

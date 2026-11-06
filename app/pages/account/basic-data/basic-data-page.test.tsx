@@ -65,6 +65,7 @@ describe("basic-data-page loader", () => {
       expect(result).toEqual({
         profile: null,
         orphanedProfile,
+        cpfExemptionLinks: null,
       })
       
       expect(mockSupabase.from).toHaveBeenCalledWith("profiles")
@@ -128,7 +129,17 @@ describe("basic-data-page loader", () => {
       expect(result).toEqual({
         profile: currentProfile,
         orphanedProfile: null,
+        cpfExemptionLinks: {
+          request: expect.stringMatching(/^https:\/\/wa\.me\//),
+          change: expect.stringMatching(/^https:\/\/wa\.me\//),
+        },
       })
+      expect(
+        decodeURIComponent(
+          (result as { cpfExemptionLinks: { request: string } })
+            .cpfExemptionLinks.request,
+        ),
+      ).toContain("/admin/participantes/profile-123")
     })
 
     it("should handle errors when checking for orphaned profiles", async () => {
@@ -172,6 +183,7 @@ describe("basic-data-page loader", () => {
       expect(result).toEqual({
         profile: null,
         orphanedProfile: null,
+        cpfExemptionLinks: null,
       })
       
       // Should log the error
@@ -222,6 +234,7 @@ describe("basic-data-page loader", () => {
       expect(result).toEqual({
         profile: null,
         orphanedProfile: null,
+        cpfExemptionLinks: null,
       })
       
       // Should NOT log "no rows" errors

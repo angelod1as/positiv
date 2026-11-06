@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { validateQuestion } from "~/components/forms/runtime/validate-question"
+import { basicDataFieldsSchema } from "~/business/common"
 import { basicDataValidation } from "~/copy/account"
 import { buildBasicDataQuestions } from "./build-basic-data-questions"
 
@@ -173,6 +174,58 @@ describe("buildBasicDataQuestions", () => {
   it("carries the descriptions the fields already had", () => {
     expect(find("phone").help).toBe("Só números, com DDD. Ex: 11955552222")
     expect(find("full_name").help).toBeUndefined()
+  })
+
+  it("still asks for a CPF from someone who has not asked for an exemption", () => {
+    const missing = basicDataFieldsSchema.shape.cpf.safeParse("")
+    if (missing.success) throw new Error("an empty CPF should not parse")
+
+    expect(validateQuestion(find("cpf"), "", {})).toEqual({
+      ok: false,
+      message: missing.error.issues[0].message,
+    })
+    expect(validateQuestion(find("cpf"), "11144477736", {})).toEqual({
+      ok: false,
+      message: basicDataValidation.invalidCpf,
+    })
+    expect(validateQuestion(find("cpf"), "11144477735", {}).ok).toBe(true)
+  })
+
+  it("lets the CPF go empty while an exemption is being asked for", () => {
+    const asking = { cpf_exempt_requested: true }
+
+    expect(validateQuestion(find("cpf"), "", asking).ok).toBe(true)
+    expect(validateQuestion(find("cpf"), undefined, asking).ok).toBe(true)
+  })
+
+  it("still checks a CPF typed in while asking for an exemption", () => {
+    expect(
+      validateQuestion(find("cpf"), "11144477736", {
+        cpf_exempt_requested: true,
+      }),
+    ).toEqual({ ok: false, message: basicDataValidation.invalidCpf })
+  })
+
+  describe("for a profile exempted from the CPF", () => {
+    const exempt = buildBasicDataQuestions({ cpfExempt: true })
+    const findExempt = (id: string) => exempt.find((item) => item.id === id)
+
+    it("asks no CPF", () => {
+      expect(findExempt("cpf")).toBeUndefined()
+    })
+
+    it("takes a passport where the RG would go", () => {
+      expect(findExempt("rg")?.prompt).toBe("RG ou passaporte")
+      expect(findExempt("rg_issuer")?.prompt).toBe("Emissor ou país")
+    })
+
+    it("keeps the documents required", () => {
+      const rg = findExempt("rg")
+      if (!rg) throw new Error("no rg question")
+
+      expect(validateQuestion(rg, "").ok).toBe(false)
+      expect(validateQuestion(rg, "AB123456").ok).toBe(true)
+    })
   })
 
   it("says why the CPF has to be a real one", () => {

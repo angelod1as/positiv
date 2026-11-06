@@ -14,6 +14,8 @@ import { buildSingleScreenFlow } from "~/components/forms/runtime/single-screen-
 import { basicDataCopy } from "~/copy/account"
 import { metaCopy } from "~/copy/meta"
 import { trackEvent } from "~/lib/analytics/umami"
+import { appOrigin } from "~/lib/helpers/app-origin"
+import { cpfExemptionLinks } from "~/lib/helpers/cpf-exemption-link"
 import { createMetaArray } from "~/lib/helpers/meta"
 import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
@@ -28,9 +30,6 @@ const {
   admin: { ADMIN_DASHBOARD },
 } = paths
 
-// Built once: a presentation that changes identity remounts the run, and with
-// it everything already typed.
-const BasicDataScreen = gridPresentation(buildBasicDataLayout())
 
 export function meta({}: Route.MetaArgs) {
   return createMetaArray(metaCopy.basicData.title)
@@ -62,18 +61,56 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     }
   }
 
-  return { profile, orphanedProfile }
+  // Only an admin can exempt someone from the CPF, so the way to ask points at
+  // the profile they would open. A visitor with no profile yet has nothing to
+  // point at.
+  return {
+    profile,
+    orphanedProfile,
+    cpfExemptionLinks: profile
+      ? cpfExemptionLinks({
+          origin: appOrigin(request.headers.get("host")),
+          profileId: profile.id,
+        })
+      : null,
+  }
 }
 
 const BasicDataPage = ({ loaderData }: Route.ComponentProps) => {
-  const { profile, orphanedProfile } = loaderData || {}
+  const { profile, orphanedProfile, cpfExemptionLinks: links = null } =
+    loaderData || {}
   const navigate = useNavigate()
 
   // A profile waiting under this e-mail is the person's own history, from
   // before they had an account. It is what the form should open holding.
   const profileData = orphanedProfile || profile
 
-  const questions = useMemo(() => buildBasicDataQuestions(), [])
+  // Read from the account, never from a profile left behind: only an admin sets
+  // it, and on the profile the person is signed in as.
+  const cpfExempt = profile?.cpf_exempt === true
+  const requestLink = links?.request
+  const changeLink = links?.change
+
+  const questions = useMemo(
+    () => buildBasicDataQuestions({ cpfExempt }),
+    [cpfExempt],
+  )
+
+  // Kept to the same identity across renders: a presentation that changes
+  // identity remounts the run, and with it everything already typed.
+  const BasicDataScreen = useMemo(
+    () =>
+      gridPresentation(
+        buildBasicDataLayout({
+          cpfExempt,
+          links:
+            requestLink && changeLink
+              ? { request: requestLink, change: changeLink }
+              : null,
+        }),
+      ),
+    [cpfExempt, requestLink, changeLink],
+  )
   const initialAnswers = useMemo(
     () => toBasicDataAnswers(profileData ?? null),
     [profileData],
