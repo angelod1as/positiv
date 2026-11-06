@@ -62,22 +62,15 @@ describe("Seeded profiles", () => {
   })
 
   // Someone with no CPF, exempted by an admin, so every screen that treats a
-  // foreigner differently has a profile to be looked at with. WEB-40
+  // foreigner differently has a profile to be looked at with. Her registration
+  // on "Evento Com Inscrições Abertas 1" is asserted by the e2e journey that
+  // uses it: other suites here empty event_participants until the global
+  // teardown puts it back. WEB-40
   it("seeds one foreign participant, exempt from the CPF", async () => {
     const foreigner = await kysely
-      .selectFrom("profiles as p")
-      .innerJoin("event_participants as ep", "ep.profile_id", "p.id")
-      .innerJoin("events as e", "e.id", "ep.event_id")
-      .select([
-        "p.cpf",
-        "p.cpf_exempt",
-        "p.rg",
-        "p.rg_issuer",
-        "p.phone_is_international",
-        "e.title",
-      ])
-      .where("p.email", "=", "user9@example.com")
-      .where("e.title", "=", "Evento Com Inscrições Abertas 1")
+      .selectFrom("profiles")
+      .select(["cpf", "cpf_exempt", "rg", "rg_issuer", "phone_is_international"])
+      .where("email", "=", "user9@example.com")
       .executeTakeFirst()
 
     expect(foreigner).toEqual({
@@ -86,7 +79,6 @@ describe("Seeded profiles", () => {
       rg: "C01X00T47",
       rg_issuer: "Alemanha",
       phone_is_international: true,
-      title: "Evento Com Inscrições Abertas 1",
     })
   })
 })
