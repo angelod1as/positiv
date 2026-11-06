@@ -18,6 +18,7 @@ ADRs are immutable once accepted - only their status can change (deprecated or s
 | [2025-06-30](./20250630-use-log4brains-to-manage-the-adrs.md) | Use Log4brains | Accepted |
 | [2025-06-30](./20250630-use-markdown-architectural-decision-records.md) | Use Markdown ADRs | Accepted |
 | [2026-10-30](./20261030-track-engineering-work-in-jira.md) | Track engineering work in Jira | Accepted, on trial until 2026-11-27 |
+| [2026-11-06](./20261106-production-ships-tests-migration-app-smoke.md) | Production ships in one order: tests, migration, app, smoke | Accepted |
 
 ### Core Architecture
 
