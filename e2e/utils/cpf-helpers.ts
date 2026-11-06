@@ -33,3 +33,24 @@ export async function setProfileCpf(
 
   return before.cpf
 }
+
+/**
+ * Grants or lifts the CPF exemption the way an admin would, clearing the CPF
+ * when granting -- an exempt profile holds none. Restoring a test profile lifts
+ * the exemption before putting its CPF back.
+ */
+export async function setProfileCpfExempt(
+  profileId: string,
+  cpfExempt: boolean
+): Promise<void> {
+  const supabase = createSupabaseAdminClient()
+
+  const { error } = await supabase
+    .from('profiles')
+    .update(cpfExempt ? { cpf_exempt: true, cpf: null } : { cpf_exempt: false })
+    .eq('id', profileId)
+
+  if (error) {
+    throw new Error(`Failed to set the CPF exemption of profile ${profileId}: ${error.message}`)
+  }
+}
