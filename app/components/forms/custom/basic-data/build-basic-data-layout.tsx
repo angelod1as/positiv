@@ -2,55 +2,12 @@ import type {
   GridSlot,
   NoteContext,
 } from "~/components/forms/runtime/presentations/grid"
+import { basicDataCopy, genderPronounsOrientationCopy } from "~/copy/account"
 import {
-  basicDataCopy,
-  cpfExemptionCopy,
-  genderPronounsOrientationCopy,
-} from "~/copy/account"
-
-type CpfExemptionLinks = { request: string; change: string }
-
-const ExemptionRequest = ({
-  links,
-  answers,
-  onAnswer,
-}: NoteContext & { links: CpfExemptionLinks }) =>
-  answers.cpf_exempt_requested === true ? (
-    <p className="text-sm text-muted-foreground">
-      {cpfExemptionCopy.pending}{" "}
-      <button
-        type="button"
-        className="underline"
-        onClick={() => onAnswer("cpf_exempt_requested", false)}
-      >
-        {cpfExemptionCopy.undo}
-      </button>
-    </p>
-  ) : (
-    <a
-      href={links.request}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-sm underline"
-      onClick={() => onAnswer("cpf_exempt_requested", true)}
-    >
-      {cpfExemptionCopy.requestLink}
-    </a>
-  )
-
-const ExemptNotice = ({ links }: { links: CpfExemptionLinks }) => (
-  <p className="text-sm text-muted-foreground">
-    {cpfExemptionCopy.exempt}{" "}
-    <a
-      href={links.change}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="underline"
-    >
-      {cpfExemptionCopy.changeLink}
-    </a>
-  </p>
-)
+  type CpfExemptionLinks,
+  ExemptionRequest,
+  ExemptNotice,
+} from "./cpf-exemption-notes"
 
 /**
  * The twelve-column arrangement the two screens had between them, now read as
