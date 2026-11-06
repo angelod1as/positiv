@@ -14,6 +14,7 @@ import type { Profile } from "~types/database/entities.types"
 import { AddToGoogleContactsButton } from "~/components/atoms/buttons/add-to-google-contacts-button"
 import { PhoneButton } from "~/lib/helpers/phone-to-button"
 import { profilePropMap } from "~/lib/helpers/propMaps"
+import { CpfExemptionControl } from "./cpf-exemption-control"
 
 type BasicDataProfile = Profile & {
   was_admin_skipped_last_event?: boolean | null
@@ -22,6 +23,8 @@ type BasicDataProfile = Profile & {
 type BasicDataProps = { profile: BasicDataProfile }
 export const BasicData: FC<BasicDataProps> = ({ profile }) => {
   const {
+    id,
+    cpf_exempt,
     full_name,
     social_name,
     cpf,
@@ -82,7 +85,14 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
           <DataPair top pair={[profilePropMap("race_color"), race_color]} />
           <DataPair top pair={[profilePropMap("email"), email]} />
           <DataPair top pair={[profilePropMap("rg"), `${rg} ${rg_issuer}`]} />
-          <DataPair top pair={[profilePropMap("cpf"), cpf]} />
+          <DataPair
+            top
+            pair={[
+              profilePropMap("cpf"),
+              cpf_exempt ? adminParticipantsCopy.cpfExemption.granted : cpf,
+            ]}
+          />
+          <CpfExemptionControl profileId={id} cpfExempt={cpf_exempt === true} />
         </div>
         <div>
           <DataPair top pair={[profilePropMap("where_lives"), where_lives]} />

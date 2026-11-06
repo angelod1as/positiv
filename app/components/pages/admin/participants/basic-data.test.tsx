@@ -109,4 +109,33 @@ describe('BasicData', () => {
     expect(screen.getByText('123.456.789-00')).toBeInTheDocument()
     expect(screen.getByText('12.345.678-9 SSP-SP')).toBeInTheDocument()
   })
+
+  it('offers to exempt from the CPF a profile that has one', async () => {
+    renderWithRouter(<BasicData profile={{ ...mockProfile, cpf_exempt: false }} />)
+
+    expect(await screen.findByText('123.456.789-00')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Marcar sem CPF' }),
+    ).toBeInTheDocument()
+  })
+
+  it('shows an exempt profile as having no CPF, with its passport', async () => {
+    renderWithRouter(
+      <BasicData
+        profile={{
+          ...mockProfile,
+          cpf: null,
+          rg: 'X1234567',
+          rg_issuer: 'Alemanha',
+          cpf_exempt: true,
+        }}
+      />,
+    )
+
+    expect(await screen.findByText('X1234567 Alemanha')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Desmarcar sem CPF' }),
+    ).toBeInTheDocument()
+    expect(screen.getAllByText('Sem CPF / estrangeira').length).toBeGreaterThan(0)
+  })
 })

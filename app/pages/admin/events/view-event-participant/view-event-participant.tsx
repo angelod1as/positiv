@@ -10,6 +10,7 @@ import {
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
+import { setProfileCpfExempt } from "~/business/admin/cpf-exemption.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
 import { paymentProvider } from "~/business/payment/payment-provider.server"
 import { getPaymentsForParticipant } from "~/business/payment/payment-totals.server"
@@ -60,6 +61,18 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (intent === "update-profile-approval-status") {
     const result = await updateProfileApprovalStatus(Object.fromEntries(formData))
     return { success: result.success }
+  }
+
+  if (intent === "update-profile-cpf-exempt") {
+    const result = await setProfileCpfExempt(Object.fromEntries(formData))
+    // Copied out: React Router turns every Error in action data into
+    // "Unexpected Server Error" in a production build.
+    return result.success
+      ? { success: true }
+      : {
+          success: false,
+          errors: result.errors.map((error) => ({ message: error.message })),
+        }
   }
 
   if (intent === "update-profile-admin-notes") {

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { setProfileCpfExempt } from "~/business/admin/cpf-exemption.server"
 import {
   getAdminContext,
   updateEventParticipantById,
@@ -18,6 +19,10 @@ import {
   registerManualPayment,
 } from "~/business/payment/manual-payment.server"
 import { action } from "./view-event-participant"
+
+vi.mock("~/business/admin/cpf-exemption.server", () => ({
+  setProfileCpfExempt: vi.fn(),
+}))
 
 vi.mock("~/business/admin/admin.server", () => ({
   getAdminContext: vi.fn(),
@@ -76,6 +81,14 @@ const INTENTS = [
     intent: "update-profile-admin-notes",
     fields: { profile_id: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f", admin_notes: "a note" },
     mutation: updateProfileAdminNotes,
+  },
+  {
+    intent: "update-profile-cpf-exempt",
+    fields: {
+      profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",
+      cpfExempt: "true",
+    },
+    mutation: setProfileCpfExempt,
   },
   {
     intent: "update-event-participant",
@@ -137,6 +150,9 @@ const INTENTS = [
 describe("ViewEventParticipant action", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(setProfileCpfExempt).mockResolvedValue({
+      success: true,
+    } as never)
     vi.mocked(getAdminContext).mockResolvedValue({
       currentProfile: { id: "admin-1" },
     } as Awaited<ReturnType<typeof getAdminContext>>)
