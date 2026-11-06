@@ -73,6 +73,17 @@ describe("production workflow", () => {
     expect(workflow).toContain("Coolify")
   })
 
+  it("queues a merge behind the run in progress instead of cancelling it", () => {
+    // Two merges in a row must not interleave: the second run's migration
+    // could land under the first run's app, or the first run's app deploy
+    // could publish the second merge's code before its migration ran. And a
+    // run in progress must never be cancelled, because it may be mid-`db
+    // push`.
+    const header = workflow.slice(0, workflow.indexOf("\njobs:\n"))
+
+    expect(header).toMatch(/\nconcurrency:\n {2}group: production\n {2}cancel-in-progress: false\n/)
+  })
+
   it("deploys the Studio once the tests pass, beside the database and not before it", () => {
     const deployStudio = jobBlock("deploy-studio")
 
