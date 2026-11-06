@@ -8,6 +8,7 @@ import {
   createTestAdminUser,
   createTestAuthUser,
   createTestProfile,
+  getTestSupabaseClient,
   runAsAuthenticatedUser,
 } from "~/test/db-test-utils"
 
@@ -162,6 +163,28 @@ describe("Admin-only profile columns", () => {
           `.execute(trx),
         ),
       ).rejects.toThrow(/admin-only/i)
+    })
+  })
+
+  describe("service_role", () => {
+    it("writes them, as the e2e helpers and the server's supabase client do", async () => {
+      const { profile } = await createUserWithProfile("service-role")
+
+      const { error } = await getTestSupabaseClient()
+        .from("profiles")
+        .update({ full_name: "By service", approved_to_attend: "approved" })
+        .eq("id", profile.id)
+
+      expect(error).toBeNull()
+      const saved = await db
+        .selectFrom("profiles")
+        .select(["full_name", "approved_to_attend"])
+        .where("id", "=", profile.id)
+        .executeTakeFirstOrThrow()
+      expect(saved).toEqual({
+        full_name: "By service",
+        approved_to_attend: "approved",
+      })
     })
   })
 
