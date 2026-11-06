@@ -6,6 +6,14 @@ on:
       - main
   workflow_dispatch:
 
+# One run at a time, and a run in progress is never cancelled: it may be in the
+# middle of `db push`. GitHub keeps one run waiting behind it; a third merge
+# replaces the waiting one, which loses nothing, because the newer run applies
+# every pending migration and deploys the newer commit.
+concurrency:
+  group: production
+  cancel-in-progress: false
+
 # Coolify deploys the application from its own webhook on this same push, in
 # parallel with everything below and answering to nothing here. So this workflow
 # does not decide whether the app ships — only whether the schema it needs is
