@@ -73,6 +73,12 @@ async function chargeAndOpenLink(page: Page, browser: Browser) {
   await paymentPage.openLink(pending.access_token)
   await expect(participantPage.getByRole('heading', { name: 'Como você quer pagar?' })).toBeVisible()
 
+  // The token is the whole authorization, so the response keeps it out of
+  // referrers and shared caches.
+  const linkResponse = await participantPage.request.get(`/pagamento/t/${pending.access_token}`)
+  expect(linkResponse.headers()['referrer-policy']).toBe('no-referrer')
+  expect(linkResponse.headers()['cache-control']).toBe('private, no-store')
+
   return {
     event,
     payer,
