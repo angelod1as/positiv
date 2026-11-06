@@ -2,6 +2,7 @@ export const adminPropMapsCopy = {
   profileFields: {
     basic_data_filled: "Dados básico preenchidos?",
     cpf: "CPF",
+    cpf_exempt: "Sem CPF (estrangeira)?",
     created_at: "Criado em",
     date_of_birth: "Data de nascimento",
     email: "E-mail",
