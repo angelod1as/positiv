@@ -140,6 +140,26 @@ SUPABASE_CONNECT_URL: (GitHub secret - production)
 
 ---
 
+#### Job 3: `deploy-app`
+
+**Purpose**: Publish the app, only after the migration ran
+
+Starts the Coolify deployment through `POST /api/v1/deploy`. Coolify's own auto-deploy is off, so this is the only path the app takes to production. Skips publishing when `main` has moved past the run's commit: the newer run, queued behind this one, migrates and publishes it.
+
+**Secrets**: `COOLIFY_URL` (the panel address) and `COOLIFY_DEPLOY_TOKEN` (a Coolify API token with the `deploy` and `read` abilities only).
+
+---
+
+#### Job 4: `smoke`
+
+**Purpose**: Prove the new app is live
+
+Polls the deployment `deploy-app` started until it finishes, fails if it failed or built another commit, then fetches the site until it answers 200.
+
+Runs share the `production` concurrency group: one at a time, and a run in progress is never cancelled. Why the order: [ADR 2026-11-06](architecture/decisions/20261106-production-ships-tests-migration-app-smoke.md).
+
+---
+
 ## Database Migrations
 
 ### Development Flow

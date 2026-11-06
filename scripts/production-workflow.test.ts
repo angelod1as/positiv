@@ -66,11 +66,61 @@ describe("production workflow", () => {
     expect(deploy).toContain("needs: unit-test")
   })
 
-  it("says out loud that the app deploys on its own trigger", () => {
-    // Nothing in this repository sequences Coolify against this workflow, and
-    // the next person to read it should not have to find that out the way we
-    // did.
-    expect(workflow).toContain("Coolify")
+  it("publishes the app only once the migration has run", () => {
+    // WEB-39: unit-test failed on main, `db push` never ran, and Coolify
+    // published the app from its own push webhook anyway, reading a column that
+    // did not exist. The app now ships from here, behind the migration.
+    const deployApp = jobBlock("deploy-app")
+
+    expect(deployApp).toContain("needs: deploy")
+    expect(deployApp).toContain("/api/v1/deploy?uuid=")
+  })
+
+  it("leaves the app alone when main has moved past this run's commit", () => {
+    // Coolify builds the branch head, not a given commit. If a newer merge is
+    // queued behind this run, the head carries migrations that have not run
+    // yet, so publishing it here would repeat WEB-39. The newer run publishes.
+    const deployApp = jobBlock("deploy-app")
+
+    expect(deployApp).toContain("git ls-remote")
+    expect(deployApp).toContain('"$GITHUB_SHA"')
+  })
+
+  it("smoke-tests the deployment of this commit, not whatever answers 200", () => {
+    // A failed deploy leaves the previous container serving, healthy and
+    // answering 200. Only the deployment record says which commit is live.
+    const smoke = jobBlock("smoke")
+
+    expect(smoke).toContain("needs: deploy-app")
+    expect(smoke).toContain("/api/v1/deployments/")
+    expect(smoke).toContain('"$GITHUB_SHA"')
+    expect(smoke).not.toContain("sleep 120")
+  })
+
+  it("keeps the Coolify token off every command line", () => {
+    // This repository is public. The token reaches curl as a config file on
+    // stdin, never as an argument, where it would sit in the process list.
+    const commandLines = workflow
+      .split("\n")
+      .filter((line) => /\bcurl\b/.test(line) && !line.trim().startsWith("#"))
+
+    for (const line of commandLines) {
+      expect(line).not.toMatch(/TOKEN|Authorization|Bearer/)
+    }
+
+    expect(workflow).not.toMatch(/run:.*secrets\./)
+    expect(workflow).toContain("COOLIFY_DEPLOY_TOKEN: ${{ secrets.COOLIFY_DEPLOY_TOKEN }}")
+  })
+
+  it("queues a merge behind the run in progress instead of cancelling it", () => {
+    // Two merges in a row must not interleave: the second run's migration
+    // could land under the first run's app, or the first run's app deploy
+    // could publish the second merge's code before its migration ran. And a
+    // run in progress must never be cancelled, because it may be mid-`db
+    // push`.
+    const header = workflow.slice(0, workflow.indexOf("\njobs:\n"))
+
+    expect(header).toMatch(/\nconcurrency:\n {2}group: production\n {2}cancel-in-progress: false\n/)
   })
 
   it("deploys the Studio once the tests pass, beside the database and not before it", () => {
