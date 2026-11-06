@@ -235,6 +235,8 @@ export const paymentsCopy = {
       "Vaga social ou staff não usa o preço do evento: digite o valor a cobrar.",
     noAmount: "Defina um valor: este evento não tem preço cadastrado.",
     amountTooLow: "O valor da cobrança precisa ser maior que zero.",
+    cpfExemptManualOnly:
+      "Participante sem CPF: só pagamento manual. Registre o pagamento à mão.",
     amountUnreadable:
       "Não consegui ler esse valor. Escreva só números, como 150,00.",
     alreadyPaid:

@@ -535,6 +535,19 @@ describe("createPaymentOffer", () => {
     expect(await paymentsFor(participantId)).toHaveLength(1)
   })
 
+  it("opens no online charge for someone exempted from the CPF", async () => {
+    const exemptId = await makeParticipant({}, { cpf_exempt: true })
+
+    const result = await createPaymentOffer({ eventParticipantId: exemptId })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.errors[0]?.message).toBe(paymentsCopy.errors.cpfExemptManualOnly)
+    }
+    expect(await paymentsFor(exemptId)).toHaveLength(0)
+    expect(sendPaymentLinkEmail).not.toHaveBeenCalled()
+  })
+
   it("does nothing but succeed when payments are switched off", async () => {
     paymentsEnabled.value = false
 
@@ -778,6 +791,30 @@ describe("resendPaymentOffer", () => {
     const result = await resendPaymentOffer({ paymentId: payment.id })
 
     expect(result.success).toBe(true)
+  })
+
+  it("sends no link to someone exempted from the CPF", async () => {
+    const payment = await chargeWith("pending")
+    await kysely
+      .updateTable("profiles")
+      .set({ cpf_exempt: true })
+      .where(
+        "id",
+        "=",
+        kysely
+          .selectFrom("event_participants")
+          .select("profile_id")
+          .where("id", "=", participantId),
+      )
+      .execute()
+
+    const result = await resendPaymentOffer({ paymentId: payment.id })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.errors[0]?.message).toBe(paymentsCopy.errors.cpfExemptManualOnly)
+    }
+    expect(sendPaymentLinkEmail).not.toHaveBeenCalled()
   })
 
   it("refuses a charge that is no longer open", async () => {

@@ -184,6 +184,28 @@ export const createPaymentOffer = applySchema(createPaymentOfferSchema)(
           .forUpdate()
           .executeTakeFirst()
 
+        // An exempt profile has no CPF, and the provider will not take a
+        // customer without one: its payments are taken by hand. Read under a
+        // lock, so an exemption granted alongside cannot slip past -- granting
+        // checks for an open charge with the profile row locked.
+        const profile = await trx
+          .selectFrom("profiles")
+          .select("cpf_exempt")
+          .where(
+            "id",
+            "=",
+            trx
+              .selectFrom("event_participants")
+              .select("profile_id")
+              .where("id", "=", values.eventParticipantId),
+          )
+          .forShare()
+          .executeTakeFirst()
+
+        if (profile?.cpf_exempt) {
+          throw new Error(paymentsCopy.errors.cpfExemptManualOnly)
+        }
+
         const settled = await trx
           .selectFrom("payments")
           .select("status")
@@ -265,14 +287,20 @@ export const resendPaymentOffer = applySchema(resendPaymentOfferSchema)(
     }
 
     const payment = await kyselyDb
-      .selectFrom("payments")
-      .select(["id", "status"])
-      .where("id", "=", values.paymentId)
-      .where("status", "in", [...ACTIVE_PAYMENT_STATUSES])
+      .selectFrom("payments as pay")
+      .innerJoin("event_participants as ep", "ep.id", "pay.event_participant_id")
+      .innerJoin("profiles as p", "p.id", "ep.profile_id")
+      .select(["pay.id", "pay.status", "p.cpf_exempt"])
+      .where("pay.id", "=", values.paymentId)
+      .where("pay.status", "in", [...ACTIVE_PAYMENT_STATUSES])
       .executeTakeFirst()
 
     if (!payment) {
       throw new Error(paymentsCopy.errors.notResendable)
+    }
+
+    if (payment.cpf_exempt) {
+      throw new Error(paymentsCopy.errors.cpfExemptManualOnly)
     }
 
     const emailId = await queuePaymentEmail(kyselyDb, {
