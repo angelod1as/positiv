@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest"
 const READER = "app/lib/helpers/read-form-data.server.ts"
 const DIRECT_READ = /\brequest(?:\.clone\(\))?\.formData\(\)|\binputFromForm\(/
 const TOP_LEVEL_DECLARATION =
-  /^(?:export )?(?:async )?function (\w+)|^(?:export )?const (\w+)/
+  /^(?:export )?(?:default )?(?:async )?function (\w+)|^(?:export )?const (\w+)/
 
 function sourceFiles() {
   return execFileSync("git", ["ls-files", "app/*.ts", "app/*.tsx"], {
