@@ -348,7 +348,7 @@ describe("root loader", () => {
   })
 
   describe("needsProfileUpdate", () => {
-    const loadWithProfile = async (
+    const loadDataWithProfile = async (
       profile: Record<string, unknown> | null,
     ) => {
       mockGetContext.mockResolvedValue({
@@ -375,11 +375,14 @@ describe("root loader", () => {
 
       const request = new Request("http://localhost:5173/")
       const result = (await loader({ request, params: {} } as never)) as {
-        data: { needsProfileUpdate: boolean }
+        data: { needsProfileUpdate: boolean; cpfExemptionLink: string | null }
       }
 
-      return result.data.needsProfileUpdate
+      return result.data
     }
+
+    const loadWithProfile = async (profile: Record<string, unknown> | null) =>
+      (await loadDataWithProfile(profile)).needsProfileUpdate
 
     const complete = {
       id: "profile-1",
@@ -409,6 +412,26 @@ describe("root loader", () => {
       expect(
         await loadWithProfile({ ...complete, cpf: null, cpf_exempt: true }),
       ).toBe(false)
+    })
+
+    it("offers the way to ask for an exemption while the CPF is missing", async () => {
+      const { cpfExemptionLink } = await loadDataWithProfile({
+        ...complete,
+        cpf: null,
+      })
+
+      expect(cpfExemptionLink).toMatch(/^https:\/\/wa\.me\//)
+      expect(decodeURIComponent(cpfExemptionLink ?? "")).toContain(
+        "/admin/participantes/profile-1",
+      )
+    })
+
+    it("offers no exemption to a profile whose CPF is good or already exempt", async () => {
+      expect((await loadDataWithProfile(complete)).cpfExemptionLink).toBeNull()
+      expect(
+        (await loadDataWithProfile({ ...complete, cpf: null, cpf_exempt: true }))
+          .cpfExemptionLink,
+      ).toBeNull()
     })
 
     it("still asks an exempt profile for race and phone", async () => {

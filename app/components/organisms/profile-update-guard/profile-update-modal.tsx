@@ -9,10 +9,16 @@ import {
 } from "~/components/ui/alert-dialog"
 import { Button } from "~/components/atoms/button/button"
 import { Copy } from "~/components/atoms/copy/copy"
-import { profileUpdateCopy } from "~/copy/account"
+import { cpfExemptionCopy, profileUpdateCopy } from "~/copy/account"
 import { PROFILE_REQUIREMENTS } from "./profile-update-config"
 
-export const ProfileUpdateModal = () => {
+type ProfileUpdateModalProps = {
+  cpfExemptionLink?: string | null
+}
+
+export const ProfileUpdateModal = ({
+  cpfExemptionLink = null,
+}: ProfileUpdateModalProps) => {
   const navigate = useNavigate()
 
   const handleUpdateProfile = () => {
@@ -32,6 +38,16 @@ export const ProfileUpdateModal = () => {
             <div data-testid="profile-update-description">
               <div className="space-y-2">
                 <Copy>{PROFILE_REQUIREMENTS.message}</Copy>
+                {cpfExemptionLink && (
+                  <a
+                    href={cpfExemptionLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    {cpfExemptionCopy.requestLink}
+                  </a>
+                )}
               </div>
             </div>
           </AlertDialogDescription>

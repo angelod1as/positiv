@@ -20,6 +20,8 @@ import {
   umamiBeforeSendScript,
 } from "~/lib/analytics/admin-pages"
 import { isValidCpf } from "~/lib/helpers/cpf"
+import { appOrigin } from "~/lib/helpers/app-origin"
+import { cpfExemptionLinks } from "~/lib/helpers/cpf-exemption-link"
 import { readFormData } from "~/lib/helpers/read-form-data.server"
 import { safeRedirect } from "~/lib/helpers/safe-redirect"
 import { isValidPhone } from "~/lib/helpers/phone"
@@ -197,6 +199,16 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         )
       : false
 
+    const cpfExemptionLink =
+      currentProfile &&
+      !currentProfile.cpf_exempt &&
+      !isValidCpf(currentProfile.cpf)
+        ? cpfExemptionLinks({
+            origin: appOrigin(request.headers.get("host")),
+            profileId: currentProfile.id,
+          }).request
+        : null
+
     let shouldShowNewsletterModal = false
     if (currentProfile) {
       const newsletterCookie =
@@ -232,6 +244,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         isProdInDev,
         isThereAnyNews: shouldShowNews,
         needsProfileUpdate,
+        cpfExemptionLink,
         shouldShowNewsletterModal,
         draftMode,
         liveSnapshot,
@@ -251,6 +264,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       isProdInDev: null,
       isThereAnyNews: null,
       needsProfileUpdate: false,
+      cpfExemptionLink: null,
       shouldShowNewsletterModal: false,
       draftMode,
       liveSnapshot: liveSnapshotFrom(draft),
@@ -375,6 +389,7 @@ type AppShellProps = {
   isProdInDev: boolean | null | undefined
   isThereAnyNews: boolean
   needsProfileUpdate: boolean
+  cpfExemptionLink: string | null
   currentPath: string
   showNewsletterModal: boolean
   siteSettings: SiteSettings | null
@@ -389,6 +404,7 @@ function AppShell({
   isProdInDev,
   isThereAnyNews,
   needsProfileUpdate,
+  cpfExemptionLink,
   currentPath,
   showNewsletterModal,
   siteSettings,
@@ -409,6 +425,7 @@ function AppShell({
         currentProfile={profile}
         currentPath={currentPath}
         needsProfileUpdate={needsProfileUpdate}
+        cpfExemptionLink={cpfExemptionLink}
       />
       <NewsletterSubscriptionModal open={showNewsletterModal} />
       <div className="flex flex-col grow mt-[var(--site-header-height,4rem)]">
@@ -431,6 +448,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
     isProdInDev,
     isThereAnyNews = false,
     needsProfileUpdate = false,
+    cpfExemptionLink = null,
     shouldShowNewsletterModal = false,
     siteSettings,
     editorialSystemUnavailable = false,
@@ -485,6 +503,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
         isProdInDev={isProdInDev}
         isThereAnyNews={isThereAnyNews ?? false}
         needsProfileUpdate={needsProfileUpdate}
+        cpfExemptionLink={cpfExemptionLink}
         currentPath={location.pathname}
         showNewsletterModal={showNewsletterModal}
         siteSettings={activeSiteSettings}
