@@ -190,7 +190,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     const needsProfileUpdate = currentProfile
       ? !currentProfile.race_color ||
         currentProfile.race_color.length === 0 ||
-        !isValidCpf(currentProfile.cpf) ||
+        (!currentProfile.cpf_exempt && !isValidCpf(currentProfile.cpf)) ||
         !isValidPhone(
           currentProfile.phone,
           currentProfile.phone_is_international ?? false,

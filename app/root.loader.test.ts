@@ -405,6 +405,19 @@ describe("root loader", () => {
       expect(await loadWithProfile({ ...complete, cpf: "" })).toBe(true)
     })
 
+    it("asks no CPF of a profile an admin exempted", async () => {
+      expect(
+        await loadWithProfile({ ...complete, cpf: null, cpf_exempt: true }),
+      ).toBe(false)
+    })
+
+    it("still asks an exempt profile for race and phone", async () => {
+      const exempt = { ...complete, cpf: null, cpf_exempt: true }
+
+      expect(await loadWithProfile({ ...exempt, race_color: [] })).toBe(true)
+      expect(await loadWithProfile({ ...exempt, phone: null })).toBe(true)
+    })
+
     it("still asks for an update when race or colour is missing", async () => {
       expect(await loadWithProfile({ ...complete, race_color: [] })).toBe(true)
     })
