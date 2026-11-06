@@ -86,6 +86,17 @@ describe("production workflow", () => {
     expect(deployApp).toContain('"$GITHUB_SHA"')
   })
 
+  it("smoke-tests the deployment of this commit, not whatever answers 200", () => {
+    // A failed deploy leaves the previous container serving, healthy and
+    // answering 200. Only the deployment record says which commit is live.
+    const smoke = jobBlock("smoke")
+
+    expect(smoke).toContain("needs: deploy-app")
+    expect(smoke).toContain("/api/v1/deployments/")
+    expect(smoke).toContain('"$GITHUB_SHA"')
+    expect(smoke).not.toContain("sleep 120")
+  })
+
   it("keeps the Coolify token off every command line", () => {
     // This repository is public. The token reaches curl as a config file on
     // stdin, never as an argument, where it would sit in the process list.
