@@ -314,21 +314,62 @@ jobs:
   # could not boot took production down, and the way anyone found out was by
   # opening the page. This is the detector that was missing.
   #
-  # What it proves: the site answers. What it does not prove: that it answers
-  # from this commit — Coolify deploys on its own trigger, and with the
-  # Dockerfile healthcheck in place a failed deploy deliberately leaves the
-  # previous container serving. That case shows up as a red deploy in Coolify,
-  # not here. Pinning this to a commit needs an endpoint that reports one.
+  # A 200 alone proves nothing about this merge: with the Dockerfile
+  # healthcheck in place a failed deploy deliberately leaves the previous
+  # container serving, and it answers 200. So the first step waits on the
+  # deployment `deploy-app` started and checks it built this commit; only then
+  # does the site's answer mean the new app is live.
+  #
+  # Skipped, with `deploy-app`'s publish step, when main moved past this run:
+  # the newer run smoke-tests what it publishes.
   smoke:
     runs-on: ubuntu-latest
-    needs: deploy
+    needs: deploy-app
+    if: needs.deploy-app.outputs.deployment_uuid != ''
+    timeout-minutes: 45
 
     steps:
-      # Coolify starts its build from its own webhook, not from this workflow,
-      # so there is no handle to wait on. A cached image redeploys in seconds
-      # and a cold build takes minutes; the polling below covers the spread.
-      - name: Give the deploy time to land
-        run: sleep 120
+      # Builds take five to ten minutes; thirty is room for a cold cache and a
+      # deployment queued behind another.
+      - name: Wait for the Coolify deployment of this commit
+        timeout-minutes: 32
+        env:
+          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
+          COOLIFY_DEPLOY_TOKEN: ${{ secrets.COOLIFY_DEPLOY_TOKEN }}
+          DEPLOYMENT_UUID: ${{ needs.deploy-app.outputs.deployment_uuid }}
+        run: |
+          for attempt in $(seq 1 90); do
+            # A blip in the API is not a failed deploy, so it is retried like
+            # a deployment still running.
+            body=$(printf 'header = "Authorization: Bearer %s"\n' "$COOLIFY_DEPLOY_TOKEN" |
+              curl -sS --fail-with-body --max-time 20 -K - \
+                "$COOLIFY_URL/api/v1/deployments/$DEPLOYMENT_UUID") || body='{"status":"unreachable"}'
+
+            status=$(jq -r '.status // "unknown"' <<< "$body")
+            commit=$(jq -r '.commit // ""' <<< "$body")
+
+            case "$status" in
+              finished)
+                if [ "$commit" != "$GITHUB_SHA" ]; then
+                  echo "::error::Coolify finished deploying $commit, not $GITHUB_SHA"
+                  exit 1
+                fi
+
+                echo "deployment of $GITHUB_SHA finished on attempt $attempt"
+                exit 0
+                ;;
+              failed | cancelled-by-user)
+                echo "::error::Coolify deployment $DEPLOYMENT_UUID ended $status; the previous app is still serving"
+                exit 1
+                ;;
+            esac
+
+            echo "attempt $attempt: $status"
+            sleep 20
+          done
+
+          echo "::error::Coolify deployment $DEPLOYMENT_UUID did not finish in 30 minutes"
+          exit 1
 
       # Not a secret — it is the address the site answers on.
       - name: Fetch the site until it answers
