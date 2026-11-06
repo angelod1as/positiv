@@ -20,6 +20,7 @@ DECLARE
     user2_profile_id uuid;
     user3_profile_id uuid;
     user4_profile_id uuid;
+    user9_profile_id uuid;
     event_id_reg_open_1 uuid;
     event_id_reg_closed_1 uuid;
     event_id_cancelled_1 uuid;
@@ -31,6 +32,7 @@ BEGIN
     SELECT p.id INTO user2_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user2@example.com';
     SELECT p.id INTO user3_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user3@example.com';
     SELECT p.id INTO user4_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user4@example.com';
+    SELECT p.id INTO user9_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user9@example.com';
 
     SELECT id INTO event_id_reg_open_1 FROM public.events WHERE title = 'Evento Com Inscrições Abertas 1';
     SELECT id INTO event_id_reg_closed_1 FROM public.events WHERE title LIKE 'Evento Com Inscrições Fechadas 1%' LIMIT 1;
@@ -60,7 +62,10 @@ BEGIN
     (user4_profile_id, event_id_completed_1, TRUE, 'finalised', 'not-attended', now() - interval '4 months', NULL, 'User applied but did not show up', NULL, 'ninguem', NULL, NULL, 'regular', NULL),
     (user4_profile_id, event_id_reg_closed_1, TRUE, 'finalised', 'pending', now() - interval '2 months', NULL, 'Application finalized', NULL, 'Beatriz Lima - evento anterior', NULL, NULL, 'regular', NULL),
     (user4_profile_id, event_id_scheduled_1, TRUE, 'sent_rules', 'pending', now() - interval '7 months', NULL, 'Admin sent participation rules to user', NULL, 'ninguem', NULL, NULL, 'regular', NULL),
-    (user4_profile_id, event_id_cancelled_1, TRUE, 'finalised', 'withdrew', now() - interval '1 month', now() - interval '15 days', 'User decided they will not go', NULL, 'ninguem', NULL, NULL, 'regular', NULL);
+    (user4_profile_id, event_id_cancelled_1, TRUE, 'finalised', 'withdrew', now() - interval '1 month', now() - interval '15 days', 'User decided they will not go', NULL, 'ninguem', NULL, NULL, 'regular', NULL),
+    -- The foreigner, talking to the organisation about a spot: no charge yet,
+    -- and only a manual one will ever be possible. WEB-40
+    (user9_profile_id, event_id_reg_open_1, TRUE, 'talking', 'pending', now() - interval '4 days', NULL, 'Foreign participant, no CPF', NULL, 'ninguem', NULL, NULL, 'regular', NULL);
 
     -- Three of the rows above are paid on events that are still live, which the
     -- rule in 10_payments.sql does not reach: it only covers a participation

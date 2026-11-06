@@ -747,6 +747,17 @@ describe("ManagePaymentModal - the Cobrança section", () => {
     ).not.toBeInTheDocument()
   })
 
+  it("offers only a manual payment for someone with no CPF, and says why", () => {
+    render(<ManagePaymentModal {...baseProps} cpfExempt />)
+
+    expect(
+      screen.queryByRole("button", { name: "Enviar cobrança" }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByText("Só pagamento manual — participante sem CPF."),
+    ).toBeInTheDocument()
+  })
+
   it.each(["social", "staff"])(
     "charges a %s spot the amount the admin types",
     async (spotType) => {

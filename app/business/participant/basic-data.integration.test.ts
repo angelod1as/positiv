@@ -191,6 +191,36 @@ describe("saveBasicData - Integration Tests", () => {
     expect(saved.cpf).not.toBe("52998224725")
   })
 
+  it("saves a profile an admin exempted from the CPF, with no CPF", async () => {
+    const email = "test-save-basic-data-cpf-exempt@example.com"
+    const userId = await createTestAuthUser(email, "test1234", tracker)
+    const profile = await createTestProfile(tracker, kysely, {
+      email,
+      user_id: userId,
+      full_name: null,
+      cpf_exempt: true,
+    })
+
+    const result = await saveBasicData({
+      answers: { ...answersFor(email), cpf: "", rg: "X1234567", rg_issuer: "Alemanha" },
+      context: { ...contextFor(email, userId), currentProfile: profile } as never,
+    })
+
+    expect(result).toEqual({ ok: true })
+    const saved = await kysely
+      .selectFrom("profiles")
+      .select(["cpf", "cpf_exempt", "rg", "rg_issuer", "basic_data_filled"])
+      .where("id", "=", profile.id)
+      .executeTakeFirstOrThrow()
+    expect(saved).toEqual({
+      cpf: null,
+      cpf_exempt: true,
+      rg: "X1234567",
+      rg_issuer: "Alemanha",
+      basic_data_filled: true,
+    })
+  })
+
   it("re-syncs the newsletter now that there is a real name to file it under", async () => {
     const addSubscriber = vi.spyOn(listmonkClient, "addSubscriber")
     addSubscriber.mockResolvedValue({

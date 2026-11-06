@@ -7,6 +7,7 @@ import {
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
+import { setProfileCpfExempt } from "~/business/admin/cpf-exemption.server"
 import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
 import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { logger } from "~/lib/logger/logger.server"
@@ -84,6 +85,23 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (intent === "update-profile-approval-status") {
     const result = await updateProfileApprovalStatus(Object.fromEntries(formData))
     return { success: result.success }
+  }
+
+  if (intent === "update-profile-cpf-exempt") {
+    // The profile of the page, not one the form names: the admin decided on
+    // the person in front of them.
+    const result = await setProfileCpfExempt({
+      profileId: params.profileId,
+      cpfExempt: formData.get("cpfExempt"),
+    })
+    // Copied out: React Router turns every Error in action data into
+    // "Unexpected Server Error" in a production build.
+    return result.success
+      ? { success: true }
+      : {
+          success: false,
+          errors: result.errors.map((error) => ({ message: error.message })),
+        }
   }
 
   if (intent === "update-profile-admin-notes") {

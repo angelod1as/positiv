@@ -61,6 +61,19 @@ describe("mapParticipantsToDownloadFormat", () => {
     expect(result[0]["CPF"]).toBe("")
   })
 
+  it("shows the passport or RG where the CPF goes for someone exempt from it", () => {
+    const result = mapParticipantsToDownloadFormat([
+      participant({
+        cpf: null,
+        cpf_exempt: true,
+        rg: "X1234567",
+        rg_issuer: "Alemanha",
+      }),
+    ])
+
+    expect(result[0]["CPF"]).toBe("X1234567 (Alemanha)")
+  })
+
   it("should leave out the row number, approval status and RG", () => {
     const result = mapParticipantsToDownloadFormat([participant({})])
 

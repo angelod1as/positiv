@@ -39,6 +39,22 @@ describe("ProfileUpdateModal", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/conta/dados-basicos")
   })
 
+  it("offers a way to ask for a CPF exemption in a new tab", () => {
+    render(<ProfileUpdateModal cpfExemptionLink="https://wa.me/55?text=oi" />)
+
+    const link = screen.getByRole("link", {
+      name: "Não tenho CPF ou sou pessoa estrangeira",
+    })
+    expect(link).toHaveAttribute("href", "https://wa.me/55?text=oi")
+    expect(link).toHaveAttribute("target", "_blank")
+  })
+
+  it("offers no exemption when the CPF is not what is missing", () => {
+    render(<ProfileUpdateModal cpfExemptionLink={null} />)
+
+    expect(screen.queryByRole("link")).not.toBeInTheDocument()
+  })
+
   it("should render with dialog always open", () => {
     render(<ProfileUpdateModal />)
 

@@ -131,3 +131,19 @@ export const profileUpdateCopy = {
 Estamos pedindo informação de raça ou cor para acompanhar nossos dados demográficos, um CPF válido para emitir suas cobranças e um celular válido para falarmos com você pelo WhatsApp.`,
   cta: "Atualizar meu perfil",
 } as const
+
+export const cpfExemptionCopy = {
+  requestLink: "Não tenho CPF ou sou pessoa estrangeira",
+  pending:
+    "Aguardando liberação da administração. Continue preenchendo o resto: ao salvar, conferimos se já foi liberado.",
+  undo: "Tenho CPF",
+  exemptLink: "I don't have a CPF. Click to speak with management",
+  notYetExempt:
+    "A administração ainda não liberou o cadastro sem CPF. Aguarde ou informe um CPF.",
+  rgLabel: "RG ou passaporte",
+  rgIssuerLabel: "Emissor ou país",
+  requestMessage: (profileUrl: string) =>
+    `Olá! Não tenho CPF (ou sou pessoa estrangeira) e preciso de liberação para continuar meu cadastro na Positiv. Meu perfil: ${profileUrl}`,
+  changeMessage: (profileUrl: string) =>
+    `Olá! Quero mudar a marcação de "Estrangeira ou sem CPF" do meu cadastro na Positiv. Meu perfil: ${profileUrl}`,
+} as const

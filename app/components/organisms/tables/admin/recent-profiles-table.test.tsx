@@ -68,6 +68,7 @@ describe("RecentProfilesTable", () => {
       race_color: null,
       provider_customer_id: null,
       phone_is_international: false,
+      cpf_exempt: false,
     } as ProfileGlobal,
     {
       id: "2",
@@ -102,6 +103,7 @@ describe("RecentProfilesTable", () => {
       race_color: null,
       provider_customer_id: null,
       phone_is_international: false,
+      cpf_exempt: false,
     } as ProfileGlobal,
   ]
 

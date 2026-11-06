@@ -9,6 +9,7 @@ import { normalizeName } from "~/lib/helpers/strings"
 import { validationMessages } from "~/lib/helpers/validation-messages"
 import { zod } from "~/lib/helpers/zod"
 import type { Database } from "~types/database/database.types"
+import type { ZodType } from "zod"
 
 /* AUTH */
 
@@ -75,6 +76,7 @@ export const currentProfileSchema = zod.object({
   pronouns: zod.array(zod.string()).nullish(),
   rg: zod.string().nullish(),
   cpf: zod.string().nullish(),
+  cpf_exempt: zod.boolean().nullish(),
   phone: zod.number().nullish(),
   phone_is_international: zod.boolean().nullish(),
   date_of_birth: zod.string().nullish(),
@@ -182,7 +184,20 @@ export const basicDataFieldsSchema = zod.object({
   where_lives: zod.string().optional(),
 })
 
-export const basicDataSchema = basicDataFieldsSchema
+type CrossFieldValues = {
+  full_name: string
+  social_name?: string | null
+  phone: number
+  confirm_phone: number
+  phone_is_international: boolean
+}
+
+/**
+ * What one field says about another, for the full set of fields and for the
+ * set a CPF-exempt profile answers.
+ */
+const withCrossFieldRules = <S extends ZodType<CrossFieldValues>>(schema: S) =>
+  schema
   // Blamed on the confirmation rather than on the phone: the number typed
   // first is not the one someone is being asked to look at again.
   .refine((data) => data.phone === data.confirm_phone, {
@@ -216,6 +231,13 @@ export const basicDataSchema = basicDataFieldsSchema
       path: ["social_name"],
     },
   )
+
+export const basicDataSchema = withCrossFieldRules(basicDataFieldsSchema)
+
+/** A profile an admin exempted from the CPF is asked everything else. */
+export const cpfExemptBasicDataSchema = withCrossFieldRules(
+  basicDataFieldsSchema.omit({ cpf: true }),
+)
 
 export const ExtraBasicDataSchema = zod.object({
   gender: zod

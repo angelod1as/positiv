@@ -10,11 +10,12 @@ import { setupIntegrationTest } from "~/test/integration-setup"
 describe("Seeded profiles", () => {
   const { kysely } = setupIntegrationTest()
 
-  it("gives every seeded profile a CPF that passes the check digits", async () => {
+  it("gives every seeded profile a CPF that passes the check digits, but the foreigner", async () => {
     const seeded = await kysely
       .selectFrom("profiles")
       .select(["email", "cpf"])
       .where("email", "~", "^(admin|user[0-9]+)@example\\.com$")
+      .where("cpf_exempt", "=", false)
       .execute()
 
     expect(seeded.length).toBeGreaterThan(0)
@@ -33,6 +34,7 @@ describe("Seeded profiles", () => {
       .selectFrom("profiles")
       .select("cpf")
       .where("email", "~", "^(admin|user[0-9]+)@example\\.com$")
+      .where("cpf", "is not", null)
       .groupBy("cpf")
       .having((eb) => eb.fn.countAll(), ">", 1)
       .execute()
@@ -42,11 +44,12 @@ describe("Seeded profiles", () => {
 
   // A phone Asaas refuses is dropped from the customer, so a local payment
   // would never exercise the phone at all.
-  it("gives every seeded profile a distinct Brazilian mobile", async () => {
+  it("gives every seeded profile a distinct Brazilian mobile, but the foreigner", async () => {
     const seeded = await kysely
       .selectFrom("profiles")
       .select(["email", "phone"])
       .where("email", "~", "^(admin|user[0-9]+)@example\\.com$")
+      .where("phone_is_international", "=", false)
       .execute()
 
     const notMobile = seeded
@@ -56,5 +59,26 @@ describe("Seeded profiles", () => {
 
     expect(notMobile).toEqual([])
     expect(new Set(phones).size).toBe(phones.length)
+  })
+
+  // Someone with no CPF, exempted by an admin, so every screen that treats a
+  // foreigner differently has a profile to be looked at with. Her registration
+  // on "Evento Com Inscrições Abertas 1" is asserted by the e2e journey that
+  // uses it: other suites here empty event_participants until the global
+  // teardown puts it back. WEB-40
+  it("seeds one foreign participant, exempt from the CPF", async () => {
+    const foreigner = await kysely
+      .selectFrom("profiles")
+      .select(["cpf", "cpf_exempt", "rg", "rg_issuer", "phone_is_international"])
+      .where("email", "=", "user9@example.com")
+      .executeTakeFirst()
+
+    expect(foreigner).toEqual({
+      cpf: null,
+      cpf_exempt: true,
+      rg: "C01X00T47",
+      rg_issuer: "Alemanha",
+      phone_is_international: true,
+    })
   })
 })

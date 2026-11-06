@@ -11,6 +11,22 @@ export const adminParticipantsCopy = {
     forbidden: "Você não tem permissão para sincronizar a lista de veteranos",
     failed: "Erro ao sincronizar a lista de veteranos. Tente novamente.",
   },
+  cpfExemption: {
+    label: "Sem CPF / estrangeira",
+    description:
+      "Libera o cadastro sem CPF. O CPF atual é apagado, e os pagamentos passam a ser só manuais.",
+    grant: "Marcar sem CPF",
+    revoke: "Desmarcar sem CPF",
+    granted: "Sem CPF / estrangeira",
+    confirmTitle: "Marcar como sem CPF?",
+    confirmDescription:
+      "O CPF deste perfil será apagado e a pessoa poderá continuar sem ele. Cobranças pelo Asaas deixam de ser possíveis: os pagamentos passam a ser só manuais.",
+    confirm: "Marcar sem CPF",
+    cancel: "Cancelar",
+    openCharge:
+      "Há uma cobrança online aberta para esta pessoa. Cancele a cobrança antes de marcar sem CPF.",
+    failed: "Não foi possível mudar a marcação de CPF. Tente novamente.",
+  },
   viewProfile: {
     profileNotFound: "Perfil não encontrado",
     profileMissing: "Perfil não encontrado ou não existe.",

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { z } from "zod"
+import { cpfExemptionCopy } from "~/copy/account"
 import { participantCopy } from "~/copy/participant"
 import { logger } from "~/lib/logger/logger.server"
 import type { Database } from "~/types/database/database.types"
@@ -129,6 +130,76 @@ describe("saveBasicData", () => {
       expect.not.objectContaining({ confirm_phone: expect.anything() }),
       expect.anything(),
     )
+  })
+
+  describe("without a CPF", () => {
+    const signedInAs = (
+      supabase: { from: ReturnType<typeof vi.fn> },
+      cpfExempt: boolean,
+    ) => ({
+      ...contextWith(supabase),
+      currentProfile: {
+        id: "profile-1",
+        basic_data_filled: false,
+        created_at: "2026-11-06T00:00:00Z",
+        cpf_exempt: cpfExempt,
+      },
+    })
+
+    it("saves an exempt profile with no CPF, whatever the form sent", async () => {
+      const supabase = mockSupabase()
+
+      const result = await saveBasicData({
+        answers: { ...answers, cpf: "52998224725" },
+        context: signedInAs(supabase, true),
+      })
+
+      expect(result).toEqual({ ok: true })
+      expect(supabase.update).toHaveBeenCalledWith(
+        expect.objectContaining({ cpf: null, rg: "123456789" }),
+      )
+    })
+
+    it("refuses a missing CPF until an admin grants the exemption", async () => {
+      const supabase = mockSupabase()
+
+      const result = await saveBasicData({
+        answers: { ...answers, cpf: "", cpf_exempt_requested: true },
+        context: signedInAs(supabase, false),
+      })
+
+      expect(result).toEqual({
+        ok: false,
+        errors: [{ questionId: "cpf", message: cpfExemptionCopy.notYetExempt }],
+      })
+      expect(supabase.update).not.toHaveBeenCalled()
+    })
+
+    it("does not take the form's word for an exemption", async () => {
+      const supabase = mockSupabase()
+
+      const result = await saveBasicData({
+        answers: { ...answers, cpf: "", cpf_exempt: true },
+        context: signedInAs(supabase, false),
+      })
+
+      expect(result.ok).toBe(false)
+      expect(supabase.update).not.toHaveBeenCalled()
+    })
+
+    it("saves a CPF typed in after asking for an exemption", async () => {
+      const supabase = mockSupabase()
+
+      const result = await saveBasicData({
+        answers: { ...answers, cpf_exempt_requested: true },
+        context: signedInAs(supabase, false),
+      })
+
+      expect(result).toEqual({ ok: true })
+      expect(supabase.update).toHaveBeenCalledWith(
+        expect.objectContaining({ cpf: "52998224725" }),
+      )
+    })
   })
 
   it("adopts a profile left behind with the same e-mail", async () => {

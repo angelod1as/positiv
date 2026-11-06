@@ -199,6 +199,20 @@ WHERE usr.email IN (
 )
 ON CONFLICT (user_id) DO NOTHING;
 
+-- user9 is a foreigner with no CPF, exempted by an admin (WEB-40): a passport
+-- where the RG goes and a phone from outside Brazil. Every screen that treats
+-- an exempt profile differently -- the profile guard, the basic data form, the
+-- admin's payment modal -- has someone to be looked at with.
+UPDATE public.profiles
+   SET cpf = NULL,
+       cpf_exempt = true,
+       rg = 'C01X00T47',
+       rg_issuer = 'Alemanha',
+       phone = 4915123456789,
+       phone_is_international = true,
+       where_lives = 'Berlim, Alemanha'
+ WHERE email = 'user9@example.com';
+
 -- ============================================================================
 -- PART B: Generated profiles for users 10-99
 -- ============================================================================

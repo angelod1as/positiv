@@ -1,10 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { setProfileCpfExempt } from "~/business/admin/cpf-exemption.server"
 import {
   getAdminContext,
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
 import { action } from "./view-profile-page"
+
+vi.mock("~/business/admin/cpf-exemption.server", () => ({
+  setProfileCpfExempt: vi.fn(),
+}))
 
 vi.mock("~/business/admin/admin.server", () => ({
   getAdminContext: vi.fn(),
@@ -47,11 +52,22 @@ const INTENTS = [
     },
     mutation: updateProfileAdminNotes,
   },
+  {
+    intent: "update-profile-cpf-exempt",
+    fields: {
+      profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",
+      cpfExempt: "true",
+    },
+    mutation: setProfileCpfExempt,
+  },
 ] as const
 
 describe("ViewProfilePage action", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(setProfileCpfExempt).mockResolvedValue({
+      success: true,
+    } as never)
     vi.mocked(getAdminContext).mockResolvedValue(
       {} as Awaited<ReturnType<typeof getAdminContext>>,
     )
@@ -102,5 +118,46 @@ describe("ViewProfilePage action - non-form body", () => {
 
     expect(thrown).toBeInstanceOf(Response)
     expect((thrown as Response).status).toBe(415)
+  })
+})
+
+describe("ViewProfilePage action - CPF exemption", () => {
+  it("exempts the profile of the page, whatever the form names", async () => {
+    vi.mocked(getAdminContext).mockResolvedValue(
+      {} as Awaited<ReturnType<typeof getAdminContext>>,
+    )
+    vi.mocked(setProfileCpfExempt).mockResolvedValue({ success: true } as never)
+
+    await runAction({
+      intent: "update-profile-cpf-exempt",
+      profileId: "00000000-0000-4000-8000-000000000000",
+      cpfExempt: "true",
+    })
+
+    expect(setProfileCpfExempt).toHaveBeenCalledWith({
+      profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",
+      cpfExempt: "true",
+    })
+  })
+
+  it("hands the refusal back to the admin", async () => {
+    vi.mocked(getAdminContext).mockResolvedValue(
+      {} as Awaited<ReturnType<typeof getAdminContext>>,
+    )
+    vi.mocked(setProfileCpfExempt).mockResolvedValue({
+      success: false,
+      errors: [new Error("Cancele a cobrança antes")],
+    } as never)
+
+    const result = await runAction({
+      intent: "update-profile-cpf-exempt",
+      profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",
+      cpfExempt: "true",
+    })
+
+    expect(result).toEqual({
+      success: false,
+      errors: [{ message: "Cancele a cobrança antes" }],
+    })
   })
 })

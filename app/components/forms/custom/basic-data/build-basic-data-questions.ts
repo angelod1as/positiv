@@ -7,10 +7,12 @@ import type {
 import {
   basicDataCopy,
   basicDataValidation,
+  cpfExemptionCopy,
   genderPronounsOrientationCopy,
 } from "~/copy/account"
 import { isValidPhone } from "~/lib/helpers/phone"
 import { normalizeName } from "~/lib/helpers/strings"
+import { zod } from "~/lib/helpers/zod"
 import {
   GENDERS,
   ORIENTATIONS,
@@ -28,7 +30,31 @@ const toOptions = (labels: readonly string[]): Option[] =>
 
 const asText = (value: unknown) => (typeof value === "string" ? value : "")
 
-export function buildBasicDataQuestions(): Question[] {
+/**
+ * While someone waits for the organisation to exempt them, the CPF may stay
+ * empty -- the server is what decides whether the exemption is there. One typed
+ * in anyway is still checked.
+ */
+const cpfQuestion = (): Question => ({
+  id: "cpf",
+  prompt: basicDataCopy.labels.cpf,
+  help: basicDataCopy.descriptions.cpf,
+  input: { kind: "text" },
+  schema: zod.unknown(),
+  refine: (value, answers: Answers) => {
+    const asking = answers.cpf_exempt_requested === true
+    if (asking && (value === undefined || value === "")) return null
+
+    const parsed = basicDataFieldsSchema.shape.cpf.safeParse(value)
+    return parsed.success
+      ? null
+      : { ok: false, message: parsed.error.issues[0].message }
+  },
+})
+
+export function buildBasicDataQuestions({
+  cpfExempt = false,
+}: { cpfExempt?: boolean } = {}): Question[] {
   const { shape } = basicDataFieldsSchema
   const extra = ExtraBasicDataSchema.shape
   const { labels, descriptions } = basicDataCopy
@@ -113,22 +139,16 @@ export function buildBasicDataQuestions(): Question[] {
           ? null
           : { ok: false, message: basicDataValidation.phoneMismatch },
     },
-    {
-      id: "cpf",
-      prompt: labels.cpf,
-      help: descriptions.cpf,
-      input: { kind: "text" },
-      schema: shape.cpf,
-    },
+    ...(cpfExempt ? [] : [cpfQuestion()]),
     {
       id: "rg",
-      prompt: labels.rg,
+      prompt: cpfExempt ? cpfExemptionCopy.rgLabel : labels.rg,
       input: { kind: "text" },
       schema: shape.rg,
     },
     {
       id: "rg_issuer",
-      prompt: labels.rg_issuer,
+      prompt: cpfExempt ? cpfExemptionCopy.rgIssuerLabel : labels.rg_issuer,
       help: descriptions.rg_issuer,
       input: { kind: "text" },
       schema: shape.rg_issuer,

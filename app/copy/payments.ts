@@ -134,6 +134,7 @@ export const paymentsCopy = {
   },
   charge: {
     title: "Cobrança",
+    manualOnly: "Só pagamento manual — participante sem CPF.",
     amount: "Valor a cobrar",
     amountHint:
       "O valor do evento: é o que a pessoa paga, sem nada a mais. As taxas ficam por conta da Positiv.",
@@ -235,6 +236,8 @@ export const paymentsCopy = {
       "Vaga social ou staff não usa o preço do evento: digite o valor a cobrar.",
     noAmount: "Defina um valor: este evento não tem preço cadastrado.",
     amountTooLow: "O valor da cobrança precisa ser maior que zero.",
+    cpfExemptManualOnly:
+      "Participante sem CPF: só pagamento manual. Registre o pagamento à mão.",
     amountUnreadable:
       "Não consegui ler esse valor. Escreva só números, como 150,00.",
     alreadyPaid:

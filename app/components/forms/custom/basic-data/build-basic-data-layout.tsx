@@ -1,12 +1,35 @@
-import type { GridSlot } from "~/components/forms/runtime/presentations/grid"
+import type {
+  GridSlot,
+  NoteContext,
+} from "~/components/forms/runtime/presentations/grid"
 import { basicDataCopy, genderPronounsOrientationCopy } from "~/copy/account"
+import {
+  type CpfExemptionLinks,
+  ExemptionRequest,
+  ExemptNotice,
+} from "./cpf-exemption-notes"
 
 /**
  * The twelve-column arrangement the two screens had between them, now read as
  * one. The notes are slots rather than text above the form: what the documents
  * are for belongs immediately before the documents are asked for.
  */
-export function buildBasicDataLayout(): GridSlot[] {
+export function buildBasicDataLayout({
+  cpfExempt = false,
+  links = null,
+}: { cpfExempt?: boolean; links?: CpfExemptionLinks | null } = {}): GridSlot[] {
+  const exemption: GridSlot[] = links
+    ? [
+        {
+          kind: "note",
+          id: "cpf_exemption",
+          render: cpfExempt
+            ? <ExemptNotice links={links} />
+            : (note: NoteContext) => <ExemptionRequest links={links} {...note} />,
+        },
+      ]
+    : []
+
   return [
     { kind: "question", id: "full_name", span: 5 },
     { kind: "question", id: "social_name", span: 4 },
@@ -25,9 +48,12 @@ export function buildBasicDataLayout(): GridSlot[] {
         </p>
       ),
     },
-    { kind: "question", id: "cpf", span: 4 },
-    { kind: "question", id: "rg", span: 4 },
-    { kind: "question", id: "rg_issuer", span: 4 },
+    ...(cpfExempt
+      ? []
+      : [{ kind: "question", id: "cpf", span: 4 } satisfies GridSlot]),
+    { kind: "question", id: "rg", span: cpfExempt ? 6 : 4 },
+    { kind: "question", id: "rg_issuer", span: cpfExempt ? 6 : 4 },
+    ...exemption,
     { kind: "question", id: "gender", span: 6 },
     { kind: "question", id: "orientation", span: 6 },
     { kind: "question", id: "pronouns", span: 6 },

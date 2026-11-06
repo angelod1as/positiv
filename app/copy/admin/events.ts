@@ -45,6 +45,8 @@ export const adminEventsCopy = {
   },
   downloadData: {
     staff: "Staff",
+    foreignDocument: (document: string | null, issuer: string | null) =>
+      issuer ? `${document ?? ""} (${issuer})` : (document ?? ""),
   },
   generalData: {
     title: "Dados gerais",

@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test'
 import path from 'path'
 import { waitForAGGridReady } from '../../helpers/ag-grid'
+import { AdminDashboardPage } from '../../pages/admin/AdminDashboardPage'
+import { UserManagementPage } from '../../pages/admin/UserManagementPage'
 import { createSoonOpenEvent } from '../../utils/direct-application-helpers'
 import { cleanupTestParticipants, createTestEventWithParticipants, type TestParticipant } from '../../utils/event-helpers'
 
@@ -70,5 +72,44 @@ test.describe('POS-525: managing a payment from the admin grid', () => {
       'Reembolsado em parte',
     )
     await expect(modal.getByText('R$ 100,00').first()).toBeVisible()
+
+    // WEB-40: the seeded foreigner, exempted from the CPF, can only be paid by
+    // hand -- the provider will not take a customer without one.
+    await page.keyboard.press('Escape')
+    await expect(modal).toBeHidden()
+
+    const adminDashboard = new AdminDashboardPage(page)
+    const userManagement = new UserManagementPage(page)
+    await adminDashboard.navigate()
+    await adminDashboard.clickViewEvent('Evento Com Inscrições Abertas 1')
+    await userManagement.waitForTableToLoad()
+
+    await userManagement.participantsTable
+      .locator('[aria-label="Buscar participantes"]')
+      .fill('user9')
+    const foreignerLink = userManagement.participantsTable
+      .locator('.ag-pinned-left-cols-container a')
+      .getByText('user9', { exact: true })
+      .first()
+    // The href, not a click: AG Grid recycles rows while the quick filter
+    // applies, the same reason the POS-362 journey reads it.
+    await expect(foreignerLink).toBeVisible()
+    const foreignerHref = await foreignerLink.getAttribute('href')
+    if (!foreignerHref) throw new Error('Could not read the link to user9')
+    await page.goto(foreignerHref)
+    await userManagement.waitForDetailView()
+
+    await expect(page.getByText('C01X00T47 Alemanha')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Desmarcar sem CPF' })).toBeVisible()
+
+    await page.getByRole('button', { name: 'Gerenciar pagamento' }).click()
+    const foreignerModal = page.getByRole('dialog')
+    await expect(
+      foreignerModal.getByText('Só pagamento manual — participante sem CPF.'),
+    ).toBeVisible()
+    await expect(foreignerModal.getByRole('button', { name: 'Enviar cobrança' })).toHaveCount(0)
+    await expect(
+      foreignerModal.getByRole('button', { name: 'Registrar pagamento' }),
+    ).toBeVisible()
   })
 })

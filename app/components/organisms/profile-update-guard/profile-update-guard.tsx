@@ -6,12 +6,14 @@ type ProfileUpdateGuardProps = {
   currentProfile: ProfileWithRoles | null
   currentPath: string
   needsProfileUpdate: boolean
+  cpfExemptionLink?: string | null
 }
 
 export const ProfileUpdateGuard = ({
   currentProfile,
   currentPath,
   needsProfileUpdate,
+  cpfExemptionLink = null,
 }: ProfileUpdateGuardProps) => {
   if (!currentProfile) {
     return null
@@ -25,5 +27,5 @@ export const ProfileUpdateGuard = ({
     return null
   }
 
-  return <ProfileUpdateModal />
+  return <ProfileUpdateModal cpfExemptionLink={cpfExemptionLink} />
 }

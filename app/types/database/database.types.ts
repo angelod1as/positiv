@@ -743,6 +743,7 @@ export type Database = {
           basic_data_filled: boolean
           became_veteran_date: string | null
           cpf: string | null
+          cpf_exempt: boolean
           created_at: string
           date_of_birth: string | null
           email: string
@@ -771,6 +772,7 @@ export type Database = {
           basic_data_filled?: boolean
           became_veteran_date?: string | null
           cpf?: string | null
+          cpf_exempt?: boolean
           created_at?: string
           date_of_birth?: string | null
           email: string
@@ -799,6 +801,7 @@ export type Database = {
           basic_data_filled?: boolean
           became_veteran_date?: string | null
           cpf?: string | null
+          cpf_exempt?: boolean
           created_at?: string
           date_of_birth?: string | null
           email?: string
@@ -915,6 +918,7 @@ export type Database = {
         Returns: {
           basic_data_filled: boolean
           cpf: string
+          cpf_exempt: boolean
           created_at: string
           date_of_birth: string
           email: string
