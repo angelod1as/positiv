@@ -137,8 +137,7 @@ export const cpfExemptionCopy = {
   pending:
     "Aguardando liberação da administração. Continue preenchendo o resto: ao salvar, conferimos se já foi liberado.",
   undo: "Tenho CPF",
-  exempt: "Estrangeira ou sem CPF.",
-  changeLink: "Para mudar isso, fale com a administração",
+  exemptLink: "I don't have a CPF. Click to speak with management",
   notYetExempt:
     "A administração ainda não liberou o cadastro sem CPF. Aguarde ou informe um CPF.",
   rgLabel: "RG ou passaporte",

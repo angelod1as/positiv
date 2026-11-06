@@ -123,7 +123,9 @@ test.describe('WEB-40: someone with no CPF', () => {
 
     await expect(page.getByRole('textbox', { name: 'CPF' })).toHaveCount(0)
     await expect(page.getByRole('textbox', { name: 'RG ou passaporte' })).toBeVisible()
-    await expect(page.getByText(/estrangeira ou sem CPF/i)).toBeVisible()
+    await expect(
+      page.getByRole('link', { name: "I don't have a CPF. Click to speak with management" })
+    ).toBeVisible()
   })
 })
 

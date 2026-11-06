@@ -126,9 +126,10 @@ describe("buildBasicDataLayout", () => {
       const layout = buildBasicDataLayout({ links, cpfExempt: true })
       renderNote(layout)
 
-      expect(screen.getByText(/estrangeira ou sem CPF/i)).toBeInTheDocument()
       expect(
-        screen.getByRole("link", { name: /fale com a administração/i }),
+        screen.getByRole("link", {
+          name: "I don't have a CPF. Click to speak with management",
+        }),
       ).toHaveAttribute("href", links.change)
 
       expect(

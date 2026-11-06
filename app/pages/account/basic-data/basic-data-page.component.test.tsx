@@ -299,7 +299,9 @@ describe("BasicDataPage", () => {
       expect(screen.queryByLabelText("CPF")).not.toBeInTheDocument()
       expect(screen.getByLabelText("RG ou passaporte")).toBeInTheDocument()
       expect(
-        screen.getByRole("link", { name: /fale com a administração/i }),
+        screen.getByRole("link", {
+          name: "I don't have a CPF. Click to speak with management",
+        }),
       ).toHaveAttribute("href", links.change)
     })
   })

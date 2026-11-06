@@ -32,15 +32,12 @@ export const ExemptionRequest = ({
   )
 
 export const ExemptNotice = ({ links }: { links: CpfExemptionLinks }) => (
-  <p className="text-sm text-muted-foreground">
-    {cpfExemptionCopy.exempt}{" "}
-    <a
-      href={links.change}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="underline"
-    >
-      {cpfExemptionCopy.changeLink}
-    </a>
-  </p>
+  <a
+    href={links.change}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="text-sm underline"
+  >
+    {cpfExemptionCopy.exemptLink}
+  </a>
 )
