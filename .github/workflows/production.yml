@@ -14,16 +14,19 @@ concurrency:
   group: production
   cancel-in-progress: false
 
-# Coolify deploys the application from its own webhook on this same push, in
-# parallel with everything below and answering to nothing here. So this workflow
-# does not decide whether the app ships — only whether the schema it needs is
-# already there when it does. Every minute this gate spends is a minute the app
-# can be live against the old schema, which is how POS-520 put an app reading
-# integer cents in front of a column still holding reais: the gate hung for
-# fifteen minutes and was cancelled, `deploy` was skipped, and the site served
-# every price at a hundredth of itself while Coolify reported healthy.
+# Production ships in one order: unit tests, then the migration, then the app,
+# then a smoke test against that app. A step that fails stops every step after
+# it, so a red main publishes nothing.
 #
-# The gate stays. Keeping it short is what makes it safe.
+# Coolify used to deploy the app from its own push webhook, in parallel with
+# this workflow and answering to nothing here. POS-520 put an app reading
+# integer cents in front of a column still holding reais that way, and WEB-39
+# put one reading `access_token` in front of a table without it. Auto-deploy is
+# now off in Coolify and `deploy-app` below starts the deployment through its
+# API, so the app never reaches production before the schema it needs.
+#
+# The migration lands before the app, so it must keep working with the app
+# already live: expand/contract, as every migration here already does.
 jobs:
   unit-test:
     runs-on: ubuntu-latest
@@ -202,6 +205,74 @@ jobs:
       # migration already on the remote. This happens when a branch with an older
       # timestamp is merged after a newer migration is already deployed to production.
       - run: supabase db push --include-all --db-url "$SUPABASE_CONNECT_URL"
+
+  # Starts the Coolify deployment, only once the migration has run. The token
+  # is a Coolify API token with the `deploy` and `read` abilities and nothing
+  # else; `read` is for the smoke job, which reads back the deployment.
+  #
+  # The token reaches curl as a config file on stdin, never as an argument, so
+  # it stays out of the process list as well as the log. GitHub masks secrets
+  # in the log on its own.
+  deploy-app:
+    runs-on: ubuntu-latest
+    needs: deploy
+    # A manual run from another branch migrated that branch's schema, while
+    # Coolify would build main. Only main publishes the app.
+    if: github.ref == 'refs/heads/main'
+    timeout-minutes: 5
+
+    outputs:
+      deployment_uuid: ${{ steps.start.outputs.deployment_uuid }}
+
+    env:
+      COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
+      COOLIFY_DEPLOY_TOKEN: ${{ secrets.COOLIFY_DEPLOY_TOKEN }}
+      # The Positiv application in Coolify. Not a secret: without the token and
+      # the panel's address, which are, it opens nothing.
+      COOLIFY_APP_UUID: v4oo4owsw4wgsks40484w4wo
+
+    steps:
+      # Coolify builds the head of main, not a commit it is handed. If a newer
+      # merge landed while this run waited or migrated, the head carries
+      # migrations that have not run yet, and publishing it now is the failure
+      # this job exists to prevent. The newer run, queued behind this one,
+      # migrates and publishes it.
+      - name: Check main still points at this commit
+        id: head
+        timeout-minutes: 2
+        run: |
+          head=$(git ls-remote "https://github.com/$GITHUB_REPOSITORY" refs/heads/main | cut -f1)
+
+          if [ "$head" = "$GITHUB_SHA" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::main moved to $head; the run for that commit publishes the app"
+            echo "current=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Start the Coolify deployment
+        id: start
+        if: steps.head.outputs.current == 'true'
+        timeout-minutes: 2
+        run: |
+          if [ -z "$COOLIFY_URL" ] || [ -z "$COOLIFY_DEPLOY_TOKEN" ]; then
+            echo "::error::COOLIFY_URL or COOLIFY_DEPLOY_TOKEN is unset"
+            exit 1
+          fi
+
+          body=$(printf 'header = "Authorization: Bearer %s"\n' "$COOLIFY_DEPLOY_TOKEN" |
+            curl -sS --fail-with-body --max-time 60 -K - -X POST \
+              "$COOLIFY_URL/api/v1/deploy?uuid=$COOLIFY_APP_UUID&force=false")
+
+          deployment_uuid=$(jq -r '.deployments[0].deployment_uuid // empty' <<< "$body")
+
+          if [ -z "$deployment_uuid" ]; then
+            echo "::error::Coolify queued no deployment: $(jq -r '.deployments[0].message // .message // "no message"' <<< "$body")"
+            exit 1
+          fi
+
+          echo "Coolify deployment $deployment_uuid queued for $GITHUB_SHA"
+          echo "deployment_uuid=$deployment_uuid" >> "$GITHUB_OUTPUT"
 
   # The Studio is hosted by Sanity (positiv.sanity.studio), not by Coolify, so
   # it deploys from here. It runs beside `deploy`, not after it: the Studio
