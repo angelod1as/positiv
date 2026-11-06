@@ -123,6 +123,9 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
         pinned: "left",
         cellRenderer: SocialNameRenderer,
         sortable: true,
+        // Someone asking about the CPF exemption sends their profile ID on
+        // WhatsApp, so the search finds a profile by it too.
+        getQuickFilterText: ({ value, data }) => `${value ?? ""} ${data?.id ?? ""}`,
       },
       {
         field: "full_name",
