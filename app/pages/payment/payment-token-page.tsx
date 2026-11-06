@@ -8,6 +8,7 @@ import {
 import { metaCopy } from "~/copy/meta"
 import { paymentsCopy } from "~/copy/payments"
 import { createMetaArray } from "~/lib/helpers/meta"
+import { readFormData } from "~/lib/helpers/read-form-data.server"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/payment-token-page"
 import PaymentPage from "./payment-page"
@@ -60,7 +61,7 @@ export async function action({ params, request }: Route.ActionArgs) {
     return redirectWithError(back, errors.chargeClosed)
   }
 
-  const formData = await request.formData()
+  const formData = await readFormData(request)
   const result = await pickOption({
     paymentId,
     profileId,
