@@ -84,6 +84,11 @@ export type ManagePaymentModalProps = {
   whatsappMessage: string | null
   /** The payment provider's name, as admins know it. */
   providerName: string
+  /**
+   * An admin exempted this person from the CPF, which the provider needs for
+   * any charge: their payments are taken by hand only.
+   */
+  cpfExempt?: boolean
 }
 
 /** The methods a payment taken by hand can have; card only ever runs online. */
@@ -578,6 +583,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
   spotType,
   ticketPrice,
   appOrigin,
+  cpfExempt = false,
   whatsappMessage,
   providerName,
 }) => {
@@ -864,7 +870,9 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
           </p>
         )}
 
-        {paymentsEnabled && (
+        {cpfExempt && <p role="status">{charge.manualOnly}</p>}
+
+        {paymentsEnabled && !cpfExempt && (
           <ChargeSection
             // Remounts when the charge does, so the amount field re-seeds from
             // whatever is open now. Cancelling one used to leave its value in

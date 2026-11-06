@@ -134,6 +134,7 @@ export const paymentsCopy = {
   },
   charge: {
     title: "Cobrança",
+    manualOnly: "Só pagamento manual — participante sem CPF.",
     amount: "Valor a cobrar",
     amountHint:
       "O valor do evento: é o que a pessoa paga, sem nada a mais. As taxas ficam por conta da Positiv.",

@@ -148,6 +148,7 @@ export const ParticipantDetail = ({
           appOrigin={appOrigin}
           whatsappMessage={whatsappMessage}
           providerName={providerName}
+          cpfExempt={profile.cpf_exempt === true}
           spotType={currentEvent.data.spot_type}
           ticketPrice={currentEvent.data.event_ticket_price}
         />

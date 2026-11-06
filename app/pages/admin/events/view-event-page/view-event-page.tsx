@@ -293,6 +293,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
             whatsappMessageByParticipant[managedParticipant.id] ?? null
           }
           providerName={providerName}
+          cpfExempt={managedParticipant.cpf_exempt === true}
           spotType={managedParticipant.spot_type}
           ticketPrice={event.ticket_price}
         />
