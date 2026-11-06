@@ -12,6 +12,10 @@ const { logger } = vi.hoisted(() => ({
 
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
 
+vi.mock("~/business/admin/cpf-exemption.server", () => ({
+  setProfileCpfExempt: vi.fn(),
+}))
+
 vi.mock("~/business/admin/admin.server", () => ({
   getAdminContext: vi.fn(),
   getParticipantFullEventHistory: vi.fn(),
