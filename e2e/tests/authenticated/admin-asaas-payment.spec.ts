@@ -184,6 +184,9 @@ test.describe('POS-577: flat prices, and refunds done in the Asaas dashboard', (
     // once paid. The owner, logged in, still sees the receipt.
     await participantPage.goto(`/pagamento/t/${pending.access_token}/obrigado`)
     await expect(participantPage.getByRole('heading', { name: 'Pagamento confirmado' })).toBeVisible()
+    const thanksResponse = await participantPage.request.get(`/pagamento/t/${pending.access_token}/obrigado`)
+    expect(thanksResponse.headers()['referrer-policy']).toBe('no-referrer')
+    expect(thanksResponse.headers()['cache-control']).toBe('private, no-store')
     await paymentPage.openLink(pending.access_token)
     await paymentPage.expectClosed()
     await participantContext.close()
