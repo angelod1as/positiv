@@ -142,8 +142,8 @@ export const cpfExemptionCopy = {
     "A administração ainda não liberou o cadastro sem CPF. Aguarde ou informe um CPF.",
   rgLabel: "RG ou passaporte",
   rgIssuerLabel: "Emissor ou país",
-  requestMessage: (profileUrl: string) =>
-    `Olá! Não tenho CPF (ou sou pessoa estrangeira) e preciso de liberação para continuar meu cadastro na Positiv. Meu perfil: ${profileUrl}`,
-  changeMessage: (profileUrl: string) =>
-    `Olá! Quero mudar a marcação de "Estrangeira ou sem CPF" do meu cadastro na Positiv. Meu perfil: ${profileUrl}`,
+  requestMessage: (profileId: string) =>
+    `Hello Positiv, I don't have a CPF. Can you help me? ID: ${profileId}`,
+  changeMessage: (profileId: string) =>
+    `Olá Positiv, quero inserir um CPF no meu perfil. Podem me ajudar? ID: ${profileId}`,
 } as const

@@ -5,10 +5,8 @@ import { cpfExemptionLinks } from "./cpf-exemption-link"
 const readText = (link: string) => new URL(link).searchParams.get("text") ?? ""
 
 describe("cpfExemptionLinks", () => {
-  const links = cpfExemptionLinks({
-    origin: "https://positivparty.com",
-    profileId: "4f7a2c1e-0000-4000-8000-000000000001",
-  })
+  const profileId = "4f7a2c1e-0000-4000-8000-000000000001"
+  const links = cpfExemptionLinks({ profileId })
 
   it("opens a WhatsApp chat with the organisation", () => {
     expect(links.request.startsWith(`https://wa.me/${POSITIV_WHATSAPP}?`)).toBe(
@@ -19,19 +17,23 @@ describe("cpfExemptionLinks", () => {
     )
   })
 
-  it("hands the admin the participant's profile in the request", () => {
-    expect(readText(links.request)).toContain(
-      "https://positivparty.com/admin/participantes/4f7a2c1e-0000-4000-8000-000000000001",
+  it("asks for help without a CPF, carrying only the profile ID", () => {
+    expect(readText(links.request)).toBe(
+      `Hello Positiv, I don't have a CPF. Can you help me? ID: ${profileId}`,
     )
   })
 
-  it("hands the admin the participant's profile when asking for a change", () => {
-    expect(readText(links.change)).toContain(
-      "https://positivparty.com/admin/participantes/4f7a2c1e-0000-4000-8000-000000000001",
+  it("asks to add a CPF, carrying only the profile ID", () => {
+    expect(readText(links.change)).toBe(
+      `Olá Positiv, quero inserir um CPF no meu perfil. Podem me ajudar? ID: ${profileId}`,
     )
   })
 
-  it("says different things for asking and for changing", () => {
-    expect(readText(links.request)).not.toBe(readText(links.change))
+  // Anyone can edit a pre-written message before sending it. A link in it is
+  // one the admin could be tricked into following -- the ID is looked up on
+  // the real site instead.
+  it("carries no link the admin could be sent to", () => {
+    expect(readText(links.request)).not.toMatch(/https?:|\.com/)
+    expect(readText(links.change)).not.toMatch(/https?:|\.com/)
   })
 })

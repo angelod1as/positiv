@@ -139,7 +139,7 @@ describe("basic-data-page loader", () => {
           (result as { cpfExemptionLinks: { request: string } })
             .cpfExemptionLinks.request,
         ),
-      ).toContain("/admin/participantes/profile-123")
+      ).toContain("ID: profile-123")
     })
 
     it("should handle errors when checking for orphaned profiles", async () => {

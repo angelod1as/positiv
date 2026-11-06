@@ -14,7 +14,6 @@ import { buildSingleScreenFlow } from "~/components/forms/runtime/single-screen-
 import { basicDataCopy } from "~/copy/account"
 import { metaCopy } from "~/copy/meta"
 import { trackEvent } from "~/lib/analytics/umami"
-import { appOrigin } from "~/lib/helpers/app-origin"
 import { cpfExemptionLinks } from "~/lib/helpers/cpf-exemption-link"
 import { createMetaArray } from "~/lib/helpers/meta"
 import { logger } from "~/lib/logger/logger.server"
@@ -68,10 +67,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     profile,
     orphanedProfile,
     cpfExemptionLinks: profile
-      ? cpfExemptionLinks({
-          origin: appOrigin(request.headers.get("host")),
-          profileId: profile.id,
-        })
+      ? cpfExemptionLinks({ profileId: profile.id })
       : null,
   }
 }

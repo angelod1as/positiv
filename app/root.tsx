@@ -20,7 +20,6 @@ import {
   umamiBeforeSendScript,
 } from "~/lib/analytics/admin-pages"
 import { isValidCpf } from "~/lib/helpers/cpf"
-import { appOrigin } from "~/lib/helpers/app-origin"
 import { cpfExemptionLinks } from "~/lib/helpers/cpf-exemption-link"
 import { readFormData } from "~/lib/helpers/read-form-data.server"
 import { safeRedirect } from "~/lib/helpers/safe-redirect"
@@ -203,10 +202,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       currentProfile &&
       !currentProfile.cpf_exempt &&
       !isValidCpf(currentProfile.cpf)
-        ? cpfExemptionLinks({
-            origin: appOrigin(request.headers.get("host")),
-            profileId: currentProfile.id,
-          }).request
+        ? cpfExemptionLinks({ profileId: currentProfile.id }).request
         : null
 
     let shouldShowNewsletterModal = false
