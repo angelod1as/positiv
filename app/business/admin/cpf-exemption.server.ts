@@ -38,6 +38,7 @@ export const setProfileCpfExempt = applySchema(setProfileCpfExemptSchema)(
           .innerJoin("event_participants as ep", "ep.id", "pay.event_participant_id")
           .select("pay.id")
           .where("ep.profile_id", "=", profileId)
+          .where("pay.kind", "=", "online")
           .where("pay.status", "in", [...ACTIVE_PAYMENT_STATUSES])
           .executeTakeFirst()
 

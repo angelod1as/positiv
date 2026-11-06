@@ -112,6 +112,24 @@ describe("Admin-only profile columns", () => {
       })
     }
 
+    it("cannot change them with the anon key either", async () => {
+      const { profile } = await createUserWithProfile("anon")
+
+      await db.transaction().execute(async (trx) => {
+        await sql`SET LOCAL ROLE anon`.execute(trx)
+        await sql`UPDATE public.profiles SET cpf_exempt = true WHERE id = ${profile.id}`.execute(
+          trx,
+        )
+      })
+
+      const saved = await db
+        .selectFrom("profiles")
+        .select("cpf_exempt")
+        .where("id", "=", profile.id)
+        .executeTakeFirstOrThrow()
+      expect(saved.cpf_exempt).toBe(false)
+    })
+
     it("still changes their own data", async () => {
       const { userId, profile } = await createUserWithProfile("own-data")
 

@@ -41,7 +41,11 @@ describe("setProfileCpfExempt", () => {
       .where("id", "=", id)
       .executeTakeFirstOrThrow()
 
-  const withCharge = async (profileId: string, status: "pending" | "awaiting_payment" | "paid") => {
+  const withCharge = async (
+    profileId: string,
+    status: "pending" | "awaiting_payment" | "paid",
+    kind: "online" | "manual" = status === "paid" ? "manual" : "online",
+  ) => {
     const event = await createTestEvent(tracker, kysely, {
       title: "Exemption Event",
       ticket_price: 22000,
@@ -54,10 +58,10 @@ describe("setProfileCpfExempt", () => {
     })
     await createTestPayment(tracker, kysely, {
       event_participant_id: participant.id,
-      kind: status === "paid" ? "manual" : "online",
+      kind,
       status,
       amount: status === "paid" ? 22000 : null,
-      method: status === "paid" ? "pix" : null,
+      method: kind === "manual" || status === "paid" ? "pix" : null,
       paid_at: status === "paid" ? new Date().toISOString() : null,
     })
   }
@@ -104,6 +108,18 @@ describe("setProfileCpfExempt", () => {
       )
       expect((await profileRow(profile.id)).cpf_exempt).toBe(false)
     }
+  })
+
+  it("is not held up by a manual payment still pending", async () => {
+    const profile = await makeProfile(null)
+    await withCharge(profile.id, "pending", "manual")
+
+    const result = await setProfileCpfExempt({
+      profileId: profile.id,
+      cpfExempt: "true",
+    })
+
+    expect(result.success).toBe(true)
   })
 
   it("exempts someone whose past charges are settled", async () => {
