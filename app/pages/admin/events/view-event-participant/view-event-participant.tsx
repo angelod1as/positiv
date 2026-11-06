@@ -64,7 +64,12 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   if (intent === "update-profile-cpf-exempt") {
-    const result = await setProfileCpfExempt(Object.fromEntries(formData))
+    // The profile of the page, not one the form names: the admin decided on
+    // the person in front of them.
+    const result = await setProfileCpfExempt({
+      profileId: params.profileId,
+      cpfExempt: formData.get("cpfExempt"),
+    })
     // Copied out: React Router turns every Error in action data into
     // "Unexpected Server Error" in a production build.
     return result.success

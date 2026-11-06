@@ -283,3 +283,23 @@ describe("ViewEventParticipant action - non-form body", () => {
     expect((thrown as Response).status).toBe(415)
   })
 })
+
+describe("ViewEventParticipant action - CPF exemption", () => {
+  it("exempts the profile of the page, whatever the form names", async () => {
+    vi.mocked(getAdminContext).mockResolvedValue(
+      {} as Awaited<ReturnType<typeof getAdminContext>>,
+    )
+    vi.mocked(setProfileCpfExempt).mockResolvedValue({ success: true } as never)
+
+    await runAction({
+      intent: "update-profile-cpf-exempt",
+      profileId: "00000000-0000-4000-8000-000000000000",
+      cpfExempt: "true",
+    })
+
+    expect(setProfileCpfExempt).toHaveBeenCalledWith({
+      profileId: params.profileId,
+      cpfExempt: "true",
+    })
+  })
+})
