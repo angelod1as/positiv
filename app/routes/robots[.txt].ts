@@ -4,7 +4,7 @@ export function loader() {
   const baseUrl = POSITIV_URL.replace(/\/$/, "")
 
   return new Response(
-    `User-agent: *\nAllow: /\nDisallow: /admin\nSitemap: ${baseUrl}/sitemap.xml\n`,
+    `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /pagamento/t/\nSitemap: ${baseUrl}/sitemap.xml\n`,
     {
       headers: {
         "Content-Type": "text/plain",

@@ -68,7 +68,10 @@ function thanksMessage(data: PaymentThanksData) {
 }
 
 const PaymentThanksPage = ({ loaderData }: Route.ComponentProps) => {
-  const data = loaderData as PaymentThanksData & { betaNotice: boolean }
+  const data = loaderData as PaymentThanksData & {
+    betaNotice: boolean
+    viaToken?: boolean
+  }
   const { title, body } = thanksMessage(data)
 
   const reached = data.state !== "closed"
@@ -87,11 +90,15 @@ const PaymentThanksPage = ({ loaderData }: Route.ComponentProps) => {
         {data.betaNotice && <PaymentBetaNotice eventTitle={data.eventTitle} />}
         <Copy>{body}</Copy>
       </CardContent>
-      <CardFooter>
-        <Button to={paths.dash.DASHBOARD} variant="outline">
-          {page.backToDashboard}
-        </Button>
-      </CardFooter>
+      {/* A signed-out payer arrives through the token link, and the dashboard
+          would only put the login wall back in front of them. */}
+      {!data.viaToken && (
+        <CardFooter>
+          <Button to={paths.dash.DASHBOARD} variant="outline">
+            {page.backToDashboard}
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   )
 }

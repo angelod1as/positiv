@@ -130,6 +130,7 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
       "p.provider_charge_id",
       "p.provider_checkout_url",
       "p.amount",
+      "p.access_token",
       "e.id as event_id",
       "e.title as event_title",
       "pr.id as profile_id",
@@ -230,7 +231,7 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
   // are done.
   const origin = isProd() ? appOrigin(null) : ""
   const successUrl = origin
-    ? `${origin}${paths.payment.PAYMENT_THANKS(payment.id)}`
+    ? `${origin}${paths.payment.PAYMENT_TOKEN_THANKS(payment.access_token)}`
     : null
 
   const charge = await paymentProvider()

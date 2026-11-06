@@ -10,13 +10,19 @@ import {
   createTestProfile,
 } from "~/test/db-test-utils"
 
-import { loadPaymentPage, loadPaymentThanks } from "./payment-page.server"
+import {
+  loadPaymentPage,
+  loadPaymentPageByToken,
+  loadPaymentThanks,
+  loadPaymentThanksByToken,
+} from "./payment-page.server"
 
 describe("loadPaymentPage", () => {
   const { tracker, kysely } = setupIntegrationTest()
   let profileId: string
   let otherProfileId: string
   let participantId: string
+  let eventId: string
 
   beforeEach(async () => {
     tracker.clear()
@@ -25,6 +31,7 @@ describe("loadPaymentPage", () => {
       title: "Payment Page Event",
       ticket_price: 22000,
     })
+    eventId = event.id
     const profile = await createTestProfile(tracker, kysely, {
       user_id: null,
       email: `test${testId}-payer@example.com`,
@@ -335,6 +342,128 @@ describe("loadPaymentPage", () => {
       await expect(
         loadPaymentThanks({ paymentId: payment.id, profileId: otherProfileId }),
       ).rejects.toBeDefined()
+    })
+  })
+
+  describe("by access token", () => {
+    const tomorrow = () => new Date(Date.now() + 86_400_000).toISOString()
+    const yesterday = () => new Date(Date.now() - 86_400_000).toISOString()
+
+    const startEventAt = (time: string | null) =>
+      kysely
+        .updateTable("events")
+        .set({ time_event_start: time })
+        .where("id", "=", eventId)
+        .execute()
+
+    const byToken = (token: string) =>
+      loadPaymentPageByToken({
+        token,
+        onlinePaymentsEnabled: true,
+        cardPaymentsEnabled: true,
+      })
+
+    beforeEach(async () => {
+      await startEventAt(tomorrow())
+    })
+
+    it("offers the options without knowing who is asking", async () => {
+      const payment = await openCharge()
+
+      const result = await byToken(payment.access_token)
+
+      expect(result).toMatchObject({ state: "ready", paymentId: payment.id })
+    })
+
+    it("stays open for an event with no start date", async () => {
+      await startEventAt(null)
+      const payment = await openCharge()
+
+      expect((await byToken(payment.access_token)).state).toBe("ready")
+    })
+
+    it("closes once the event has started", async () => {
+      await startEventAt(yesterday())
+      const payment = await openCharge()
+
+      expect(await byToken(payment.access_token)).toEqual({
+        state: "closed",
+        eventTitle: "Payment Page Event",
+      })
+    })
+
+    it("closes a charge already paid rather than showing the receipt", async () => {
+      const payment = await createTestPayment(tracker, kysely, {
+        event_participant_id: participantId,
+      })
+
+      expect((await byToken(payment.access_token)).state).toBe("closed")
+    })
+
+    it("closes an expired charge", async () => {
+      const expired = await createTestPayment(tracker, kysely, {
+        event_participant_id: participantId,
+        kind: "online",
+        status: "expired",
+        amount: null,
+        method: null,
+        paid_at: null,
+      })
+
+      expect((await byToken(expired.access_token)).state).toBe("closed")
+    })
+
+    // The token path never writes a CPF without a session: the id route asks
+    // for one once the owner has logged in.
+    it("sends a profile without a valid CPF to the logged-in payment page", async () => {
+      await kysely
+        .updateTable("profiles")
+        .set({ cpf: "111.111.111-11" })
+        .where("id", "=", profileId)
+        .execute()
+      const payment = await openCharge()
+
+      const refusal = await byToken(payment.access_token).catch(
+        (error: unknown) => error,
+      )
+
+      expect(refusal).toBeInstanceOf(Response)
+      expect((refusal as Response).headers.get("Location")).toBe(
+        `/pagamento/${payment.id}`,
+      )
+    })
+
+    it("refuses a token that names no payment", async () => {
+      await expect(byToken("0".repeat(48))).rejects.toBeInstanceOf(Response)
+    })
+
+    it("refuses a token that is not one at all", async () => {
+      await expect(byToken("not-a-token")).rejects.toBeInstanceOf(Response)
+    })
+
+    it("thanks the payer of an open charge without knowing who is asking", async () => {
+      const payment = await openCharge()
+
+      expect(
+        await loadPaymentThanksByToken({ token: payment.access_token }),
+      ).toEqual({ state: "waiting", eventTitle: "Payment Page Event" })
+    })
+
+    it("says on the thanks page that a charge is paid", async () => {
+      const payment = await createTestPayment(tracker, kysely, {
+        event_participant_id: participantId,
+        amount: 22199,
+      })
+
+      expect(
+        await loadPaymentThanksByToken({ token: payment.access_token }),
+      ).toMatchObject({ state: "paid", amount: 22199 })
+    })
+
+    it("refuses a thanks page for a token that names no payment", async () => {
+      await expect(
+        loadPaymentThanksByToken({ token: "0".repeat(48) }),
+      ).rejects.toBeInstanceOf(Response)
     })
   })
 })

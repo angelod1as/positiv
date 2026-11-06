@@ -64,7 +64,7 @@ function paymentMessageValues(
   return {
     // The origin the server would build, not the request host, so the copied
     // message and the e-mail hand the participant the same link.
-    link: `${appOrigin}${paths.payment.PAYMENT(active.id)}`,
+    link: `${appOrigin}${paths.payment.PAYMENT_TOKEN(active.access_token)}`,
     data: formatInTimeZone(active.due_at, "America/Sao_Paulo", "dd/MM/yyyy"),
     nome: participantName,
     evento: eventTitle,

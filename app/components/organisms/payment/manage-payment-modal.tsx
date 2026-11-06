@@ -448,7 +448,7 @@ const ChargeSection: FC<ChargeSectionProps> = ({
         : null
 
   const paymentUrl = active
-    ? `${appOrigin}${paths.payment.PAYMENT(active.id)}`
+    ? `${appOrigin}${paths.payment.PAYMENT_TOKEN(active.access_token)}`
     : null
 
   const copyMessage = () => {

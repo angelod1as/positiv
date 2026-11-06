@@ -75,6 +75,7 @@ const paidAsaasCharge = (overrides: Partial<PaymentRow> = {}): PaymentRow =>
 
 const openCharge = payment({
   id: "open-1",
+  access_token: "tok-open-1",
   kind: "online",
   status: "pending",
   method: null,
@@ -801,7 +802,7 @@ describe("ManagePaymentModal - the Cobrança section", () => {
 
     const share = screen.getByRole("group", { name: "Link de pagamento" })
     expect(
-      within(share).getByText("https://www.positivparty.com/pagamento/open-1"),
+      within(share).getByText("https://www.positivparty.com/pagamento/t/tok-open-1"),
     ).toBeInTheDocument()
     expect(
       within(share).getByRole("button", { name: "Copiar mensagem" }),

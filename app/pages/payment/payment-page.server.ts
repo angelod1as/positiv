@@ -1,3 +1,4 @@
+import { redirect } from "react-router"
 import { redirectWithError } from "remix-toast"
 import { ACTIVE_PAYMENT_STATUSES } from "~/business/payment/payment-totals.server"
 import { paymentProvider } from "~/business/payment/payment-provider.server"
@@ -202,4 +203,82 @@ export async function loadPaymentThanks({
   }
 
   return { state: "waiting", eventTitle }
+}
+
+const ACCESS_TOKEN = /^[0-9a-f]{48}$/
+
+/**
+ * The payment a link's token names, and whose it is. The token is the whole
+ * authorization: whoever holds it may pay, signed in or not. Refused the way
+ * the id route refuses a charge that is not yours, so a guess learns nothing.
+ */
+export async function findPaymentByToken(token: string) {
+  const payment = ACCESS_TOKEN.test(token)
+    ? await kyselyDb
+        .selectFrom("payments as p")
+        .innerJoin("event_participants as ep", "ep.id", "p.event_participant_id")
+        .innerJoin("events as e", "e.id", "ep.event_id")
+        .innerJoin("profiles as pr", "pr.id", "ep.profile_id")
+        .select(["p.id", "pr.id as profile_id", "e.time_event_start"])
+        .where("p.access_token", "=", token)
+        .executeTakeFirst()
+    : undefined
+
+  if (!payment) {
+    throw await redirectWithError(
+      paths.dash.DASHBOARD,
+      paymentsCopy.page.notYours,
+    )
+  }
+
+  return {
+    paymentId: payment.id,
+    profileId: payment.profile_id,
+    eventStarted:
+      payment.time_event_start !== null &&
+      new Date(payment.time_event_start) <= new Date(),
+  }
+}
+
+/**
+ * The payment page behind a token link. It only ever offers to pay: a charge
+ * already settled, closed, or for an event that has begun reads as closed, and
+ * a profile without a CPF goes to the logged-in page, which asks for one.
+ */
+export async function loadPaymentPageByToken({
+  token,
+  onlinePaymentsEnabled,
+  cardPaymentsEnabled,
+}: {
+  token: string
+  onlinePaymentsEnabled: boolean
+  cardPaymentsEnabled: boolean
+}): Promise<PaymentPageData> {
+  const { paymentId, profileId, eventStarted } = await findPaymentByToken(token)
+  const data = await loadPaymentPage({
+    paymentId,
+    profileId,
+    onlinePaymentsEnabled,
+    cardPaymentsEnabled,
+  })
+
+  if (data.state === "needs_cpf") {
+    throw redirect(paths.payment.PAYMENT(paymentId))
+  }
+
+  if (data.state === "paid" || eventStarted) {
+    return { state: "closed", eventTitle: data.eventTitle }
+  }
+
+  return data
+}
+
+/** Where the provider sends a payer who came in through a token link. */
+export async function loadPaymentThanksByToken({
+  token,
+}: {
+  token: string
+}): Promise<PaymentThanksData> {
+  const { paymentId, profileId } = await findPaymentByToken(token)
+  return loadPaymentThanks({ paymentId, profileId })
 }

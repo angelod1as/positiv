@@ -175,7 +175,7 @@ describe("view event participant loader", () => {
       errors: [],
     } as unknown as Awaited<ReturnType<typeof getParticipantFullEventHistory>>)
     vi.mocked(getPaymentsForParticipant).mockResolvedValue({
-      active: { id: "pay-1", due_at: "2026-09-01T12:00:00Z", base_amount: 25000 },
+      active: { id: "pay-1", access_token: "tok-1", due_at: "2026-09-01T12:00:00Z", base_amount: 25000 },
       payments: [],
       totals: {},
     } as unknown as Awaited<ReturnType<typeof getPaymentsForParticipant>>)
@@ -185,7 +185,7 @@ describe("view event participant loader", () => {
     }
 
     expect(whatsappMessage).toContain("Ana Social")
-    expect(whatsappMessage).toContain("/pagamento/pay-1")
+    expect(whatsappMessage).toContain("/pagamento/t/tok-1")
     expect(whatsappMessage).toContain("01/09/2026")
   })
 

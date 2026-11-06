@@ -38,10 +38,10 @@ const options = buildPaymentOptions(25000, {
 // The page reads one prop of the many a route component is handed, and a test
 // that built the rest would be describing React Router, not this page.
 const Page = PaymentPage as unknown as (props: {
-  loaderData: PaymentPageData
+  loaderData: PaymentPageData & { viaToken?: boolean }
 }) => React.ReactNode
 
-const renderPage = (loaderData: PaymentPageData) =>
+const renderPage = (loaderData: PaymentPageData & { viaToken?: boolean }) =>
   renderWithRouter(<Page loaderData={loaderData} />)
 
 const ready: PaymentPageData = {
@@ -170,6 +170,24 @@ describe("PaymentPage", () => {
     expect(screen.queryByRole("radio")).not.toBeInTheDocument()
     expect(
       screen.queryByRole("button", { name: paymentsCopy.page.pay }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("points the signed-in participant back to the dashboard", () => {
+    renderPage({ state: "closed", eventTitle: "Encontro de Maio" })
+
+    expect(
+      screen.getByRole("link", { name: paymentsCopy.page.backToDashboard }),
+    ).toBeInTheDocument()
+  })
+
+  // Through a token link the visitor may be signed out, and the dashboard
+  // would only put the login wall back in front of them.
+  it("offers no dashboard link on a token link", () => {
+    renderPage({ state: "closed", eventTitle: "Encontro de Maio", viaToken: true })
+
+    expect(
+      screen.queryByRole("link", { name: paymentsCopy.page.backToDashboard }),
     ).not.toBeInTheDocument()
   })
 

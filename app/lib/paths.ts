@@ -76,6 +76,9 @@ const ADMIN_EVENT_VIEW_PARTICIPANT = (eventId: string, participantId: string) =>
 //// PAYMENT
 const PAYMENT = (paymentId: string) => `/pagamento/${paymentId}`
 const PAYMENT_THANKS = (paymentId: string) => `${PAYMENT(paymentId)}/obrigado`
+const PAYMENT_TOKEN = (token: string) => `/pagamento/t/${token}`
+const PAYMENT_TOKEN_THANKS = (token: string) =>
+  `${PAYMENT_TOKEN(token)}/obrigado`
 const PAYMENT_CPF_COMMIT = "/api/payment/cpf"
 
 const paths = {
@@ -122,6 +125,8 @@ const paths = {
   payment: {
     PAYMENT,
     PAYMENT_THANKS,
+    PAYMENT_TOKEN,
+    PAYMENT_TOKEN_THANKS,
     PAYMENT_CPF_COMMIT,
   },
   dash: {
