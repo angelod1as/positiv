@@ -201,6 +201,63 @@ describe("production workflow", () => {
     expect(result.stdout).not.toContain("attempt 2:")
   })
 
+  describe("starting the Coolify deployment", () => {
+    // Runs the step's own script with curl replaced by a stub that answers
+    // `body`, the way Coolify's deploy endpoint would.
+    function startDeployment(body: string) {
+      const dir = mkdtempSync(join(tmpdir(), "production-workflow-"))
+      const script = join(dir, "step.sh")
+      const output = join(dir, "output")
+
+      writeFileSync(join(dir, "body.json"), body)
+      writeFileSync(join(dir, "curl"), `#!/bin/sh\ncat > /dev/null\ncat '${join(dir, "body.json")}'\n`)
+      chmodSync(join(dir, "curl"), 0o755)
+      writeFileSync(script, runScript("Start the Coolify deployment"))
+      writeFileSync(output, "")
+
+      const result = spawnSync("bash", ["-e", script], {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PATH: `${dir}:${process.env.PATH}`,
+          COOLIFY_URL: "https://coolify.invalid/",
+          COOLIFY_DEPLOY_TOKEN: "not-a-token",
+          COOLIFY_APP_UUID: "app",
+          GITHUB_SHA: "a".repeat(40),
+          GITHUB_OUTPUT: output,
+        },
+      })
+
+      return { status: result.status, stdout: result.stdout, output: readFileSync(output, "utf8") }
+    }
+
+    it("hands the queued deployment to the smoke job", () => {
+      const result = startDeployment(
+        '{"deployments":[{"message":"queued","resource_uuid":"app","deployment_uuid":"dep-1"}]}',
+      )
+
+      expect(result.status).toBe(0)
+      expect(result.output).toBe("deployment_uuid=dep-1\n")
+    })
+
+    it("fails the run, with Coolify's reason, when nothing was queued", () => {
+      // Without a deployment there is nothing for the smoke job to wait on,
+      // and a skipped smoke would read as green.
+      const result = startDeployment('{"message":"No resources found."}')
+
+      expect(result.status).toBe(1)
+      expect(result.stdout).toContain("::error::Coolify queued no deployment: No resources found.")
+      expect(result.output).toBe("")
+    })
+
+    it("fails the run when the answer is not JSON", () => {
+      const result = startDeployment("<html>502 Bad Gateway</html>")
+
+      expect(result.status).not.toBe(0)
+      expect(result.output).toBe("")
+    })
+  })
+
   it("gives the smoke job room for both its waits, so neither is cut off silently", () => {
     // The job's own timeout kills a step without its error message, so it
     // must outlast the deployment wait's timeout plus the site fetch's worst
