@@ -36,6 +36,9 @@ function runScript(stepName: string): string {
   expect(nameLine, `step "${stepName}" not found`).toBeGreaterThan(-1)
 
   const runLine = lines.findIndex((line, index) => index > nameLine && /^ +run: \|$/.test(line))
+
+  // Only a literal block (`run: |`) is read; any other form would be misparsed.
+  expect(runLine, `step "${stepName}" has no "run: |" block`).toBeGreaterThan(nameLine)
   const indent = lines[runLine + 1].search(/\S/)
   const body: string[] = []
 
@@ -198,6 +201,24 @@ describe("production workflow", () => {
     expect(result.stdout).not.toContain("attempt 2:")
   })
 
+  it("gives the smoke job room for both its waits, so neither is cut off silently", () => {
+    // The job's own timeout kills a step without its error message, so it
+    // must outlast the deployment wait's timeout plus the site fetch's worst
+    // case: every attempt timing out, then sleeping.
+    const smoke = jobBlock("smoke")
+    const jobTimeout = Number(smoke.match(/\n {4}timeout-minutes: (\d+)/)?.[1])
+    const waitTimeout = Number(
+      smoke.match(/- name: Wait for the Coolify deployment of this commit\n +timeout-minutes: (\d+)/)?.[1],
+    )
+    const fetch = runScript("Fetch the site until it answers")
+    const attempts = Number(fetch.match(/seq 1 (\d+)/)?.[1])
+    const maxTime = Number(fetch.match(/--max-time (\d+)/)?.[1])
+    const pause = Number(fetch.match(/sleep (\d+)/)?.[1])
+    const fetchWorstMinutes = (attempts * (maxTime + pause)) / 60
+
+    expect(jobTimeout).toBeGreaterThan(waitTimeout + fetchWorstMinutes)
+  })
+
   it("keeps the Coolify token off every command line", () => {
     // This repository is public. The token reaches curl as a config file on
     // stdin, never as an argument, where it would sit in the process list.
@@ -215,7 +236,13 @@ describe("production workflow", () => {
     expect(coolifyCalls.length).toBeGreaterThan(0)
     expect(stdinConfigs).toHaveLength(coolifyCalls.length)
 
-    expect(workflow).not.toMatch(/run:.*secrets\./)
+    // A secret is read only as a step's env mapping, never inside a script,
+    // where the expression would be expanded into the command itself.
+    const secretLines = workflow.split("\n").filter((line) => line.includes("secrets."))
+
+    for (const line of secretLines) {
+      expect(line).toMatch(/^ +[A-Z_]+: \$\{\{ secrets\.[A-Z_]+ \}\}$/)
+    }
     expect(workflow).toContain("COOLIFY_DEPLOY_TOKEN: ${{ secrets.COOLIFY_DEPLOY_TOKEN }}")
   })
 

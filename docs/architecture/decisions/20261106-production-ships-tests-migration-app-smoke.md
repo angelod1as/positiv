@@ -32,7 +32,7 @@ Runs share a concurrency group that never cancels a run in progress. Coolify bui
 
 ### Negative
 
-- Runs hold the `production` concurrency group until the smoke test finishes, up to about 45 minutes on a slow build. A hotfix merged meanwhile waits to migrate, and a third merge replaces the waiting run.
+- Runs hold the `production` concurrency group until the smoke test finishes, up to about an hour in the worst case. A hotfix merged meanwhile waits to migrate, and a third merge replaces the waiting run.
 - The app goes live a few minutes later than before: after the tests and the migration instead of in parallel with them.
 - A migration lands while the previous app is still serving, so it must stay compatible with it. Expand/contract was already the rule; now it is required.
 - A run that leaves publishing to a newer run ends green with a warning. If that newer run goes red, the older commit's migration is live while the app stays on the commit before it, until the next green merge publishes both. That is the rule working: a red `main` publishes nothing.

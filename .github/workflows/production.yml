@@ -340,7 +340,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy-app
     if: needs.deploy-app.outputs.deployment_uuid != ''
-    timeout-minutes: 45
+    # The deployment wait's 32 minutes plus the site fetch's worst case, 30
+    # attempts of a 20-second timeout and a 20-second pause, with room left:
+    # this limit kills a step without its error message.
+    timeout-minutes: 60
 
     steps:
       # Builds take five to ten minutes; twenty-eight is room for a cold cache and a
