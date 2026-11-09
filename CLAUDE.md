@@ -204,12 +204,17 @@ The "Default privileges on new objects in public" test in
   `~/lib/supabase/db.server`.
 - `app/pages/` — the routes themselves, mirroring the URL structure, API
   routes included (`app/pages/api/`). Route modules stay thin: a loader or
-  action parses the request and calls `app/business/`, and never imports
-  Kysely, `db.server` or the Supabase server client. Not to be confused with
+  action parses the request and calls `app/business/`, never imports
+  Kysely, `db.server` or the Supabase server client, and never calls
+  supabase-js `.from`, `.rpc` or `.auth` — auth flows go through
+  `app/business/auth/`. Not to be confused with
   `app/components/pages/`, which holds the components a given page renders.
 - Dependencies point one way: `pages → business → lib`. Full rule:
   [the ADR](docs/architecture/decisions/20261106-server-side-code-is-organized-by-domain.md).
   The code is still moving into this layout (WEB-42); new code follows it now.
+  Until then, `app/routes/`, `~/kysely-db`, `business/admin/`,
+  `business/participant/` and `business/common.ts` still exist and are to be
+  moved or removed by WEB-42 — never a precedent for new code.
 - `app/components/` — atomic design (`atoms`, `molecules`, `organisms`), plus
   `ui` for ShadcN and `forms` for the form layer.
 - `app/copy/` — every user-visible string; see Site Copy below.

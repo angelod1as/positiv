@@ -10,7 +10,7 @@ Server-side code had no single home. Most of it sat in `app/business/`, which CL
 
 ## Decision
 
-**`app/business/<domain>/` is split by domain, never by actor.** Who calls a function is the route's concern and the permission check's, not the folder's. The domains are `auth`, `profile`, `event`, `application`, `payment`, `newsletter`, `email`, `cms`, `feedback`, `settings` and `reporting`. A domain holds its logic and its queries, called through Kysely from its `*.server.ts` files; there is no separate repository layer.
+**`app/business/<domain>/` is split by domain, never by actor.** Who calls a function is the route's concern and the permission check's, not the folder's. The domains are `auth`, `profile`, `event`, `application`, `payment`, `newsletter`, `email`, `cms`, `feedback`, `settings` and `reporting`. A domain holds its logic and its queries, called through Kysely from its `*.server.ts` files; there is no separate repository layer. Two domains are not entities: `reporting` holds read-only back-office aggregates that span several domains (dashboards, dataviz, demographics, profile search), and `settings` holds the app-wide configuration stored in the database. A function that changes data never goes in `reporting`.
 
 **A vendor SDK lives inside the domain that owns it, and only that domain imports it**: Asaas in `payment`, Listmonk in `newsletter`, Sanity in `cms`, nodemailer in `email`. Other domains call the owner's functions. A formal port (an interface with swappable adapters) exists only where swapping the vendor is a real prospect, which today means payments ([Payments go through a provider connector](./20260930-payments-go-through-a-provider-connector.md)).
 
@@ -18,9 +18,9 @@ Server-side code had no single home. Most of it sat in `app/business/`, which CL
 
 **Dependencies point one way: `pages → business → lib`.** `lib` never imports `business`. A domain may import another domain's files directly, with no barrel, but never in a cycle.
 
-**Route modules are thin.** A loader or action in `app/pages/` parses the request, calls `business`, and shapes the response. It never imports Kysely, `pg`, `db.server` or the Supabase server client, and never calls supabase-js `.from`, `.rpc` or `.auth`. Every API route, browser-facing or machine-to-machine (cron, webhook), lives in `app/pages/api/`, mirroring its URL.
+**Route modules are thin.** A loader or action in `app/pages/` parses the request, calls `business`, and shapes the response. It never imports Kysely, `pg`, `db.server` or the Supabase server client, and never calls supabase-js `.from`, `.rpc` or `.auth`; auth flows (sign-in, OTP confirmation, password reset) call `business/auth`. Every API route, browser-facing or machine-to-machine (cron, webhook), lives in `app/pages/api/`, mirroring its URL.
 
-**A file that imports a server-only module carries the `.server` suffix** ([Use Server-Only File Suffixes](./20250126-use-server-only-file-suffixes.md)).
+**A file that imports a server-only module carries the `.server` suffix.** This extends [Use Server-Only File Suffixes](./20250126-use-server-only-file-suffixes.md), which covers server-only code itself: the suffix now also applies transitively, to any file that imports a server-only module (`pg`, `kysely`, `nodemailer`, `db.server`, or another `.server` file). WEB-43 adds a test that enforces it.
 
 **`dependency-cruiser`, run inside `pnpm lint`, enforces four rules**: no import cycles, `lib` never imports `business`, `pages` never reaches the database, and a vendor SDK is imported only by its owning domain.
 
