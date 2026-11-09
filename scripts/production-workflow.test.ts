@@ -166,6 +166,38 @@ describe("production workflow", () => {
     expect(result.output).toBe("")
   })
 
+  it("gives up waiting on a clock, so its error prints before the step timeout", () => {
+    // Counting attempts, an API that times out on every call stretched the
+    // loop past the step's timeout-minutes, and GitHub killed it without the
+    // message saying why. Bash's SECONDS is imported from the environment, so
+    // starting it late stands in for an hour of slow calls.
+    const dir = mkdtempSync(join(tmpdir(), "production-workflow-"))
+    const script = join(dir, "step.sh")
+
+    writeFileSync(join(dir, "curl"), "#!/bin/sh\nexit 28\n")
+    writeFileSync(join(dir, "sleep"), "#!/bin/sh\nexit 0\n")
+    chmodSync(join(dir, "curl"), 0o755)
+    chmodSync(join(dir, "sleep"), 0o755)
+    writeFileSync(script, runScript("Wait for the Coolify deployment of this commit"))
+
+    const result = spawnSync("bash", ["-e", script], {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        PATH: `${dir}:${process.env.PATH}`,
+        SECONDS: "100000",
+        COOLIFY_URL: "https://coolify.invalid",
+        COOLIFY_DEPLOY_TOKEN: "not-a-token",
+        DEPLOYMENT_UUID: "deployment",
+        GITHUB_SHA: "a".repeat(40),
+      },
+    })
+
+    expect(result.status).toBe(1)
+    expect(result.stdout).toContain("::error::Coolify deployment deployment did not finish")
+    expect(result.stdout).not.toContain("attempt 2:")
+  })
+
   it("keeps the Coolify token off every command line", () => {
     // This repository is public. The token reaches curl as a config file on
     // stdin, never as an argument, where it would sit in the process list.

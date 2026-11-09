@@ -225,8 +225,6 @@ jobs:
       deployment_uuid: ${{ steps.start.outputs.deployment_uuid }}
 
     env:
-      COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
-      COOLIFY_DEPLOY_TOKEN: ${{ secrets.COOLIFY_DEPLOY_TOKEN }}
       # The Positiv application in Coolify. Not a secret: without the token and
       # the panel's address, which are, it opens nothing.
       COOLIFY_APP_UUID: v4oo4owsw4wgsks40484w4wo
@@ -265,6 +263,9 @@ jobs:
         id: start
         if: steps.head.outputs.current == 'true'
         timeout-minutes: 2
+        env:
+          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
+          COOLIFY_DEPLOY_TOKEN: ${{ secrets.COOLIFY_DEPLOY_TOKEN }}
         run: |
           if [ -z "$COOLIFY_URL" ] || [ -z "$COOLIFY_DEPLOY_TOKEN" ]; then
             echo "::error::COOLIFY_URL or COOLIFY_DEPLOY_TOKEN is unset"
@@ -342,7 +343,7 @@ jobs:
     timeout-minutes: 45
 
     steps:
-      # Builds take five to ten minutes; thirty is room for a cold cache and a
+      # Builds take five to ten minutes; twenty-eight is room for a cold cache and a
       # deployment queued behind another.
       - name: Wait for the Coolify deployment of this commit
         timeout-minutes: 32
@@ -353,7 +354,15 @@ jobs:
         run: |
           COOLIFY_URL=${COOLIFY_URL%/}
 
-          for attempt in $(seq 1 90); do
+          # A clock, not a count of attempts: an API that times out on every
+          # call makes each attempt 40 seconds instead of 20. Twenty-eight
+          # minutes plus one last attempt stays inside the step's 32, so the
+          # error below always prints.
+          attempt=0
+
+          while [ "$SECONDS" -lt 1680 ]; do
+            attempt=$((attempt + 1))
+
             # A blip in the API is not a failed deploy, so it is retried like
             # a deployment still running.
             body=$(printf 'header = "Authorization: Bearer %s"\n' "$COOLIFY_DEPLOY_TOKEN" |
@@ -383,7 +392,7 @@ jobs:
             sleep 20
           done
 
-          echo "::error::Coolify deployment $DEPLOYMENT_UUID did not finish after 90 checks"
+          echo "::error::Coolify deployment $DEPLOYMENT_UUID did not finish in 28 minutes"
           exit 1
 
       # Not a secret — it is the address the site answers on.

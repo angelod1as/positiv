@@ -21,17 +21,18 @@ A failed step stops every step after it, so a red `main` publishes nothing.
 
 Coolify's auto-deploy is off for the `Positiv` application. The workflow authenticates with `COOLIFY_DEPLOY_TOKEN`, a Coolify API token with the `deploy` and `read` abilities only, and reaches the panel at `COOLIFY_URL`. Both are GitHub secrets.
 
-Runs share a concurrency group that never cancels a run in progress. Coolify builds the head of `main`, not a given commit, so `deploy-app` publishes only while `main` still points at its run's commit; otherwise the newer run, queued behind it, migrates and publishes.
+Runs share a concurrency group that never cancels a run in progress. Coolify builds the head of `main`, not a given commit, so `deploy-app` publishes only while `main` still points at its run's commit; otherwise the newer run, queued behind it, migrates and publishes. A narrow window remains: Coolify resolves the head when the build starts, so a merge landing between the check and the build start is built early. The smoke test's commit comparison turns that case into a red run.
 
 ## Consequences
 
 ### Positive
 
-- An app never reaches production before the schema it reads.
+- An app no longer reaches production before the schema it reads, outside the narrow window above, which ends the run red.
 - The smoke test proves the new app is live, not just that something answers 200.
 
 ### Negative
 
+- Runs hold the `production` concurrency group until the smoke test finishes, up to about 45 minutes on a slow build. A hotfix merged meanwhile waits to migrate, and a third merge replaces the waiting run.
 - The app goes live a few minutes later than before: after the tests and the migration instead of in parallel with them.
 - A migration lands while the previous app is still serving, so it must stay compatible with it. Expand/contract was already the rule; now it is required.
 - A run that leaves publishing to a newer run ends green with a warning. If that newer run goes red, the older commit's migration is live while the app stays on the commit before it, until the next green merge publishes both. That is the rule working: a red `main` publishes nothing.
@@ -49,4 +50,4 @@ Runs share a concurrency group that never cancels a run in progress. Coolify bui
 
 2. **Pin Coolify to a commit through the API before deploying**
    - Pros: the build would be exactly this run's commit.
-   - Cons: needs a token with `write` on the application, far more than deploying requires; the head check gets the same guarantee.
+   - Cons: needs a token with `write` on the application, far more than deploying requires; the head check gets nearly the same guarantee, short of the window above, which the smoke test catches.
