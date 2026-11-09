@@ -241,12 +241,23 @@ jobs:
         id: head
         timeout-minutes: 2
         run: |
-          head=$(git ls-remote "https://github.com/$GITHUB_REPOSITORY" refs/heads/main | cut -f1)
+          # Not piped: under the default `bash -e` a failed ls-remote would be
+          # hidden behind the pipe, leave head empty, and read as "main moved",
+          # skipping the deploy on a green run.
+          remote=$(git ls-remote "https://github.com/$GITHUB_REPOSITORY" refs/heads/main)
+          head=${remote%%[[:space:]]*}
+
+          if [ -z "$head" ]; then
+            echo "::error::could not read the head of main"
+            exit 1
+          fi
 
           if [ "$head" = "$GITHUB_SHA" ]; then
             echo "current=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::notice::main moved to $head; the run for that commit publishes the app"
+            # A warning, not a notice: if the newer run goes red, this commit's
+            # migration is live and its app is not until the next green merge.
+            echo "::warning::main moved to $head; the run for that commit publishes the app"
             echo "current=false" >> "$GITHUB_OUTPUT"
           fi
 
@@ -259,6 +270,8 @@ jobs:
             echo "::error::COOLIFY_URL or COOLIFY_DEPLOY_TOKEN is unset"
             exit 1
           fi
+
+          COOLIFY_URL=${COOLIFY_URL%/}
 
           body=$(printf 'header = "Authorization: Bearer %s"\n' "$COOLIFY_DEPLOY_TOKEN" |
             curl -sS --fail-with-body --max-time 60 -K - -X POST \
@@ -338,6 +351,8 @@ jobs:
           COOLIFY_DEPLOY_TOKEN: ${{ secrets.COOLIFY_DEPLOY_TOKEN }}
           DEPLOYMENT_UUID: ${{ needs.deploy-app.outputs.deployment_uuid }}
         run: |
+          COOLIFY_URL=${COOLIFY_URL%/}
+
           for attempt in $(seq 1 90); do
             # A blip in the API is not a failed deploy, so it is retried like
             # a deployment still running.
@@ -368,7 +383,7 @@ jobs:
             sleep 20
           done
 
-          echo "::error::Coolify deployment $DEPLOYMENT_UUID did not finish in 30 minutes"
+          echo "::error::Coolify deployment $DEPLOYMENT_UUID did not finish after 90 checks"
           exit 1
 
       # Not a secret — it is the address the site answers on.

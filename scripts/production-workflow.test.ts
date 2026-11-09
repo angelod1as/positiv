@@ -1,4 +1,6 @@
-import { readFileSync } from "node:fs"
+import { spawnSync } from "node:child_process"
+import { chmodSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
@@ -25,6 +27,50 @@ function runCommand(stepName: string): string {
   }
 
   return step[1]
+}
+
+function runScript(stepName: string): string {
+  const lines = workflow.split("\n")
+  const nameLine = lines.findIndex((line) => line.trim() === `- name: ${stepName}`)
+
+  expect(nameLine, `step "${stepName}" not found`).toBeGreaterThan(-1)
+
+  const runLine = lines.findIndex((line, index) => index > nameLine && /^ +run: \|$/.test(line))
+  const indent = lines[runLine + 1].search(/\S/)
+  const body: string[] = []
+
+  for (const line of lines.slice(runLine + 1)) {
+    if (line.trim() !== "" && line.search(/\S/) < indent) break
+    body.push(line.slice(indent))
+  }
+
+  return body.join("\n")
+}
+
+// Runs a step's script the way GitHub runs it when no shell is given, with
+// `git` replaced by a stub that prints `gitOutput` and exits `gitStatus`.
+function runHeadCheck(gitOutput: string, gitStatus: number) {
+  const dir = mkdtempSync(join(tmpdir(), "production-workflow-"))
+  const script = join(dir, "step.sh")
+  const output = join(dir, "output")
+
+  writeFileSync(join(dir, "git"), `#!/bin/sh\nprintf '%s' '${gitOutput}'\nexit ${gitStatus}\n`)
+  chmodSync(join(dir, "git"), 0o755)
+  writeFileSync(script, runScript("Check main still points at this commit"))
+  writeFileSync(output, "")
+
+  const result = spawnSync("bash", ["-e", script], {
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      PATH: `${dir}:${process.env.PATH}`,
+      GITHUB_REPOSITORY: "angelod1as/positiv",
+      GITHUB_SHA: "a".repeat(40),
+      GITHUB_OUTPUT: output,
+    },
+  })
+
+  return { status: result.status, output: readFileSync(output, "utf8") }
 }
 
 function jobBlock(name: string): string {
@@ -97,6 +143,29 @@ describe("production workflow", () => {
     expect(smoke).not.toContain("sleep 120")
   })
 
+  it("publishes when main still points at this run's commit", () => {
+    const result = runHeadCheck(`${"a".repeat(40)}\trefs/heads/main\n`, 0)
+
+    expect(result.status).toBe(0)
+    expect(result.output).toBe("current=true\n")
+  })
+
+  it("leaves publishing to the newer run when main has moved", () => {
+    const result = runHeadCheck(`${"b".repeat(40)}\trefs/heads/main\n`, 0)
+
+    expect(result.status).toBe(0)
+    expect(result.output).toBe("current=false\n")
+  })
+
+  it("fails the run when it cannot read main, rather than reading it as moved", () => {
+    // Read as moved, a network blip would skip the deploy and leave the run
+    // green, with this commit's migration live and its app nowhere.
+    const result = runHeadCheck("", 128)
+
+    expect(result.status).not.toBe(0)
+    expect(result.output).toBe("")
+  })
+
   it("keeps the Coolify token off every command line", () => {
     // This repository is public. The token reaches curl as a config file on
     // stdin, never as an argument, where it would sit in the process list.
@@ -107,6 +176,12 @@ describe("production workflow", () => {
     for (const line of commandLines) {
       expect(line).not.toMatch(/TOKEN|Authorization|Bearer/)
     }
+
+    const coolifyCalls = workflow.match(/\$COOLIFY_URL\/api\//g) ?? []
+    const stdinConfigs = workflow.match(/\bcurl\b[^\n]* -K - /g) ?? []
+
+    expect(coolifyCalls.length).toBeGreaterThan(0)
+    expect(stdinConfigs).toHaveLength(coolifyCalls.length)
 
     expect(workflow).not.toMatch(/run:.*secrets\./)
     expect(workflow).toContain("COOLIFY_DEPLOY_TOKEN: ${{ secrets.COOLIFY_DEPLOY_TOKEN }}")
