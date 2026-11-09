@@ -27,7 +27,7 @@ ADRs are immutable once accepted - only their status can change (deprecated or s
 | [2025-01-23](./20250123-use-react-router-7-with-ssr.md) | Use React Router 7 with SSR | Accepted |
 | [2025-01-24](./20250124-use-rls-for-authorization.md) | Use Row-Level Security for Authorization | Accepted |
 | [2025-01-25](./20250125-use-kysely-as-sql-query-builder.md) | Use Kysely as SQL Query Builder | Accepted |
-| [2025-01-26](./20250126-use-server-only-file-suffixes.md) | Use Server-Only File Suffixes (.server.ts) | Accepted |
+| [2025-01-26](./20250126-use-server-only-file-suffixes.md) | Use Server-Only File Suffixes (.server.ts) | Accepted, amended 2026-11-06 |
 | [2026-10-21](./20261021-authorization-asks-for-permissions-never-roles.md) | Authorization asks for permissions, never roles | Accepted |
 | [2026-11-04](./20261104-kysely-helper-types-wrap-kysely-tables.md) | Kysely helper types wrap Kysely tables | Accepted |
 | [2026-11-06](./20261106-server-side-code-is-organized-by-domain.md) | Server-side code is organized by domain | Accepted |

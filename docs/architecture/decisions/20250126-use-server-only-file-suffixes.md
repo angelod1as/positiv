@@ -1,6 +1,6 @@
 # Use Server-Only File Suffixes (.server.ts)
 
-- Status: accepted
+- Status: accepted, amended by [Server-side code is organized by domain](./20261106-server-side-code-is-organized-by-domain.md)
 - Date: 2025-01-26
 - Tags: architecture, security, build
 
