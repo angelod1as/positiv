@@ -212,13 +212,13 @@ The "Default privileges on new objects in public" test in
 - Dependencies point one way: `pages → business → lib`. Full rule:
   [the ADR](docs/architecture/decisions/20261106-server-side-code-is-organized-by-domain.md).
   The code is still moving into this layout (WEB-42); new code follows it now.
-  `dependency-cruiser` checks these rules only from WEB-43 on — until then a
-  green `pnpm lint` proves nothing about them.
   Until then, `app/routes/`, `~/kysely-db`, `business/admin/`,
   `business/participant/` and `business/common.ts` still exist, and some route
   modules (`payment-page.server.ts`, `get-next-events.ts`, `unsubscribe.tsx`
   and others) still query the database. WEB-42 moves or removes all of
   them — never a precedent for new code.
+  `dependency-cruiser` checks these rules only from WEB-43 on — until then a
+  green `pnpm lint` proves nothing about them.
 - `app/components/` — atomic design (`atoms`, `molecules`, `organisms`), plus
   `ui` for ShadcN and `forms` for the form layer.
 - `app/copy/` — every user-visible string; see Site Copy below.
