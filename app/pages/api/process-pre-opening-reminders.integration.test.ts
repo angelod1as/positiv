@@ -58,7 +58,7 @@ const { getPendingCampaigns } = await import(
   "~/business/newsletter/campaign-tracking.server"
 )
 
-const { action } = await import("./api.process-pre-opening-reminders")
+const { action } = await import("./process-pre-opening-reminders")
 const { logger } = await import("~/lib/logger/logger.server")
 
 describe("api.process-pre-opening-reminders - Integration Tests", () => {

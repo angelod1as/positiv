@@ -25,7 +25,7 @@ vi.mock("~/business/newsletter/event-listmonk-sync.server", () => ({
 }))
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
 
-const { action } = await import("./api.process-campaigns")
+const { action } = await import("./process-campaigns")
 
 const SECRET = "test-secret-123"
 const URL = "http://localhost:5173/api/process-campaigns"

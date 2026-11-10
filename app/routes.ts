@@ -17,17 +17,17 @@ export default [
   ...devOnly,
 
   // API ROUTES (internal endpoints)
-  route("/api/process-campaigns", "routes/api.process-campaigns.ts"),
-  route("/api/retry-newsletter-syncs", "routes/api.retry-newsletter-syncs.ts"),
-  route("/api/sync-listmonk-unsubscribes", "routes/api.sync-listmonk-unsubscribes.ts"),
-  route("/api/sync-veterans-list", "routes/api.sync-veterans-list.ts"),
+  route("/api/process-campaigns", "pages/api/process-campaigns.ts"),
+  route("/api/retry-newsletter-syncs", "pages/api/retry-newsletter-syncs.ts"),
+  route("/api/sync-listmonk-unsubscribes", "pages/api/sync-listmonk-unsubscribes.ts"),
+  route("/api/sync-veterans-list", "pages/api/sync-veterans-list.ts"),
   route(
     "/api/process-pre-opening-reminders",
-    "routes/api.process-pre-opening-reminders.ts",
+    "pages/api/process-pre-opening-reminders.ts",
   ),
-  route("/api/retry-payment-emails", "routes/api.retry-payment-emails.ts"),
-  route("/api/sync-payment-refunds", "routes/api.sync-payment-refunds.ts"),
-  route("/api/payment/webhook", "routes/api.payment-webhook.ts"),
+  route("/api/retry-payment-emails", "pages/api/retry-payment-emails.ts"),
+  route("/api/sync-payment-refunds", "pages/api/sync-payment-refunds.ts"),
+  route("/api/payment/webhook", "pages/api/payment/webhook.ts"),
   route("/api/events/:id/rules-quiz", "pages/api/events/verify-rules-quiz.ts"),
   route(
     "/api/events/:id/application",
@@ -56,8 +56,8 @@ export default [
     "pages/api/admin/event-demographics.ts",
   ),
   route("/api/admin/feedback-status", "pages/api/admin/feedback-status.ts"),
-  route("/robots.txt", "routes/robots[.txt].ts"),
-  route("/sitemap.xml", "routes/sitemap[.xml].ts"),
+  route("/robots.txt", "pages/robots[.txt].ts"),
+  route("/sitemap.xml", "pages/sitemap[.xml].ts"),
 
   // Draft-mode handshake for Sanity's Presentation tool
   route("/api/preview-mode/enable", "pages/api/preview-mode/enable.ts"),

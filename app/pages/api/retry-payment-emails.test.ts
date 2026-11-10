@@ -1,39 +1,42 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-const { ENV, syncVeteransListmonkList, logger } = vi.hoisted(() => ({
+const { ENV, sweepPaymentEmails, logger } = vi.hoisted(() => ({
   ENV: {} as Record<string, unknown>,
-  syncVeteransListmonkList: vi.fn(),
+  sweepPaymentEmails: vi.fn(),
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
 vi.mock("varlock/env", () => ({ ENV }))
-vi.mock("~/business/newsletter/veterans-list.server", () => ({
-  syncVeteransListmonkList,
+vi.mock("~/business/payment/payment-email-outbox.server", () => ({
+  sweepPaymentEmails,
 }))
-vi.mock("~/lib/logger/logger.server", () => ({ logger }))
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { ...logger, child: () => logger },
+}))
 
-const { action } = await import("./api.sync-veterans-list")
+const { action } = await import("./retry-payment-emails")
 
 const SECRET = "test-secret-123"
-const URL = "http://localhost:5173/api/sync-veterans-list"
+const URL = "http://localhost:5173/api/retry-payment-emails"
 
 const call = (init: RequestInit) =>
   action({
     request: new Request(URL, init),
     url: new globalThis.URL(URL),
-    pattern: "/api/sync-veterans-list",
+    pattern: "/api/retry-payment-emails",
     params: {},
     context: {},
   })
 
-describe("api.sync-veterans-list", () => {
+describe("api.retry-payment-emails", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     ENV.INTERNAL_JOB_SECRET = SECRET
-    syncVeteransListmonkList.mockResolvedValue({
-      success: true,
-      data: { added: 2, removed: 1, total: 40 },
-      errors: [],
+    sweepPaymentEmails.mockResolvedValue({
+      processed: 2,
+      sent: 2,
+      failed: 0,
+      skipped: 0,
     })
   })
 
@@ -41,7 +44,7 @@ describe("api.sync-veterans-list", () => {
     const response = await call({ method: "POST" })
 
     expect(response.status).toBe(401)
-    expect(syncVeteransListmonkList).not.toHaveBeenCalled()
+    expect(sweepPaymentEmails).not.toHaveBeenCalled()
   })
 
   it("refuses a request carrying the wrong token", async () => {
@@ -51,7 +54,7 @@ describe("api.sync-veterans-list", () => {
     })
 
     expect(response.status).toBe(401)
-    expect(syncVeteransListmonkList).not.toHaveBeenCalled()
+    expect(sweepPaymentEmails).not.toHaveBeenCalled()
   })
 
   it("refuses anything but a POST", async () => {
@@ -61,7 +64,7 @@ describe("api.sync-veterans-list", () => {
     })
 
     expect(response.status).toBe(405)
-    expect(syncVeteransListmonkList).not.toHaveBeenCalled()
+    expect(sweepPaymentEmails).not.toHaveBeenCalled()
   })
 
   it("refuses to run when no secret is configured", async () => {
@@ -73,10 +76,10 @@ describe("api.sync-veterans-list", () => {
     })
 
     expect(response.status).toBe(500)
-    expect(syncVeteransListmonkList).not.toHaveBeenCalled()
+    expect(sweepPaymentEmails).not.toHaveBeenCalled()
   })
 
-  it("syncs and reports what changed on the list", async () => {
+  it("sweeps and reports what it sent", async () => {
     const response = await call({
       method: "POST",
       headers: { Authorization: `Bearer ${SECRET}` },
@@ -85,15 +88,12 @@ describe("api.sync-veterans-list", () => {
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({
       success: true,
-      stats: { added: 2, removed: 1, total: 40 },
+      stats: { processed: 2, sent: 2, failed: 0, skipped: 0 },
     })
   })
 
-  it("answers 500 when the sync fails", async () => {
-    syncVeteransListmonkList.mockResolvedValue({
-      success: false,
-      errors: [new Error("Listmonk is down")],
-    })
+  it("answers 500 when the sweep itself fails", async () => {
+    sweepPaymentEmails.mockRejectedValue(new Error("the database is down"))
 
     const response = await call({
       method: "POST",
@@ -101,10 +101,6 @@ describe("api.sync-veterans-list", () => {
     })
 
     expect(response.status).toBe(500)
-    expect(await response.json()).toEqual({
-      success: false,
-      error: "Listmonk is down",
-    })
     expect(logger.error).toHaveBeenCalled()
   })
 })

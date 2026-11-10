@@ -32,7 +32,7 @@ vi.mock("~/business/payment/payment-webhook.server", async (importOriginal) => {
   }
 })
 
-import { action } from "./api.payment-webhook"
+import { action } from "./webhook"
 
 function post(body: unknown, token?: string) {
   return action({

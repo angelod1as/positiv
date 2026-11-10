@@ -14,7 +14,7 @@ vi.mock("~/business/newsletter/listmonk-unsubscribe-sync.server", () => ({
 }))
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
 
-const { action } = await import("./api.sync-listmonk-unsubscribes")
+const { action } = await import("./sync-listmonk-unsubscribes")
 
 const SECRET = "test-secret-123"
 const URL = "http://localhost:5173/api/sync-listmonk-unsubscribes"

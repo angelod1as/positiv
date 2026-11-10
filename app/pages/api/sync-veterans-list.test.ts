@@ -1,45 +1,47 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-const { ENV, syncOpenPayments, logger } = vi.hoisted(() => ({
+const { ENV, syncVeteransListmonkList, logger } = vi.hoisted(() => ({
   ENV: {} as Record<string, unknown>,
-  syncOpenPayments: vi.fn(),
+  syncVeteransListmonkList: vi.fn(),
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
 vi.mock("varlock/env", () => ({ ENV }))
-vi.mock("~/business/payment/payment-sync.server", () => ({
-  syncOpenPayments,
+vi.mock("~/business/newsletter/veterans-list.server", () => ({
+  syncVeteransListmonkList,
 }))
-vi.mock("~/lib/logger/logger.server", () => ({
-  logger: { ...logger, child: () => logger },
-}))
+vi.mock("~/lib/logger/logger.server", () => ({ logger }))
 
-const { action } = await import("./api.sync-payment-refunds")
+const { action } = await import("./sync-veterans-list")
 
 const SECRET = "test-secret-123"
-const URL = "http://localhost:5173/api.sync-payment-refunds"
+const URL = "http://localhost:5173/api/sync-veterans-list"
 
 const call = (init: RequestInit) =>
   action({
     request: new Request(URL, init),
     url: new globalThis.URL(URL),
-    pattern: "/api/sync-payment-refunds",
+    pattern: "/api/sync-veterans-list",
     params: {},
     context: {},
   })
 
-describe("api.sync-payment-refunds", () => {
+describe("api.sync-veterans-list", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     ENV.INTERNAL_JOB_SECRET = SECRET
-    syncOpenPayments.mockResolvedValue({ synced: 2, failed: 0 })
+    syncVeteransListmonkList.mockResolvedValue({
+      success: true,
+      data: { added: 2, removed: 1, total: 40 },
+      errors: [],
+    })
   })
 
   it("refuses a request with no bearer token", async () => {
     const response = await call({ method: "POST" })
 
     expect(response.status).toBe(401)
-    expect(syncOpenPayments).not.toHaveBeenCalled()
+    expect(syncVeteransListmonkList).not.toHaveBeenCalled()
   })
 
   it("refuses a request carrying the wrong token", async () => {
@@ -49,7 +51,7 @@ describe("api.sync-payment-refunds", () => {
     })
 
     expect(response.status).toBe(401)
-    expect(syncOpenPayments).not.toHaveBeenCalled()
+    expect(syncVeteransListmonkList).not.toHaveBeenCalled()
   })
 
   it("refuses anything but a POST", async () => {
@@ -59,7 +61,7 @@ describe("api.sync-payment-refunds", () => {
     })
 
     expect(response.status).toBe(405)
-    expect(syncOpenPayments).not.toHaveBeenCalled()
+    expect(syncVeteransListmonkList).not.toHaveBeenCalled()
   })
 
   it("refuses to run when no secret is configured", async () => {
@@ -71,10 +73,10 @@ describe("api.sync-payment-refunds", () => {
     })
 
     expect(response.status).toBe(500)
-    expect(syncOpenPayments).not.toHaveBeenCalled()
+    expect(syncVeteransListmonkList).not.toHaveBeenCalled()
   })
 
-  it("syncs and reports how it went", async () => {
+  it("syncs and reports what changed on the list", async () => {
     const response = await call({
       method: "POST",
       headers: { Authorization: `Bearer ${SECRET}` },
@@ -83,12 +85,15 @@ describe("api.sync-payment-refunds", () => {
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({
       success: true,
-      stats: { synced: 2, failed: 0 },
+      stats: { added: 2, removed: 1, total: 40 },
     })
   })
 
-  it("answers 500 when the sync itself fails", async () => {
-    syncOpenPayments.mockRejectedValue(new Error("the database is down"))
+  it("answers 500 when the sync fails", async () => {
+    syncVeteransListmonkList.mockResolvedValue({
+      success: false,
+      errors: [new Error("Listmonk is down")],
+    })
 
     const response = await call({
       method: "POST",
@@ -96,6 +101,10 @@ describe("api.sync-payment-refunds", () => {
     })
 
     expect(response.status).toBe(500)
+    expect(await response.json()).toEqual({
+      success: false,
+      error: "Listmonk is down",
+    })
     expect(logger.error).toHaveBeenCalled()
   })
 })
