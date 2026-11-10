@@ -336,7 +336,7 @@ explicit yes.
   ternaries by eye.
 - **Some Portuguese is not copy and must never move here**: the values in
   `app/lib/constants/constants.ts` are written to the database, the Listmonk list
-  name in `app/business/admin/event-listmonk-sync.server.ts` is an external
+  name in `app/business/newsletter/event-listmonk-sync.server.ts` is an external
   label, and the news items under `news-dialog/items/` have their own workflow.
 - Full convention, including the Markdown traps and the `as const satisfies`
   rules: `app/copy/README.md`.

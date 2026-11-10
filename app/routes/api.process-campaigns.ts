@@ -1,10 +1,9 @@
 import { timingSafeEqual } from "node:crypto"
 import type { ActionFunctionArgs } from "react-router"
 import { ENV } from "varlock/env"
-import { deleteEventListmonkList } from "~/business/admin/event-listmonk-sync.server"
+import { cleanupCompletedEventLists } from "~/business/newsletter/event-listmonk-sync.server"
 import { processCampaignForEvent } from "~/business/newsletter/campaign-automation.server"
 import { getPendingCampaigns } from "~/business/newsletter/campaign-tracking.server"
-import { db } from "~/lib/supabase/db.server"
 import { logger } from "~/lib/logger/logger.server"
 
 /**
@@ -92,36 +91,5 @@ export async function action({ request }: ActionFunctionArgs) {
       },
       { status: 500 },
     )
-  }
-}
-
-async function cleanupCompletedEventLists() {
-  const eventsToCleanup = await db
-    .selectFrom("events")
-    .select(["id", "listmonk_list_id"])
-    .where("event_status", "=", "Completed")
-    .where("time_group_end", "<", new Date().toISOString())
-    .where("listmonk_list_id", "is not", null)
-    .execute()
-
-  const results: Array<{ eventId: string; success: boolean; error?: string }> =
-    []
-
-  for (const event of eventsToCleanup) {
-    const result = await deleteEventListmonkList(event.id)
-    results.push({
-      eventId: event.id,
-      success: result.success,
-      error: result.success
-        ? undefined
-        : result.errors?.[0]?.message || "Unknown error",
-    })
-  }
-
-  return {
-    cleaned: eventsToCleanup.length,
-    succeeded: results.filter((r) => r.success).length,
-    failed: results.filter((r) => !r.success).length,
-    results,
   }
 }

@@ -11,15 +11,15 @@ import {
   addSubscriber,
   addSubscribersToListBulk,
   removeSubscriberFromList,
-} from "../newsletter/listmonk-client.server"
+} from "./listmonk-client.server"
 import {
   createList,
   deleteList,
   getBlocklistedSubscribers,
   getListById,
   getListSubscribers,
-} from "../newsletter/listmonk-lists.server"
-import { saveListmonkSubscriberId } from "../newsletter/subscription-helpers.server"
+} from "./listmonk-lists.server"
+import { saveListmonkSubscriberId } from "./subscription-helpers.server"
 
 export const listmonkSyncFiltersSchema = z.object({
   approvalStatuses: z.array(profileApprovedToAttendStatusEnum).optional(),
@@ -409,3 +409,34 @@ export const updateEventListmonkList = composable(
     }
   },
 )
+
+export async function cleanupCompletedEventLists() {
+  const eventsToCleanup = await db
+    .selectFrom("events")
+    .select(["id", "listmonk_list_id"])
+    .where("event_status", "=", "Completed")
+    .where("time_group_end", "<", new Date().toISOString())
+    .where("listmonk_list_id", "is not", null)
+    .execute()
+
+  const results: Array<{ eventId: string; success: boolean; error?: string }> =
+    []
+
+  for (const event of eventsToCleanup) {
+    const result = await deleteEventListmonkList(event.id)
+    results.push({
+      eventId: event.id,
+      success: result.success,
+      error: result.success
+        ? undefined
+        : result.errors?.[0]?.message || "Unknown error",
+    })
+  }
+
+  return {
+    cleaned: eventsToCleanup.length,
+    succeeded: results.filter((r) => r.success).length,
+    failed: results.filter((r) => !r.success).length,
+    results,
+  }
+}

@@ -15,17 +15,14 @@ vi.mock("~/business/newsletter/campaign-tracking.server", () => ({
 vi.mock("~/business/newsletter/campaign-automation.server", () => ({
   processCampaignForEvent,
 }))
-vi.mock("~/business/admin/event-listmonk-sync.server", () => ({
-  deleteEventListmonkList: vi.fn(),
+vi.mock("~/business/newsletter/event-listmonk-sync.server", () => ({
+  cleanupCompletedEventLists: vi.fn(async () => ({
+    cleaned: 0,
+    succeeded: 0,
+    failed: 0,
+    results: [],
+  })),
 }))
-vi.mock("~/lib/supabase/db.server", () => {
-  const query = {
-    select: () => query,
-    where: () => query,
-    execute: async () => [],
-  }
-  return { db: { selectFrom: () => query } }
-})
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
 
 const { action } = await import("./api.process-campaigns")

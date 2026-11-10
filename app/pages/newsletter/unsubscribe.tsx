@@ -5,7 +5,7 @@ import {
 } from "~/business/newsletter/subscription-helpers.server"
 import { unsubscribeCopy } from "~/copy/newsletter"
 import { sharedCopy } from "~/copy/shared"
-import { db } from "~/lib/supabase/db.server"
+import { findProfileContact } from "~/business/profile/find-profile-contact.server"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/unsubscribe"
 import { Button } from "~/components/atoms/button/button"
@@ -39,11 +39,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const subscription = result.data
 
-  const profile = await db
-    .selectFrom("profiles")
-    .select(["email", "full_name", "social_name"])
-    .where("id", "=", profileId)
-    .executeTakeFirstOrThrow()
+  const profile = await findProfileContact(profileId)
 
   const isAlreadyUnsubscribed =
     !subscription.consent_given || subscription.sync_status === "unsubscribed"

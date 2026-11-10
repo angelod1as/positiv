@@ -8,7 +8,7 @@ import { getAdminEventById, getEventDemographicsById } from "~/business/event/ev
 import {
   listmonkSyncFiltersSchema,
   updateEventListmonkList,
-} from "~/business/admin/event-listmonk-sync.server"
+} from "~/business/newsletter/event-listmonk-sync.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
 import { paymentProvider } from "~/business/payment/payment-provider.server"
 import { getPaymentsForEvent } from "~/business/payment/payment-totals.server"

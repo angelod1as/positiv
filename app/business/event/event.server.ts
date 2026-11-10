@@ -13,7 +13,7 @@ import {
 import {
   deleteEventListmonkList,
   updateEventListmonkList,
-} from "../admin/event-listmonk-sync.server"
+} from "../newsletter/event-listmonk-sync.server"
 import { syncVeteransListmonkList } from "../newsletter/veterans-list.server"
 import type { DBClient } from "~types/utils/utils.types"
 

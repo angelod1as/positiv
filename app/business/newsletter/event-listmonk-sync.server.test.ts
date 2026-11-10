@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
-import type { ListmonkList } from "../newsletter/listmonk-lists.server"
+import type { ListmonkList } from "./listmonk-lists.server"
 
 const {
   mockSqlExecute,
@@ -56,7 +56,7 @@ vi.mock("~/lib/supabase/db.server", () => {
   return { db: chain }
 })
 
-vi.mock("../newsletter/listmonk-lists.server", () => ({
+vi.mock("./listmonk-lists.server", () => ({
   createList: vi.fn(),
   deleteList: vi.fn(),
   getBlocklistedSubscribers: vi.fn(),
@@ -64,13 +64,13 @@ vi.mock("../newsletter/listmonk-lists.server", () => ({
   getListSubscribers: vi.fn(),
 }))
 
-vi.mock("../newsletter/listmonk-client.server", () => ({
+vi.mock("./listmonk-client.server", () => ({
   addSubscriber: vi.fn(),
   addSubscribersToListBulk: vi.fn(),
   removeSubscriberFromList: vi.fn(),
 }))
 
-vi.mock("../newsletter/subscription-helpers.server", () => ({
+vi.mock("./subscription-helpers.server", () => ({
   saveListmonkSubscriberId: vi.fn(),
   updateSyncStatus: vi.fn(),
 }))
@@ -87,12 +87,12 @@ import {
   getBlocklistedSubscribers,
   getListById,
   getListSubscribers,
-} from "../newsletter/listmonk-lists.server"
-import { addSubscriber, addSubscribersToListBulk, removeSubscriberFromList } from "../newsletter/listmonk-client.server"
+} from "./listmonk-lists.server"
+import { addSubscriber, addSubscribersToListBulk, removeSubscriberFromList } from "./listmonk-client.server"
 import {
   saveListmonkSubscriberId,
   updateSyncStatus,
-} from "../newsletter/subscription-helpers.server"
+} from "./subscription-helpers.server"
 
 const mockCreateList = vi.mocked(createList)
 const mockDeleteList = vi.mocked(deleteList)

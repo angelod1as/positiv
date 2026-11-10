@@ -26,7 +26,7 @@ vi.mock("~/business/event/event.server", () => ({
   getEventDemographicsById: vi.fn(),
 }))
 
-vi.mock("~/business/admin/event-listmonk-sync.server", () => ({
+vi.mock("~/business/newsletter/event-listmonk-sync.server", () => ({
   listmonkSyncFiltersSchema: { safeParse: vi.fn() },
   updateEventListmonkList: vi.fn(),
 }))
