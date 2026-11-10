@@ -123,6 +123,14 @@ pnpm db:types --local    # regenerate types from local Supabase
    - Create NEW migrations for any additional changes needed
    - Never modify the pulled migrations
 
+### Production Ships Tests → Migration → App → Smoke
+
+`production.yml` is the only path to production: unit tests, then `db push`,
+then the Coolify deploy through its API, then a smoke test of that deployment.
+Coolify's auto-deploy is off. The migration goes live while the previous app is
+still serving, so it must work with that app (expand/contract). Why:
+[the ADR](docs/architecture/decisions/20261106-production-ships-tests-migration-app-smoke.md).
+
 ### After Any DDL Change, Run the Advisors
 
 `get_advisors` with type `security` and type `performance`, through the

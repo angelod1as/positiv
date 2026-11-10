@@ -1,6 +1,8 @@
-import { readFileSync } from "node:fs"
+import { spawnSync } from "node:child_process"
+import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { describe, expect, it } from "vitest"
+import { afterAll, describe, expect, it } from "vitest"
 
 // POS-520 merged, Coolify finished deploying the app six minutes later, and the
 // migration that the app depended on never ran: the gate job sat for fifteen
@@ -15,6 +17,11 @@ const workflow = readFileSync(
   "utf8",
 )
 
+// Every stubbed step runs in a directory under this one, removed after the suite.
+const scratch = mkdtempSync(join(tmpdir(), "production-workflow-"))
+
+afterAll(() => rmSync(scratch, { recursive: true, force: true }))
+
 function runCommand(stepName: string): string {
   const step = workflow.match(
     new RegExp(`- name: ${stepName}\\n(?: +[a-z-]+:.*\\n)*? +run: (.+)`),
@@ -25,6 +32,53 @@ function runCommand(stepName: string): string {
   }
 
   return step[1]
+}
+
+function runScript(stepName: string): string {
+  const lines = workflow.split("\n")
+  const nameLine = lines.findIndex((line) => line.trim() === `- name: ${stepName}`)
+
+  expect(nameLine, `step "${stepName}" not found`).toBeGreaterThan(-1)
+
+  const runLine = lines.findIndex((line, index) => index > nameLine && /^ +run: \|$/.test(line))
+
+  // Only a literal block (`run: |`) is read; any other form would be misparsed.
+  expect(runLine, `step "${stepName}" has no "run: |" block`).toBeGreaterThan(nameLine)
+  const indent = lines[runLine + 1].search(/\S/)
+  const body: string[] = []
+
+  for (const line of lines.slice(runLine + 1)) {
+    if (line.trim() !== "" && line.search(/\S/) < indent) break
+    body.push(line.slice(indent))
+  }
+
+  return body.join("\n")
+}
+
+// Runs a step's script the way GitHub runs it when no shell is given, with
+// `git` replaced by a stub that prints `gitOutput` and exits `gitStatus`.
+function runHeadCheck(gitOutput: string, gitStatus: number) {
+  const dir = mkdtempSync(join(scratch, "step-"))
+  const script = join(dir, "step.sh")
+  const output = join(dir, "output")
+
+  writeFileSync(join(dir, "git"), `#!/bin/sh\nprintf '%s' '${gitOutput}'\nexit ${gitStatus}\n`)
+  chmodSync(join(dir, "git"), 0o755)
+  writeFileSync(script, runScript("Check main still points at this commit"))
+  writeFileSync(output, "")
+
+  const result = spawnSync("bash", ["-e", script], {
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      PATH: `${dir}:${process.env.PATH}`,
+      GITHUB_REPOSITORY: "angelod1as/positiv",
+      GITHUB_SHA: "a".repeat(40),
+      GITHUB_OUTPUT: output,
+    },
+  })
+
+  return { status: result.status, output: readFileSync(output, "utf8") }
 }
 
 function jobBlock(name: string): string {
@@ -66,11 +120,290 @@ describe("production workflow", () => {
     expect(deploy).toContain("needs: unit-test")
   })
 
-  it("says out loud that the app deploys on its own trigger", () => {
-    // Nothing in this repository sequences Coolify against this workflow, and
-    // the next person to read it should not have to find that out the way we
-    // did.
-    expect(workflow).toContain("Coolify")
+  it("publishes the app only once the migration has run", () => {
+    // WEB-39: unit-test failed on main, `db push` never ran, and Coolify
+    // published the app from its own push webhook anyway, reading a column that
+    // did not exist. The app now ships from here, behind the migration.
+    const deployApp = jobBlock("deploy-app")
+
+    expect(deployApp).toContain("needs: deploy")
+    expect(deployApp).toContain("/api/v1/deploy?uuid=")
+  })
+
+  it("leaves the app alone when main has moved past this run's commit", () => {
+    // Coolify builds the branch head, not a given commit. If a newer merge is
+    // queued behind this run, the head carries migrations that have not run
+    // yet, so publishing it here would repeat WEB-39. The newer run publishes.
+    const deployApp = jobBlock("deploy-app")
+
+    expect(deployApp).toContain("git ls-remote")
+    expect(deployApp).toContain('"$GITHUB_SHA"')
+  })
+
+  it("smoke-tests the deployment of this commit, not whatever answers 200", () => {
+    // A failed deploy leaves the previous container serving, healthy and
+    // answering 200. Only the deployment record says which commit is live.
+    const smoke = jobBlock("smoke")
+
+    expect(smoke).toContain("needs: deploy-app")
+    expect(smoke).toContain("/api/v1/deployments/")
+    expect(smoke).toContain('"$GITHUB_SHA"')
+    expect(smoke).not.toContain("sleep 120")
+  })
+
+  it("publishes when main still points at this run's commit", () => {
+    const result = runHeadCheck(`${"a".repeat(40)}\trefs/heads/main\n`, 0)
+
+    expect(result.status).toBe(0)
+    expect(result.output).toBe("current=true\n")
+  })
+
+  it("leaves publishing to the newer run when main has moved", () => {
+    const result = runHeadCheck(`${"b".repeat(40)}\trefs/heads/main\n`, 0)
+
+    expect(result.status).toBe(0)
+    expect(result.output).toBe("current=false\n")
+  })
+
+  it("fails the run when it cannot read main, rather than reading it as moved", () => {
+    // Read as moved, a network blip would skip the deploy and leave the run
+    // green, with this commit's migration live and its app nowhere.
+    const result = runHeadCheck("", 128)
+
+    expect(result.status).not.toBe(0)
+    expect(result.output).toBe("")
+  })
+
+  describe("waiting for the Coolify deployment", () => {
+    // Runs the wait step's own script with curl replaced by a stub that
+    // answers `body` with HTTP `code`, as curl does with `-w '\n%{http_code}'`,
+    // and sleep by a no-op. SECONDS starts a second before the deadline, so a
+    // script that keeps retrying ends at once instead of spinning.
+    function waitForDeployment(body: string, code: number) {
+      const dir = mkdtempSync(join(scratch, "step-"))
+      const script = join(dir, "step.sh")
+
+      writeFileSync(join(dir, "body.json"), body)
+      writeFileSync(
+        join(dir, "curl"),
+        `#!/bin/sh\ncat > /dev/null\ncat '${join(dir, "body.json")}'\nprintf '\\n%s' '${code}'\n`,
+      )
+      writeFileSync(join(dir, "sleep"), "#!/bin/sh\nexit 0\n")
+      chmodSync(join(dir, "curl"), 0o755)
+      chmodSync(join(dir, "sleep"), 0o755)
+      writeFileSync(script, runScript("Wait for the Coolify deployment of this commit"))
+
+      const result = spawnSync("bash", ["-e", script], {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PATH: `${dir}:${process.env.PATH}`,
+          SECONDS: "1679",
+          COOLIFY_URL: "https://coolify.invalid",
+          COOLIFY_DEPLOY_TOKEN: "not-a-token",
+          DEPLOYMENT_UUID: "dep-1",
+          GITHUB_SHA: "a".repeat(40),
+        },
+      })
+
+      return { status: result.status, stdout: result.stdout }
+    }
+
+    it("passes once Coolify has finished deploying this commit", () => {
+      const result = waitForDeployment(`{"status":"finished","commit":"${"a".repeat(40)}"}`, 200)
+
+      expect(result.status).toBe(0)
+      expect(result.stdout).toContain(`deployment of ${"a".repeat(40)} finished`)
+    })
+
+    it("fails when Coolify finished deploying another commit", () => {
+      const result = waitForDeployment(`{"status":"finished","commit":"${"b".repeat(40)}"}`, 200)
+
+      expect(result.status).toBe(1)
+      expect(result.stdout).toContain(`finished deploying ${"b".repeat(40)}, not ${"a".repeat(40)}`)
+    })
+
+    it.each(["failed", "cancelled-by-user"])("fails when the deployment ended %s", (status) => {
+      const result = waitForDeployment(`{"status":"${status}","commit":"${"a".repeat(40)}"}`, 200)
+
+      expect(result.status).toBe(1)
+      expect(result.stdout).toContain(`ended ${status}`)
+    })
+
+    it.each([401, 403, 404])("fails at once, naming the answer, when Coolify refuses with %i", (code) => {
+      // Retrying these only holds the production group for 28 minutes: a
+      // token without `read`, a wrong panel address or an unknown deployment
+      // never starts answering.
+      const result = waitForDeployment('{"message":"Unauthenticated."}', code)
+
+      expect(result.status).toBe(1)
+      expect(result.stdout).toContain(`Coolify answered ${code}`)
+      expect(result.stdout).not.toContain("did not finish")
+    })
+
+    it("keeps waiting through an answer that may pass", () => {
+      const result = waitForDeployment("<html>502 Bad Gateway</html>", 502)
+
+      expect(result.status).toBe(1)
+      expect(result.stdout).toContain("attempt 1: HTTP 502")
+      expect(result.stdout).toContain("did not finish")
+    })
+  })
+
+  it("gives up waiting on a clock, so its error prints before the step timeout", () => {
+    // Counting attempts, an API that times out on every call stretched the
+    // loop past the step's timeout-minutes, and GitHub killed it without the
+    // message saying why. Bash's SECONDS is imported from the environment, so
+    // starting it late stands in for an hour of slow calls.
+    const dir = mkdtempSync(join(scratch, "step-"))
+    const script = join(dir, "step.sh")
+
+    writeFileSync(join(dir, "curl"), "#!/bin/sh\nexit 28\n")
+    writeFileSync(join(dir, "sleep"), "#!/bin/sh\nexit 0\n")
+    chmodSync(join(dir, "curl"), 0o755)
+    chmodSync(join(dir, "sleep"), 0o755)
+    writeFileSync(script, runScript("Wait for the Coolify deployment of this commit"))
+
+    const result = spawnSync("bash", ["-e", script], {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        PATH: `${dir}:${process.env.PATH}`,
+        SECONDS: "100000",
+        COOLIFY_URL: "https://coolify.invalid",
+        COOLIFY_DEPLOY_TOKEN: "not-a-token",
+        DEPLOYMENT_UUID: "deployment",
+        GITHUB_SHA: "a".repeat(40),
+      },
+    })
+
+    expect(result.status).toBe(1)
+    expect(result.stdout).toContain("::error::Coolify deployment deployment did not finish")
+    expect(result.stdout).not.toContain("attempt 2:")
+  })
+
+  describe("starting the Coolify deployment", () => {
+    // Runs the step's own script with curl replaced by a stub that answers
+    // `body`, the way Coolify's deploy endpoint would.
+    function startDeployment(body: string) {
+      const dir = mkdtempSync(join(scratch, "step-"))
+      const script = join(dir, "step.sh")
+      const output = join(dir, "output")
+
+      writeFileSync(join(dir, "body.json"), body)
+      writeFileSync(join(dir, "curl"), `#!/bin/sh\ncat > /dev/null\ncat '${join(dir, "body.json")}'\n`)
+      chmodSync(join(dir, "curl"), 0o755)
+      writeFileSync(script, runScript("Start the Coolify deployment"))
+      writeFileSync(output, "")
+
+      const result = spawnSync("bash", ["-e", script], {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PATH: `${dir}:${process.env.PATH}`,
+          COOLIFY_URL: "https://coolify.invalid/",
+          COOLIFY_DEPLOY_TOKEN: "not-a-token",
+          COOLIFY_APP_UUID: "app",
+          GITHUB_SHA: "a".repeat(40),
+          GITHUB_OUTPUT: output,
+        },
+      })
+
+      return { status: result.status, stdout: result.stdout, output: readFileSync(output, "utf8") }
+    }
+
+    it("hands the queued deployment to the smoke job", () => {
+      const result = startDeployment(
+        '{"deployments":[{"message":"queued","resource_uuid":"app","deployment_uuid":"dep-1"}]}',
+      )
+
+      expect(result.status).toBe(0)
+      expect(result.output).toBe("deployment_uuid=dep-1\n")
+    })
+
+    it("fails the run, with Coolify's reason, when nothing was queued", () => {
+      // Without a deployment there is nothing for the smoke job to wait on,
+      // and a skipped smoke would read as green.
+      const result = startDeployment('{"message":"No resources found."}')
+
+      expect(result.status).toBe(1)
+      expect(result.stdout).toContain("::error::Coolify queued no deployment: No resources found.")
+      expect(result.output).toBe("")
+    })
+
+    it("fails the run when the answer is not JSON", () => {
+      const result = startDeployment("<html>502 Bad Gateway</html>")
+
+      expect(result.status).not.toBe(0)
+      expect(result.output).toBe("")
+    })
+  })
+
+  it("gives the smoke job room for both its waits, so neither is cut off silently", () => {
+    // The job's own timeout kills a step without its error message, so it
+    // must outlast the deployment wait's timeout plus the site fetch's worst
+    // case: every attempt timing out, then sleeping.
+    const smoke = jobBlock("smoke")
+    const jobTimeout = Number(smoke.match(/\n {4}timeout-minutes: (\d+)/)?.[1])
+    const waitTimeout = Number(
+      smoke.match(/- name: Wait for the Coolify deployment of this commit\n +timeout-minutes: (\d+)/)?.[1],
+    )
+    const fetch = runScript("Fetch the site until it answers")
+    const attempts = Number(fetch.match(/seq 1 (\d+)/)?.[1])
+    const maxTime = Number(fetch.match(/--max-time (\d+)/)?.[1])
+    const pause = Number(fetch.match(/sleep (\d+)/)?.[1])
+    const fetchWorstMinutes = (attempts * (maxTime + pause)) / 60
+
+    expect(jobTimeout).toBeGreaterThan(waitTimeout + fetchWorstMinutes)
+  })
+
+  it("keeps the Coolify token off every command line", () => {
+    // This repository is public. The token reaches curl as a config file on
+    // stdin, never as an argument, where it would sit in the process list.
+    const commandLines = workflow
+      .split("\n")
+      .filter((line) => /\bcurl\b/.test(line) && !line.trim().startsWith("#"))
+
+    for (const line of commandLines) {
+      expect(line).not.toMatch(/TOKEN|Authorization|Bearer/)
+    }
+
+    const coolifyCalls = workflow.match(/\$COOLIFY_URL\/api\//g) ?? []
+    const stdinConfigs = workflow.match(/\bcurl\b[^\n]* -K - /g) ?? []
+
+    expect(coolifyCalls.length).toBeGreaterThan(0)
+    expect(stdinConfigs).toHaveLength(coolifyCalls.length)
+
+    // A secret is read only as a step's env mapping, never inside a script,
+    // where the expression would be expanded into the command itself.
+    const secretLines = workflow.split("\n").filter((line) => line.includes("secrets."))
+
+    for (const line of secretLines) {
+      expect(line).toMatch(/^ +[A-Z_]+: \$\{\{ secrets\.[A-Z_]+ \}\}$/)
+    }
+    expect(workflow).toContain("COOLIFY_DEPLOY_TOKEN: ${{ secrets.COOLIFY_DEPLOY_TOKEN }}")
+  })
+
+  it("queues a merge behind the run in progress instead of cancelling it", () => {
+    // Two merges in a row must not interleave: the second run's migration
+    // could land under the first run's app, or the first run's app deploy
+    // could publish the second merge's code before its migration ran. And a
+    // run in progress must never be cancelled, because it may be mid-`db
+    // push`.
+    const header = workflow.slice(0, workflow.indexOf("\njobs:\n"))
+
+    expect(header).toMatch(/\nconcurrency:\n {2}group: .*\n {2}cancel-in-progress: false\n/)
+  })
+
+  it("keeps a manual run from another branch out of main's queue", () => {
+    // GitHub keeps one run waiting per group, and a newer one replaces it. A
+    // dispatch from a branch sharing main's group could replace a waiting
+    // merge, whose migration and app would then never run.
+    const group = workflow.match(/\nconcurrency:\n {2}group: (.*)\n/)?.[1]
+
+    expect(group).toBe(
+      "${{ github.ref == 'refs/heads/main' && 'production' || format('production-{0}', github.run_id) }}",
+    )
   })
 
   it("deploys the Studio once the tests pass, beside the database and not before it", () => {
