@@ -16,6 +16,8 @@ import { action } from "./view-event-page"
 
 vi.mock("~/business/admin/admin.server", () => ({
   getAdminContext: vi.fn(),
+}))
+vi.mock("~/business/application/event-participants.server", () => ({
   getProfilesWithExtraDataById: vi.fn(),
   getRejectedEventParticipants: vi.fn(),
 }))

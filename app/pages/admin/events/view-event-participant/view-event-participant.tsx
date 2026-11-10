@@ -3,13 +3,12 @@ import { NoResultError } from "kysely"
 import { redirectWithError } from "remix-toast"
 import {
   getAdminContext,
-  getEventParticipantBasic,
   getParticipantFullEventHistory,
   getProfileById,
-  updateEventParticipantById,
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
+import { getEventParticipantBasic, updateEventParticipantById } from "~/business/application/event-participants.server"
 import { setProfileCpfExempt } from "~/business/admin/cpf-exemption.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
 import { paymentProvider } from "~/business/payment/payment-provider.server"

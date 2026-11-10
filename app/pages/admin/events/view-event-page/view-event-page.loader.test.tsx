@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { getAdminEventById } from "~/business/event/event.server"
-import { getProfilesWithExtraDataById, getRejectedEventParticipants } from "~/business/admin/admin.server"
+import { getProfilesWithExtraDataById, getRejectedEventParticipants } from "~/business/application/event-participants.server"
 import { listInvitesForEvent } from "~/business/event/event-invites.server"
 import { getPaymentsForEvent } from "~/business/payment/payment-totals.server"
 import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
@@ -16,6 +16,8 @@ vi.mock("~/lib/logger/logger.server", () => ({
 
 vi.mock("~/business/admin/admin.server", () => ({
   getAdminContext: vi.fn(),
+}))
+vi.mock("~/business/application/event-participants.server", () => ({
   getProfilesWithExtraDataById: vi.fn(),
   getRejectedEventParticipants: vi.fn(),
 }))

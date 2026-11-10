@@ -6,8 +6,10 @@ import { action } from "./event-participant"
 const updateEventParticipantById = vi.hoisted(() => vi.fn())
 const getAdminContext = vi.hoisted(() => vi.fn())
 
-vi.mock("~/business/admin/admin.server", () => ({
+vi.mock("~/business/application/event-participants.server", () => ({
   updateEventParticipantById,
+}))
+vi.mock("~/business/admin/admin.server", () => ({
   getAdminContext,
 }))
 

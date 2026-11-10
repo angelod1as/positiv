@@ -11,7 +11,7 @@ vi.mock("~/lib/supabase/db.server", () => ({
   },
 }))
 
-vi.mock("~/business/session.server", () => ({
+vi.mock("~/business/application/rules-session.server", () => ({
   rulesSessionStorage: {
     getSession: vi.fn(),
     commitSession: vi.fn(),
@@ -28,7 +28,7 @@ const mockKysely = vi.mocked(db)
 
 import { getUserContext } from "~/business/auth/auth.server"
 import { isVeteran } from "~/business/participant/is-veteran.server"
-import { rulesSessionStorage } from "~/business/session.server"
+import { rulesSessionStorage } from "~/business/application/rules-session.server"
 import { getRulesFormQuestions } from "~/components/forms/custom/rules/rules-questions"
 
 const mockGetSession = vi.mocked(rulesSessionStorage.getSession)

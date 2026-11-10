@@ -24,8 +24,10 @@ vi.mock("remix-toast", () => ({
   redirectWithSuccess: vi.fn(),
 }))
 
-vi.mock("./business/session.server", () => ({
+vi.mock("./lib/request/cookies.server", () => ({
   newsCookie: { parse: vi.fn(), serialize: vi.fn() },
+}))
+vi.mock("./business/newsletter/newsletter-preference-cookie.server", () => ({
   newsletterPreferenceCookie: { parse: vi.fn(), serialize: vi.fn() },
 }))
 
@@ -58,7 +60,7 @@ describe("root loader", () => {
   beforeEach(async () => {
     const { getContext } = await import("./business/auth/auth.server")
     const { getToast } = await import("remix-toast")
-    const { newsCookie } = await import("./business/session.server")
+    const { newsCookie } = await import("./lib/request/cookies.server")
 
     const { siteSnapshotCache } = await import(
       "./business/cms/site-snapshot-cache.server"
@@ -145,14 +147,14 @@ describe("root loader", () => {
       headers: toastHeaders,
     })
 
-    const { newsCookie } = await import("./business/session.server")
+    const { newsCookie } = await import("./lib/request/cookies.server")
     vi.mocked(newsCookie.parse).mockResolvedValue({
       showNews: "false",
       newsVersion: "1",
     })
 
     const { newsletterPreferenceCookie } = await import(
-      "./business/session.server"
+      "./business/newsletter/newsletter-preference-cookie.server"
     )
     vi.mocked(newsletterPreferenceCookie.parse).mockResolvedValue({
       checked: true,
@@ -361,8 +363,9 @@ describe("root loader", () => {
       })
       mockGetToast.mockResolvedValue({ toast: null, headers: new Headers() })
 
-      const { newsCookie, newsletterPreferenceCookie } = await import(
-        "./business/session.server"
+      const { newsCookie } = await import("./lib/request/cookies.server")
+      const { newsletterPreferenceCookie } = await import(
+        "./business/newsletter/newsletter-preference-cookie.server"
       )
       vi.mocked(newsCookie.parse).mockResolvedValue({
         showNews: "false",
@@ -491,7 +494,7 @@ describe("root loader", () => {
       })
       mockGetToast.mockResolvedValue({ toast: null, headers: new Headers() })
       const { newsletterPreferenceCookie } = await import(
-        "./business/session.server"
+        "./business/newsletter/newsletter-preference-cookie.server"
       )
       vi.mocked(newsletterPreferenceCookie.parse).mockResolvedValue({
         checked: true,

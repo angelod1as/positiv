@@ -6,12 +6,8 @@ import {
   profileApprovedToAttendStatusEnum,
 } from "~types/database/entities.types"
 import { eventFormSchema } from "../event/event-schemas"
-import {
-  updateEventParticipantByIdSchema,
-  updateParticipantVsEventSchema,
-  updateProfileAdminNotesSchema,
-  updateProfileApprovalStatusSchema,
-} from "./common"
+import { updateEventParticipantByIdSchema, updateParticipantVsEventSchema } from "../application/application-schemas"
+import { updateProfileAdminNotesSchema, updateProfileApprovalStatusSchema } from "./common"
 
 const base = {
   title: "Festa",

@@ -1,10 +1,10 @@
 import { redirect, type ActionFunctionArgs } from "react-router"
 import { getUserContext } from "~/business/auth/auth.server"
-import { applyToEvent } from "~/business/participant/apply-to-event.server"
+import { applyToEvent } from "~/business/application/apply-to-event.server"
 import {
   hasPassedRulesQuiz,
   rulesSessionStorage,
-} from "~/business/session.server"
+} from "~/business/application/rules-session.server"
 import { buildApplicationQuestions } from "~/components/forms/custom/application/build-application-questions"
 import { participantCopy } from "~/copy/participant"
 import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"

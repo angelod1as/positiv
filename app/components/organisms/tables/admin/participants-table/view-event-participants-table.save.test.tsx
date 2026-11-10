@@ -1,6 +1,6 @@
 import { act, render } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import type { ProfileWithExtraData } from "~/business/admin/admin.server"
+import type { ProfileWithExtraData } from "~/business/application/event-participants.server"
 import type { AGDataTableProps } from "~/components/organisms/tables/ag-grid/base/types"
 import { adminEventsCopy } from "~/copy/admin/events"
 import { AdminViewEventParticipantsTable } from "./view-event-participants-table"

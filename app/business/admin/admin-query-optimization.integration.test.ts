@@ -6,10 +6,7 @@ import {
   createTestEventParticipant,
   createTestProfile,
 } from "~/test/db-test-utils"
-import {
-  getProfilesWithExtraDataById,
-  profilesWithExtraDataByIdQuery,
-} from "./admin.server"
+import { getProfilesWithExtraDataById, profilesWithExtraDataByIdQuery } from "../application/event-participants.server"
 
 type PlanNode = {
   "Node Type": string

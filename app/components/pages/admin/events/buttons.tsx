@@ -1,7 +1,7 @@
 import { type FC } from "react"
 import type { FetcherWithComponents } from "react-router"
 
-import type { ProfileWithExtraData } from "~/business/admin/admin.server"
+import type { ProfileWithExtraData } from "~/business/application/event-participants.server"
 import { Button } from "~/components/atoms/button/button"
 import { adminEventsCopy } from "~/copy/admin/events"
 import { sharedCopy } from "~/copy/shared"

@@ -1,7 +1,7 @@
 import type { FetcherWithComponents } from "react-router"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { renderWithRouter, screen, waitFor } from "~/test/test-utils"
-import type { ProfileWithExtraData } from "~/business/admin/admin.server"
+import type { ProfileWithExtraData } from "~/business/application/event-participants.server"
 import { downloadCSV } from "~/lib/helpers/download-csv"
 import type {
   ComposableFetcherData,

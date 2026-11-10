@@ -6,7 +6,7 @@ import { Button } from "~/components/atoms/button/button"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
 import { Label } from "~/components/ui/label"
 import { TextArea } from "~/components/ui/textarea"
-import { MAX_CANCELLATION_REASON_LENGTH } from "~/business/participant/cancellation-reason-schema"
+import { MAX_CANCELLATION_REASON_LENGTH } from "~/business/application/cancellation-reason-schema"
 import { eventCardCopy } from "~/copy/events"
 import { POSITIV_WHATSAPP } from "~/lib/constants/constants"
 

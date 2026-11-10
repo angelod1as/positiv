@@ -50,10 +50,8 @@ import {
 import { siteSettingsFromDraft } from "./business/cms/site-settings-from-draft.server"
 import { subscribeProfileToNewsletter } from "./business/newsletter/auto-subscribe.server"
 import { getSubscriptionStatus } from "./business/newsletter/subscription-helpers.server"
-import {
-  newsCookie,
-  newsletterPreferenceCookie,
-} from "./business/session.server"
+import { newsCookie } from "./lib/request/cookies.server"
+import { newsletterPreferenceCookie } from "./business/newsletter/newsletter-preference-cookie.server"
 import { Footer } from "./components/organisms/footer/footer"
 import { Header } from "./components/organisms/header/header"
 import { NEWS_VERSION } from "./components/organisms/news-dialog/news-utils"

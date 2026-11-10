@@ -3,15 +3,17 @@ import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup
 import { clearParticipantsForProfiles, createTestEvent, createTestEventParticipant, createTestPayment, createTestProfile } from "~/test/db-test-utils"
 import {
   getParticipantFullEventHistory,
+  getAllProfiles,
+  getProfileById,
+  updateProfileApprovalStatus,
+} from "./admin.server"
+import {
   updateEventParticipantById,
   getProfileWithExtraDataById,
   getEventParticipantHistoryById,
   getProfilesWithExtraDataById,
   getRejectedEventParticipants,
-  getAllProfiles,
-  getProfileById,
-  updateProfileApprovalStatus,
-} from "./admin.server"
+} from "../application/event-participants.server"
 import { getEventsForDashboard } from "../event/event.server"
 
 describe("getParticipantFullEventHistory - Integration Tests", () => {

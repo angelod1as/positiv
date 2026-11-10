@@ -1,10 +1,7 @@
 import { NoResultError, type QueryNode } from "kysely"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import {
-  getEventParticipantBasic,
-  getParticipantFullEventHistory,
-  getProfileById,
-} from "~/business/admin/admin.server"
+import { getEventParticipantBasic } from "~/business/application/event-participants.server"
+import { getParticipantFullEventHistory, getProfileById } from "~/business/admin/admin.server"
 import { getPaymentsForParticipant } from "~/business/payment/payment-totals.server"
 import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
 import { loader } from "./view-event-participant"
@@ -19,12 +16,14 @@ vi.mock("~/lib/logger/logger.server", () => ({
 
 vi.mock("~/business/admin/admin.server", () => ({
   getAdminContext: vi.fn(),
-  getEventParticipantBasic: vi.fn(),
   getParticipantFullEventHistory: vi.fn(),
   getProfileById: vi.fn(),
-  updateEventParticipantById: vi.fn(),
   updateProfileAdminNotes: vi.fn(),
   updateProfileApprovalStatus: vi.fn(),
+}))
+vi.mock("~/business/application/event-participants.server", () => ({
+  getEventParticipantBasic: vi.fn(),
+  updateEventParticipantById: vi.fn(),
 }))
 
 vi.mock("~/business/settings/app-settings.server", () => ({

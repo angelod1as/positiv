@@ -249,3 +249,10 @@ export const getEventDemographicsById = composable(
 
 export const findCalendarEvent = async (supabase: DBClient, eventId: string) =>
   supabase.from("events").select("*").eq("id", eventId).single()
+
+export const findEventId = async (eventId: string) =>
+  db
+    .selectFrom("events")
+    .select("id")
+    .where("id", "=", eventId)
+    .executeTakeFirst()

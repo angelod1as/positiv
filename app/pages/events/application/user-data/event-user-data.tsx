@@ -4,7 +4,7 @@ import { toast } from "sonner"
 import {
   hasPassedRulesQuiz,
   rulesSessionStorage,
-} from "~/business/session.server"
+} from "~/business/application/rules-session.server"
 import { Copy } from "~/components/atoms/copy/copy"
 import { buildApplicationQuestions } from "~/components/forms/custom/application/build-application-questions"
 import { FormRunner } from "~/components/forms/runtime/form-runner"

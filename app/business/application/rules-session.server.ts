@@ -1,8 +1,4 @@
-import {
-  createCookie,
-  createCookieSessionStorage,
-  type Session,
-} from "react-router"
+import { createCookieSessionStorage, type Session } from "react-router"
 import { ENV } from "varlock/env"
 
 type RulesSessionData = {
@@ -47,13 +43,3 @@ export function hasPassedRulesQuiz(
 ): boolean {
   return (session.get("rulesCorrect") ?? []).includes(eventId)
 }
-
-export const newsCookie = createCookie("show-news", {
-  maxAge: 34560000, // max value
-})
-
-export const newsletterPreferenceCookie = createCookie("newsletter-preference", {
-  httpOnly: true,
-  sameSite: "lax",
-  secure: ENV.APP_ENV === "production",
-})

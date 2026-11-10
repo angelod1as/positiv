@@ -1,5 +1,5 @@
 import { useState } from "react"
-import type { RejectedEventParticipant } from "~/business/admin/admin.server"
+import type { RejectedEventParticipant } from "~/business/application/event-participants.server"
 import { Link } from "~/components/atoms/link/link"
 import { adminEventsCopy } from "~/copy/admin/events"
 import paths from "~/lib/paths"

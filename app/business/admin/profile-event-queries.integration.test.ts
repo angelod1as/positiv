@@ -6,11 +6,8 @@ import {
   createTestPayment,
   createTestProfile,
 } from "~/test/db-test-utils"
-import {
-  getEventParticipantBasic,
-  getProfilesWithExtraDataById,
-  updateProfileAdminNotes,
-} from "./admin.server"
+import { getEventParticipantBasic, getProfilesWithExtraDataById } from "../application/event-participants.server"
+import { updateProfileAdminNotes } from "./admin.server"
 
 describe("getEventParticipantBasic - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()

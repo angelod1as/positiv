@@ -2,10 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { setProfileCpfExempt } from "~/business/admin/cpf-exemption.server"
 import {
   getAdminContext,
-  updateEventParticipantById,
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
+import { updateEventParticipantById } from "~/business/application/event-participants.server"
 import { cancelPayment } from "~/business/payment/payment-cancel.server"
 import { syncPaymentFromProvider } from "~/business/payment/payment-sync.server"
 import {
@@ -26,12 +26,14 @@ vi.mock("~/business/admin/cpf-exemption.server", () => ({
 
 vi.mock("~/business/admin/admin.server", () => ({
   getAdminContext: vi.fn(),
-  getEventParticipantBasic: vi.fn(),
   getParticipantFullEventHistory: vi.fn(),
   getProfileById: vi.fn(),
-  updateEventParticipantById: vi.fn(),
   updateProfileAdminNotes: vi.fn(),
   updateProfileApprovalStatus: vi.fn(),
+}))
+vi.mock("~/business/application/event-participants.server", () => ({
+  getEventParticipantBasic: vi.fn(),
+  updateEventParticipantById: vi.fn(),
 }))
 
 vi.mock("~/business/payment/manual-payment.server", () => ({

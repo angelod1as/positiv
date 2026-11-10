@@ -265,20 +265,3 @@ export const ExtraBasicDataSchema = zod.object({
       message: validationMessages.minOptions(1),
     }),
 })
-
-export const applyToEventSchema = zod.object({
-  applicationDate: zod.coerce.date(),
-  eventId: zod.string(),
-  referrals: zod.string().optional(),
-  referred: zod.string().trim().min(1),
-  companions: zod.string().optional(),
-  bond: zod
-    .enum(["Só vou acompanhade.", "Posso ir sozinhe."])
-    .default("Posso ir sozinhe."),
-  notes: zod.string().optional(),
-})
-
-// The form schema draws the form, so a field nobody fills cannot live in it.
-export const applyToEventInputSchema = applyToEventSchema.extend({
-  skipEmail: zod.boolean().optional(),
-})

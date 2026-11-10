@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
-import { sendApplicationMail } from "~/business/participant/send-application-mail.server"
+import { sendApplicationMail } from "~/business/application/send-application-mail.server"
 import { sendEmail } from "~/business/email/send-email"
 import type { Event, ProfileWithRoles } from "~types/database/entities.types"
 import { applicationMailTemplate } from "./application-mail.template"

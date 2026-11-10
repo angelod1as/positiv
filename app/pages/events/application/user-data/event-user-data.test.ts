@@ -6,17 +6,17 @@ vi.mock("~/business/auth/auth.server", () => ({
   getUserContext: vi.fn().mockResolvedValue({ supabaseHeaders: new Headers() }),
 }))
 
-vi.mock("~/business/session.server", async (importOriginal) => ({
+vi.mock("~/business/application/rules-session.server", async (importOriginal) => ({
   // The gate check itself stays real: a mock of it could not catch the two
   // guards drifting apart, which is the whole reason it is shared.
-  ...(await importOriginal<typeof import("~/business/session.server")>()),
+  ...(await importOriginal<typeof import("~/business/application/rules-session.server")>()),
   rulesSessionStorage: {
     getSession: vi.fn(),
     commitSession: vi.fn(),
   },
 }))
 
-import { rulesSessionStorage } from "~/business/session.server"
+import { rulesSessionStorage } from "~/business/application/rules-session.server"
 
 const mockGetSession = vi.mocked(rulesSessionStorage.getSession)
 const mockCommitSession = vi.mocked(rulesSessionStorage.commitSession)

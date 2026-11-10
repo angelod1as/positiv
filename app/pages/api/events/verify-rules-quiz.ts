@@ -1,13 +1,13 @@
 import { redirect, type ActionFunctionArgs } from "react-router"
 import { getUserContext } from "~/business/auth/auth.server"
+import { findEventId } from "~/business/event/event.server"
 import { isVeteran } from "~/business/participant/is-veteran.server"
-import { rulesSessionStorage } from "~/business/session.server"
+import { rulesSessionStorage } from "~/business/application/rules-session.server"
 import {
   OPENING_QUESTION,
   SHORT_RUN_LENGTH,
 } from "~/components/forms/custom/rules/build-rules-flow"
 import { getRulesFormSchema } from "~/components/forms/custom/rules/rules-form-schema"
-import { db } from "~/lib/supabase/db.server"
 import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
 
@@ -27,11 +27,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   const { currentProfile } = await getUserContext(request, params)
 
-  const event = await db
-    .selectFrom("events")
-    .select("id")
-    .where("id", "=", params.id)
-    .executeTakeFirst()
+  const event = await findEventId(params.id)
 
   if (!event) return redirect(DASHBOARD)
 

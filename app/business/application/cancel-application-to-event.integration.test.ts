@@ -48,7 +48,7 @@ vi.mock("./send-application-mail.server", () => ({
   sendApplicationMail: vi.fn().mockResolvedValue({ emailSent: false }),
 }))
 
-import { updateEventParticipantById } from "~/business/admin/admin.server"
+import { updateEventParticipantById } from "~/business/application/event-participants.server"
 import { applyToEvent } from "./apply-to-event.server"
 import { cancelApplicationToEvent } from "./cancel-application-to-event.server"
 

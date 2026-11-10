@@ -1,5 +1,6 @@
 import { redirect } from "react-router"
 import { getUserContext } from "~/business/auth/auth.server"
+import { findUserApplication } from "~/business/application/find-user-application.server"
 import { Button } from "~/components/atoms/button/button"
 import {
   Card,
@@ -11,7 +12,6 @@ import {
 import { createMetaArray } from "~/lib/helpers/meta"
 import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
-import { db } from "~/lib/supabase/db.server"
 import type { Route } from "./+types/event-application-confirmation-page"
 import { Copy } from "~/components/atoms/copy/copy"
 import { applicationConfirmationCopy } from "~/copy/events"
@@ -28,13 +28,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   if (!params.id || !currentProfile) return redirect(DASHBOARD)
 
-  const application = await db
-    .selectFrom("event_participants")
-    .select("id")
-    .where("event_id", "=", params.id)
-    .where("profile_id", "=", currentProfile.id)
-    .where("is_user_applied", "=", true)
-    .executeTakeFirst()
+  const application = await findUserApplication(params.id, currentProfile.id)
 
   if (!application) return redirect(DASHBOARD)
 
