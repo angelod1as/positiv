@@ -21,7 +21,7 @@ A failed step stops every step after it, so a red `main` publishes nothing.
 
 Coolify's auto-deploy is off for the `Positiv` application. The workflow authenticates with `COOLIFY_DEPLOY_TOKEN`, a Coolify API token with the `deploy` and `read` abilities only, and reaches the panel at `COOLIFY_URL`. Both are GitHub secrets.
 
-Runs share a concurrency group that never cancels a run in progress. Coolify builds the head of `main`, not a given commit, so `deploy-app` publishes only while `main` still points at its run's commit; otherwise the newer run, queued behind it, migrates and publishes. A narrow window remains: Coolify resolves the head when the build starts, so a merge landing between the check and the build start is built early. The smoke test's commit comparison turns that case into a red run.
+Runs share a concurrency group that never cancels a run in progress. Coolify builds the head of `main`, not a given commit, so `deploy-app` publishes only while `main` still points at its run's commit; otherwise the newer run, queued behind it, migrates and publishes. A narrow window remains: Coolify resolves the head when the build starts, so a merge landing between the check and the build start is built early. The smoke test's commit comparison turns that case into a red run. That comparison assumes Coolify records the full 40-character SHA on a finished deployment, as every deployment in its history did when this was written, API-triggered ones included. A manual run from a branch other than `main` gets a concurrency group of its own, so it never replaces a merge waiting in the queue.
 
 ## Consequences
 

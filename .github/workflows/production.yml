@@ -9,9 +9,10 @@ on:
 # One run at a time, and a run in progress is never cancelled: it may be in the
 # middle of `db push`. GitHub keeps one run waiting behind it; a third merge
 # replaces the waiting one, which loses nothing, because the newer run applies
-# every pending migration and deploys the newer commit.
+# every pending migration and deploys the newer commit. A manual run from any
+# other branch gets a group of its own, so it can never replace a waiting merge.
 concurrency:
-  group: production
+  group: ${{ github.ref == 'refs/heads/main' && 'production' || format('production-{0}', github.run_id) }}
   cancel-in-progress: false
 
 # Production ships in one order: unit tests, then the migration, then the app,

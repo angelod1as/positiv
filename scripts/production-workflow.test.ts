@@ -1,8 +1,8 @@
 import { spawnSync } from "node:child_process"
-import { chmodSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs"
+import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { describe, expect, it } from "vitest"
+import { afterAll, describe, expect, it } from "vitest"
 
 // POS-520 merged, Coolify finished deploying the app six minutes later, and the
 // migration that the app depended on never ran: the gate job sat for fifteen
@@ -16,6 +16,11 @@ const workflow = readFileSync(
   join(import.meta.dirname, "..", ".github", "workflows", "production.yml"),
   "utf8",
 )
+
+// Every stubbed step runs in a directory under this one, removed after the suite.
+const scratch = mkdtempSync(join(tmpdir(), "production-workflow-"))
+
+afterAll(() => rmSync(scratch, { recursive: true, force: true }))
 
 function runCommand(stepName: string): string {
   const step = workflow.match(
@@ -53,7 +58,7 @@ function runScript(stepName: string): string {
 // Runs a step's script the way GitHub runs it when no shell is given, with
 // `git` replaced by a stub that prints `gitOutput` and exits `gitStatus`.
 function runHeadCheck(gitOutput: string, gitStatus: number) {
-  const dir = mkdtempSync(join(tmpdir(), "production-workflow-"))
+  const dir = mkdtempSync(join(scratch, "step-"))
   const script = join(dir, "step.sh")
   const output = join(dir, "output")
 
@@ -175,7 +180,7 @@ describe("production workflow", () => {
     // and sleep by a no-op. SECONDS starts a second before the deadline, so a
     // script that keeps retrying ends at once instead of spinning.
     function waitForDeployment(body: string, code: number) {
-      const dir = mkdtempSync(join(tmpdir(), "production-workflow-"))
+      const dir = mkdtempSync(join(scratch, "step-"))
       const script = join(dir, "step.sh")
 
       writeFileSync(join(dir, "body.json"), body)
@@ -250,7 +255,7 @@ describe("production workflow", () => {
     // loop past the step's timeout-minutes, and GitHub killed it without the
     // message saying why. Bash's SECONDS is imported from the environment, so
     // starting it late stands in for an hour of slow calls.
-    const dir = mkdtempSync(join(tmpdir(), "production-workflow-"))
+    const dir = mkdtempSync(join(scratch, "step-"))
     const script = join(dir, "step.sh")
 
     writeFileSync(join(dir, "curl"), "#!/bin/sh\nexit 28\n")
@@ -281,7 +286,7 @@ describe("production workflow", () => {
     // Runs the step's own script with curl replaced by a stub that answers
     // `body`, the way Coolify's deploy endpoint would.
     function startDeployment(body: string) {
-      const dir = mkdtempSync(join(tmpdir(), "production-workflow-"))
+      const dir = mkdtempSync(join(scratch, "step-"))
       const script = join(dir, "step.sh")
       const output = join(dir, "output")
 
@@ -387,7 +392,18 @@ describe("production workflow", () => {
     // push`.
     const header = workflow.slice(0, workflow.indexOf("\njobs:\n"))
 
-    expect(header).toMatch(/\nconcurrency:\n {2}group: production\n {2}cancel-in-progress: false\n/)
+    expect(header).toMatch(/\nconcurrency:\n {2}group: .*\n {2}cancel-in-progress: false\n/)
+  })
+
+  it("keeps a manual run from another branch out of main's queue", () => {
+    // GitHub keeps one run waiting per group, and a newer one replaces it. A
+    // dispatch from a branch sharing main's group could replace a waiting
+    // merge, whose migration and app would then never run.
+    const group = workflow.match(/\nconcurrency:\n {2}group: (.*)\n/)?.[1]
+
+    expect(group).toBe(
+      "${{ github.ref == 'refs/heads/main' && 'production' || format('production-{0}', github.run_id) }}",
+    )
   })
 
   it("deploys the Studio once the tests pass, beside the database and not before it", () => {
