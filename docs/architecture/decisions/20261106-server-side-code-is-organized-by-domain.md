@@ -20,7 +20,7 @@ As of 2026-11-06, server-side code had no single home. Most of it sat in `app/bu
 
 **Route modules are thin.** A loader or action in `app/pages/` parses the request, calls `business`, and shapes the response. It never imports Kysely, `pg`, `db.server` or the Supabase server client, and never calls supabase-js `.from`, `.rpc` or `.auth`; auth flows (sign-in, OTP confirmation, password reset) call `business/auth`. Every API route, browser-facing or machine-to-machine (cron, webhook), lives in `app/pages/api/`, mirroring its URL.
 
-**A file that imports a server-only module carries the `.server` suffix.** This extends [Use Server-Only File Suffixes](./20250126-use-server-only-file-suffixes.md), which covers server-only code itself: the suffix now also applies transitively, to any file that imports a server-only module (`pg`, `kysely`, `nodemailer`, `db.server`, or another `.server` file). Two exemptions: type-only imports (`import type`), which are erased at build time, and route modules registered in `app/routes.ts`, whose `loader` and `action` React Router strips from the client bundle. WEB-43 will add a test that enforces it.
+**A file that imports a server-only module carries the `.server` suffix.** This extends [Use Server-Only File Suffixes](./20250126-use-server-only-file-suffixes.md), which covers server-only code itself: the suffix now also applies transitively, to any file that imports a server-only module (`pg`, `kysely`, `nodemailer`, `db.server`, or another `.server` file). Two exemptions: type-only imports (`import type`), which are erased at build time, and route modules registered in `app/routes.ts`, whose `loader` and `action` React Router strips from the client bundle. The route-module exemption holds only while server code is reached from `loader` and `action` alone: another export (`meta`, the component) that uses it still ships it to the client. WEB-43 will add a test that enforces it.
 
 **From WEB-43 on, `dependency-cruiser`, run inside `pnpm lint`, enforces these rules**: no import cycles, `lib` never imports `business`, `pages` never reaches the database, a vendor SDK is imported only by its owning domain, and `settings` imports no other domain. `pg` is imported only by `lib/supabase/`; Kysely itself (`sql`, its types) may be imported by `business` and `lib`, never by `pages`. Until WEB-43 lands, nothing checks these rules.
 
@@ -66,7 +66,7 @@ The migration is two tickets: WEB-42 moves the code without changing behavior, o
 
 5. **One ticket per domain** for the migration.
    - Pros: smaller PRs.
-   - Cons: thirteen tickets (one per domain move, plus `lib`, the API routes, the cycles and the guard), thirteen branches conflicting with each other and with everything else for weeks; a move-only PR is reviewable commit by commit anyway.
+   - Cons: thirteen tickets (one for each of the eight domains that move, plus the database handle, `lib`, the API routes, the cycles and the guard), thirteen branches conflicting with each other and with everything else for weeks; a move-only PR is reviewable commit by commit anyway.
 
 ## References
 
