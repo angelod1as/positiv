@@ -1,4 +1,4 @@
-import { sql, type RawBuilder } from "kysely"
+import { NoResultError, sql, type RawBuilder } from "kysely"
 
 /**
  * Helper to properly cast JavaScript objects to PostgreSQL JSONB type.
@@ -17,3 +17,6 @@ import { sql, type RawBuilder } from "kysely"
 export function json<T>(object: T): RawBuilder<T> {
   return sql`${JSON.stringify(object)}::jsonb`
 }
+
+export const isNoResultError = (error: unknown) =>
+  error instanceof NoResultError

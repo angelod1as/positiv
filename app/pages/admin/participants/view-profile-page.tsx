@@ -1,4 +1,4 @@
-import { NoResultError } from "kysely"
+import { isNoResultError } from "~/lib/helpers/kysely-helpers.server"
 import { redirectWithError } from "remix-toast"
 import { getAdminContext } from "~/business/auth/admin-context.server"
 import {
@@ -42,7 +42,7 @@ export async function loader({ params }: Route.LoaderArgs) {
   ])
 
   if (!profileResult.success) {
-    if (profileResult.errors.every((error) => error instanceof NoResultError)) {
+    if (profileResult.errors.every(isNoResultError)) {
       logger.warn("Profile not found", { profileId })
     } else {
       logger.error("Failed to fetch profile", {
