@@ -43,6 +43,10 @@ export function createContentCache<T>({
           if (loadGeneration === generation) inFlight = null
         })
       }
+      if (cached) {
+        inFlight.catch(() => {})
+        return Promise.resolve(cached.value)
+      }
       return inFlight
     },
     reset() {

@@ -30,13 +30,27 @@ describe("createContentCache", () => {
     expect(load).toHaveBeenCalledTimes(1)
   })
 
-  it("loads again once the TTL has passed", async () => {
+  it("serves the stale value while it reloads once the TTL has passed", async () => {
     load.mockResolvedValueOnce("first").mockResolvedValueOnce("second")
 
     await cache.get()
     vi.advanceTimersByTime(60_000)
 
+    expect(await cache.get()).toBe("first")
     expect(await cache.get()).toBe("second")
+    expect(load).toHaveBeenCalledTimes(2)
+  })
+
+  it("does not wait on a slow reload when a value is cached", async () => {
+    load
+      .mockResolvedValueOnce("first")
+      .mockReturnValueOnce(new Promise<string>(() => {}))
+
+    await cache.get()
+    vi.advanceTimersByTime(60_000)
+
+    expect(await cache.get()).toBe("first")
+    expect(await cache.get()).toBe("first")
     expect(load).toHaveBeenCalledTimes(2)
   })
 
@@ -70,6 +84,7 @@ describe("createContentCache", () => {
 
     vi.advanceTimersByTime(60_000)
 
+    expect(await cache.get()).toBe("first")
     expect(await cache.get()).toBe("second")
     expect(load).toHaveBeenCalledTimes(3)
   })
@@ -147,7 +162,25 @@ describe("createContentCache reset", () => {
     await expect(staleGet).rejects.toThrow("Sanity is down")
     vi.advanceTimersByTime(30_000)
 
+    expect(await cache.get()).toBe("fresh")
     expect(await cache.get()).toBe("fresher")
+    expect(load).toHaveBeenCalledTimes(3)
+  })
+
+  it("drops a background reload that reset made obsolete", async () => {
+    const stale = deferred()
+    load
+      .mockResolvedValueOnce("first")
+      .mockReturnValueOnce(stale.promise)
+      .mockResolvedValueOnce("fresh")
+
+    await cache.get()
+    vi.advanceTimersByTime(60_000)
+    expect(await cache.get()).toBe("first")
+    cache.reset()
+    stale.reject(new Error("Sanity is down"))
+
+    expect(await cache.get()).toBe("fresh")
     expect(load).toHaveBeenCalledTimes(3)
   })
 })
