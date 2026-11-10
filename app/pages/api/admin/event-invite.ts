@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs } from "react-router"
-import { getAdminContext } from "~/business/admin/admin.server"
+import { getAdminContext } from "~/business/auth/admin-context.server"
 import {
   createInvite,
   listInvitesForEvent,

@@ -4,7 +4,7 @@ import { participantCopy } from "~/copy/participant"
 import { db } from "~/lib/supabase/db.server"
 import { logger } from "~/lib/logger/logger.server"
 import { agreeToTermsSchema } from "./profile-schemas"
-import { contextSchema } from "../common"
+import { contextSchema } from "../auth/auth-schemas"
 import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
 import { unsubscribeProfile } from "../newsletter/subscription-helpers.server"
 

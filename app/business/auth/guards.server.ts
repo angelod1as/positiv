@@ -1,7 +1,7 @@
 import { redirectWithError } from "remix-toast"
 import { errorsCopy } from "~/copy/errors"
 import paths from "~/lib/paths"
-import type { contextSchema } from "~/business/common"
+import type { contextSchema } from "~/business/auth/auth-schemas"
 import type { z } from "zod"
 import { can, type Permission } from "./permissions"
 

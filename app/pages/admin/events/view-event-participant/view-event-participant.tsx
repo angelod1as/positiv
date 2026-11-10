@@ -1,7 +1,7 @@
 import type { ShouldRevalidateFunctionArgs } from "react-router"
 import { NoResultError } from "kysely"
 import { redirectWithError } from "remix-toast"
-import { getAdminContext } from "~/business/admin/admin.server"
+import { getAdminContext } from "~/business/auth/admin-context.server"
 import {
   getParticipantFullEventHistory,
   getProfileById,

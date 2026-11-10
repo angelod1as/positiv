@@ -99,3 +99,7 @@ export const contextSchema = getSupabaseSchema.extend({
 export const userContextSchema = contextSchema.extend({
   currentUser: currentUserSchema,
 })
+
+export const adminContextSchema = userContextSchema.extend({
+  eventId: zod.string().optional(),
+})

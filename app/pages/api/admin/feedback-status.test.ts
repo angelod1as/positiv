@@ -7,7 +7,7 @@ const updateFeedbackStatus = vi.hoisted(() => vi.fn())
 const getAdminContext = vi.hoisted(() => vi.fn())
 
 vi.mock("~/business/feedback/feedback.server", () => ({ updateFeedbackStatus }))
-vi.mock("~/business/admin/admin.server", () => ({ getAdminContext }))
+vi.mock("~/business/auth/admin-context.server", () => ({ getAdminContext }))
 
 const context = { currentProfile: { id: "profile-1" } }
 

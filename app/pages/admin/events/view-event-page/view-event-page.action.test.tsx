@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { getAdminContext } from "~/business/admin/admin.server"
+import { getAdminContext } from "~/business/auth/admin-context.server"
 import {
   cancelManualPayment,
   editManualPayment,
@@ -14,7 +14,7 @@ import {
 import { markManualRefunded } from "~/business/payment/payment-refund.server"
 import { action } from "./view-event-page"
 
-vi.mock("~/business/admin/admin.server", () => ({
+vi.mock("~/business/auth/admin-context.server", () => ({
   getAdminContext: vi.fn(),
 }))
 vi.mock("~/business/application/event-participants.server", () => ({

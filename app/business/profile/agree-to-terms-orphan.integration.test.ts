@@ -10,7 +10,7 @@ import {
 } from "~/test/db-test-utils"
 import { agreeToTerms } from "./agree-to-terms.server"
 import type { z } from "zod"
-import type { contextSchema } from "~/business/common"
+import type { contextSchema } from "~/business/auth/auth-schemas"
 
 vi.mock("~/business/newsletter/auto-subscribe.server", () => ({
   subscribeProfileToNewsletter: vi.fn().mockResolvedValue({

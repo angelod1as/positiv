@@ -1,18 +1,10 @@
-import {
-  createServerClient as createSupabaseServerClient,
-  parseCookieHeader,
-  serializeCookieHeader,
-} from "@supabase/ssr"
 import { type EmailOtpType } from "@supabase/supabase-js"
 import { type LoaderFunctionArgs } from "react-router"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
-import { ENV } from "varlock/env"
+import { verifyEmailOtp } from "~/business/auth/confirm-otp.server"
 import { authConfirmCopy } from "~/copy/auth"
 import { EMAIL_CONFIRMED_PARAM } from "~/lib/hooks/use-track-email-confirmed"
 import paths from "~/lib/paths"
-import type { Database } from "~types/database/database.types"
-
-const { VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY } = ENV
 
 const {
   auth: { LOGIN },
@@ -26,30 +18,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const headers = new Headers()
 
   if (token_hash && type) {
-    const supabase = createSupabaseServerClient<Database>(
-      VITE_SUPABASE_URL,
-      VITE_SUPABASE_ANON_KEY,
-      {
-        cookies: {
-          getAll() {
-            return parseCookieHeader(request.headers.get("Cookie") ?? "") as {
-              name: string
-              value: string
-            }[]
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              headers.append(
-                "Set-Cookie",
-                serializeCookieHeader(name, value, options),
-              ),
-            )
-          },
-        },
-      },
-    )
-
-    const { error } = await supabase.auth.verifyOtp({
+    const { error } = await verifyEmailOtp({
+      request,
+      headers,
       type,
       token_hash,
     })

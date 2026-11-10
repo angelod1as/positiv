@@ -5,7 +5,7 @@ import { cpfExemptionCopy } from "~/copy/account"
 import { participantCopy } from "~/copy/participant"
 import { logger } from "~/lib/logger/logger.server"
 import type { Database } from "~/types/database/database.types"
-import type { userContextSchema } from "../common"
+import type { userContextSchema } from "../auth/auth-schemas"
 import { saveBasicData } from "./basic-data.server"
 
 const subscribe = vi.hoisted(() => vi.fn())

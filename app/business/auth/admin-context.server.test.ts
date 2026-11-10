@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 // Mock getUserContext to return a basic user context
-vi.mock("../auth/auth.server", () => ({
+vi.mock("./auth.server", () => ({
   getUserContext: vi.fn(async () => ({
     user: {
       id: "test-user-id",
@@ -28,9 +28,8 @@ vi.mock("../auth/auth.server", () => ({
 }))
 
 // Import after mocking
-import { getUserContext } from "../auth/auth.server"
-import { getAdminContext } from "./admin.server"
-import { getParticipantFullEventHistory } from "../profile/profiles.server"
+import { getUserContext } from "./auth.server"
+import { getAdminContext } from "./admin-context.server"
 
 describe("getAdminContext", () => {
   it("should return admin context without events array", async () => {
@@ -77,12 +76,5 @@ describe("getAdminContext", () => {
     await expect(
       getAdminContext(new Request("http://localhost/admin"), {}),
     ).rejects.toBeInstanceOf(Response)
-  })
-})
-
-describe("getParticipantFullEventHistory", () => {
-  it("should be defined with correct function signature", () => {
-    expect(getParticipantFullEventHistory).toBeDefined()
-    expect(typeof getParticipantFullEventHistory).toBe("function")
   })
 })

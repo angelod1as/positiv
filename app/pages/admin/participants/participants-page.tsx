@@ -1,7 +1,7 @@
 import type { ActionFunctionArgs } from "react-router"
 import { useLoaderData } from "react-router"
 import { redirectWithError } from "remix-toast"
-import { getAdminContext } from "~/business/admin/admin.server"
+import { getAdminContext } from "~/business/auth/admin-context.server"
 import { getAllProfiles, updateProfileAdminNotes } from "~/business/profile/profiles.server"
 import { can, PERMISSIONS } from "~/business/auth/permissions"
 import { syncVeteransListmonkList } from "~/business/newsletter/veterans-list.server"

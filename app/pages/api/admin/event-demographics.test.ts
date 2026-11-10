@@ -8,7 +8,7 @@ const getAdminContext = vi.hoisted(() => vi.fn())
 vi.mock("~/business/event/event.server", () => ({
   updateEventDemographics,
 }))
-vi.mock("~/business/admin/admin.server", () => ({
+vi.mock("~/business/auth/admin-context.server", () => ({
   getAdminContext,
 }))
 

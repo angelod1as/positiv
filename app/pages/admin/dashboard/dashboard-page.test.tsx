@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 // Mock the getAdminContext to return without events
-vi.mock("~/business/admin/admin.server", () => ({
+vi.mock("~/business/auth/admin-context.server", () => ({
   getAdminContext: vi.fn().mockResolvedValue({
     user: {
       id: "test-user-id",

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach, type Mock } from "vitest"
 import { agreeToTerms } from "./agree-to-terms.server"
 import type { z } from "zod"
-import type { contextSchema } from "../common"
+import type { contextSchema } from "../auth/auth-schemas"
 
 // Mock the newsletter functions
 vi.mock("../newsletter/auto-subscribe.server", () => ({

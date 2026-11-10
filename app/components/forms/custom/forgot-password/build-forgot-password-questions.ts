@@ -1,4 +1,4 @@
-import { forgotPasswordSchema } from "~/business/common"
+import { forgotPasswordSchema } from "~/business/auth/auth-schemas"
 import type { Question } from "~/components/forms/runtime/question.types"
 import { forgotPasswordCopy } from "~/copy/auth"
 

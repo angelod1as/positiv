@@ -1,6 +1,6 @@
 import type { ActionFunctionArgs } from "react-router"
 import { getContext, registerUser } from "~/business/auth/auth.server"
-import { registerUserSchema } from "~/business/common"
+import { registerUserSchema } from "~/business/auth/auth-schemas"
 import { getClientIp } from "~/lib/request/get-client-ip.server"
 
 /**

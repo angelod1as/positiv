@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { setProfileCpfExempt } from "~/business/profile/cpf-exemption.server"
-import { getAdminContext } from "~/business/admin/admin.server"
+import { getAdminContext } from "~/business/auth/admin-context.server"
 import { updateProfileAdminNotes, updateProfileApprovalStatus } from "~/business/profile/profiles.server"
 import { updateEventParticipantById } from "~/business/application/event-participants.server"
 import { cancelPayment } from "~/business/payment/payment-cancel.server"
@@ -21,7 +21,7 @@ vi.mock("~/business/profile/cpf-exemption.server", () => ({
   setProfileCpfExempt: vi.fn(),
 }))
 
-vi.mock("~/business/admin/admin.server", () => ({
+vi.mock("~/business/auth/admin-context.server", () => ({
   getAdminContext: vi.fn(),
 }))
 vi.mock("~/business/profile/profiles.server", () => ({

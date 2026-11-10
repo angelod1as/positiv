@@ -6,7 +6,7 @@ import { toCommitErrors } from "~/lib/helpers/to-commit-errors"
 import { logger } from "~/lib/logger/logger.server"
 import type { CommitResult } from "~types/forms/commit.types"
 import paths from "~/lib/paths"
-import { contextSchema, forgotPasswordSchema } from "../common"
+import { contextSchema, forgotPasswordSchema } from "./auth-schemas"
 import { recordAuthAttempt } from "./auth-attempt-guard.server"
 
 const {

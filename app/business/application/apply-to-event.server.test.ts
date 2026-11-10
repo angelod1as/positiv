@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach, type Mock } from "vitest"
 import { applyToEvent } from "./apply-to-event.server"
 import type { z } from "zod"
-import type { userContextSchema } from "../common"
+import type { userContextSchema } from "../auth/auth-schemas"
 
 vi.mock("./send-application-mail.server", () => ({
   sendApplicationMail: vi.fn(),

@@ -4,10 +4,8 @@ import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
 import { adminLayoutCopy } from "~/copy/admin"
 import paths from "~/lib/paths"
-
-
-import { getUserContext } from "../auth/auth.server"
-import { adminContextSchema } from "./common"
+import { getUserContext } from "./auth.server"
+import { adminContextSchema } from "./auth-schemas"
 
 const {
   root: { HOME },

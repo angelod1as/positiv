@@ -3,7 +3,7 @@ import { errorsCopy } from "~/copy/errors"
 import { toCommitErrors } from "~/lib/helpers/to-commit-errors"
 import { logger } from "~/lib/logger/logger.server"
 import type { CommitResult } from "~types/forms/commit.types"
-import { changePasswordSchema, userContextSchema } from "../common"
+import { changePasswordSchema, userContextSchema } from "./auth-schemas"
 
 type UpdatePasswordProps = {
   answers: Record<string, unknown>

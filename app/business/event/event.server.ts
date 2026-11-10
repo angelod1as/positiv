@@ -4,7 +4,7 @@ import { adminEventsCopy } from "~/copy/admin/events"
 import { db } from "~/lib/supabase/db.server"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
 import { logger } from "~/lib/logger/logger.server"
-import { adminContextSchema } from "../admin/common"
+import { adminContextSchema } from "../auth/auth-schemas"
 import {
   eventFormSchema,
   updateEventDemographicsSchema,

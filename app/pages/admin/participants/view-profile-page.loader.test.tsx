@@ -13,7 +13,7 @@ vi.mock("~/business/profile/cpf-exemption.server", () => ({
   setProfileCpfExempt: vi.fn(),
 }))
 
-vi.mock("~/business/admin/admin.server", () => ({
+vi.mock("~/business/auth/admin-context.server", () => ({
   getAdminContext: vi.fn(),
 }))
 vi.mock("~/business/profile/profiles.server", () => ({

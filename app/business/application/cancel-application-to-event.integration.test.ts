@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { z } from "zod"
-import type { userContextSchema } from "../common"
+import type { userContextSchema } from "../auth/auth-schemas"
 import {
   cleanupAfterTest,
   setupIntegrationTest,

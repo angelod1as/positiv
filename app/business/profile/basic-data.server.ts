@@ -13,7 +13,7 @@ import {
   cpfExemptBasicDataSchema,
   ExtraBasicDataSchema,
 } from "./profile-schemas"
-import { userContextSchema } from "../common"
+import { userContextSchema } from "../auth/auth-schemas"
 import { refreshNewsletterSubscriber } from "../newsletter/auto-subscribe.server"
 
 type SaveBasicDataProps = {

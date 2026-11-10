@@ -15,7 +15,7 @@ import {
   getSupabaseSchema,
   registerUserSchema,
   userContextSchema,
-} from "../common"
+} from "./auth-schemas"
 import {
   isSignupDomainBlocked,
   recordSignupAttempt,

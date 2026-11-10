@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { useFetcher } from "react-router"
 import { redirectWithError } from "remix-toast"
 import { listInvitesForEvent } from "~/business/event/event-invites.server"
-import { getAdminContext } from "~/business/admin/admin.server"
+import { getAdminContext } from "~/business/auth/admin-context.server"
 import { getProfilesWithExtraDataById, getRejectedEventParticipants } from "~/business/application/event-participants.server"
 import { getAdminEventById, getEventDemographicsById } from "~/business/event/event.server"
 import {

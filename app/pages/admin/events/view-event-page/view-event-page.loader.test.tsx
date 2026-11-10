@@ -14,7 +14,7 @@ vi.mock("~/lib/logger/logger.server", () => ({
   logger: { ...logger, child: () => logger },
 }))
 
-vi.mock("~/business/admin/admin.server", () => ({
+vi.mock("~/business/auth/admin-context.server", () => ({
   getAdminContext: vi.fn(),
 }))
 vi.mock("~/business/application/event-participants.server", () => ({

@@ -5,9 +5,9 @@ import {
   participantAttendanceStatusEnum,
   profileApprovedToAttendStatusEnum,
 } from "~types/database/entities.types"
-import { eventFormSchema } from "../event/event-schemas"
-import { updateEventParticipantByIdSchema, updateParticipantVsEventSchema } from "../application/application-schemas"
-import { updateProfileAdminNotesSchema, updateProfileApprovalStatusSchema } from "../profile/profile-schemas"
+import { eventFormSchema } from "../business/event/event-schemas"
+import { updateEventParticipantByIdSchema, updateParticipantVsEventSchema } from "../business/application/application-schemas"
+import { updateProfileAdminNotesSchema, updateProfileApprovalStatusSchema } from "../business/profile/profile-schemas"
 
 const base = {
   title: "Festa",
