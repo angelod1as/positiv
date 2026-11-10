@@ -1,4 +1,4 @@
-import { updateEventStatusSchema } from "~/business/admin/common"
+import { updateEventStatusSchema } from "~/business/event/event-schemas"
 import type { Question } from "~/components/forms/runtime/question.types"
 import { adminEventsCopy } from "~/copy/admin/events"
 import { ALL_EVENT_STATUS_OPTIONS, eventStatusMap } from "~/lib/helpers/propMaps"

@@ -8,11 +8,11 @@ import {
   getEventParticipantHistoryById,
   getProfilesWithExtraDataById,
   getRejectedEventParticipants,
-  getEventsForDashboard,
   getAllProfiles,
   getProfileById,
-  updateProfileApprovalStatus
+  updateProfileApprovalStatus,
 } from "./admin.server"
+import { getEventsForDashboard } from "../event/event.server"
 
 describe("getParticipantFullEventHistory - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()

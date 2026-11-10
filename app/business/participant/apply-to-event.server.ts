@@ -3,7 +3,7 @@ import { can, PERMISSIONS } from "~/business/auth/permissions"
 import { participantCopy } from "~/copy/participant"
 import { dateToString } from "~/lib/helpers/date-to-string"
 import { applyToEventInputSchema, userContextSchema } from "../common"
-import { findValidInvite, markInviteUsed } from "./event-invite.server"
+import { findValidInvite, markInviteUsed } from "../event/event-invite.server"
 import { sendApplicationMail } from "./send-application-mail.server"
 import { db } from "~/lib/supabase/db.server"
 

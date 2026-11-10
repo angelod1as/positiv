@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { eventFormSchema } from "~/business/admin/common"
+import { eventFormSchema } from "~/business/event/event-schemas"
 import { adminEventsCopy } from "~/copy/admin/events"
 import { buildEventQuestions } from "./build-event-questions"
 

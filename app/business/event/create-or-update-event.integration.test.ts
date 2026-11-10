@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { createTestEvent, getTestSupabaseClient } from "~/test/db-test-utils"
 import { cleanupAfterTest, setupIntegrationTest } from "~/test/integration-setup"
-import { createOrUpdateEvent } from "./admin.server"
+import { createOrUpdateEvent } from "./event.server"
 
 describe("createOrUpdateEvent - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()

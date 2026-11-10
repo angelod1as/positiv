@@ -15,7 +15,7 @@ import { metaCopy } from "~/copy/meta"
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { createMetaArray, createPageTitle } from "~/lib/helpers/meta"
 import { logger } from "~/lib/logger/logger.server"
-import { getNextEvents } from "~/pages/page/fetch/get-next-events"
+import { getNextEvents } from "~/business/event/get-next-events.server"
 import { PageContent } from "./page-content"
 import type { Route } from "./+types/page"
 

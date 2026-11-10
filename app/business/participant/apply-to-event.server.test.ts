@@ -15,14 +15,14 @@ vi.mock("~/lib/supabase/db.server", () => ({
 
 // A closed event asks the database whether the applicant holds an invite, and
 // these cases are about the applicant who does not.
-vi.mock("./event-invite.server", () => ({
+vi.mock("../event/event-invite.server", () => ({
   findValidInvite: vi.fn().mockResolvedValue(undefined),
   markInviteUsed: vi.fn(),
 }))
 
 import { sendApplicationMail } from "./send-application-mail.server"
 import { db } from "~/lib/supabase/db.server"
-import { findValidInvite } from "./event-invite.server"
+import { findValidInvite } from "../event/event-invite.server"
 
 describe("applyToEvent", () => {
   let mockFrom: Mock

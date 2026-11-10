@@ -1,4 +1,4 @@
-import { getAdminEventById } from "~/business/admin/admin.server"
+import { getAdminEventById } from "~/business/event/event.server"
 import { EventForm } from "~/components/forms/admin/event-form"
 import { adminEventsCopy } from "~/copy/admin/events"
 import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"

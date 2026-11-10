@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
 import { createTestProfile, createTestEvent, createTestEventParticipant, createTestAuthUser } from "~/test/db-test-utils"
-import { updateEventStatus } from "../admin.server"
+import { updateEventStatus } from "./event.server"
 import { getEventDemographicsHistory } from "./demographics-history.server"
 import type { EventStatus } from "~types/database/entities.types"
 import type { SupabaseClient } from "@supabase/supabase-js"

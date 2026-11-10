@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react"
 import { useFetcher } from "react-router"
 import { redirectWithError } from "remix-toast"
-import { listInvitesForEvent } from "~/business/admin/event-invites.server"
+import { listInvitesForEvent } from "~/business/event/event-invites.server"
 import {
   getAdminContext,
-  getAdminEventById,
-  getEventDemographicsById,
   getProfilesWithExtraDataById,
   getRejectedEventParticipants,
 } from "~/business/admin/admin.server"
+import { getAdminEventById, getEventDemographicsById } from "~/business/event/event.server"
 import {
   listmonkSyncFiltersSchema,
   updateEventListmonkList,

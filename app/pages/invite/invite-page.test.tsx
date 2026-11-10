@@ -6,7 +6,7 @@ vi.mock("~/business/auth/auth.server", () => ({
 }))
 
 const findValidInviteByToken = vi.fn()
-vi.mock("~/business/participant/event-invite.server", () => ({
+vi.mock("~/business/event/event-invite.server", () => ({
   findValidInviteByToken: (...args: unknown[]) =>
     findValidInviteByToken(...args),
 }))

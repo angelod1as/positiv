@@ -1,8 +1,6 @@
 import type { ActionFunctionArgs } from "react-router"
-import {
-  createOrUpdateEvent,
-  getAdminContext,
-} from "~/business/admin/admin.server"
+import { createOrUpdateEvent } from "~/business/event/event.server"
+import { getAdminContext } from "~/business/admin/admin.server"
 import { toCommitResult } from "~/lib/helpers/to-commit-result"
 import { zod } from "~/lib/helpers/zod"
 

@@ -2,7 +2,7 @@ import { composable } from "composable-functions"
 import type { Transaction } from "kysely"
 import { db as kyselyDb } from "~/lib/supabase/db.server"
 import type { Database } from "~/types/database/kysely.types"
-import type { Demographics } from "../../reporting/demographics/demographics"
+import type { Demographics } from "../reporting/demographics/demographics"
 
 export const storeEventDemographicsSnapshot = composable(
   async ({

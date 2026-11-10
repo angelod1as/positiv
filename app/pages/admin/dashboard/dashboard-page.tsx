@@ -1,8 +1,6 @@
 import { Link } from "react-router"
-import {
-  getEventsForDashboard,
-  getRecentProfiles,
-} from "~/business/admin/admin.server"
+import { getEventsForDashboard } from "~/business/event/event.server"
+import { getRecentProfiles } from "~/business/admin/admin.server"
 import { getRecentFeedbacks } from "~/business/feedback/feedback.server"
 import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
 import { EventCard } from "~/components/organisms/event-card/event-card"

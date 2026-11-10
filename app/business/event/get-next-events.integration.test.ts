@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
 import { createTestProfile, createTestEvent, createTestEventParticipant, createTestPayment } from "~/test/db-test-utils"
-import { getNextEvents } from "./get-next-events"
+import { getNextEvents } from "./get-next-events.server"
 import type { EventStatus } from "~types/database/entities.types"
 
 describe("getNextEvents - Query Optimization Integration Tests", () => {

@@ -47,11 +47,8 @@ vi.mock("~/business/newsletter/listmonk-client.server", async (importOriginal) =
   removeSubscribersFromListBulk,
 }))
 
-import {
-  updateEventParticipantById,
-  updateEventStatus,
-  updateProfileAdminNotes,
-} from "./admin.server"
+import { updateEventParticipantById, updateProfileAdminNotes } from "./admin.server"
+import { updateEventStatus } from "../event/event.server"
 import { action as syncVeteransListRoute } from "~/routes/api.sync-veterans-list"
 
 const subscriber = (id: number, email: string): ListSubscriber => ({

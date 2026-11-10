@@ -5,8 +5,8 @@ import {
   participantAttendanceStatusEnum,
   profileApprovedToAttendStatusEnum,
 } from "~types/database/entities.types"
+import { eventFormSchema } from "../event/event-schemas"
 import {
-  eventFormSchema,
   updateEventParticipantByIdSchema,
   updateParticipantVsEventSchema,
   updateProfileAdminNotesSchema,

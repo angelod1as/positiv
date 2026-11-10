@@ -16,10 +16,12 @@ import { action } from "./view-event-page"
 
 vi.mock("~/business/admin/admin.server", () => ({
   getAdminContext: vi.fn(),
-  getAdminEventById: vi.fn(),
-  getEventDemographicsById: vi.fn(),
   getProfilesWithExtraDataById: vi.fn(),
   getRejectedEventParticipants: vi.fn(),
+}))
+vi.mock("~/business/event/event.server", () => ({
+  getAdminEventById: vi.fn(),
+  getEventDemographicsById: vi.fn(),
 }))
 
 vi.mock("~/business/admin/event-listmonk-sync.server", () => ({

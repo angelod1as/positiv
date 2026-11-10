@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { eventFormSchema } from '~/business/admin/common'
+import { eventFormSchema } from '~/business/event/event-schemas'
 import {
   ABANDONED_TEST_EVENT_PATTERN,
   abandonedBefore,

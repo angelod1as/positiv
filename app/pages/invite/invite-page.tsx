@@ -1,6 +1,6 @@
 import { redirect } from "react-router"
 import { getContext } from "~/business/auth/auth.server"
-import { findValidInviteByToken } from "~/business/participant/event-invite.server"
+import { findValidInviteByToken } from "~/business/event/event-invite.server"
 import { Copy } from "~/components/atoms/copy/copy"
 import { Link } from "~/components/atoms/link/link"
 import { inviteCopy } from "~/copy/events"

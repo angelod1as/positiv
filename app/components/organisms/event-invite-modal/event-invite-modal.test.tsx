@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter } from "react-router"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import type { EventInviteRow } from "~/business/admin/event-invites.server"
+import type { EventInviteRow } from "~/business/event/event-invites.server"
 import { adminInvitesCopy } from "~/copy/admin/invites"
 import { EventInviteModal } from "./event-invite-modal"
 
