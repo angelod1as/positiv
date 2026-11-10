@@ -21,7 +21,7 @@ vi.mock("~/business/settings/app-settings.server", () => ({
   isCardPaymentsEnabled: vi.fn(),
 }))
 
-vi.mock("../../business/event/get-next-events.server", () => ({
+vi.mock("~/business/event/get-next-events.server", () => ({
   getNextEvents: vi.fn(),
 }))
 
@@ -34,7 +34,7 @@ import { applyToEvent } from "~/business/application/apply-to-event.server"
 import { cancelApplicationToEvent } from "~/business/application/cancel-application-to-event.server"
 import { hasEverApplied } from "~/business/application/has-ever-applied.server"
 import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
-import { getNextEvents } from "../../business/event/get-next-events.server"
+import { getNextEvents } from "~/business/event/get-next-events.server"
 import { logger } from "~/lib/logger/logger.server"
 import { action, clientAction, loader } from "./dashboard-page"
 import { PERMISSIONS } from "~/business/auth/permissions"

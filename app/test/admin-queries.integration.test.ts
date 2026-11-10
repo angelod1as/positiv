@@ -6,15 +6,15 @@ import {
   getAllProfiles,
   getProfileById,
   updateProfileApprovalStatus,
-} from "../business/profile/profiles.server"
+} from "~/business/profile/profiles.server"
 import {
   updateEventParticipantById,
   getProfileWithExtraDataById,
   getEventParticipantHistoryById,
   getProfilesWithExtraDataById,
   getRejectedEventParticipants,
-} from "../business/application/event-participants.server"
-import { getEventsForDashboard } from "../business/event/event.server"
+} from "~/business/application/event-participants.server"
+import { getEventsForDashboard } from "~/business/event/event.server"
 
 describe("getParticipantFullEventHistory - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()

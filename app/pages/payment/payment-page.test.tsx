@@ -6,7 +6,7 @@ import { buildPaymentOptions } from "~/business/payment/pricing"
 import { asaasConnector } from "~/business/payment/provider/asaas/asaas-connector.server"
 import { paymentsCopy } from "~/copy/payments"
 import PaymentPage from "./payment-page"
-import type { PaymentPageData } from "./payment-page.server"
+import type { PaymentPageData } from "~/business/payment/payment-page.server"
 
 const { submit, navigationState, fetcherData } = vi.hoisted(() => ({
   submit: vi.fn(),

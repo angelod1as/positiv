@@ -10,7 +10,7 @@ import { action, headers, loader, meta } from "./payment-token-page"
 import {
   findPaymentByToken,
   loadPaymentPageByToken,
-} from "./payment-page.server"
+} from "~/business/payment/payment-page.server"
 
 vi.mock("~/business/auth/auth.server", () => ({
   getContext: vi.fn(),
@@ -26,7 +26,7 @@ vi.mock("~/business/payment/payment-checkout.server", () => ({
   pickOption: vi.fn(),
 }))
 
-vi.mock("./payment-page.server", () => ({
+vi.mock("~/business/payment/payment-page.server", () => ({
   findPaymentByToken: vi.fn(),
   loadPaymentPageByToken: vi.fn(async () => ({
     state: "closed",

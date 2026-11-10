@@ -15,7 +15,7 @@ import PaymentPage from "./payment-page"
 import {
   findPaymentByToken,
   loadPaymentPageByToken,
-} from "./payment-page.server"
+} from "~/business/payment/payment-page.server"
 
 const { errors } = paymentsCopy
 
