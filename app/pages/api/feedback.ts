@@ -1,7 +1,7 @@
 import type { ActionFunctionArgs } from "react-router"
 import { ENV } from "varlock/env"
 import { submitFeedbackForm } from "~/business/feedback/submit-feedback-form.server"
-import { getClientIp } from "~/lib/helpers/get-client-ip.server"
+import { getClientIp } from "~/lib/request/get-client-ip.server"
 import { logger } from "~/lib/logger/logger.server"
 
 /**

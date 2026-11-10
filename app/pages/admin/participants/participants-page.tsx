@@ -16,7 +16,7 @@ import { createMetaArray } from "~/lib/helpers/meta"
 import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/participants-page"
-import { readFormData } from "~/lib/helpers/read-form-data.server"
+import { readFormData } from "~/lib/request/read-form-data.server"
 
 const {
   admin: { ADMIN_DASHBOARD },

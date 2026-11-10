@@ -1,5 +1,5 @@
 import { getTurnstileConfig } from "./get-turnstile-config.server"
-import type { RequestLike } from "./is-test-environment.server"
+import type { RequestLike } from "~/lib/env/is-test-environment.server"
 
 export interface TurnstileVerificationResult {
   success: boolean

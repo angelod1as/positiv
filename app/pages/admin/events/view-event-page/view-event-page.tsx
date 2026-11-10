@@ -42,7 +42,7 @@ import paths from "~/lib/paths"
 import type { ComposableFetcherData } from "~types/database/entities.types"
 import type { Route } from "./+types/view-event-page"
 import { sendToast } from "./send-toast"
-import { readFormData } from "~/lib/helpers/read-form-data.server"
+import { readFormData } from "~/lib/request/read-form-data.server"
 
 const {
   admin: { ADMIN_DASHBOARD },

@@ -32,7 +32,7 @@ import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/payment-page"
 import { loadPaymentPage, type PaymentPageData } from "./payment-page.server"
-import { readFormData } from "~/lib/helpers/read-form-data.server"
+import { readFormData } from "~/lib/request/read-form-data.server"
 
 const { page, errors } = paymentsCopy
 

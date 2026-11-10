@@ -22,7 +22,7 @@ import type { Event } from "~types/database/entities.types"
 import { getNextEvents } from "../page/fetch/get-next-events"
 import type { Route } from "./+types/dashboard-page"
 import { splitEvents } from "./utils/split-events"
-import { readFormData } from "~/lib/helpers/read-form-data.server"
+import { readFormData } from "~/lib/request/read-form-data.server"
 
 export function meta({}: Route.MetaArgs) {
   return createMetaArray(metaCopy.dashboard.title)

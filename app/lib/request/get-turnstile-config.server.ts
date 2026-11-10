@@ -1,6 +1,6 @@
 import { ENV } from "varlock/env"
-import type { RequestLike } from "./is-test-environment.server"
-import { isTestEnvironment } from "./is-test-environment.server"
+import type { RequestLike } from "~/lib/env/is-test-environment.server"
+import { isTestEnvironment } from "~/lib/env/is-test-environment.server"
 
 export interface TurnstileConfig {
   siteKey: string

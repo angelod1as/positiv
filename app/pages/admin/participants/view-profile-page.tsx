@@ -15,7 +15,7 @@ import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-profile-page"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
-import { readFormData } from "~/lib/helpers/read-form-data.server"
+import { readFormData } from "~/lib/request/read-form-data.server"
 
 const {
   admin: { ADMIN_PARTICIPANTS },

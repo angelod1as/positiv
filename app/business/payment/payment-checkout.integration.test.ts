@@ -44,7 +44,7 @@ vi.mock("./payment-alert.server", async (importOriginal) => {
   }
 })
 
-vi.mock("~/lib/helpers/is-prod.server", () => ({
+vi.mock("~/lib/env/is-prod.server", () => ({
   isProd: () => prod.value,
   isCI: () => false,
 }))

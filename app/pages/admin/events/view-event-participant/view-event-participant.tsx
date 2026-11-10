@@ -30,7 +30,7 @@ import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event-participant"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
 import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
-import { readFormData } from "~/lib/helpers/read-form-data.server"
+import { readFormData } from "~/lib/request/read-form-data.server"
 
 const {
   admin: {

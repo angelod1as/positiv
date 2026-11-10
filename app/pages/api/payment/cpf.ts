@@ -3,7 +3,7 @@ import { getUserContext } from "~/business/auth/auth.server"
 import { savePaymentCpf } from "~/business/payment/payment-cpf.server"
 import { errorsCopy } from "~/copy/errors"
 import { paymentsCopy } from "~/copy/payments"
-import { readFormData } from "~/lib/helpers/read-form-data.server"
+import { readFormData } from "~/lib/request/read-form-data.server"
 
 /**
  * A route of its own rather than the page's action: the page's action creates
