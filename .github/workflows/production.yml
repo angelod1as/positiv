@@ -366,11 +366,27 @@ jobs:
           while [ "$SECONDS" -lt 1680 ]; do
             attempt=$((attempt + 1))
 
-            # A blip in the API is not a failed deploy, so it is retried like
-            # a deployment still running.
-            body=$(printf 'header = "Authorization: Bearer %s"\n' "$COOLIFY_DEPLOY_TOKEN" |
-              curl -sS --fail-with-body --max-time 20 -K - \
-                "$COOLIFY_URL/api/v1/deployments/$DEPLOYMENT_UUID") || body='{"status":"unreachable"}'
+            # The HTTP code comes last, on its own line. A network failure
+            # leaves none, and reads as 000.
+            response=$(printf 'header = "Authorization: Bearer %s"\n' "$COOLIFY_DEPLOY_TOKEN" |
+              curl -sS --max-time 20 -K - -w '\n%{http_code}' \
+                "$COOLIFY_URL/api/v1/deployments/$DEPLOYMENT_UUID") || response=$'\n000'
+
+            code=${response##*$'\n'}
+            body=${response%$'\n'*}
+
+            # A refusal never turns into an answer, so it fails now rather than
+            # holding the production group for 28 minutes. Anything else that
+            # is not a 200 (a 5xx, a 429, the network) is retried like a
+            # deployment still running.
+            case "$code" in
+              401 | 403 | 404)
+                echo "::error::Coolify answered $code for deployment $DEPLOYMENT_UUID; check COOLIFY_URL and that the token has the read ability"
+                exit 1
+                ;;
+              200) ;;
+              *) body="{\"status\":\"HTTP $code\"}" ;;
+            esac
 
             status=$(jq -r '.status // "unknown"' <<< "$body")
             commit=$(jq -r '.commit // ""' <<< "$body")

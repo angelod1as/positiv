@@ -169,6 +169,82 @@ describe("production workflow", () => {
     expect(result.output).toBe("")
   })
 
+  describe("waiting for the Coolify deployment", () => {
+    // Runs the wait step's own script with curl replaced by a stub that
+    // answers `body` with HTTP `code`, as curl does with `-w '\n%{http_code}'`,
+    // and sleep by a no-op. SECONDS starts a second before the deadline, so a
+    // script that keeps retrying ends at once instead of spinning.
+    function waitForDeployment(body: string, code: number) {
+      const dir = mkdtempSync(join(tmpdir(), "production-workflow-"))
+      const script = join(dir, "step.sh")
+
+      writeFileSync(join(dir, "body.json"), body)
+      writeFileSync(
+        join(dir, "curl"),
+        `#!/bin/sh\ncat > /dev/null\ncat '${join(dir, "body.json")}'\nprintf '\\n%s' '${code}'\n`,
+      )
+      writeFileSync(join(dir, "sleep"), "#!/bin/sh\nexit 0\n")
+      chmodSync(join(dir, "curl"), 0o755)
+      chmodSync(join(dir, "sleep"), 0o755)
+      writeFileSync(script, runScript("Wait for the Coolify deployment of this commit"))
+
+      const result = spawnSync("bash", ["-e", script], {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PATH: `${dir}:${process.env.PATH}`,
+          SECONDS: "1679",
+          COOLIFY_URL: "https://coolify.invalid",
+          COOLIFY_DEPLOY_TOKEN: "not-a-token",
+          DEPLOYMENT_UUID: "dep-1",
+          GITHUB_SHA: "a".repeat(40),
+        },
+      })
+
+      return { status: result.status, stdout: result.stdout }
+    }
+
+    it("passes once Coolify has finished deploying this commit", () => {
+      const result = waitForDeployment(`{"status":"finished","commit":"${"a".repeat(40)}"}`, 200)
+
+      expect(result.status).toBe(0)
+      expect(result.stdout).toContain(`deployment of ${"a".repeat(40)} finished`)
+    })
+
+    it("fails when Coolify finished deploying another commit", () => {
+      const result = waitForDeployment(`{"status":"finished","commit":"${"b".repeat(40)}"}`, 200)
+
+      expect(result.status).toBe(1)
+      expect(result.stdout).toContain(`finished deploying ${"b".repeat(40)}, not ${"a".repeat(40)}`)
+    })
+
+    it.each(["failed", "cancelled-by-user"])("fails when the deployment ended %s", (status) => {
+      const result = waitForDeployment(`{"status":"${status}","commit":"${"a".repeat(40)}"}`, 200)
+
+      expect(result.status).toBe(1)
+      expect(result.stdout).toContain(`ended ${status}`)
+    })
+
+    it.each([401, 403, 404])("fails at once, naming the answer, when Coolify refuses with %i", (code) => {
+      // Retrying these only holds the production group for 28 minutes: a
+      // token without `read`, a wrong panel address or an unknown deployment
+      // never starts answering.
+      const result = waitForDeployment('{"message":"Unauthenticated."}', code)
+
+      expect(result.status).toBe(1)
+      expect(result.stdout).toContain(`Coolify answered ${code}`)
+      expect(result.stdout).not.toContain("did not finish")
+    })
+
+    it("keeps waiting through an answer that may pass", () => {
+      const result = waitForDeployment("<html>502 Bad Gateway</html>", 502)
+
+      expect(result.status).toBe(1)
+      expect(result.stdout).toContain("attempt 1: HTTP 502")
+      expect(result.stdout).toContain("did not finish")
+    })
+  })
+
   it("gives up waiting on a clock, so its error prints before the step timeout", () => {
     // Counting attempts, an API that times out on every call stretched the
     // loop past the step's timeout-minutes, and GitHub killed it without the
