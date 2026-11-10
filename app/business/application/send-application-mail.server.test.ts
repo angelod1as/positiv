@@ -2,11 +2,11 @@ import { describe, expect, it, vi, beforeEach } from "vitest"
 import { sendApplicationMail } from "./send-application-mail.server"
 import type { Event, ProfileWithRoles } from "~types/database/entities.types"
 
-vi.mock("~/business/email/send-email", () => ({
+vi.mock("~/business/email/send-email.server", () => ({
   sendEmail: vi.fn(),
 }))
 
-vi.mock("~/business/email/format-application-mail", () => ({
+vi.mock("~/business/email/format-application-mail.server", () => ({
   formatApplicationMail: vi.fn(),
 }))
 
@@ -14,8 +14,8 @@ vi.mock("~/lib/logger/logger.server", () => ({
   logger: { error: vi.fn() },
 }))
 
-import { sendEmail } from "~/business/email/send-email"
-import { formatApplicationMail } from "~/business/email/format-application-mail"
+import { sendEmail } from "~/business/email/send-email.server"
+import { formatApplicationMail } from "~/business/email/format-application-mail.server"
 import { logger } from "~/lib/logger/logger.server"
 
 describe("sendApplicationMail", () => {

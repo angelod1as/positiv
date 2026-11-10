@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { Event, ProfileWithRoles } from "~types/database/entities.types"
 import { applicationCopyFallback } from "./application-mail-copy"
 import { loadApplicationCopy } from "./application-mail-copy.server"
-import { formatApplicationMail } from "./format-application-mail"
+import { formatApplicationMail } from "./format-application-mail.server"
 
 vi.mock("~/lib/logger/logger.server", () => ({
   logger: {

@@ -2,7 +2,7 @@ import { composable } from "composable-functions"
 import type Mail from "nodemailer/lib/mailer"
 import { POSITIV_EMAIL } from "~/lib/constants/constants"
 import { emailLogger as logger } from "./email-logger.server"
-import { getEmailTransport } from "./get-email-transport"
+import { getEmailTransport } from "./get-email-transport.server"
 
 export interface MailOptions extends Omit<Mail.Options, "from"> {
   to?: NonNullable<Mail.Options["to"]>

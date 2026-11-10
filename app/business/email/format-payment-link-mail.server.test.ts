@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { buildPaymentOptions } from "~/business/payment/pricing"
 import { asaasConnector } from "~/business/payment/provider/asaas/asaas-connector.server"
-import { formatPaymentLinkMail } from "./format-payment-link-mail"
+import { formatPaymentLinkMail } from "./format-payment-link-mail.server"
 import { paymentLinkCopyFallback } from "./payment-link-mail-copy"
 import { loadPaymentLinkCopy } from "./payment-link-mail-copy.server"
 

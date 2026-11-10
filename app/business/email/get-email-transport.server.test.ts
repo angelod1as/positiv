@@ -37,7 +37,7 @@ describe("getEmailTransport", () => {
     ENV.AWS_ACCESS_KEY_ID = "key"
     ENV.AWS_SECRET_ACCESS_KEY = "secret"
 
-    const { getEmailTransport } = await import("./get-email-transport")
+    const { getEmailTransport } = await import("./get-email-transport.server")
     getEmailTransport()
 
     expect(createTransport).toHaveBeenCalledWith(
@@ -50,7 +50,7 @@ describe("getEmailTransport", () => {
     ENV.AWS_ACCESS_KEY_ID = "key"
     ENV.AWS_SECRET_ACCESS_KEY = "secret"
 
-    const { getEmailTransport } = await import("./get-email-transport")
+    const { getEmailTransport } = await import("./get-email-transport.server")
     getEmailTransport()
 
     expect(createTransport).toHaveBeenCalledWith(
@@ -66,7 +66,7 @@ describe("getEmailTransport", () => {
     ENV.AWS_ACCESS_KEY_ID = "key"
     ENV.AWS_SECRET_ACCESS_KEY = "secret"
 
-    const { getEmailTransport } = await import("./get-email-transport")
+    const { getEmailTransport } = await import("./get-email-transport.server")
     getEmailTransport()
 
     expect(createTransport).toHaveBeenCalledWith(
@@ -81,7 +81,7 @@ describe("getEmailTransport", () => {
   it("bounds a local send so it cannot outlive an outbox claim", async () => {
     ENV.APP_ENV = "development"
 
-    const { getEmailTransport } = await import("./get-email-transport")
+    const { getEmailTransport } = await import("./get-email-transport.server")
     getEmailTransport()
 
     const options = createTransport.mock.calls[0][0]
@@ -95,7 +95,7 @@ describe("getEmailTransport", () => {
     ENV.AWS_ACCESS_KEY_ID = "key"
     ENV.AWS_SECRET_ACCESS_KEY = "secret"
 
-    const { getEmailTransport } = await import("./get-email-transport")
+    const { getEmailTransport } = await import("./get-email-transport.server")
     getEmailTransport()
 
     const config = SESv2Client.mock.calls[0][0]
@@ -106,7 +106,7 @@ describe("getEmailTransport", () => {
   it("refuses to build a production transport without credentials", async () => {
     ENV.APP_ENV = "production"
 
-    const { getEmailTransport } = await import("./get-email-transport")
+    const { getEmailTransport } = await import("./get-email-transport.server")
 
     expect(() => getEmailTransport()).toThrow("Credentials not found")
   })

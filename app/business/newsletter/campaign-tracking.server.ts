@@ -1,6 +1,6 @@
 import { composable } from "composable-functions"
 import { db } from "~/lib/supabase/db.server"
-import { json } from "~/lib/helpers/kysely-helpers"
+import { json } from "~/lib/helpers/kysely-helpers.server"
 import { logger } from "~/lib/logger/logger.server"
 
 const MAX_CAMPAIGN_RETRIES = 3

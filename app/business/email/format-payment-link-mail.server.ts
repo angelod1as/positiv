@@ -3,7 +3,7 @@ import { renderTemplate } from "~/business/cms/placeholders"
 import { paymentLinkCopyFallback } from "./payment-link-mail-copy"
 import { loadPaymentLinkCopy } from "./payment-link-mail-copy.server"
 import { PAYMENT_LINK_MAIL_VARIABLES } from "./payment-link-mail.variables"
-import { renderWithFallback } from "./render-with-fallback"
+import { renderWithFallback } from "./render-with-fallback.server"
 import type { PaymentLinkCopy } from "./payment-link-mail-copy"
 import {
   paymentLinkMailTemplate,

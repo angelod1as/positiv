@@ -37,7 +37,7 @@ describe("sendEmail in production", () => {
 
   it("hands SES the whole message as one raw email", async () => {
     send.mockResolvedValue({ MessageId: "ses-message-id" })
-    const { sendEmail } = await import("./send-email")
+    const { sendEmail } = await import("./send-email.server")
 
     const result = await sendEmail({
       to: "participante@example.com",
@@ -58,7 +58,7 @@ describe("sendEmail in production", () => {
 
   it("fails the send when SES rejects the message", async () => {
     send.mockRejectedValue(new Error("MessageRejected"))
-    const { sendEmail } = await import("./send-email")
+    const { sendEmail } = await import("./send-email.server")
 
     const result = await sendEmail({
       to: "participante@example.com",

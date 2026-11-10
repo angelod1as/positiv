@@ -4,7 +4,7 @@ vi.mock("varlock/env", () => ({ ENV: {} }))
 
 import { paymentsCopy } from "~/copy/payments"
 import { AsaasError } from "./asaas-client.server"
-import { asaasErrorMessage } from "./asaas-error-message"
+import { asaasErrorMessage } from "./asaas-error-message.server"
 
 const refused = (code: string, description: string, status = 400) =>
   new AsaasError("POST", status, [{ code, description }], "/installments/inst_1/refund")

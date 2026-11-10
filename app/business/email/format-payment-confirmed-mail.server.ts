@@ -6,7 +6,7 @@ import {
 } from "./payment-confirmed-mail-copy"
 import { loadPaymentConfirmedCopy } from "./payment-confirmed-mail-copy.server"
 import { PAYMENT_CONFIRMED_MAIL_VARIABLES } from "./payment-confirmed-mail.variables"
-import { renderWithFallback } from "./render-with-fallback"
+import { renderWithFallback } from "./render-with-fallback.server"
 import {
   paymentConfirmedMailTemplate,
   type PaymentConfirmedMailInput,

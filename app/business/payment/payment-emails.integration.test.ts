@@ -19,7 +19,7 @@ const { sendEmail, logger, appUrl, cardEnabled } = vi.hoisted(() => ({
   appUrl: { override: undefined as string | undefined },
 }))
 
-vi.mock("~/business/email/send-email", () => ({ sendEmail }))
+vi.mock("~/business/email/send-email.server", () => ({ sendEmail }))
 vi.mock("~/lib/logger/logger.server", () => ({
   logger: { ...logger, child: () => logger },
 }))

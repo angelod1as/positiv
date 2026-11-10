@@ -4,7 +4,7 @@ import type { Event, ProfileWithRoles } from "~types/database/entities.types"
 import { type ApplicationCopy, applicationCopyFallback } from "./application-mail-copy"
 import { loadApplicationCopy } from "./application-mail-copy.server"
 import { APPLICATION_MAIL_VARIABLES } from "./application-mail.variables"
-import { renderWithFallback } from "./render-with-fallback"
+import { renderWithFallback } from "./render-with-fallback.server"
 import { applicationMailTemplate } from "./templates/application-mail.template"
 
 function render(

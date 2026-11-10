@@ -10,7 +10,7 @@ import {
   getAsaasInstallmentRefunds,
   getAsaasPaymentRefunds,
 } from "./asaas-client.server"
-import { asaasErrorMessage } from "./asaas-error-message"
+import { asaasErrorMessage } from "./asaas-error-message.server"
 import { asaasRefunds } from "./asaas-refunds"
 import { readAsaasWebhook } from "./asaas-webhook.server"
 

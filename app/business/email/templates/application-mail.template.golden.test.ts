@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest"
 import { sendApplicationMail } from "~/business/application/send-application-mail.server"
-import { sendEmail } from "~/business/email/send-email"
+import { sendEmail } from "~/business/email/send-email.server"
 import type { Event, ProfileWithRoles } from "~types/database/entities.types"
 import { applicationMailTemplate } from "./application-mail.template"
 
-vi.mock("~/business/email/send-email", () => ({
+vi.mock("~/business/email/send-email.server", () => ({
   sendEmail: vi.fn(async () => ({ success: true })),
 }))
 vi.mock("~/business/email/application-mail-copy.server", async () => {

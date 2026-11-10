@@ -41,7 +41,7 @@ vi.mock("~/lib/supabase/db.server", () => ({
   },
 }))
 
-vi.mock("~/lib/helpers/kysely-helpers", () => ({
+vi.mock("~/lib/helpers/kysely-helpers.server", () => ({
   json: vi.fn((v: unknown) => v),
 }))
 

@@ -1,7 +1,7 @@
-import { formatApplicationMail } from "~/business/email/format-application-mail"
+import { formatApplicationMail } from "~/business/email/format-application-mail.server"
 import type { Event, ProfileWithRoles } from "~types/database/entities.types"
 
-import { type MailOptions, sendEmail } from "~/business/email/send-email"
+import { type MailOptions, sendEmail } from "~/business/email/send-email.server"
 import { logger } from "~/lib/logger/logger.server"
 
 type sendApplicationMailProps = {

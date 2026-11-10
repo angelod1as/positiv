@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { formatPaymentRefundMail } from "./format-payment-refund-mail"
+import { formatPaymentRefundMail } from "./format-payment-refund-mail.server"
 import { paymentRefundCopyFallback } from "./payment-refund-mail-copy"
 import { loadPaymentRefundCopy } from "./payment-refund-mail-copy.server"
 

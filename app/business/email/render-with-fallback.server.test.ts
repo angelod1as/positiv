@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { logger } from "~/lib/logger/logger.server"
-import { renderWithFallback } from "./render-with-fallback"
+import { renderWithFallback } from "./render-with-fallback.server"
 
 vi.mock("~/lib/logger/logger.server", () => ({
   logger: {

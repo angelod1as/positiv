@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { formatPaymentConfirmedMail } from "./format-payment-confirmed-mail"
+import { formatPaymentConfirmedMail } from "./format-payment-confirmed-mail.server"
 import { paymentConfirmedCopyFallback } from "./payment-confirmed-mail-copy"
 import { loadPaymentConfirmedCopy } from "./payment-confirmed-mail-copy.server"
 
