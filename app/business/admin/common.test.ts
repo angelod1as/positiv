@@ -7,7 +7,7 @@ import {
 } from "~types/database/entities.types"
 import { eventFormSchema } from "../event/event-schemas"
 import { updateEventParticipantByIdSchema, updateParticipantVsEventSchema } from "../application/application-schemas"
-import { updateProfileAdminNotesSchema, updateProfileApprovalStatusSchema } from "./common"
+import { updateProfileAdminNotesSchema, updateProfileApprovalStatusSchema } from "../profile/profile-schemas"
 
 const base = {
   title: "Festa",

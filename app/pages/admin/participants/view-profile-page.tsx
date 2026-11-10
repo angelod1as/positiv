@@ -1,13 +1,13 @@
 import { NoResultError } from "kysely"
 import { redirectWithError } from "remix-toast"
+import { getAdminContext } from "~/business/admin/admin.server"
 import {
-  getAdminContext,
   getParticipantFullEventHistory,
   getProfileById,
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
-} from "~/business/admin/admin.server"
-import { setProfileCpfExempt } from "~/business/admin/cpf-exemption.server"
+} from "~/business/profile/profiles.server"
+import { setProfileCpfExempt } from "~/business/profile/cpf-exemption.server"
 import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
 import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { logger } from "~/lib/logger/logger.server"

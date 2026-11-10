@@ -29,7 +29,8 @@ vi.mock("../auth/auth.server", () => ({
 
 // Import after mocking
 import { getUserContext } from "../auth/auth.server"
-import { getAdminContext, getParticipantFullEventHistory } from "./admin.server"
+import { getAdminContext } from "./admin.server"
+import { getParticipantFullEventHistory } from "../profile/profiles.server"
 
 describe("getAdminContext", () => {
   it("should return admin context without events array", async () => {

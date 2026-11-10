@@ -2,7 +2,8 @@ import type { z } from "zod"
 import { toCommitErrors } from "~/lib/helpers/to-commit-errors"
 import { logger } from "~/lib/logger/logger.server"
 import type { CommitError } from "~types/forms/commit.types"
-import { agreeToTermsSchema, userContextSchema } from "../common"
+import { agreeToTermsSchema } from "./profile-schemas"
+import { userContextSchema } from "../common"
 import { agreeToTerms } from "./agree-to-terms.server"
 
 /**

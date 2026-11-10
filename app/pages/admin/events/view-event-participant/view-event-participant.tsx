@@ -1,15 +1,15 @@
 import type { ShouldRevalidateFunctionArgs } from "react-router"
 import { NoResultError } from "kysely"
 import { redirectWithError } from "remix-toast"
+import { getAdminContext } from "~/business/admin/admin.server"
 import {
-  getAdminContext,
   getParticipantFullEventHistory,
   getProfileById,
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
-} from "~/business/admin/admin.server"
+} from "~/business/profile/profiles.server"
 import { getEventParticipantBasic, updateEventParticipantById } from "~/business/application/event-participants.server"
-import { setProfileCpfExempt } from "~/business/admin/cpf-exemption.server"
+import { setProfileCpfExempt } from "~/business/profile/cpf-exemption.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
 import { paymentProvider } from "~/business/payment/payment-provider.server"
 import { getPaymentsForParticipant } from "~/business/payment/payment-totals.server"

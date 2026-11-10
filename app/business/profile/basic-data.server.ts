@@ -12,8 +12,8 @@ import {
   basicDataSchema,
   cpfExemptBasicDataSchema,
   ExtraBasicDataSchema,
-  userContextSchema,
-} from "../common"
+} from "./profile-schemas"
+import { userContextSchema } from "../common"
 import { refreshNewsletterSubscriber } from "../newsletter/auto-subscribe.server"
 
 type SaveBasicDataProps = {

@@ -4,8 +4,10 @@ import { validationMessages } from "~/lib/helpers/validation-messages"
 import {
   basicDataFieldsSchema,
   basicDataSchema,
-  currentProfileSchema,
   ExtraBasicDataSchema,
+} from "./profile/profile-schemas"
+import {
+  currentProfileSchema,
   registerUserFieldsSchema,
   registerUserSchema,
 } from "./common"

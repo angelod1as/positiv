@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { validateQuestion } from "~/components/forms/runtime/validate-question"
-import { basicDataFieldsSchema } from "~/business/common"
+import { basicDataFieldsSchema } from "~/business/profile/profile-schemas"
 import { basicDataValidation } from "~/copy/account"
 import { buildBasicDataQuestions } from "./build-basic-data-questions"
 

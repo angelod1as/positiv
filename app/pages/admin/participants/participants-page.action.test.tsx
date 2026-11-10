@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import {
-  getAdminContext,
-  updateProfileAdminNotes,
-} from "~/business/admin/admin.server"
+import { getAdminContext } from "~/business/admin/admin.server"
+import { updateProfileAdminNotes } from "~/business/profile/profiles.server"
 import { syncVeteransListmonkList } from "~/business/newsletter/veterans-list.server"
 import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { action } from "./participants-page"
 
 vi.mock("~/business/admin/admin.server", () => ({
   getAdminContext: vi.fn(),
+}))
+vi.mock("~/business/profile/profiles.server", () => ({
   getAllProfiles: vi.fn(),
   updateProfileAdminNotes: vi.fn(),
 }))

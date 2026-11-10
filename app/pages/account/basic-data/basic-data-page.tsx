@@ -3,6 +3,7 @@ import { can, PERMISSIONS } from "~/business/auth/permissions"
 import { useNavigate } from "react-router"
 import { toast } from "sonner"
 import { getUserContext } from "~/business/auth/auth.server"
+import { findOrphanedProfile } from "~/business/profile/profiles.server"
 import { buildBasicDataLayout } from "~/components/forms/custom/basic-data/build-basic-data-layout"
 import { buildBasicDataQuestions } from "~/components/forms/custom/basic-data/build-basic-data-questions"
 import { toBasicDataAnswers } from "~/components/forms/custom/basic-data/to-basic-data-answers"
@@ -44,12 +45,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   // Check for orphaned profile with user's email
   let orphanedProfile = null
   if (currentUser?.email) {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("email", currentUser.email)
-      .is("user_id", null)
-      .single()
+    const { data, error } = await findOrphanedProfile(supabase, currentUser.email)
 
     // Only set orphanedProfile if we found one (ignore "no rows" error)
     if (data && !error) {

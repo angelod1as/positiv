@@ -48,7 +48,7 @@ vi.mock("~/business/newsletter/listmonk-client.server", async (importOriginal) =
 }))
 
 import { updateEventParticipantById } from "../application/event-participants.server"
-import { updateProfileAdminNotes } from "./admin.server"
+import { updateProfileAdminNotes } from "./profiles.server"
 import { updateEventStatus } from "../event/event.server"
 import { action as syncVeteransListRoute } from "~/routes/api.sync-veterans-list"
 

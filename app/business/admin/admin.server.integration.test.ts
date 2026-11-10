@@ -6,7 +6,7 @@ import {
   getAllProfiles,
   getProfileById,
   updateProfileApprovalStatus,
-} from "./admin.server"
+} from "../profile/profiles.server"
 import {
   updateEventParticipantById,
   getProfileWithExtraDataById,

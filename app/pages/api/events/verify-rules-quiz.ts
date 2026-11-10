@@ -1,7 +1,7 @@
 import { redirect, type ActionFunctionArgs } from "react-router"
 import { getUserContext } from "~/business/auth/auth.server"
 import { findEventId } from "~/business/event/event.server"
-import { isVeteran } from "~/business/participant/is-veteran.server"
+import { isVeteran } from "~/business/profile/is-veteran.server"
 import { rulesSessionStorage } from "~/business/application/rules-session.server"
 import {
   OPENING_QUESTION,

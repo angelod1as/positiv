@@ -5,12 +5,12 @@ vi.mock("~/business/auth/auth.server", () => ({
   getUserContext: vi.fn(),
 }))
 
-vi.mock("~/business/participant/save-terms-agreement.server", () => ({
+vi.mock("~/business/profile/save-terms-agreement.server", () => ({
   saveTermsAgreement: vi.fn(),
 }))
 
 import { getUserContext } from "~/business/auth/auth.server"
-import { saveTermsAgreement } from "~/business/participant/save-terms-agreement.server"
+import { saveTermsAgreement } from "~/business/profile/save-terms-agreement.server"
 
 const mockGetUserContext = vi.mocked(getUserContext)
 const mockSaveTermsAgreement = vi.mocked(saveTermsAgreement)

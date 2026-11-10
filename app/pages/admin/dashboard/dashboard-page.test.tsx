@@ -10,6 +10,8 @@ vi.mock("~/business/admin/admin.server", () => ({
     },
     supabase: {} as SupabaseClient,
   }),
+}))
+vi.mock("~/business/profile/profiles.server", () => ({
   getRecentProfiles: vi.fn().mockResolvedValue([
     {
       id: "profile-1",

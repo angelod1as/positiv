@@ -1,5 +1,6 @@
 import type { z } from "zod"
-import type { basicDataSchema, changePasswordSchema } from "~/business/common"
+import type { basicDataSchema } from "~/business/profile/profile-schemas"
+import type { changePasswordSchema } from "~/business/common"
 
 export const accountReadyCopy = {
   title: "Sua conta está pronta! 🎉",
