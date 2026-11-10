@@ -1,6 +1,6 @@
 import { composable } from "composable-functions"
 import { cancelActivePayment } from "~/business/payment/payment-offer.server"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { dateToString } from "~/lib/helpers/date-to-string"
 import { logger } from "~/lib/logger/logger.server"
 import { cancellationReasonSchema } from "./cancellation-reason-schema"
@@ -26,7 +26,7 @@ export const cancelApplicationToEvent = composable(
 
     const cancellationReason = cancellationReasonSchema.parse(reason)
 
-    const withdrawn = await kyselyDb
+    const withdrawn = await db
       .updateTable("event_participants")
       .set({
         is_user_applied: false,
@@ -56,7 +56,7 @@ export const cancelApplicationToEvent = composable(
       .execute()
 
     if (withdrawn.length === 0) {
-      const paid = await kyselyDb
+      const paid = await db
         .selectFrom("event_participants")
         .innerJoin(
           "event_participant_payments",

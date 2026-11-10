@@ -3,7 +3,7 @@ import { ENV } from "varlock/env"
 import { participantCancellationAlertCopy as copy } from "~/copy/admin"
 import { adminPropMapsCopy } from "~/copy/admin/prop-maps"
 import { sharedCopy } from "~/copy/shared"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import type { ParticipantApplicationStatus } from "~types/database/entities.types"
@@ -26,7 +26,7 @@ export interface ParticipantCancellation {
 export async function findParticipantCancellation(
   eventParticipantId: string,
 ): Promise<ParticipantCancellation | undefined> {
-  const row = await kyselyDb
+  const row = await db
     .selectFrom("event_participants as ep")
     .innerJoin("events as e", "e.id", "ep.event_id")
     .innerJoin("profiles as p", "p.id", "ep.profile_id")

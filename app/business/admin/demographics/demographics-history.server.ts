@@ -1,6 +1,6 @@
 import { composable } from "composable-functions"
 import type { Transaction } from "kysely"
-import { kyselyDb } from "~/kysely-db"
+import { db as kyselyDb } from "~/lib/supabase/db.server"
 import type { Database } from "~/types/database/kysely.types"
 import type { Demographics } from "./demographics"
 

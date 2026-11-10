@@ -1,6 +1,6 @@
 import { applySchema } from "composable-functions"
 import { paymentsCopy } from "~/copy/payments"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { zod } from "~/lib/helpers/zod"
 import { isValidCpf, normalizeCpf } from "~/lib/helpers/cpf"
 import { isUniqueViolation } from "~/lib/helpers/is-unique-violation"
@@ -22,7 +22,7 @@ export const savePaymentCpfSchema = zod.object({
 export const savePaymentCpf = applySchema(savePaymentCpfSchema)(
   async (values) => {
     try {
-      await kyselyDb
+      await db
         .updateTable("profiles")
         .set({ cpf: values.cpf })
         .where("id", "=", values.profileId)

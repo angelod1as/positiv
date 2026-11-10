@@ -2,7 +2,7 @@ import { formatPaymentConfirmedMail } from "~/business/email/format-payment-conf
 import { formatPaymentLinkMail } from "~/business/email/format-payment-link-mail"
 import { formatPaymentRefundMail } from "~/business/email/format-payment-refund-mail"
 import { type MailOptions, sendEmail } from "~/business/email/send-email"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { appOrigin } from "~/lib/helpers/app-origin"
 import { emailLink } from "~/lib/helpers/email-link"
 import { paymentLogger as logger } from "./payment-logger.server"
@@ -54,7 +54,7 @@ export async function sendPaymentLinkEmail({
 }: {
   paymentId: string
 }): Promise<{ success: boolean }> {
-  const payment = await kyselyDb
+  const payment = await db
     .selectFrom("payments as p")
     .innerJoin("event_participants as ep", "ep.id", "p.event_participant_id")
     .innerJoin("events as e", "e.id", "ep.event_id")
@@ -158,7 +158,7 @@ export async function sendPaymentConfirmedEmail({
 }: {
   paymentId: string
 }): Promise<{ success: boolean }> {
-  const payment = await kyselyDb
+  const payment = await db
     .selectFrom("payments as p")
     .innerJoin("event_participants as ep", "ep.id", "p.event_participant_id")
     .innerJoin("events as e", "e.id", "ep.event_id")
@@ -231,7 +231,7 @@ export async function sendPaymentRefundEmail({
 }: {
   paymentId: string
 }): Promise<{ success: boolean }> {
-  const payment = await kyselyDb
+  const payment = await db
     .selectFrom("payments as p")
     .innerJoin("event_participants as ep", "ep.id", "p.event_participant_id")
     .innerJoin("events as e", "e.id", "ep.event_id")

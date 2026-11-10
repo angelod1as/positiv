@@ -32,7 +32,7 @@ vi.mock("~/lib/logger/logger.server", () => ({
   logger: { ...logger, child: () => logger },
 }))
 
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import {
   deliverPaymentEmail,
   queuePaymentEmail,
@@ -123,7 +123,7 @@ describe("payment email outbox", () => {
     it("writes a row that still owes its send", async () => {
       const payment = await paidPayment()
 
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "confirmation",
       })
@@ -138,11 +138,11 @@ describe("payment email outbox", () => {
     it("reuses the link a payment still owes rather than queuing a second", async () => {
       const payment = await openPayment()
 
-      const first = await queuePaymentEmail(kyselyDb, {
+      const first = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "link",
       })
-      const second = await queuePaymentEmail(kyselyDb, {
+      const second = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "link",
       })
@@ -160,7 +160,7 @@ describe("payment email outbox", () => {
     // run at being sent rather than the leftovers of the one that gave up.
     it("gives a reused link a fresh start", async () => {
       const payment = await openPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "link",
       })
@@ -175,7 +175,7 @@ describe("payment email outbox", () => {
         .where("id", "=", id)
         .execute()
 
-      await queuePaymentEmail(kyselyDb, { paymentId: payment.id, kind: "link" })
+      await queuePaymentEmail(db, { paymentId: payment.id, kind: "link" })
 
       const row = await readRow(id)
       expect(row.attempts).toBe(0)
@@ -186,13 +186,13 @@ describe("payment email outbox", () => {
 
     it("queues a new link once the one owed has gone out", async () => {
       const payment = await openPayment()
-      const first = await queuePaymentEmail(kyselyDb, {
+      const first = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "link",
       })
       await deliverPaymentEmail(first)
 
-      const second = await queuePaymentEmail(kyselyDb, {
+      const second = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "link",
       })
@@ -207,7 +207,7 @@ describe("payment email outbox", () => {
     it("queues on a connection that plans statements generically", async () => {
       const payment = await openPayment()
 
-      const id = await kyselyDb.transaction().execute(async (trx) => {
+      const id = await db.transaction().execute(async (trx) => {
         await sql`SET LOCAL plan_cache_mode = force_generic_plan`.execute(trx)
         return queuePaymentEmail(trx, { paymentId: payment.id, kind: "link" })
       })
@@ -218,11 +218,11 @@ describe("payment email outbox", () => {
     it("still queues a second refund email for the same payment", async () => {
       const payment = await paidPayment()
 
-      const first = await queuePaymentEmail(kyselyDb, {
+      const first = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "refund",
       })
-      const second = await queuePaymentEmail(kyselyDb, {
+      const second = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "refund",
       })
@@ -234,7 +234,7 @@ describe("payment email outbox", () => {
   describe("deliverPaymentEmail", () => {
     it("sends the email its kind names and stamps the row", async () => {
       const payment = await paidPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "confirmation",
       })
@@ -253,7 +253,7 @@ describe("payment email outbox", () => {
 
     it("routes a refund row to the refund email", async () => {
       const payment = await paidPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "refund",
       })
@@ -269,7 +269,7 @@ describe("payment email outbox", () => {
     it("leaves the row owed when the send does not succeed", async () => {
       sendPaymentConfirmedEmail.mockResolvedValue({ success: false })
       const payment = await paidPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "confirmation",
       })
@@ -287,7 +287,7 @@ describe("payment email outbox", () => {
     it("records the reason when the sender throws", async () => {
       sendPaymentConfirmedEmail.mockRejectedValue(new Error("smtp is down"))
       const payment = await paidPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "confirmation",
       })
@@ -303,7 +303,7 @@ describe("payment email outbox", () => {
     it("waits longer before each attempt after a failure", async () => {
       sendPaymentConfirmedEmail.mockResolvedValue({ success: false })
       const payment = await paidPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "confirmation",
       })
@@ -320,7 +320,7 @@ describe("payment email outbox", () => {
     it("gives a row up after its fifth failed attempt", async () => {
       sendPaymentConfirmedEmail.mockResolvedValue({ success: false })
       const payment = await paidPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "confirmation",
       })
@@ -352,7 +352,7 @@ describe("payment email outbox", () => {
     it("only warns about a failure it will try again", async () => {
       sendPaymentConfirmedEmail.mockResolvedValue({ success: false })
       const payment = await paidPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "confirmation",
       })
@@ -366,7 +366,7 @@ describe("payment email outbox", () => {
 
     it("does not claim a row it has given up on", async () => {
       const payment = await paidPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "confirmation",
       })
@@ -384,7 +384,7 @@ describe("payment email outbox", () => {
 
     it("sends once when two deliveries race for the same row", async () => {
       const payment = await paidPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "confirmation",
       })
@@ -401,7 +401,7 @@ describe("payment email outbox", () => {
 
     it("takes a row back once the claim on it has expired", async () => {
       const payment = await paidPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "confirmation",
       })
@@ -422,7 +422,7 @@ describe("payment email outbox", () => {
 
     it("leaves a row a live claim still covers", async () => {
       const payment = await paidPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "confirmation",
       })
@@ -446,7 +446,7 @@ describe("payment email outbox", () => {
     // Whatever it writes must not land on the claim that replaced it.
     it("does not release a claim that replaced its own", async () => {
       const payment = await paidPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "confirmation",
       })
@@ -472,7 +472,7 @@ describe("payment email outbox", () => {
     // the claim that replaced this one then fails.
     it("records a send on a claim that was taken over, and says it may be a second one", async () => {
       const payment = await paidPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "confirmation",
       })
@@ -497,7 +497,7 @@ describe("payment email outbox", () => {
 
     it("does not send again an email that went out on a claim taken over", async () => {
       const payment = await paidPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "confirmation",
       })
@@ -529,7 +529,7 @@ describe("payment email outbox", () => {
     // charge that has just been paid or called off. The claim itself asks.
     it("does not send a link for a charge that closed since", async () => {
       const payment = await openPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "link",
       })
@@ -550,7 +550,7 @@ describe("payment email outbox", () => {
 
     it("does not send a row that already went out", async () => {
       const payment = await paidPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "confirmation",
       })
@@ -568,7 +568,7 @@ describe("payment email outbox", () => {
     it("delivers a row whose send never happened", async () => {
       sendPaymentConfirmedEmail.mockResolvedValueOnce({ success: false })
       const payment = await paidPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "confirmation",
       })
@@ -587,7 +587,7 @@ describe("payment email outbox", () => {
     it("counts a row somebody else is sending as skipped, not failed", async () => {
       sendPaymentConfirmedEmail.mockResolvedValueOnce({ success: false })
       const payment = await paidPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "confirmation",
       })
@@ -611,7 +611,7 @@ describe("payment email outbox", () => {
     it("waits out the pause a failed send left before trying again", async () => {
       sendPaymentConfirmedEmail.mockResolvedValueOnce({ success: false })
       const payment = await paidPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "confirmation",
       })
@@ -628,7 +628,7 @@ describe("payment email outbox", () => {
 
     it("leaves a row it has given up on for a person", async () => {
       const payment = await paidPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "confirmation",
       })
@@ -647,7 +647,7 @@ describe("payment email outbox", () => {
 
     it("leaves a row that already went out alone", async () => {
       const payment = await paidPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "confirmation",
       })
@@ -664,7 +664,7 @@ describe("payment email outbox", () => {
 
     it("gives a fresh row time to be sent the normal way", async () => {
       const payment = await paidPayment()
-      await queuePaymentEmail(kyselyDb, {
+      await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "confirmation",
       })
@@ -677,7 +677,7 @@ describe("payment email outbox", () => {
 
     it("does not send a link for a charge that is no longer open", async () => {
       const payment = await openPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "link",
       })
@@ -702,7 +702,7 @@ describe("payment email outbox", () => {
     // interchangeable: this one decides whether a link is still worth sending.
     it("leaves the link of a charge that has lapsed", async () => {
       const payment = await openPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "link",
       })
@@ -721,7 +721,7 @@ describe("payment email outbox", () => {
 
     it("still sends a link for a charge that is open", async () => {
       const payment = await openPayment()
-      const id = await queuePaymentEmail(kyselyDb, {
+      const id = await queuePaymentEmail(db, {
         paymentId: payment.id,
         kind: "link",
       })

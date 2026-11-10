@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 
 const newToken = () => randomBytes(24).toString("base64url")
 
@@ -22,7 +22,7 @@ export async function createInvite({
   eventId: string
   profileId: string
 }) {
-  const existing = await kyselyDb
+  const existing = await db
     .selectFrom("event_invites")
     .selectAll()
     .where("event_id", "=", eventId)
@@ -37,7 +37,7 @@ export async function createInvite({
   // index is what settles it, and the loser reads back what the winner wrote
   // rather than surfacing a constraint violation as a 500.
   try {
-    return await kyselyDb
+    return await db
       .insertInto("event_invites")
       .values({ event_id: eventId, profile_id: profileId, token: newToken() })
       .returningAll()
@@ -45,7 +45,7 @@ export async function createInvite({
   } catch (error) {
     if (!isUniqueViolation(error)) throw error
 
-    const winner = await kyselyDb
+    const winner = await db
       .selectFrom("event_invites")
       .selectAll()
       .where("event_id", "=", eventId)
@@ -70,7 +70,7 @@ const isUniqueViolation = (error: unknown) =>
   (error as { code?: unknown }).code === "23505"
 
 const reissue = async (inviteId: string) =>
-  await kyselyDb
+  await db
     .updateTable("event_invites")
     .set({ token: newToken(), revoked_at: null, used_at: null })
     .where("id", "=", inviteId)
@@ -83,7 +83,7 @@ const reissue = async (inviteId: string) =>
  * names the event it believes it is acting on, and that has to be true.
  */
 export async function revokeInvite(eventId: string, inviteId: string) {
-  await kyselyDb
+  await db
     .updateTable("event_invites")
     .set({ revoked_at: new Date().toISOString() })
     .where("id", "=", inviteId)
@@ -92,7 +92,7 @@ export async function revokeInvite(eventId: string, inviteId: string) {
 }
 
 export async function listInvitesForEvent(eventId: string) {
-  return await kyselyDb
+  return await db
     .selectFrom("event_invites")
     .innerJoin("profiles", "profiles.id", "event_invites.profile_id")
     .select([

@@ -22,8 +22,8 @@ vi.mock("remix-toast", () => ({
   }),
 }))
 
-vi.mock("~/kysely-db", () => ({
-  kyselyDb: {
+vi.mock("~/lib/supabase/db.server", () => ({
+  db: {
     selectFrom: vi.fn(),
   },
 }))
@@ -508,7 +508,7 @@ describe("registerUser", () => {
   beforeEach(async () => {
     vi.mocked(recordSignupAttempt).mockResolvedValue(true)
     vi.mocked(isSignupDomainBlocked).mockResolvedValue(false)
-    const { kyselyDb: kysely } = await import("~/kysely-db")
+    const { db: kysely } = await import("~/lib/supabase/db.server")
     vi.mocked(kysely.selectFrom).mockReturnValue({
       select: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
@@ -746,7 +746,7 @@ describe("registerUser", () => {
     }
 
     // Mock Kysely to return an existing claimed profile (user_id IS NOT NULL)
-    const { kyselyDb: kysely } = await import("~/kysely-db")
+    const { db: kysely } = await import("~/lib/supabase/db.server")
     const mockExecuteTakeFirst = vi
       .fn()
       .mockResolvedValue({ id: "claimed-profile-id" })
@@ -809,7 +809,7 @@ describe("registerUser", () => {
       },
     }
 
-    const { kyselyDb: kysely } = await import("~/kysely-db")
+    const { db: kysely } = await import("~/lib/supabase/db.server")
     const mockExecuteTakeFirst = vi
       .fn()
       .mockResolvedValue({ id: "claimed-profile-id" })
@@ -863,7 +863,7 @@ describe("registerUser", () => {
 
     // Mock Kysely to return NO claimed profile (orphan exists but has user_id=NULL)
     // The claimed profile check (user_id IS NOT NULL) returns undefined → allow signup
-    const { kyselyDb: kysely } = await import("~/kysely-db")
+    const { db: kysely } = await import("~/lib/supabase/db.server")
     const mockExecuteTakeFirst = vi.fn().mockResolvedValue(undefined)
     const mockWhereUserId = vi.fn().mockReturnValue({
       executeTakeFirst: mockExecuteTakeFirst,
@@ -912,7 +912,7 @@ describe("registerUser", () => {
     }
 
     // Mock Kysely to return no existing profile
-    const { kyselyDb: kysely } = await import("~/kysely-db")
+    const { db: kysely } = await import("~/lib/supabase/db.server")
     const mockExecuteTakeFirst = vi.fn().mockResolvedValue(undefined)
     const mockWhereUserId = vi.fn().mockReturnValue({
       executeTakeFirst: mockExecuteTakeFirst,
@@ -1070,7 +1070,7 @@ describe("registerUser signup guard", () => {
     vi.clearAllMocks()
     vi.mocked(recordSignupAttempt).mockResolvedValue(true)
     vi.mocked(isSignupDomainBlocked).mockResolvedValue(false)
-    const { kyselyDb: kysely } = await import("~/kysely-db")
+    const { db: kysely } = await import("~/lib/supabase/db.server")
     vi.mocked(kysely.selectFrom).mockReturnValue({
       select: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({

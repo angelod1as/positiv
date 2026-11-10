@@ -8,8 +8,8 @@ vi.mock("~/lib/logger/logger.server", () => ({
 const mockReturningExecute = vi.fn().mockResolvedValue([])
 const mockExecute = vi.fn().mockResolvedValue([])
 
-vi.mock("~/kysely-db", () => ({
-  kyselyDb: {
+vi.mock("~/lib/supabase/db.server", () => ({
+  db: {
     updateTable: vi.fn(() => ({
       set: vi.fn(() => ({
         where: vi.fn(() => ({

@@ -8,7 +8,7 @@ const { logger } = vi.hoisted(() => ({
 }))
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
 
-vi.mock("~/kysely-db", () => ({ kyselyDb: {} }))
+vi.mock("~/lib/supabase/db.server", () => ({ db: {} }))
 
 const cancellation = {
   eventId: "event-123",

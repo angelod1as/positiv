@@ -36,7 +36,7 @@ vi.mock("kysely", async () => {
   }
 })
 
-vi.mock("~/kysely-db", () => {
+vi.mock("~/lib/supabase/db.server", () => {
   const chain = {
     selectFrom: vi.fn().mockReturnThis(),
     innerJoin: vi.fn().mockReturnThis(),
@@ -53,7 +53,7 @@ vi.mock("~/kysely-db", () => {
     executeTakeFirst: mockExecuteTakeFirst,
     executeTakeFirstOrThrow: mockExecuteTakeFirstOrThrow,
   }
-  return { kyselyDb: chain }
+  return { db: chain }
 })
 
 vi.mock("../newsletter/listmonk-lists.server", () => ({

@@ -1,5 +1,5 @@
 import { sql } from "kysely"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { DATAVIZ_EVENT_CUTOFF_DATE } from "~/lib/constants/constants"
 import type {
   EventAttendanceDataPoint,
@@ -11,7 +11,7 @@ import type {
 export async function getEventAttendanceData(): Promise<
   EventAttendanceDataPoint[]
 > {
-  const result = await kyselyDb
+  const result = await db
     .selectFrom("events")
     .leftJoin(
       "event_participants",
@@ -76,7 +76,7 @@ export async function getEventAttendanceData(): Promise<
 }
 
 export async function getEventRevenueData(): Promise<EventRevenueDataPoint[]> {
-  const result = await kyselyDb
+  const result = await db
     .selectFrom("events")
     .leftJoin(
       "event_participants",
@@ -127,7 +127,7 @@ export async function getEventRevenueData(): Promise<EventRevenueDataPoint[]> {
 export async function getConversionFunnelData(): Promise<
   ConversionFunnelDataPoint[]
 > {
-  const result = await kyselyDb
+  const result = await db
     .selectFrom("events")
     .leftJoin(
       "event_participants",
@@ -184,7 +184,7 @@ export async function getConversionFunnelData(): Promise<
 }
 
 export async function getOccupancyData(): Promise<OccupancyDataPoint[]> {
-  const result = await kyselyDb
+  const result = await db
     .selectFrom("events")
     .leftJoin(
       "event_participants",

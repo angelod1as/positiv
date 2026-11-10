@@ -1,4 +1,4 @@
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { paymentProvider } from "~/business/payment/payment-provider.server"
 
 /**
@@ -8,7 +8,7 @@ import { paymentProvider } from "~/business/payment/payment-provider.server"
 export const isProviderConfigured = () => paymentProvider().isConfigured()
 
 export const getOnlinePaymentsSetting = async () => {
-  const row = await kyselyDb
+  const row = await db
     .selectFrom("app_settings as s")
     .leftJoin("profiles as p", "p.id", "s.updated_by")
     .select([
@@ -37,7 +37,7 @@ export const getOnlinePaymentsSetting = async () => {
 export const isOnlinePaymentsEnabled = async () => {
   if (!isProviderConfigured()) return false
 
-  const row = await kyselyDb
+  const row = await db
     .selectFrom("app_settings")
     .select("online_payments_enabled")
     .executeTakeFirst()
@@ -58,7 +58,7 @@ export const setOnlinePaymentsEnabled = async ({
     updated_by: profileId ?? null,
   }
 
-  await kyselyDb
+  await db
     .insertInto("app_settings")
     .values({ id: true, ...values })
     .onConflict((oc) => oc.column("id").doUpdateSet(values))
@@ -66,7 +66,7 @@ export const setOnlinePaymentsEnabled = async ({
 }
 
 export const isCardPaymentsEnabled = async () => {
-  const row = await kyselyDb
+  const row = await db
     .selectFrom("app_settings")
     .select("card_payments_enabled")
     .executeTakeFirst()
@@ -87,7 +87,7 @@ export const setCardPaymentsEnabled = async ({
     updated_by: profileId ?? null,
   }
 
-  await kyselyDb
+  await db
     .insertInto("app_settings")
     .values({ id: true, ...values })
     .onConflict((oc) => oc.column("id").doUpdateSet(values))
@@ -95,7 +95,7 @@ export const setCardPaymentsEnabled = async ({
 }
 
 export const getRegistrationLimit = async () => {
-  const row = await kyselyDb
+  const row = await db
     .selectFrom("app_settings")
     .select("registration_limit")
     .executeTakeFirst()
@@ -116,7 +116,7 @@ export const setRegistrationLimit = async ({
     updated_by: profileId ?? null,
   }
 
-  await kyselyDb
+  await db
     .insertInto("app_settings")
     .values({ id: true, ...values })
     .onConflict((oc) => oc.column("id").doUpdateSet(values))

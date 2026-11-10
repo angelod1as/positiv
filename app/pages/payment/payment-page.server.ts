@@ -8,7 +8,7 @@ import {
   type PaymentOption,
 } from "~/business/payment/pricing"
 import { paymentsCopy } from "~/copy/payments"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { zod } from "~/lib/helpers/zod"
 import paths from "~/lib/paths"
 
@@ -50,7 +50,7 @@ async function findOwnPayment(paymentId: string, profileId: string) {
     )
   }
 
-  const payment = await kyselyDb
+  const payment = await db
     .selectFrom("payments as p")
     .innerJoin("event_participants as ep", "ep.id", "p.event_participant_id")
     .innerJoin("events as e", "e.id", "ep.event_id")
@@ -214,7 +214,7 @@ const ACCESS_TOKEN = /^[0-9a-f]{48}$/
  */
 export async function findPaymentByToken(token: string) {
   const payment = ACCESS_TOKEN.test(token)
-    ? await kyselyDb
+    ? await db
         .selectFrom("payments as p")
         .innerJoin("event_participants as ep", "ep.id", "p.event_participant_id")
         .innerJoin("events as e", "e.id", "ep.event_id")

@@ -11,7 +11,7 @@ import {
 import { createMetaArray } from "~/lib/helpers/meta"
 import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import type { Route } from "./+types/event-application-confirmation-page"
 import { Copy } from "~/components/atoms/copy/copy"
 import { applicationConfirmationCopy } from "~/copy/events"
@@ -28,7 +28,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   if (!params.id || !currentProfile) return redirect(DASHBOARD)
 
-  const application = await kyselyDb
+  const application = await db
     .selectFrom("event_participants")
     .select("id")
     .where("event_id", "=", params.id)

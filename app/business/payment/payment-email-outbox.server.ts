@@ -1,5 +1,5 @@
 import { sql, type Kysely } from "kysely"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { paymentLogger as logger } from "./payment-logger.server"
 import type { Database } from "~types/database/kysely.types"
 import { ACTIVE_PAYMENT_STATUSES } from "./payment-totals.server"
@@ -102,7 +102,7 @@ export async function queuePaymentEmail(
 export async function deliverPaymentEmail(
   id: string,
 ): Promise<{ sent: boolean; claimed: boolean }> {
-  const claimed = await kyselyDb
+  const claimed = await db
     .updateTable("payment_emails")
     .set({
       claimed_at: new Date().toISOString(),
@@ -160,7 +160,7 @@ export async function deliverPaymentEmail(
     // The claim is given back with the error: it covers a send in flight, and
     // this one is over. How long the sweep waits before trying again is
     // next_attempt_at's to say, not the lease's.
-    const released = await kyselyDb
+    const released = await db
       .updateTable("payment_emails")
       .set({
         last_error: error,
@@ -195,7 +195,7 @@ export async function deliverPaymentEmail(
     return { sent: false, claimed: true }
   }
 
-  const stamped = await kyselyDb
+  const stamped = await db
     .updateTable("payment_emails")
     .set({ sent_at: new Date().toISOString(), last_error: null })
     .where("id", "=", id)
@@ -209,7 +209,7 @@ export async function deliverPaymentEmail(
     // that. What this can do is stop a third: the email left, so the row is
     // no longer owed, whether or not the claim that replaced this one
     // succeeds. A stamp that one writes afterwards only moves the timestamp.
-    await kyselyDb
+    await db
       .updateTable("payment_emails")
       .set({ sent_at: new Date().toISOString(), last_error: null })
       .where("id", "=", id)
@@ -246,7 +246,7 @@ export async function sweepPaymentEmails(): Promise<{
   failed: number
   skipped: number
 }> {
-  const candidates = await kyselyDb
+  const candidates = await db
     .selectFrom("payment_emails as pe")
     .innerJoin("payments as p", "p.id", "pe.payment_id")
     .select("pe.id")

@@ -1,4 +1,4 @@
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 
 /**
  * An invite is valid while nobody revoked it. `used_at` is deliberately not
@@ -6,7 +6,7 @@ import { kyselyDb } from "~/kysely-db"
  * same link again.
  */
 export async function findValidInvite(eventId: string, profileId: string) {
-  return await kyselyDb
+  return await db
     .selectFrom("event_invites")
     .selectAll()
     .where("event_id", "=", eventId)
@@ -16,7 +16,7 @@ export async function findValidInvite(eventId: string, profileId: string) {
 }
 
 export async function findValidInviteByToken(token: string) {
-  return await kyselyDb
+  return await db
     .selectFrom("event_invites")
     .selectAll()
     .where("token", "=", token)
@@ -25,7 +25,7 @@ export async function findValidInviteByToken(token: string) {
 }
 
 export async function markInviteUsed(eventId: string, profileId: string) {
-  await kyselyDb
+  await db
     .updateTable("event_invites")
     .set({ used_at: new Date().toISOString() })
     .where("event_id", "=", eventId)

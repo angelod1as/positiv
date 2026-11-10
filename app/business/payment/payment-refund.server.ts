@@ -1,6 +1,6 @@
 import { applySchema } from "composable-functions"
 import { paymentsCopy } from "~/copy/payments"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { reaisToCents } from "~/lib/helpers/format-currency"
 import { zod } from "~/lib/helpers/zod"
 import { paymentLogger as logger } from "./payment-logger.server"
@@ -34,7 +34,7 @@ export const markManualRefundedSchema = zod.object({
  */
 export const markManualRefunded = applySchema(markManualRefundedSchema)(
   async (values) => {
-    const payment = await kyselyDb
+    const payment = await db
       .selectFrom("payments")
       .select(["amount", "status", "kind"])
       .where("id", "=", values.paymentId)
@@ -64,7 +64,7 @@ export const markManualRefunded = applySchema(markManualRefundedSchema)(
 
     // The refund and the notice it owes commit together, so a notice that
     // never goes out is a row the sweep can find rather than a lost effect.
-    const emailId = await kyselyDb.transaction().execute(async (trx) => {
+    const emailId = await db.transaction().execute(async (trx) => {
       const updated = await trx
         .updateTable("payments")
         .set({

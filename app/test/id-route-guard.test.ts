@@ -35,7 +35,7 @@ const { dbAccess } = vi.hoisted(() => ({ dbAccess: vi.fn() }))
 // query about to happen. Every read and call answers the same proxy, so a
 // module that builds a base query when it loads still loads; the reads it made
 // are cleared before each test.
-vi.mock("~/kysely-db", () => {
+vi.mock("~/lib/supabase/db.server", () => {
   const chain: object = new Proxy(() => undefined, {
     get: (_target, property) => {
       if (property === "then") return undefined
@@ -44,7 +44,7 @@ vi.mock("~/kysely-db", () => {
     },
     apply: () => chain,
   })
-  return { kyselyDb: chain }
+  return { db: chain }
 })
 
 vi.mock("~/business/auth/auth.server", () => ({

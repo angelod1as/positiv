@@ -5,8 +5,8 @@ import type { Kysely } from "kysely"
 import type { Database } from "~/types/database/kysely.types"
 
 // Mock the kysely module
-vi.mock("~/kysely-db", () => ({
-  kyselyDb: {
+vi.mock("~/lib/supabase/db.server", () => ({
+  db: {
     connection: vi.fn().mockReturnThis(),
     dynamic: {},
     selectFrom: vi.fn().mockReturnThis(),

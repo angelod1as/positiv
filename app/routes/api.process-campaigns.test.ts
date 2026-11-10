@@ -18,13 +18,13 @@ vi.mock("~/business/newsletter/campaign-automation.server", () => ({
 vi.mock("~/business/admin/event-listmonk-sync.server", () => ({
   deleteEventListmonkList: vi.fn(),
 }))
-vi.mock("~/kysely-db", () => {
+vi.mock("~/lib/supabase/db.server", () => {
   const query = {
     select: () => query,
     where: () => query,
     execute: async () => [],
   }
-  return { kyselyDb: { selectFrom: () => query } }
+  return { db: { selectFrom: () => query } }
 })
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
 

@@ -6,7 +6,7 @@ import { ENV } from "varlock/env"
 import { logoutCopy } from "~/copy/auth"
 import { errorsCopy } from "~/copy/errors"
 import { appOrigin } from "~/lib/helpers/app-origin"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import { createServerClient } from "~/lib/supabase/server"
@@ -262,7 +262,7 @@ export const registerUser = async (
   // this email. Orphan profiles (user_id = NULL, e.g. pre-imported contacts) are allowed
   // through — they will be linked to the new auth account during the agree-to-terms step.
   const normalizedEmail = data.email.toLowerCase().trim()
-  const claimedProfile = await kyselyDb
+  const claimedProfile = await db
     .selectFrom("profiles")
     .select("id")
     .where("email", "=", normalizedEmail)

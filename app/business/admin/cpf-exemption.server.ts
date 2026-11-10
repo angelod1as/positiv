@@ -1,7 +1,7 @@
 import { applySchema } from "composable-functions"
 import { ACTIVE_PAYMENT_STATUSES } from "~/business/payment/payment-totals.server"
 import { adminParticipantsCopy } from "~/copy/admin/participants"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { zod } from "~/lib/helpers/zod"
 
 export const setProfileCpfExemptSchema = zod.object({
@@ -22,7 +22,7 @@ export const setProfileCpfExemptSchema = zod.object({
  */
 export const setProfileCpfExempt = applySchema(setProfileCpfExemptSchema)(
   async ({ profileId, cpfExempt }) => {
-    return kyselyDb.transaction().execute(async (trx) => {
+    return db.transaction().execute(async (trx) => {
       const profile = await trx
         .selectFrom("profiles")
         .select("id")

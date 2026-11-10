@@ -1,7 +1,7 @@
 import { applySchema } from "composable-functions"
 import { errorsCopy } from "~/copy/errors"
 import { participantCopy } from "~/copy/participant"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { logger } from "~/lib/logger/logger.server"
 import { agreeToTermsSchema, contextSchema } from "../common"
 import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
@@ -26,10 +26,10 @@ export const agreeToTerms = applySchema(
   } else {
     const normalizedEmail = currentUser.email.toLowerCase().trim()
 
-    // Use kyselyDb (server-side, bypasses RLS) for orphan operations.
+    // Use db (server-side, bypasses RLS) for orphan operations.
     // The session client cannot SELECT/UPDATE orphan profiles because the RLS
     // policy requires auth.uid() = user_id, which is never true when user_id IS NULL.
-    const orphanProfile = await kyselyDb
+    const orphanProfile = await db
       .selectFrom("profiles")
       .select("id")
       .where("email", "=", normalizedEmail)
@@ -41,7 +41,7 @@ export const agreeToTerms = applySchema(
       // TOCTOU race: if another process claimed the profile between our SELECT and
       // this UPDATE, 0 rows match and executeTakeFirst returns undefined — we surface
       // that as an error rather than silently binding the wrong profile ID to this user.
-      const linkedProfile = await kyselyDb
+      const linkedProfile = await db
         .updateTable("profiles")
         .set({ user_id: currentUser.id })
         .where("id", "=", orphanProfile.id)

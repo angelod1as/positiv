@@ -16,7 +16,7 @@ const { mockExecute } = vi.hoisted(() => ({
   mockExecute: vi.fn(),
 }))
 
-vi.mock("~/kysely-db", () => {
+vi.mock("~/lib/supabase/db.server", () => {
   const chain = {
     selectFrom: vi.fn().mockReturnThis(),
     innerJoin: vi.fn().mockReturnThis(),
@@ -24,7 +24,7 @@ vi.mock("~/kysely-db", () => {
     where: vi.fn().mockReturnThis(),
     execute: mockExecute,
   }
-  return { kyselyDb: chain }
+  return { db: chain }
 })
 
 vi.mock("varlock/env", () => ({

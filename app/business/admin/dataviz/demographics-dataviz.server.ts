@@ -1,5 +1,5 @@
 import { sql } from "kysely"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { DATAVIZ_EVENT_CUTOFF_DATE } from "~/lib/constants/constants"
 import type {
   VeteranRookieDataPoint,
@@ -10,7 +10,7 @@ import type {
 export async function getVeteranRookieData(): Promise<
   VeteranRookieDataPoint[]
 > {
-  const result = await kyselyDb
+  const result = await db
     .selectFrom("events")
     .leftJoin(
       "event_participants",
@@ -67,7 +67,7 @@ export async function getDemographicsData(
 
   if (mode === "attended") {
     // Get profile IDs that have attended at least one event (filtered by cutoff date)
-    const attendedProfiles = await kyselyDb
+    const attendedProfiles = await db
       .selectFrom("event_participants")
       .innerJoin("events", "events.id", "event_participants.event_id")
       .where("event_participants.attendance_status", "=", "attended")
@@ -105,13 +105,13 @@ export async function getDemographicsData(
             WHERE profiles.gender IS NOT NULL
               AND profiles.id = ANY(ARRAY[${profileIdsArray}])
             GROUP BY g.value
-          `.execute(kyselyDb)
+          `.execute(db)
         : sql<{ category: string; count: number }>`
             SELECT g.value as category, count(distinct profiles.id)::int as count
             FROM profiles, unnest(profiles.gender) as g(value)
             WHERE profiles.gender IS NOT NULL
             GROUP BY g.value
-          `.execute(kyselyDb),
+          `.execute(db),
 
       // Query orientation distribution
       shouldFilterByAttendees
@@ -121,13 +121,13 @@ export async function getDemographicsData(
             WHERE profiles.orientation IS NOT NULL
               AND profiles.id = ANY(ARRAY[${profileIdsArray}])
             GROUP BY o.value
-          `.execute(kyselyDb)
+          `.execute(db)
         : sql<{ category: string; count: number }>`
             SELECT o.value as category, count(distinct profiles.id)::int as count
             FROM profiles, unnest(profiles.orientation) as o(value)
             WHERE profiles.orientation IS NOT NULL
             GROUP BY o.value
-          `.execute(kyselyDb),
+          `.execute(db),
 
       // Query race distribution
       shouldFilterByAttendees
@@ -137,13 +137,13 @@ export async function getDemographicsData(
             WHERE profiles.race_color IS NOT NULL
               AND profiles.id = ANY(ARRAY[${profileIdsArray}])
             GROUP BY r.value
-          `.execute(kyselyDb)
+          `.execute(db)
         : sql<{ category: string; count: number }>`
             SELECT r.value as category, count(distinct profiles.id)::int as count
             FROM profiles, unnest(profiles.race_color) as r(value)
             WHERE profiles.race_color IS NOT NULL
             GROUP BY r.value
-          `.execute(kyselyDb),
+          `.execute(db),
 
       // Query age distribution
       shouldFilterByAttendees
@@ -171,7 +171,7 @@ export async function getDemographicsData(
                 WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 40 AND 49 THEN '40-49'
                 ELSE '50+'
               END
-          `.execute(kyselyDb)
+          `.execute(db)
         : sql<{ category: string; count: number }>`
             SELECT
               CASE
@@ -195,7 +195,7 @@ export async function getDemographicsData(
                 WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 40 AND 49 THEN '40-49'
                 ELSE '50+'
               END
-          `.execute(kyselyDb),
+          `.execute(db),
     ])
 
   // Calculate totals for percentages

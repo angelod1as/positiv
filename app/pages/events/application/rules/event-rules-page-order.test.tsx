@@ -12,7 +12,7 @@ import { getRulesFormQuestions } from "~/components/forms/custom/rules/rules-que
 import EventRulesPage from "./event-rules-page"
 
 vi.mock("~/business/auth/auth.server", () => ({ getUserContext: vi.fn() }))
-vi.mock("~/kysely-db", () => ({ kyselyDb: { selectFrom: vi.fn() } }))
+vi.mock("~/lib/supabase/db.server", () => ({ db: { selectFrom: vi.fn() } }))
 
 const EVENT = "11111111-1111-4111-8111-111111111111"
 

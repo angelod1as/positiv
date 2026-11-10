@@ -6,7 +6,7 @@ import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
 import { adminLayoutCopy } from "~/copy/admin"
 import { adminEventsCopy } from "~/copy/admin/events"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import paths from "~/lib/paths"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
 import { logger } from "~/lib/logger/logger.server"
@@ -59,7 +59,7 @@ export const getAdminContext = async (
 }
 
 export const getEventsForDashboard = async () => {
-  const events = await kyselyDb
+  const events = await db
     .selectFrom("events")
     .selectAll()
     .orderBy("time_event_start", "desc")
@@ -70,7 +70,7 @@ export const getEventsForDashboard = async () => {
 
 export const getAdminEventById = composable(
   async ({ eventId }: { eventId: string }) => {
-    return await kyselyDb
+    return await db
       .selectFrom("events")
       .selectAll()
       .where("id", "=", eventId)
@@ -103,7 +103,7 @@ const participantHistoryFields = ({
     excludedEventId === undefined ? undefined : sql.ref<string>(excludedEventId)
 
   return [
-    kyselyDb
+    db
       .selectFrom("event_participants as ep_count")
       .innerJoin("events as e_count", "ep_count.event_id", "e_count.id")
       .select(sql<number>`COALESCE(COUNT(*)::int, 0)`.as("count"))
@@ -115,7 +115,7 @@ const participantHistoryFields = ({
         excludedEvent ? qb.where("ep_count.event_id", "!=", excludedEvent) : qb,
       )
       .as("attended_events_count"),
-    kyselyDb
+    db
       .selectFrom("event_participants as ep_last")
       .innerJoin("events as e_last", "ep_last.event_id", "e_last.id")
       .select("e_last.title")
@@ -129,7 +129,7 @@ const participantHistoryFields = ({
       .orderBy("e_last.time_event_start", "desc")
       .limit(1)
       .as("last_attended_event_title"),
-    kyselyDb
+    db
       .selectFrom("event_participants as ep_last_date")
       .innerJoin(
         "events as e_last_date",
@@ -149,7 +149,7 @@ const participantHistoryFields = ({
       .orderBy("e_last_date.time_event_start", "desc")
       .limit(1)
       .as("last_attended_event_date"),
-    kyselyDb
+    db
       .selectFrom("event_participants as ep_last_id")
       .innerJoin("events as e_last_id", "ep_last_id.event_id", "e_last_id.id")
       .select("e_last_id.id")
@@ -165,7 +165,7 @@ const participantHistoryFields = ({
       .orderBy("e_last_id.time_event_start", "desc")
       .limit(1)
       .as("last_attended_event_id"),
-    kyselyDb
+    db
       .selectFrom("event_participants as ep_recent")
       .innerJoin("events as e_recent", "ep_recent.event_id", "e_recent.id")
       .select(sql<number>`COALESCE(COUNT(*)::int, 0)`.as("count"))
@@ -215,7 +215,7 @@ const participantHistoryFields = ({
 }
 
 // Main query to get event_participants information along with if they were skipped in the last event
-const profilesWithExtraDataQuery = kyselyDb
+const profilesWithExtraDataQuery = db
   .selectFrom("event_participants as current_ep")
   .innerJoin("profiles as p", "current_ep.profile_id", "p.id")
   .innerJoin(
@@ -293,7 +293,7 @@ export type RejectedEventParticipant = {
 export async function getRejectedEventParticipants(
   eventId: string,
 ): Promise<RejectedEventParticipant[]> {
-  return kyselyDb
+  return db
     .selectFrom("event_participants as ep")
     .innerJoin("profiles as p", "ep.profile_id", "p.id")
     .select(["p.id as profile_id", "p.social_name", "p.full_name"])
@@ -303,7 +303,7 @@ export async function getRejectedEventParticipants(
     .execute()
 }
 
-const globalProfileBaseQuery = kyselyDb
+const globalProfileBaseQuery = db
   .selectFrom("profiles as p")
   .selectAll("p")
   .select(participantHistoryFields({ profileId: "p.id" }))
@@ -370,7 +370,7 @@ export const getRecentProfiles = async () => {
 
 export const getAdminProfileById = composable(
   async ({ profileId }: { profileId: string }) => {
-    return await kyselyDb
+    return await db
       .selectFrom("profiles")
       .selectAll()
       .where("id", "=", profileId)
@@ -394,7 +394,7 @@ export const getEventParticipantHistoryById = composable(
     profileId: string
     eventId: string
   }): Promise<Array<ParticipantVsEvent>> => {
-    return await kyselyDb
+    return await db
       .selectFrom("event_participants")
       .innerJoin("events", "events.id", "event_participants.event_id")
       .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
@@ -434,7 +434,7 @@ export const getParticipantFullEventHistory = composable(
     profileId: string
     excludeEventId?: string
   }): Promise<Array<ParticipantEventHistoryData>> => {
-    let query = kyselyDb
+    let query = db
       .selectFrom("event_participants")
       .innerJoin("events", "events.id", "event_participants.event_id")
       .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
@@ -506,7 +506,7 @@ export const updateEventStatus = applySchema(
   if (!eventId) return null
 
   // Use transaction to ensure atomicity
-  const transactionResult = await kyselyDb
+  const transactionResult = await db
     .transaction()
     .execute(async (trx) => {
       // Only calculate and store demographics when status is changing TO Completed
@@ -622,7 +622,7 @@ export const updateEventDemographics = applySchema(
   }
 
   // Calculate current demographics from database
-  const baseQuery = kyselyDb
+  const baseQuery = db
     .selectFrom("event_participants")
     .where("event_participants.event_id", "=", eventId)
     .where("attendance_status", "=", "attended")
@@ -689,7 +689,7 @@ export const updateParticipantVsEvent = applySchema(
 )(async (formData) => {
   const { intent, event_id, profile_id, ...data } = formData
 
-  await kyselyDb
+  await db
     .updateTable("event_participants")
     .where("event_id", "=", event_id)
     .where("profile_id", "=", profile_id)
@@ -703,7 +703,7 @@ export const updateEventParticipantById = applySchema(
   const { id, profile_id, is_veteran, flag, flag_notes, approved_to_attend, ...data } =
     formData
 
-  const result = await kyselyDb.transaction().execute(async (transaction) => {
+  const result = await db.transaction().execute(async (transaction) => {
     if (
       typeof is_veteran === "boolean" ||
       flag !== undefined ||
@@ -756,7 +756,7 @@ export const updateProfileApprovalStatus = applySchema(
 )(async (formData) => {
   const { profile_id, approved_to_attend } = formData
 
-  const result = await kyselyDb
+  const result = await db
     .updateTable("profiles")
     .where("id", "=", profile_id)
     .set({ approved_to_attend })
@@ -777,7 +777,7 @@ export const getEventParticipantBasic = composable(
     profileId: string
     eventId: string
   }): Promise<EventParticipantWithEvent | null> => {
-    const result = await kyselyDb
+    const result = await db
       .selectFrom("event_participants")
       .innerJoin("events", "events.id", "event_participants.event_id")
       .leftJoin(
@@ -837,7 +837,7 @@ export const updateProfileAdminNotes = applySchema(
     return { profile_id }
   }
 
-  const result = await kyselyDb
+  const result = await db
     .updateTable("profiles")
     .where("id", "=", profile_id)
     .set(updateData)

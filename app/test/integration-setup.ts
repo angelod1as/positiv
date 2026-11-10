@@ -1,7 +1,7 @@
 import { Kysely, PostgresDialect } from "kysely"
 import { Pool } from "pg"
 import { afterAll } from "vitest"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import type { Database } from "~/types/database/kysely.types"
 import { assertLocalDatabaseUrl } from "./assert-local-database"
 import { TestDataTracker, cleanupTestData } from "./db-test-utils"
@@ -11,7 +11,7 @@ let testKysely: Kysely<Database> | null = null
 
 /**
  * Every test file gets its own module registry, so each one builds its own
- * `pg` pool for the test client and another for the application's `kyselyDb`.
+ * `pg` pool for the test client and another for the application's `db`.
  * The suite runs in a single fork, so those pools all outlive their file and
  * their idle connections pile up until Postgres refuses new ones — the whole
  * suite starts failing on "remaining connection slots are reserved".
@@ -22,7 +22,7 @@ let testKysely: Kysely<Database> | null = null
 afterAll(async () => {
   const closing = testKysely
   testKysely = null
-  await Promise.all([closing?.destroy(), kyselyDb.destroy()])
+  await Promise.all([closing?.destroy(), db.destroy()])
 })
 
 // Export the test Kysely instance

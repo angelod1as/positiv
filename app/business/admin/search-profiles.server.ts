@@ -1,5 +1,5 @@
 import { sql } from "kysely"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 
 const RESULT_LIMIT = 5
 
@@ -28,7 +28,7 @@ export async function searchProfilesForInvite(eventId: string, term: string) {
   // into a fragment matched against every number in the table.
   const isPhoneQuery = /^[\d\s()+.-]+$/.test(trimmed) && digits.length >= 8
 
-  return await kyselyDb
+  return await db
     .selectFrom("profiles")
     .select((eb) => [
       "profiles.id",

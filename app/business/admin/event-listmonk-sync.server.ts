@@ -1,6 +1,6 @@
 import { composable } from "composable-functions"
 import { z } from "zod"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { logger } from "~/lib/logger/logger.server"
 import {
   participantApplicationStatusEnum,
@@ -44,7 +44,7 @@ interface EventWithListmonk {
 }
 
 async function getEventById(eventId: string): Promise<EventWithListmonk> {
-  return await kyselyDb
+  return await db
     .selectFrom("events")
     .select(["id", "title", "listmonk_list_id", "listmonk_list_synced_at"])
     .where("id", "=", eventId)
@@ -55,7 +55,7 @@ async function getNonRejectedParticipants(
   eventId: string,
   filters?: ListmonkSyncFilters,
 ) {
-  let query = kyselyDb
+  let query = db
     .selectFrom("event_participants as ep")
     .innerJoin("profiles as p", "ep.profile_id", "p.id")
     .leftJoin("newsletter_subscriptions as ns", "ns.profile_id", "p.id")
@@ -99,7 +99,7 @@ async function updateEventListmonkFields(
   listmonkListId: number | null,
   syncedAt: Date | null,
 ) {
-  await kyselyDb
+  await db
     .updateTable("events")
     .set({
       listmonk_list_id: listmonkListId,

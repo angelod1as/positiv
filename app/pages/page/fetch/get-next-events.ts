@@ -1,5 +1,5 @@
 import { composable, type Composable } from "composable-functions"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import type { Event, EventStatus } from "~types/database/entities.types"
 
 type GetNextEvents = Composable<
@@ -21,7 +21,7 @@ export const getNextEvents: GetNextEvents = composable(
       "Registration Closed",
     ]
 
-    const baseQuery = kyselyDb
+    const baseQuery = db
       .selectFrom("events")
       .where("events.time_event_start", ">=", now)
       .where(

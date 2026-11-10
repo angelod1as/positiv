@@ -6,7 +6,7 @@ const env = vi.hoisted<Record<string, unknown>>(() => ({
 }))
 vi.mock("varlock/env", () => ({ ENV: env }))
 
-vi.mock("~/kysely-db", () => ({ kyselyDb: {} }))
+vi.mock("~/lib/supabase/db.server", () => ({ db: {} }))
 
 const logger = vi.hoisted(() => ({
   error: vi.fn(),

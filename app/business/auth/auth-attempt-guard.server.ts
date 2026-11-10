@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto"
 import { sql } from "kysely"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 
 export type AuthAttemptScope =
   | "login_ip"
@@ -35,7 +35,7 @@ const windowStartFor = (scope: AuthAttemptScope, now: Date) =>
   new Date(now.getTime() - AUTH_ATTEMPT_LIMITS[scope].windowMs).toISOString()
 
 const pruneExpired = (now: Date) =>
-  kyselyDb
+  db
     .deleteFrom("auth_attempts")
     .where(
       "created_at",
@@ -62,7 +62,7 @@ export const reserveAuthAttempt = async (
 
   // Attempts on one key queue behind each other, so a burst cannot all read a
   // count under the limit before any of them is recorded.
-  return kyselyDb.transaction().execute(async (trx) => {
+  return db.transaction().execute(async (trx) => {
     await sql`SELECT pg_advisory_xact_lock(hashtext(${`${scope}:${keyHash}`}))`.execute(
       trx,
     )
@@ -100,5 +100,5 @@ export const recordAuthAttempt = async (
  * getting through before any failure is counted.
  */
 export const releaseAuthAttempt = async (id: number): Promise<void> => {
-  await kyselyDb.deleteFrom("auth_attempts").where("id", "=", id).execute()
+  await db.deleteFrom("auth_attempts").where("id", "=", id).execute()
 }

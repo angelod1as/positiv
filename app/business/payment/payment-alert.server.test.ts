@@ -17,7 +17,7 @@ vi.mock("varlock/env", () => ({ ENV: env }))
 vi.mock("~/lib/logger/logger.server", () => ({
   logger: { ...logger, child: () => logger },
 }))
-vi.mock("~/kysely-db", () => ({ kyselyDb: { selectFrom } }))
+vi.mock("~/lib/supabase/db.server", () => ({ db: { selectFrom } }))
 
 const row: PaymentAlertRow = {
   paymentId: "48e85b01-0000-4000-8000-000000000001",

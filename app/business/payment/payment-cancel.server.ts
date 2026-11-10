@@ -1,6 +1,6 @@
 import { applySchema } from "composable-functions"
 import { paymentsCopy } from "~/copy/payments"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { zod } from "~/lib/helpers/zod"
 import { paymentLogger as logger } from "./payment-logger.server"
 import {
@@ -23,7 +23,7 @@ export const cancelPaymentSchema = zod.object({
  * side anyway, and the admin's cancellation is not worth undoing over it.
  */
 export const cancelPayment = applySchema(cancelPaymentSchema)(async (values) => {
-  const cancelled = await kyselyDb
+  const cancelled = await db
     .updateTable("payments")
     .set({ status: "cancelled" })
     .where("id", "=", values.paymentId)

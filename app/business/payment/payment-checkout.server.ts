@@ -2,7 +2,7 @@ import { applySchema } from "composable-functions"
 import { sql } from "kysely"
 import type { z } from "zod"
 import { paymentsCopy } from "~/copy/payments"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { appOrigin } from "~/lib/helpers/app-origin"
 import { isProd } from "~/lib/helpers/is-prod.server"
 import { zod } from "~/lib/helpers/zod"
@@ -73,7 +73,7 @@ async function ensureProviderCustomer(
   // charge below is: two picks racing both find nothing and both create a
   // customer, and an unconditional write would let the row and the profile end
   // up naming different ones.
-  const written = await kyselyDb
+  const written = await db
     .updateTable("profiles")
     .set({ provider_customer_id: customerId })
     .where("id", "=", profile.id)
@@ -95,7 +95,7 @@ async function ensureProviderCustomer(
   // Another pick got there first. Its customer is the one every charge must
   // name, so the one created here is abandoned at the provider: it holds no
   // money and is attached to no charge.
-  const winner = await kyselyDb
+  const winner = await db
     .selectFrom("profiles")
     .select("provider_customer_id")
     .where("id", "=", profile.id)
@@ -115,7 +115,7 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
     throw new Error(paymentsCopy.errors.chargeClosed)
   }
 
-  const payment = await kyselyDb
+  const payment = await db
     .selectFrom("payments as p")
     .innerJoin("event_participants as ep", "ep.id", "p.event_participant_id")
     .innerJoin("events as e", "e.id", "ep.event_id")
@@ -262,7 +262,7 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
     throw new Error(paymentsCopy.errors.noInvoiceUrl(paymentProvider().name))
   }
 
-  const updated = await kyselyDb
+  const updated = await db
     .updateTable("payments")
     .set({
       status: "awaiting_payment",
@@ -335,7 +335,7 @@ export const pickOption = applySchema(pickOptionSchema)(async (values) => {
  * invoice that won rather than an error about a charge that is in fact open.
  */
 function readChargeAfterRace(paymentId: string) {
-  return kyselyDb
+  return db
     .selectFrom("payments")
     .select(["method", "installment_count", "provider_checkout_url"])
     .where("id", "=", paymentId)

@@ -7,7 +7,7 @@ import {
   SHORT_RUN_LENGTH,
 } from "~/components/forms/custom/rules/build-rules-flow"
 import { getRulesFormSchema } from "~/components/forms/custom/rules/rules-form-schema"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
 
@@ -27,7 +27,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   const { currentProfile } = await getUserContext(request, params)
 
-  const event = await kyselyDb
+  const event = await db
     .selectFrom("events")
     .select("id")
     .where("id", "=", params.id)

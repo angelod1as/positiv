@@ -7,8 +7,8 @@ vi.mock("~/business/auth/auth.server", () => ({
   getUserContext: vi.fn(),
 }))
 
-vi.mock("~/kysely-db", () => ({
-  kyselyDb: {
+vi.mock("~/lib/supabase/db.server", () => ({
+  db: {
     selectFrom: vi.fn(),
   },
 }))
@@ -22,10 +22,10 @@ vi.mock("react-router", async (importOriginal) => {
 })
 
 import { getUserContext } from "~/business/auth/auth.server"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 
 const mockGetUserContext = vi.mocked(getUserContext)
-const mockKysely = vi.mocked(kyselyDb)
+const mockKysely = vi.mocked(db)
 const mockRedirect = vi.mocked(redirect)
 
 const mockApplication = (row: { id: string } | undefined) => {

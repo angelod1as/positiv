@@ -1,5 +1,5 @@
 import { composable } from "composable-functions"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import {
   LISTMONK_REGISTERED_LIST_ID,
   LISTMONK_VETERANS_LIST_ID,
@@ -12,7 +12,7 @@ import { getListSubscribers } from "./listmonk-lists.server"
 import type { VeteransSyncResult } from "./veterans-list.types"
 
 export async function getConsentedVeteranEmails(): Promise<string[]> {
-  const rows = await kyselyDb
+  const rows = await db
     .selectFrom("profiles as p")
     .innerJoin("newsletter_subscriptions as ns", "ns.profile_id", "p.id")
     .select("p.email")

@@ -1,4 +1,4 @@
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { appOrigin } from "~/lib/helpers/app-origin"
 import { paymentLogger as logger } from "./payment-logger.server"
 import paths from "~/lib/paths"
@@ -92,7 +92,7 @@ export async function readPaymentAlertContext(
   paymentId: string,
 ): Promise<{ paymentId: string } & Record<string, unknown>> {
   try {
-    const row = await kyselyDb
+    const row = await db
       .selectFrom("payments as p")
       .innerJoin("event_participants as ep", "ep.id", "p.event_participant_id")
       .innerJoin("events as e", "e.id", "ep.event_id")

@@ -5,8 +5,8 @@ vi.mock("~/business/auth/auth.server", () => ({
   getUserContext: vi.fn(),
 }))
 
-vi.mock("~/kysely-db", () => ({
-  kyselyDb: {
+vi.mock("~/lib/supabase/db.server", () => ({
+  db: {
     selectFrom: vi.fn(),
   },
 }))
@@ -22,9 +22,9 @@ vi.mock("~/business/participant/is-veteran.server", () => ({
   isVeteran: vi.fn(),
 }))
 
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 
-const mockKysely = vi.mocked(kyselyDb)
+const mockKysely = vi.mocked(db)
 
 import { getUserContext } from "~/business/auth/auth.server"
 import { isVeteran } from "~/business/participant/is-veteran.server"

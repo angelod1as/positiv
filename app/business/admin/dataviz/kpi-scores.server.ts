@@ -1,11 +1,11 @@
 import { sql } from "kysely"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { DATAVIZ_EVENT_CUTOFF_DATE } from "~/lib/constants/constants"
 import type { KpiScores } from "./dataviz.types"
 
 export async function getKpiScores(): Promise<KpiScores> {
   // Profile counts
-  const profileCounts = await kyselyDb
+  const profileCounts = await db
     .selectFrom("profiles")
     .select([
       sql<number>`count(*)::int`.as("total_profiles"),
@@ -22,7 +22,7 @@ export async function getKpiScores(): Promise<KpiScores> {
     .executeTakeFirstOrThrow()
 
   // Event counts
-  const eventCounts = await kyselyDb
+  const eventCounts = await db
     .selectFrom("events")
     .where("event_status", "=", "Completed")
     .where("time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
@@ -33,7 +33,7 @@ export async function getKpiScores(): Promise<KpiScores> {
     .executeTakeFirstOrThrow()
 
   // Unique attendees
-  const attendeeCounts = await kyselyDb
+  const attendeeCounts = await db
     .selectFrom("event_participants")
     .innerJoin("events", "events.id", "event_participants.event_id")
     .where("events.event_status", "=", "Completed")
@@ -47,7 +47,7 @@ export async function getKpiScores(): Promise<KpiScores> {
     .executeTakeFirstOrThrow()
 
   // Average attendance per event
-  const avgAttendance = await kyselyDb
+  const avgAttendance = await db
     .selectFrom("events")
     .leftJoin(
       "event_participants",
@@ -74,7 +74,7 @@ export async function getKpiScores(): Promise<KpiScores> {
       : 0
 
   // Average occupancy percentage (exclude events with 0 total_spots)
-  const occupancyData = await kyselyDb
+  const occupancyData = await db
     .selectFrom("events")
     .leftJoin(
       "event_participants",
@@ -101,7 +101,7 @@ export async function getKpiScores(): Promise<KpiScores> {
     occupancyData.length > 0 ? Math.round(occupancySum / occupancyData.length) : 0
 
   // Total revenue
-  const revenueData = await kyselyDb
+  const revenueData = await db
     .selectFrom("event_participants")
     .innerJoin("events", "events.id", "event_participants.event_id")
     .leftJoin(
@@ -122,9 +122,9 @@ export async function getKpiScores(): Promise<KpiScores> {
       : 0
 
   // Attendance frequency (3+ and 5+ events)
-  const attendanceFrequency = await kyselyDb
+  const attendanceFrequency = await db
     .selectFrom(
-      kyselyDb
+      db
         .selectFrom("event_participants")
         .innerJoin("events", "events.id", "event_participants.event_id")
         .where("event_participants.attendance_status", "=", "attended")
@@ -144,7 +144,7 @@ export async function getKpiScores(): Promise<KpiScores> {
     .executeTakeFirstOrThrow()
 
   // Average no-show rate (aggregate in database for better performance)
-  const noShowTotals = await kyselyDb
+  const noShowTotals = await db
     .selectFrom("events")
     .leftJoin(
       "event_participants",

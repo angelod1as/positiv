@@ -12,8 +12,8 @@ vi.mock("../newsletter/subscription-helpers.server", () => ({
   unsubscribeProfile: vi.fn(),
 }))
 
-vi.mock("~/kysely-db", () => ({
-  kyselyDb: {
+vi.mock("~/lib/supabase/db.server", () => ({
+  db: {
     selectFrom: vi.fn(),
     updateTable: vi.fn(),
   },
@@ -21,7 +21,7 @@ vi.mock("~/kysely-db", () => ({
 
 import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
 import { unsubscribeProfile } from "../newsletter/subscription-helpers.server"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 
 describe("agreeToTerms", () => {
   let mockFrom: Mock
@@ -30,7 +30,7 @@ describe("agreeToTerms", () => {
   let mockSingle: Mock
 
   const mockKyselySelectReturning = (result: { id: string } | undefined) => {
-    ;(kyselyDb.selectFrom as unknown as Mock).mockReturnValue({
+    ;(db.selectFrom as unknown as Mock).mockReturnValue({
       select: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
@@ -42,7 +42,7 @@ describe("agreeToTerms", () => {
   }
 
   const mockKyselyUpdateReturning = (result: { id: string } | undefined) => {
-    ;(kyselyDb.updateTable as unknown as Mock).mockReturnValue({
+    ;(db.updateTable as unknown as Mock).mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
@@ -142,7 +142,7 @@ describe("agreeToTerms", () => {
     await agreeToTerms(values, context)
 
     expect(mockInsert).not.toHaveBeenCalled()
-    expect(kyselyDb.updateTable).toHaveBeenCalledWith("profiles")
+    expect(db.updateTable).toHaveBeenCalledWith("profiles")
     expect(unsubscribeProfile).toHaveBeenCalledWith("orphan-profile-456")
   })
 

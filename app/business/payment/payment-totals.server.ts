@@ -1,5 +1,5 @@
 import type { Selectable } from "kysely"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import type { ParticipantPaymentTotals } from "~types/database/entities.types"
 import type { Database } from "~types/database/kysely.types"
 import { paymentProvider } from "./payment-provider.server"
@@ -34,13 +34,13 @@ export async function getPaymentsForParticipant(
   eventParticipantId: string,
 ): Promise<ParticipantPayments> {
   const [rows, totals] = await Promise.all([
-    kyselyDb
+    db
       .selectFrom("payments")
       .selectAll()
       .where("event_participant_id", "=", eventParticipantId)
       .orderBy("created_at", "desc")
       .execute(),
-    kyselyDb
+    db
       .selectFrom("event_participant_payments")
       .selectAll()
       .where("event_participant_id", "=", eventParticipantId)
@@ -70,7 +70,7 @@ export async function getPaymentsForParticipant(
 export async function getPaymentsForEvent(
   eventId: string,
 ): Promise<Record<string, PaymentRow[]>> {
-  const payments = await kyselyDb
+  const payments = await db
     .selectFrom("payments")
     .selectAll("payments")
     .innerJoin(

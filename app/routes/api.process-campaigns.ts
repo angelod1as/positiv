@@ -4,7 +4,7 @@ import { ENV } from "varlock/env"
 import { deleteEventListmonkList } from "~/business/admin/event-listmonk-sync.server"
 import { processCampaignForEvent } from "~/business/newsletter/campaign-automation.server"
 import { getPendingCampaigns } from "~/business/newsletter/campaign-tracking.server"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { logger } from "~/lib/logger/logger.server"
 
 /**
@@ -96,7 +96,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 async function cleanupCompletedEventLists() {
-  const eventsToCleanup = await kyselyDb
+  const eventsToCleanup = await db
     .selectFrom("events")
     .select(["id", "listmonk_list_id"])
     .where("event_status", "=", "Completed")

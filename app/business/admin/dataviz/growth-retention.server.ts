@@ -1,5 +1,5 @@
 import { sql } from "kysely"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { DATAVIZ_EVENT_CUTOFF_DATE } from "~/lib/constants/constants"
 import type {
   GrowthDataPoint,
@@ -8,7 +8,7 @@ import type {
 } from "./dataviz.types"
 
 export async function getGrowthData(): Promise<GrowthDataPoint[]> {
-  const result = await kyselyDb
+  const result = await db
     .selectFrom("profiles")
     .where("profiles.created_at", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
     .select([
@@ -34,9 +34,9 @@ export async function getGrowthData(): Promise<GrowthDataPoint[]> {
 
 export async function getRetentionData(): Promise<RetentionDataPoint[]> {
   // Subquery: count attended events per profile
-  const result = await kyselyDb
+  const result = await db
     .selectFrom(
-      kyselyDb
+      db
         .selectFrom("event_participants")
         .innerJoin("events", "events.id", "event_participants.event_id")
         .where("event_participants.attendance_status", "=", "attended")
@@ -79,7 +79,7 @@ const MONTH_NAMES = [
 ]
 
 export async function getSeasonalityData(): Promise<SeasonalityDataPoint[]> {
-  const result = await kyselyDb
+  const result = await db
     .selectFrom("events")
     .leftJoin(
       "event_participants",
