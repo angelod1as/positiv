@@ -1,14 +1,31 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { LoaderFunctionArgs } from "react-router"
 import { EMAIL_CONFIRMED_PARAM } from "~/lib/hooks/use-track-email-confirmed"
+import paths from "~/lib/paths"
 import { loader } from "./confirm"
 
-const { verifyOtp } = vi.hoisted(() => ({ verifyOtp: vi.fn() }))
+const { verifyOtp, clientCookies } = vi.hoisted(() => ({
+  verifyOtp: vi.fn(),
+  clientCookies: {
+    current: null as null | {
+      setAll: (
+        cookies: { name: string; value: string; options: object }[],
+      ) => void
+    },
+  },
+}))
 
 vi.mock("@supabase/ssr", () => ({
-  createServerClient: () => ({ auth: { verifyOtp } }),
+  createServerClient: (
+    _url: string,
+    _key: string,
+    options: { cookies: NonNullable<typeof clientCookies.current> },
+  ) => {
+    clientCookies.current = options.cookies
+    return { auth: { verifyOtp } }
+  },
   parseCookieHeader: () => [],
-  serializeCookieHeader: () => "",
+  serializeCookieHeader: (name: string, value: string) => `${name}=${value}`,
 }))
 
 vi.mock("varlock/env", () => ({
@@ -81,5 +98,71 @@ describe("auth confirm loader", () => {
 
     expect(landing.pathname).toBe("/conta/mudar-senha")
     expect(landing.searchParams.has(EMAIL_CONFIRMED_PARAM)).toBe(false)
+  })
+
+  it("hands the session Supabase sets back to the browser", async () => {
+    verifyOtp.mockImplementation(async () => {
+      clientCookies.current?.setAll([
+        { name: "sb-session", value: "signed-in", options: {} },
+      ])
+      return { error: null }
+    })
+
+    const response = (await loader({
+      request: new Request("http://localhost/auth/confirm?token_hash=abc&type=email"),
+    } as LoaderFunctionArgs)) as Response
+
+    expect(response.headers.get("Set-Cookie")).toContain("sb-session=signed-in")
+  })
+})
+
+describe("auth confirm loader when the link does not sign anyone in", () => {
+  beforeEach(() => {
+    verifyOtp.mockReset()
+  })
+
+  async function refusal(query: string) {
+    const request = new Request(`http://localhost/auth/confirm?${query}`)
+    const thrown = await loader({ request } as LoaderFunctionArgs).then(
+      () => {
+        throw new Error("the loader let the link through")
+      },
+      (error: unknown) => error as Response,
+    )
+
+    return {
+      landing: new URL(thrown.headers.get("Location") ?? "", "http://localhost"),
+      cookies: thrown.headers.get("Set-Cookie") ?? "",
+    }
+  }
+
+  it("sends a link with no token back to the login page", async () => {
+    const { landing, cookies } = await refusal("type=email")
+
+    expect(landing.pathname).toBe(paths.auth.LOGIN)
+    expect(cookies).not.toContain("sb-")
+    expect(verifyOtp).not.toHaveBeenCalled()
+  })
+
+  it("sends an expired link back to the login page", async () => {
+    verifyOtp.mockResolvedValue({
+      error: { message: "Token has expired or is invalid", code: "otp_expired" },
+    })
+
+    const { landing, cookies } = await refusal("token_hash=abc&type=email")
+
+    expect(landing.pathname).toBe(paths.auth.LOGIN)
+    expect(cookies).not.toContain("sb-")
+  })
+
+  it("sends a link Supabase refuses for any other reason back to the login page", async () => {
+    verifyOtp.mockResolvedValue({
+      error: { message: "Something else went wrong", code: "unexpected" },
+    })
+
+    const { landing, cookies } = await refusal("token_hash=abc&type=email")
+
+    expect(landing.pathname).toBe(paths.auth.LOGIN)
+    expect(cookies).not.toContain("sb-")
   })
 })
