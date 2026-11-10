@@ -4,23 +4,23 @@ import {
   useFetcher,
   useLoaderData,
 } from "react-router"
-import type { DemographicsDataResult } from "~/business/admin/dataviz/dataviz.types"
+import type { DemographicsDataResult } from "~/business/reporting/dataviz/dataviz.types"
 import {
   getDemographicsData,
   getVeteranRookieData,
-} from "~/business/admin/dataviz/demographics-dataviz.server"
+} from "~/business/reporting/dataviz/demographics-dataviz.server"
 import {
   getConversionFunnelData,
   getEventAttendanceData,
   getEventRevenueData,
   getOccupancyData,
-} from "~/business/admin/dataviz/event-metrics.server"
+} from "~/business/reporting/dataviz/event-metrics.server"
 import {
   getGrowthData,
   getRetentionData,
   getSeasonalityData,
-} from "~/business/admin/dataviz/growth-retention.server"
-import { getKpiScores } from "~/business/admin/dataviz/kpi-scores.server"
+} from "~/business/reporting/dataviz/growth-retention.server"
+import { getKpiScores } from "~/business/reporting/dataviz/kpi-scores.server"
 import type { FilterMode } from "~/components/atoms/charts/demographic-filter-toggle"
 import { CommunitySection } from "~/components/pages/admin/dataviz/community-section"
 import { EventsSection } from "~/components/pages/admin/dataviz/events-section"

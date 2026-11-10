@@ -537,7 +537,7 @@ export const updateEventStatus = applySchema(
           .execute()
 
         const { calculateDemographics } = await import(
-          "./demographics/demographics"
+          "../reporting/demographics/demographics"
         )
         const demographics = calculateDemographics(participantsResult)
 
@@ -646,7 +646,7 @@ export const updateEventDemographics = applySchema(
     ])
     .execute()
 
-  const { calculateDemographics } = await import("./demographics/demographics")
+  const { calculateDemographics } = await import("../reporting/demographics/demographics")
   const demographics = calculateDemographics(result)
 
   // Upsert the snapshot

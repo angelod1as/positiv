@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { KpiScores as KpiScoresData } from '~/business/admin/dataviz/dataviz.types'
+import type { KpiScores as KpiScoresData } from '~/business/reporting/dataviz/dataviz.types'
 import { render, screen, within } from '~/test/test-utils'
 import { KpiScores } from './kpi-scores'
 

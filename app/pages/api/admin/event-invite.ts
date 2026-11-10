@@ -5,7 +5,7 @@ import {
   listInvitesForEvent,
   revokeInvite,
 } from "~/business/admin/event-invites.server"
-import { searchProfilesForInvite } from "~/business/admin/search-profiles.server"
+import { searchProfilesForInvite } from "~/business/reporting/search-profiles.server"
 import { zod } from "~/lib/helpers/zod"
 
 /**

@@ -7,7 +7,7 @@ import type {
   OccupancyDataPoint,
   SeasonalityDataPoint,
   VeteranRookieDataPoint,
-} from '~/business/admin/dataviz/dataviz.types'
+} from '~/business/reporting/dataviz/dataviz.types'
 import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { render, screen, within } from '~/test/test-utils'
 import { EventsSection } from './events-section'

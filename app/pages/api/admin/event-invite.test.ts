@@ -15,7 +15,7 @@ vi.mock("~/business/admin/event-invites.server", () => ({
 }))
 
 const searchProfilesForInvite = vi.fn()
-vi.mock("~/business/admin/search-profiles.server", () => ({
+vi.mock("~/business/reporting/search-profiles.server", () => ({
   searchProfilesForInvite: (...args: unknown[]) =>
     searchProfilesForInvite(...args),
 }))

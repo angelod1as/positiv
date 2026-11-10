@@ -11,7 +11,7 @@ import type {
   RetentionDataPoint,
   SeasonalityDataPoint,
   VeteranRookieDataPoint,
-} from '~/business/admin/dataviz/dataviz.types'
+} from '~/business/reporting/dataviz/dataviz.types'
 import type { ChartContent } from '~/components/pages/page/sections/chart-section'
 import { adminDatavizCopy as copy } from '~/copy/admin/dataviz'
 import { buildEventLabel, groupSmallCategories, sortByAgeRange } from '~/lib/helpers/chart-utils'
