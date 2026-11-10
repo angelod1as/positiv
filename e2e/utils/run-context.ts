@@ -6,7 +6,7 @@ export const ABANDONED_TEST_EVENT_PATTERN = '[E2E:%'
 
 const ABANDONED_AFTER_HOURS = 1
 
-// Mirrors the admin event form: `eventFormSchema.title` in app/business/admin/common.ts
+// Mirrors the admin event form: `eventFormSchema.title` in app/business/event/event-schemas.ts
 const MAX_EVENT_TITLE_LENGTH = 50
 
 export function generateRunId(): string {
