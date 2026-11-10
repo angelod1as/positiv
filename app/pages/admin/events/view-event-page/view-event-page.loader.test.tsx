@@ -1,10 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import {
-  getAdminEventById,
-  getProfilesWithExtraDataById,
-  getRejectedEventParticipants,
-} from "~/business/admin/admin.server"
-import { listInvitesForEvent } from "~/business/admin/event-invites.server"
+import { getAdminEventById } from "~/business/event/event.server"
+import { getProfilesWithExtraDataById, getRejectedEventParticipants } from "~/business/application/event-participants.server"
+import { listInvitesForEvent } from "~/business/event/event-invites.server"
 import { getPaymentsForEvent } from "~/business/payment/payment-totals.server"
 import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
 import { loader } from "./view-event-page"
@@ -17,12 +14,16 @@ vi.mock("~/lib/logger/logger.server", () => ({
   logger: { ...logger, child: () => logger },
 }))
 
-vi.mock("~/business/admin/admin.server", () => ({
+vi.mock("~/business/auth/admin-context.server", () => ({
   getAdminContext: vi.fn(),
-  getAdminEventById: vi.fn(),
-  getEventDemographicsById: vi.fn(),
+}))
+vi.mock("~/business/application/event-participants.server", () => ({
   getProfilesWithExtraDataById: vi.fn(),
   getRejectedEventParticipants: vi.fn(),
+}))
+vi.mock("~/business/event/event.server", () => ({
+  getAdminEventById: vi.fn(),
+  getEventDemographicsById: vi.fn(),
 }))
 
 vi.mock("~/business/settings/app-settings.server", () => ({
@@ -30,7 +31,7 @@ vi.mock("~/business/settings/app-settings.server", () => ({
   isOnlinePaymentsEnabled: vi.fn(),
 }))
 
-vi.mock("~/business/admin/event-invites.server", () => ({
+vi.mock("~/business/event/event-invites.server", () => ({
   listInvitesForEvent: vi.fn(),
 }))
 

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto"
 import { sql } from "kysely"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 
 export const SIGNUP_ATTEMPT_LIMIT = 10
 export const SIGNUP_ATTEMPT_WINDOW_MS = 24 * 60 * 60 * 1000
@@ -22,14 +22,14 @@ export const recordSignupAttempt = async (
     now.getTime() - SIGNUP_ATTEMPT_WINDOW_MS,
   ).toISOString()
 
-  await kyselyDb
+  await db
     .deleteFrom("signup_attempts")
     .where("created_at", "<", windowStart)
     .execute()
 
   // Attempts from one address queue behind each other, so a burst cannot all
   // read a count under the limit before any of them is recorded.
-  return kyselyDb.transaction().execute(async (trx) => {
+  return db.transaction().execute(async (trx) => {
     await sql`SELECT pg_advisory_xact_lock(hashtext(${ipHash}))`.execute(trx)
 
     const { count } = await trx
@@ -56,7 +56,7 @@ export const isSignupDomainBlocked = async (
   const domain = email.trim().toLowerCase().split("@").at(-1)
   if (!domain) return false
 
-  const blocked = await kyselyDb
+  const blocked = await db
     .selectFrom("blocked_signup_domains")
     .select("domain")
     .where("domain", "=", domain)

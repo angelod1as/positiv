@@ -1,11 +1,11 @@
 import type { ActionFunctionArgs } from "react-router"
-import { getAdminContext } from "~/business/admin/admin.server"
+import { getAdminContext } from "~/business/auth/admin-context.server"
 import {
   createInvite,
   listInvitesForEvent,
   revokeInvite,
-} from "~/business/admin/event-invites.server"
-import { searchProfilesForInvite } from "~/business/admin/search-profiles.server"
+} from "~/business/event/event-invites.server"
+import { searchProfilesForInvite } from "~/business/reporting/search-profiles.server"
 import { zod } from "~/lib/helpers/zod"
 
 /**

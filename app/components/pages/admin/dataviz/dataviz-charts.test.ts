@@ -5,7 +5,7 @@ import type {
   EventRevenueDataPoint,
   OccupancyDataPoint,
   VeteranRookieDataPoint,
-} from '~/business/admin/dataviz/dataviz.types'
+} from '~/business/reporting/dataviz/dataviz.types'
 import {
   ageChart,
   approvalChart,

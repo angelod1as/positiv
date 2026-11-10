@@ -3,7 +3,7 @@ import type { z } from "zod"
 import { zod } from "~/lib/helpers/zod"
 import { createBrowserClient } from "~/lib/supabase/client"
 import type { Database } from "~types/database/database.types"
-import { currentProfileSchema, currentUserSchema } from "../common"
+import { currentProfileSchema, currentUserSchema } from "./auth-schemas"
 
 export const clientContextSchema = zod.object({
   supabase: zod.custom<SupabaseClient<Database, "public">>(),

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
-import type { ProfileWithExtraData } from '~/business/admin/admin.server'
+import type { ProfileWithExtraData } from '~/business/application/event-participants.server'
 import { adminParticipantsCopy } from '~/copy/admin/participants'
 import { BasicData } from './basic-data'
 

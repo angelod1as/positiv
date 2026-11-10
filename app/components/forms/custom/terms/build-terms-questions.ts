@@ -1,4 +1,4 @@
-import { agreeToTermsSchema } from "~/business/common"
+import { agreeToTermsSchema } from "~/business/profile/profile-schemas"
 import type { Question } from "~/components/forms/runtime/question.types"
 import { agreeToTermsCopy } from "~/copy/dashboard"
 

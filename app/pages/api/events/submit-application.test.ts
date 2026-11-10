@@ -5,21 +5,21 @@ vi.mock("~/business/auth/auth.server", () => ({
   getUserContext: vi.fn().mockResolvedValue({ currentProfile: { id: "me" } }),
 }))
 
-vi.mock("~/business/session.server", async (importOriginal) => ({
+vi.mock("~/business/application/rules-session.server", async (importOriginal) => ({
   // The gate check itself stays real: a mock of it could not catch the two
   // guards drifting apart, which is the whole reason it is shared.
-  ...(await importOriginal<typeof import("~/business/session.server")>()),
+  ...(await importOriginal<typeof import("~/business/application/rules-session.server")>()),
   rulesSessionStorage: {
     getSession: vi.fn(),
   },
 }))
 
-vi.mock("~/business/participant/apply-to-event.server", () => ({
+vi.mock("~/business/application/apply-to-event.server", () => ({
   applyToEvent: vi.fn(),
 }))
 
-import { applyToEvent } from "~/business/participant/apply-to-event.server"
-import { rulesSessionStorage } from "~/business/session.server"
+import { applyToEvent } from "~/business/application/apply-to-event.server"
+import { rulesSessionStorage } from "~/business/application/rules-session.server"
 
 const mockApplyToEvent = vi.mocked(applyToEvent)
 const mockGetSession = vi.mocked(rulesSessionStorage.getSession)

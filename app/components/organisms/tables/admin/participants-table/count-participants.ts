@@ -1,4 +1,4 @@
-import type { ProfileWithExtraData } from "~/business/admin/admin.server"
+import type { ProfileWithExtraData } from "~/business/application/event-participants.server"
 import type {
   ParticipantApplicationStatus,
   ParticipantAttendanceStatus,

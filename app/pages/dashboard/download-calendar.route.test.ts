@@ -1,7 +1,7 @@
 import { redirectWithError } from "remix-toast"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { getContext } from "~/business/auth/auth.server"
-import { formatCalendarEvent } from "~/business/participant/format-calendar-event.server"
+import { formatCalendarEvent } from "~/business/event/format-calendar-event.server"
 import { dashboardCopy } from "~/copy/dashboard"
 import paths from "~/lib/paths"
 import { loader } from "./download-calendar.route"
@@ -23,7 +23,7 @@ vi.mock("~/business/auth/auth.server", () => ({
   getContext: vi.fn(),
 }))
 
-vi.mock("~/business/participant/format-calendar-event.server", () => ({
+vi.mock("~/business/event/format-calendar-event.server", () => ({
   formatCalendarEvent: vi.fn(),
 }))
 

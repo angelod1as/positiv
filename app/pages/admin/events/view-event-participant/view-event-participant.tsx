@@ -1,16 +1,15 @@
 import type { ShouldRevalidateFunctionArgs } from "react-router"
-import { NoResultError } from "kysely"
+import { isNoResultError } from "~/lib/helpers/kysely-helpers.server"
 import { redirectWithError } from "remix-toast"
+import { getAdminContext } from "~/business/auth/admin-context.server"
 import {
-  getAdminContext,
-  getEventParticipantBasic,
   getParticipantFullEventHistory,
   getProfileById,
-  updateEventParticipantById,
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
-} from "~/business/admin/admin.server"
-import { setProfileCpfExempt } from "~/business/admin/cpf-exemption.server"
+} from "~/business/profile/profiles.server"
+import { getEventParticipantBasic, updateEventParticipantById } from "~/business/application/event-participants.server"
+import { setProfileCpfExempt } from "~/business/profile/cpf-exemption.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
 import { paymentProvider } from "~/business/payment/payment-provider.server"
 import { getPaymentsForParticipant } from "~/business/payment/payment-totals.server"
@@ -30,7 +29,7 @@ import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event-participant"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
 import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
-import { readFormData } from "~/lib/helpers/read-form-data.server"
+import { readFormData } from "~/lib/request/read-form-data.server"
 
 const {
   admin: {
@@ -120,7 +119,7 @@ export async function loader({ params }: Route.LoaderArgs) {
   ])
 
   if (!profileResult.success) {
-    if (profileResult.errors.every((error) => error instanceof NoResultError)) {
+    if (profileResult.errors.every(isNoResultError)) {
       logger.warn("Profile not found", { profileId })
     } else {
       logger.error("Failed to fetch profile", {

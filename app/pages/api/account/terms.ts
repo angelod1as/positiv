@@ -1,6 +1,6 @@
 import type { ActionFunctionArgs } from "react-router"
 import { getUserContext } from "~/business/auth/auth.server"
-import { saveTermsAgreement } from "~/business/participant/save-terms-agreement.server"
+import { saveTermsAgreement } from "~/business/profile/save-terms-agreement.server"
 
 /**
  * A route of its own rather than the page's action: a POST to a page route is

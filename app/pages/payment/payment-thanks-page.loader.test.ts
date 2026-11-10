@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest"
 import * as authServer from "~/business/auth/auth.server"
 import type { Route } from "./+types/payment-thanks-page"
 import { loader } from "./payment-thanks-page"
-import { loadPaymentThanks } from "./payment-page.server"
+import { loadPaymentThanks } from "~/business/payment/payment-page.server"
 import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
 
 vi.mock("~/business/auth/auth.server", () => ({
@@ -13,7 +13,7 @@ vi.mock("~/business/settings/app-settings.server", () => ({
   isOnlinePaymentsEnabled: vi.fn(),
 }))
 
-vi.mock("./payment-page.server", () => ({
+vi.mock("~/business/payment/payment-page.server", () => ({
   loadPaymentThanks: vi.fn(async () => ({ state: "waiting", eventTitle: "" })),
 }))
 

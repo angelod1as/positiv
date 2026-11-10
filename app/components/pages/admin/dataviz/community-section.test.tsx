@@ -1,6 +1,6 @@
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import type { DemographicsDataResult } from '~/business/admin/dataviz/dataviz.types'
+import type { DemographicsDataResult } from '~/business/reporting/dataviz/dataviz.types'
 import { render, screen, within } from '~/test/test-utils'
 import { CommunitySection } from './community-section'
 

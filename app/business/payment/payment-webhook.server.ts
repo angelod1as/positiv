@@ -1,5 +1,5 @@
 import { sql, type Kysely } from "kysely"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import type { Database } from "~types/database/kysely.types"
 import { paymentLogger as logger } from "./payment-logger.server"
 import type { PaymentEvent, ProviderRefund } from "./payment-provider"
@@ -25,7 +25,7 @@ export async function recordWebhookEvent(
   event: PaymentEvent,
   payload: unknown,
 ): Promise<{ isNew: boolean; alreadyProcessed: boolean; id: string }> {
-  const inserted = await kyselyDb
+  const inserted = await db
     .insertInto("payment_webhook_events")
     .values({
       provider_event_id: event.eventId,
@@ -41,7 +41,7 @@ export async function recordWebhookEvent(
 
   if (inserted) return { isNew: true, alreadyProcessed: false, id: inserted.id }
 
-  const existing = await kyselyDb
+  const existing = await db
     .selectFrom("payment_webhook_events")
     .select(["id", "processed_at"])
     .where("provider_event_id", "=", event.eventId)
@@ -150,7 +150,7 @@ export async function applyWebhookEvent(
     // that pair is worse than neither: a row marked paid whose delivery was
     // never closed comes back as a redelivery, lands in `already_paid`, and
     // the participant is never told.
-    result = await kyselyDb.transaction().execute(async (trx) => {
+    result = await db.transaction().execute(async (trx) => {
       const payment = await findPayment(trx, event)
 
       if (!payment) {
@@ -173,7 +173,7 @@ export async function applyWebhookEvent(
     const message = error instanceof Error ? error.message : String(error)
     try {
       // On its own connection: the transaction above is already rolled back.
-      await markProcessed(kyselyDb, inboxId, message)
+      await markProcessed(db, inboxId, message)
     } catch {
       // The inbox is unreachable too. The throw below is what matters — it is
       // what makes the provider retry the whole thing.

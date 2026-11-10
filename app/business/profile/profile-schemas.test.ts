@@ -1,0 +1,307 @@
+import { describe, expect, it } from "vitest"
+import { basicDataValidation } from "~/copy/account"
+import { validationMessages } from "~/lib/helpers/validation-messages"
+import {
+  basicDataFieldsSchema,
+  basicDataSchema,
+  ExtraBasicDataSchema,
+} from "./profile-schemas"
+
+describe("basicDataFieldsSchema", () => {
+  it("exposes each field so a question can reuse it", () => {
+    const { shape } = basicDataFieldsSchema
+
+    expect(shape.full_name.safeParse("M").success).toBe(false)
+    expect(shape.full_name.safeParse("Maria Silva").success).toBe(true)
+    expect(shape.phone.safeParse(1).success).toBe(false)
+    expect(shape.phone.safeParse(11999999999).success).toBe(true)
+    expect(shape.date_of_birth.safeParse("2020-01-01").success).toBe(false)
+  })
+
+  // The CPF reaches Asaas, which refuses a customer whose digits do not check
+  // out. Catching it on the form is the difference between a sentence the
+  // person can act on and a charge that cannot be created later.
+  it("refuses a CPF whose check digits do not add up", () => {
+    const { shape } = basicDataFieldsSchema
+
+    expect(shape.cpf.safeParse("529.982.247-25").success).toBe(true)
+    // Stored as digits whichever form wrote it, so profiles.cpf never holds
+    // the same number in two shapes.
+    expect(shape.cpf.parse("529.982.247-25")).toBe("52998224725")
+    expect(shape.cpf.safeParse("52998224725").success).toBe(true)
+    expect(shape.cpf.safeParse("529.982.247-26").success).toBe(false)
+    expect(shape.cpf.safeParse("111.111.111-11").success).toBe(false)
+    expect(shape.cpf.safeParse("12345678900").success).toBe(false)
+    expect(shape.cpf.safeParse("5299822472").success).toBe(false)
+  })
+
+  it("does not compare one field with another — that is the whole schema's job", () => {
+    const mismatched = {
+      full_name: "Maria Silva",
+      social_name: null,
+      rg: "123456789",
+      rg_issuer: "SSP-SP",
+      cpf: "52998224725",
+      date_of_birth: "1990-01-01",
+      phone: 11999999999,
+      confirm_phone: 11888888888,
+    }
+
+    expect(basicDataFieldsSchema.safeParse(mismatched).success).toBe(true)
+    expect(basicDataSchema.safeParse(mismatched).success).toBe(false)
+  })
+})
+
+describe("basicDataSchema", () => {
+  const validBasicData = {
+    full_name: "Maria Silva",
+    social_name: null,
+    rg: "123456789",
+    rg_issuer: "SSP-SP",
+    cpf: "52998224725",
+    date_of_birth: "1990-01-01",
+    phone: 11999999999,
+    confirm_phone: 11999999999,
+  }
+
+  describe("name transformation", () => {
+    it("should transform all uppercase full_name to title case", () => {
+      const data = { ...validBasicData, full_name: "MARIA SILVA" }
+      const result = basicDataSchema.safeParse(data)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.full_name).toBe("Maria Silva")
+      }
+    })
+
+    it("should transform all lowercase full_name to title case", () => {
+      const data = { ...validBasicData, full_name: "maria silva" }
+      const result = basicDataSchema.safeParse(data)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.full_name).toBe("Maria Silva")
+      }
+    })
+
+    it("should transform all uppercase social_name to title case", () => {
+      const data = { ...validBasicData, social_name: "MARIA" }
+      const result = basicDataSchema.safeParse(data)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.social_name).toBe("Maria")
+      }
+    })
+
+    it("should transform all lowercase social_name to title case", () => {
+      const data = { ...validBasicData, social_name: "maria" }
+      const result = basicDataSchema.safeParse(data)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.social_name).toBe("Maria")
+      }
+    })
+
+    it("should leave properly cased name unchanged", () => {
+      const data = { ...validBasicData, full_name: "Maria da Silva" }
+      const result = basicDataSchema.safeParse(data)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.full_name).toBe("Maria da Silva")
+      }
+    })
+
+    it("should handle Portuguese particles correctly", () => {
+      const data = { ...validBasicData, full_name: "JOÃO DOS SANTOS" }
+      const result = basicDataSchema.safeParse(data)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.full_name).toBe("João dos Santos")
+      }
+    })
+  })
+
+  describe("social_name !== full_name validation", () => {
+    it("should fail when social_name equals full_name exactly", () => {
+      const data = {
+        ...validBasicData,
+        full_name: "Maria Silva",
+        social_name: "Maria Silva",
+      }
+      const result = basicDataSchema.safeParse(data)
+
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        const socialNameError = result.error.issues.find((issue) =>
+          issue.path.includes("social_name"),
+        )
+        expect(socialNameError).toBeDefined()
+        expect(socialNameError?.message).toBe(
+          "O nome social deve ser diferente do nome completo",
+        )
+      }
+    })
+
+    it("should fail when social_name equals full_name case-insensitively", () => {
+      const data = {
+        ...validBasicData,
+        full_name: "Maria Silva",
+        social_name: "maria silva",
+      }
+      const result = basicDataSchema.safeParse(data)
+
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        const socialNameError = result.error.issues.find((issue) =>
+          issue.path.includes("social_name"),
+        )
+        expect(socialNameError).toBeDefined()
+      }
+    })
+
+    it("should fail when social_name equals full_name after transformation", () => {
+      const data = {
+        ...validBasicData,
+        full_name: "MARIA SILVA",
+        social_name: "maria silva",
+      }
+      const result = basicDataSchema.safeParse(data)
+
+      expect(result.success).toBe(false)
+    })
+
+    it("should pass when social_name is different from full_name", () => {
+      const data = {
+        ...validBasicData,
+        full_name: "Maria Silva",
+        social_name: "Maria",
+      }
+      const result = basicDataSchema.safeParse(data)
+
+      expect(result.success).toBe(true)
+    })
+
+    it("should pass when social_name is null", () => {
+      const data = {
+        ...validBasicData,
+        full_name: "Maria Silva",
+        social_name: null,
+      }
+      const result = basicDataSchema.safeParse(data)
+
+      expect(result.success).toBe(true)
+    })
+
+    it("should pass when social_name is undefined", () => {
+      const data = {
+        ...validBasicData,
+        full_name: "Maria Silva",
+      }
+      delete (data as { social_name?: string | null }).social_name
+      const result = basicDataSchema.safeParse(data)
+
+      expect(result.success).toBe(true)
+    })
+  })
+
+  describe("phone", () => {
+    const withPhone = (phone: number, phone_is_international?: boolean) => ({
+      ...validBasicData,
+      phone,
+      confirm_phone: phone,
+      phone_is_international,
+    })
+
+    const phoneIssue = (data: object) => {
+      const result = basicDataSchema.safeParse(data)
+      if (result.success) return null
+      return result.error.issues.find((issue) => issue.path[0] === "phone")
+        ?.message
+    }
+
+    it("reads a phone nobody flagged as Brazilian", () => {
+      const result = basicDataSchema.safeParse(withPhone(11999999999))
+
+      expect(result.success).toBe(true)
+      if (result.success) expect(result.data.phone_is_international).toBe(false)
+    })
+
+    it("refuses a landline or a mobile still missing its ninth digit", () => {
+      expect(phoneIssue(withPhone(1133334444))).toBe(
+        basicDataValidation.notAMobile,
+      )
+      expect(phoneIssue(withPhone(1199998888, false))).toBe(
+        basicDataValidation.notAMobile,
+      )
+    })
+
+    it("refuses a foreign number that was not flagged international", () => {
+      expect(phoneIssue(withPhone(351912345678))).toBe(
+        basicDataValidation.notAMobile,
+      )
+    })
+
+    it("accepts a foreign number flagged international", () => {
+      const result = basicDataSchema.safeParse(withPhone(351912345678, true))
+
+      expect(result.success).toBe(true)
+      if (result.success) expect(result.data.phone_is_international).toBe(true)
+    })
+
+    it("refuses a flagged number that is a Brazilian one with its country code", () => {
+      expect(phoneIssue(withPhone(5511999998888, true))).toBe(
+        basicDataValidation.invalidInternationalPhone,
+      )
+    })
+  })
+})
+describe("ExtraBasicDataSchema", () => {
+  const validExtraData = {
+    gender: ["Travesti"],
+    orientation: ["Bi"],
+    pronouns: ["Ela/dela"],
+    race_color: ["Preta"],
+  }
+
+  it("accepts an answer someone wrote themselves", () => {
+    const result = ExtraBasicDataSchema.safeParse({
+      ...validExtraData,
+      gender: ["Pessoa não binária transmasculina"],
+    })
+
+    expect(result.success).toBe(true)
+  })
+
+  it.each(["gender", "orientation", "pronouns", "race_color"])(
+    "refuses a %s answer longer than fifty characters",
+    (field) => {
+      const result = ExtraBasicDataSchema.safeParse({
+        ...validExtraData,
+        [field]: ["a".repeat(51)],
+      })
+
+      expect(result.success).toBe(false)
+      if (result.success) throw new Error("expected a refusal")
+      expect(result.error.issues[0].message).toBe(validationMessages.maxLength(50))
+    },
+  )
+
+  it.each(["gender", "orientation", "pronouns", "race_color"])(
+    "refuses more than ten %s answers",
+    (field) => {
+      const result = ExtraBasicDataSchema.safeParse({
+        ...validExtraData,
+        [field]: Array.from({ length: 11 }, (_, index) => `answer ${index}`),
+      })
+
+      expect(result.success).toBe(false)
+      if (result.success) throw new Error("expected a refusal")
+      expect(result.error.issues[0].message).toBe(validationMessages.maxOptions(10))
+    },
+  )
+})

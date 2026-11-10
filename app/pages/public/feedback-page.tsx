@@ -12,7 +12,7 @@ import { buildSingleScreenFlow } from "~/components/forms/runtime/single-screen-
 import { Card, CardContent } from "~/components/ui/card"
 import { metaCopy } from "~/copy/meta"
 import { publicCopy } from "~/copy/public"
-import { getTurnstileConfig } from "~/lib/helpers/get-turnstile-config.server"
+import { getTurnstileConfig } from "~/lib/request/get-turnstile-config.server"
 import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
 import type { CommitResult } from "~types/forms/commit.types"

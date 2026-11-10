@@ -1,5 +1,5 @@
 import { format, isValid, parseISO } from 'date-fns'
-import type { DemographicDistribution } from '~/business/admin/dataviz/dataviz.types'
+import type { DemographicDistribution } from '~/business/reporting/dataviz/dataviz.types'
 
 export function formatChartDate(dateString: string): string {
   if (!dateString) return ''

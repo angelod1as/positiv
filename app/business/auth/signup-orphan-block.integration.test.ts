@@ -4,7 +4,7 @@ import {
   setupIntegrationTest,
 } from "~/test/integration-setup"
 import { createTestProfile, createTestAuthUser } from "~/test/db-test-utils"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 
 describe("Signup Claimed Profile Blocking - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()
@@ -28,7 +28,7 @@ describe("Signup Claimed Profile Blocking - Integration Tests", () => {
 
     // The new check queries for claimed profiles (user_id IS NOT NULL)
     // An orphan profile should NOT appear in this query
-    const claimedProfile = await kyselyDb
+    const claimedProfile = await db
       .selectFrom("profiles")
       .select("id")
       .where("email", "=", testEmail)
@@ -49,7 +49,7 @@ describe("Signup Claimed Profile Blocking - Integration Tests", () => {
     })
 
     // A claimed profile (user_id IS NOT NULL) should be found → block signup
-    const claimedProfile = await kyselyDb
+    const claimedProfile = await db
       .selectFrom("profiles")
       .select("id")
       .where("email", "=", testEmail)
@@ -61,7 +61,7 @@ describe("Signup Claimed Profile Blocking - Integration Tests", () => {
   })
 
   it("should not block signup when no profile exists for email", async () => {
-    const claimedProfile = await kyselyDb
+    const claimedProfile = await db
       .selectFrom("profiles")
       .select("id")
       .where("email", "=", "nonexistent-email-99999@example.com")
@@ -83,7 +83,7 @@ describe("Signup Claimed Profile Blocking - Integration Tests", () => {
     })
 
     // Query using normalized email should find the claimed profile
-    const claimedProfile = await kyselyDb
+    const claimedProfile = await db
       .selectFrom("profiles")
       .select("id")
       .where("email", "=", normalizedEmail)

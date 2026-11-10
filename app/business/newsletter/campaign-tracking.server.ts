@@ -1,6 +1,6 @@
 import { composable } from "composable-functions"
-import { kyselyDb } from "~/kysely-db"
-import { json } from "~/lib/helpers/kysely-helpers"
+import { db } from "~/lib/supabase/db.server"
+import { json } from "~/lib/helpers/kysely-helpers.server"
 import { logger } from "~/lib/logger/logger.server"
 
 const MAX_CAMPAIGN_RETRIES = 3
@@ -17,7 +17,7 @@ export const createCampaignTracking = composable(
     campaignType: "opening" | "pre_opening" = "opening",
     shouldSendAt?: string,
   ) => {
-    await kyselyDb
+    await db
       .insertInto("event_newsletter_campaigns")
       .values({
         event_id: eventId,
@@ -36,7 +36,7 @@ export const createCampaignTracking = composable(
 
 export const getPendingCampaigns = composable(
   async (campaignType: "opening" | "pre_opening") => {
-    const campaigns = await kyselyDb
+    const campaigns = await db
       .selectFrom("event_newsletter_campaigns")
       .selectAll()
       .where("campaign_type", "=", campaignType)
@@ -65,7 +65,7 @@ export const updateCampaignCreated = composable(
     campaignId: string,
     campaignType: "opening" | "pre_opening",
   ) => {
-    await kyselyDb
+    await db
       .updateTable("event_newsletter_campaigns")
       .set({
         campaign_is_created: true,
@@ -83,7 +83,7 @@ export const updateCampaignCreated = composable(
 
 export const updateCampaignSent = composable(
   async (eventId: string, campaignType: "opening" | "pre_opening") => {
-    await kyselyDb
+    await db
       .updateTable("event_newsletter_campaigns")
       .set({
         campaign_is_sent: true,
@@ -104,7 +104,7 @@ export const updateCampaignError = composable(
     errorData: CampaignErrorData,
     campaignType: "opening" | "pre_opening",
   ) => {
-    const [updated] = await kyselyDb
+    const [updated] = await db
       .updateTable("event_newsletter_campaigns")
       .set((eb) => ({
         times_attempted: eb("times_attempted", "+", 1),

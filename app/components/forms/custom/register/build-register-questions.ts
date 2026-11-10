@@ -1,7 +1,7 @@
 import {
   PASSWORDS_DIFFER_MESSAGE,
   registerUserFieldsSchema,
-} from "~/business/common"
+} from "~/business/auth/auth-schemas"
 import type { Question } from "~/components/forms/runtime/question.types"
 import { registerCopy } from "~/copy/auth"
 

@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const navigate = vi.fn()
 
-vi.mock("~/lib/helpers/get-turnstile-config.server", () => ({
+vi.mock("~/lib/request/get-turnstile-config.server", () => ({
   getTurnstileConfig: vi.fn(() => ({
     siteKey: "test-site-key",
     secretKey: "test-secret-key",

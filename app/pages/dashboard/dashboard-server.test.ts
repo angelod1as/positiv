@@ -5,15 +5,15 @@ vi.mock("~/business/auth/auth.server", () => ({
   getUserContext: vi.fn(),
 }))
 
-vi.mock("~/business/participant/apply-to-event.server", () => ({
+vi.mock("~/business/application/apply-to-event.server", () => ({
   applyToEvent: vi.fn(),
 }))
 
-vi.mock("~/business/participant/cancel-application-to-event.server", () => ({
+vi.mock("~/business/application/cancel-application-to-event.server", () => ({
   cancelApplicationToEvent: vi.fn(),
 }))
 
-vi.mock("~/business/participant/has-ever-applied.server", () => ({
+vi.mock("~/business/application/has-ever-applied.server", () => ({
   hasEverApplied: vi.fn(),
 }))
 
@@ -21,7 +21,7 @@ vi.mock("~/business/settings/app-settings.server", () => ({
   isCardPaymentsEnabled: vi.fn(),
 }))
 
-vi.mock("../page/fetch/get-next-events", () => ({
+vi.mock("~/business/event/get-next-events.server", () => ({
   getNextEvents: vi.fn(),
 }))
 
@@ -30,11 +30,11 @@ vi.mock("~/lib/logger/logger.server", () => ({
 }))
 
 import { getContext, getUserContext } from "~/business/auth/auth.server"
-import { applyToEvent } from "~/business/participant/apply-to-event.server"
-import { cancelApplicationToEvent } from "~/business/participant/cancel-application-to-event.server"
-import { hasEverApplied } from "~/business/participant/has-ever-applied.server"
+import { applyToEvent } from "~/business/application/apply-to-event.server"
+import { cancelApplicationToEvent } from "~/business/application/cancel-application-to-event.server"
+import { hasEverApplied } from "~/business/application/has-ever-applied.server"
 import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
-import { getNextEvents } from "../page/fetch/get-next-events"
+import { getNextEvents } from "~/business/event/get-next-events.server"
 import { logger } from "~/lib/logger/logger.server"
 import { action, clientAction, loader } from "./dashboard-page"
 import { PERMISSIONS } from "~/business/auth/permissions"

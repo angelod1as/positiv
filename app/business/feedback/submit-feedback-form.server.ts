@@ -1,7 +1,7 @@
 import { ENV } from "varlock/env"
 import { publicCopy } from "~/copy/public"
 import { toCommitErrors } from "~/lib/helpers/to-commit-errors"
-import { verifyTurnstileToken } from "~/lib/helpers/verify-turnstile.server"
+import { verifyTurnstileToken } from "~/lib/request/verify-turnstile.server"
 import { logger } from "~/lib/logger/logger.server"
 import type { CommitResult } from "~types/forms/commit.types"
 import { feedbackRateLimiter } from "./feedback-rate-limiter"

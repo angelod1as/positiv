@@ -2,7 +2,7 @@ import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server
 import { metaCopy } from "~/copy/meta"
 import { createMetaArray } from "~/lib/helpers/meta"
 import type { Route } from "./+types/payment-token-thanks-page"
-import { loadPaymentThanksByToken } from "./payment-page.server"
+import { loadPaymentThanksByToken } from "~/business/payment/payment-page.server"
 import PaymentThanksPage from "./payment-thanks-page"
 
 export function meta({}: Route.MetaArgs) {

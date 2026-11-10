@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FC } from "react"
-import type { EventInviteRow } from "~/business/admin/event-invites.server"
-import type { InviteSearchResult } from "~/business/admin/search-profiles.server"
+import type { EventInviteRow } from "~/business/event/event-invites.server"
+import type { InviteSearchResult } from "~/business/reporting/search-profiles.server"
 import { Button } from "~/components/atoms/button/button"
 import {
   Dialog,

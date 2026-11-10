@@ -12,7 +12,7 @@ vi.mock("~/business/event/find-visible-event.server", () => ({
   findVisibleEvent: vi.fn(),
 }))
 
-vi.mock("~/business/participant/is-veteran.server", () => ({
+vi.mock("~/business/profile/is-veteran.server", () => ({
   isVeteran: vi.fn(),
 }))
 
@@ -31,7 +31,7 @@ vi.mock("react-router", async (importOriginal) => {
 
 import { getUserContext } from "~/business/auth/auth.server"
 import { findVisibleEvent } from "~/business/event/find-visible-event.server"
-import { isVeteran } from "~/business/participant/is-veteran.server"
+import { isVeteran } from "~/business/profile/is-veteran.server"
 import type { EventStatus } from "~types/database/entities.types"
 
 const mockGetUserContext = vi.mocked(getUserContext)

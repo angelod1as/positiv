@@ -2,7 +2,7 @@ import type {
   DemographicsDataResult,
   GrowthDataPoint,
   RetentionDataPoint,
-} from '~/business/admin/dataviz/dataviz.types'
+} from '~/business/reporting/dataviz/dataviz.types'
 import { DemographicFilterToggle } from '~/components/atoms/charts/demographic-filter-toggle'
 import type { FilterMode } from '~/components/atoms/charts/demographic-filter-toggle'
 import { adminDatavizCopy } from '~/copy/admin/dataviz'

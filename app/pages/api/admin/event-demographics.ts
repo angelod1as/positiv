@@ -1,8 +1,6 @@
 import type { ActionFunctionArgs } from "react-router"
-import {
-  getAdminContext,
-  updateEventDemographics,
-} from "~/business/admin/admin.server"
+import { getAdminContext } from "~/business/auth/admin-context.server"
+import { updateEventDemographics } from "~/business/event/event.server"
 import { toCommitResult } from "~/lib/helpers/to-commit-result"
 import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 

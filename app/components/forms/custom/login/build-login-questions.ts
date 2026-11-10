@@ -1,4 +1,4 @@
-import { loginSchema } from "~/business/common"
+import { loginSchema } from "~/business/auth/auth-schemas"
 import type { Question } from "~/components/forms/runtime/question.types"
 import { loginCopy } from "~/copy/auth"
 

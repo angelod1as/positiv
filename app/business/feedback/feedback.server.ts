@@ -1,6 +1,6 @@
 import { applySchema, composable } from "composable-functions"
 import { adminFeedbacksCopy } from "~/copy/admin"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import type { FeedbackFormData, FeedbackStatus } from "./feedback-schema"
 import { updateFeedbackStatusSchema } from "./feedback-schema"
 
@@ -24,7 +24,7 @@ export async function submitFeedback(
   data: Omit<FeedbackFormData, "captchaToken">,
   ipAddress: string,
 ) {
-  return await kyselyDb
+  return await db
     .insertInto("feedbacks")
     .values({
       name: data.name ?? null,
@@ -41,7 +41,7 @@ export async function submitFeedback(
 
 export const updateFeedbackStatus = applySchema(updateFeedbackStatusSchema)(
   async ({ id, status }) => {
-    const result = await kyselyDb
+    const result = await db
       .updateTable("feedbacks")
       .set({ status })
       .where("id", "=", id)
@@ -55,7 +55,7 @@ export const updateFeedbackStatus = applySchema(updateFeedbackStatusSchema)(
 
 export const getRecentFeedbacks = composable(
   async (limit: number = 10): Promise<FeedbackWithVerification[]> => {
-    const feedbacks = await kyselyDb
+    const feedbacks = await db
       .selectFrom("feedbacks")
       .selectAll()
       .where("status", "!=", "resolved")
@@ -74,7 +74,7 @@ export const getRecentFeedbacks = composable(
 
 export const getAllFeedbacksWithVerification = composable(
   async (): Promise<FeedbackWithVerification[]> => {
-    const feedbacks = await kyselyDb
+    const feedbacks = await db
       .selectFrom("feedbacks")
       .selectAll()
       .orderBy("created_at", "desc")
@@ -96,7 +96,7 @@ export const getAllFeedbacksWithVerification = composable(
 
     const profilesWithEmail =
       emails.length > 0
-        ? await kyselyDb
+        ? await db
             .selectFrom("profiles")
             .select(["id", "email", "social_name", "full_name"])
             .where("email", "in", emails)
@@ -105,7 +105,7 @@ export const getAllFeedbacksWithVerification = composable(
 
     const profilesWithPhone =
       phones.length > 0
-        ? await kyselyDb
+        ? await db
             .selectFrom("profiles")
             .select(["id", "phone", "social_name", "full_name"])
             .where("phone", "in", phones)

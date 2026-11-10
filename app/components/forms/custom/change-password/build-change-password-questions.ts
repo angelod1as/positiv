@@ -1,4 +1,4 @@
-import { changePasswordFieldsSchema } from "~/business/common"
+import { changePasswordFieldsSchema } from "~/business/auth/auth-schemas"
 import type { Question } from "~/components/forms/runtime/question.types"
 import { changePasswordCopy } from "~/copy/account"
 

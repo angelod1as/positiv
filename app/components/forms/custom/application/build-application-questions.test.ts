@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { applyToEventSchema } from "~/business/common"
+import { applyToEventSchema } from "~/business/application/application-schemas"
 import { eventApplicationCopy } from "~/copy/events"
 import { buildApplicationQuestions } from "./build-application-questions"
 

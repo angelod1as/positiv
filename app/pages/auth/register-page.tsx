@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from "~/components/ui/card"
 import { trackEvent } from "~/lib/analytics/umami"
-import { getTurnstileConfig } from "~/lib/helpers/get-turnstile-config.server"
+import { getTurnstileConfig } from "~/lib/request/get-turnstile-config.server"
 import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
 import { cn } from "~/lib/utils"

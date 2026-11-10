@@ -2,7 +2,7 @@ import { addDays } from "date-fns/addDays"
 import { format } from "date-fns/format"
 import { setHours } from "date-fns/setHours"
 import { setMinutes } from "date-fns/setMinutes"
-import type { eventFormSchema } from "~/business/admin/common"
+import type { eventFormSchema } from "~/business/event/event-schemas"
 import { dateTimeFormat } from "~/lib/utils"
 
 type DayOffsets = keyof Omit<

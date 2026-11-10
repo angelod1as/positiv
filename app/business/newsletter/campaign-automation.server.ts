@@ -1,5 +1,5 @@
 import { composable } from "composable-functions"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { LISTMONK_REGISTERED_LIST_ID } from "~/lib/constants/constants"
 import {
   updateCampaignCreated,
@@ -20,7 +20,7 @@ export const createCampaignForEvent = composable(
     campaignType: "opening" | "pre_opening" = "opening",
   ): Promise<number> => {
     // Fetch event data
-    const event = await kyselyDb
+    const event = await db
       .selectFrom("events")
       .selectAll()
       .where("id", "=", eventId)
@@ -81,7 +81,7 @@ export const sendCampaign = composable(
     campaignType: "opening" | "pre_opening" = "opening",
   ): Promise<void> => {
     // Fetch tracking row to get campaign ID
-    const tracking = await kyselyDb
+    const tracking = await db
       .selectFrom("event_newsletter_campaigns")
       .selectAll()
       .where("event_id", "=", eventId)
@@ -150,7 +150,7 @@ export const processCampaignForEvent = composable(
     campaignType: "opening" | "pre_opening" = "opening",
   ): Promise<void> => {
     // Get current tracking state
-    const tracking = await kyselyDb
+    const tracking = await db
       .selectFrom("event_newsletter_campaigns")
       .selectAll()
       .where("event_id", "=", eventId)

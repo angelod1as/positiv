@@ -5,7 +5,7 @@ import { runtimeStorageKey } from "~/components/forms/runtime/persistence"
 import { adminEventsCopy } from "~/copy/admin/events"
 import paths from "~/lib/paths"
 import type { Event } from "~types/database/entities.types"
-import { eventFormSchema } from "~/business/admin/common"
+import { eventFormSchema } from "~/business/event/event-schemas"
 import { EventForm } from "./event-form"
 
 const navigate = vi.hoisted(() => vi.fn())

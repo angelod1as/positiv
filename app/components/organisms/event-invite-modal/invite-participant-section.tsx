@@ -1,5 +1,5 @@
 import { useState, type FC } from "react"
-import type { EventInviteRow } from "~/business/admin/event-invites.server"
+import type { EventInviteRow } from "~/business/event/event-invites.server"
 import { Button } from "~/components/atoms/button/button"
 import { adminInvitesCopy } from "~/copy/admin/invites"
 import { checkEventStatus } from "~/lib/helpers/check-event-status"

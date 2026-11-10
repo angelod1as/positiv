@@ -13,7 +13,7 @@ import { getRulesFormQuestions } from "~/components/forms/custom/rules/rules-que
 import EventRulesPage from "./event-rules-page"
 
 vi.mock("~/business/auth/auth.server", () => ({ getUserContext: vi.fn() }))
-vi.mock("~/kysely-db", () => ({ kyselyDb: { selectFrom: vi.fn() } }))
+vi.mock("~/lib/supabase/db.server", () => ({ db: { selectFrom: vi.fn() } }))
 
 /**
  * Three of these tests wait up to five seconds inside themselves, which is

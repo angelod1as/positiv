@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
-import { formatPaymentConfirmedMail } from "~/business/email/format-payment-confirmed-mail"
+import { formatPaymentConfirmedMail } from "~/business/email/format-payment-confirmed-mail.server"
 import { paymentConfirmedMailTemplate } from "./payment-confirmed-mail.template"
 
 vi.mock("~/business/email/payment-confirmed-mail-copy.server", async () => {

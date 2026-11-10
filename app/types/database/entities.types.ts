@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 import type { Selectable } from "kysely"
-import { currentProfileSchema } from "~/business/common"
+import { currentProfileSchema } from "~/business/auth/auth-schemas"
 import type {
   GENDERS,
   ORIENTATIONS,

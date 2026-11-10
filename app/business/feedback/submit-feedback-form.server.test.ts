@@ -21,7 +21,7 @@ vi.mock("./notify-new-feedback.server", () => ({
   notifyNewFeedback: vi.fn(async () => undefined),
 }))
 
-vi.mock("~/lib/helpers/verify-turnstile.server", () => ({
+vi.mock("~/lib/request/verify-turnstile.server", () => ({
   verifyTurnstileToken: vi.fn(async () => ({ success: true })),
 }))
 
@@ -32,7 +32,7 @@ vi.mock("~/lib/logger/logger.server", () => ({
 import { feedbackRateLimiter } from "./feedback-rate-limiter"
 import { submitFeedback } from "./feedback.server"
 import { notifyNewFeedback } from "./notify-new-feedback.server"
-import { verifyTurnstileToken } from "~/lib/helpers/verify-turnstile.server"
+import { verifyTurnstileToken } from "~/lib/request/verify-turnstile.server"
 
 const feedbackCopy = publicCopy.feedback
 

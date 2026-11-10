@@ -17,8 +17,10 @@ vi.mock("remix-toast", () => ({
   redirectWithSuccess: vi.fn(),
 }))
 
-vi.mock("./business/session.server", () => ({
+vi.mock("./lib/request/cookies.server", () => ({
   newsCookie: { parse: vi.fn(), serialize: vi.fn() },
+}))
+vi.mock("./business/newsletter/newsletter-preference-cookie.server", () => ({
   newsletterPreferenceCookie: { parse: vi.fn(), serialize: vi.fn() },
 }))
 
@@ -44,7 +46,7 @@ async function rejection(promise: Promise<unknown>) {
 
 describe("root action", () => {
   beforeEach(async () => {
-    const { newsCookie } = await import("./business/session.server")
+    const { newsCookie } = await import("./lib/request/cookies.server")
     vi.mocked(newsCookie.parse).mockResolvedValue({})
     vi.mocked(newsCookie.serialize).mockResolvedValue("news=1")
   })
@@ -112,7 +114,7 @@ describe("root action", () => {
     const { subscribeProfileToNewsletter } =
       await import("./business/newsletter/auto-subscribe.server")
     const { newsletterPreferenceCookie } =
-      await import("./business/session.server")
+      await import("./business/newsletter/newsletter-preference-cookie.server")
     vi.mocked(getContext).mockResolvedValue({
       currentProfile: { id: "profile-1" },
     } as never)

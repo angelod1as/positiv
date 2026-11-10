@@ -1,5 +1,5 @@
 import type { z } from "zod"
-import type { eventFormSchema } from "~/business/admin/common"
+import type { eventFormSchema } from "~/business/event/event-schemas"
 import { formatCurrency } from "~/lib/helpers/format-currency"
 
 export const eventFormValidation = {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { mapParticipantsToDownloadFormat } from "./download-helpers"
-import type { ProfileWithExtraData } from "~/business/admin/admin.server"
+import type { ProfileWithExtraData } from "~/business/application/event-participants.server"
 
 const participant = (
   overrides: Partial<ProfileWithExtraData>,

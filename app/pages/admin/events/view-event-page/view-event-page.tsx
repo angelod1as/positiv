@@ -1,18 +1,14 @@
 import { useEffect, useState } from "react"
 import { useFetcher } from "react-router"
 import { redirectWithError } from "remix-toast"
-import { listInvitesForEvent } from "~/business/admin/event-invites.server"
-import {
-  getAdminContext,
-  getAdminEventById,
-  getEventDemographicsById,
-  getProfilesWithExtraDataById,
-  getRejectedEventParticipants,
-} from "~/business/admin/admin.server"
+import { listInvitesForEvent } from "~/business/event/event-invites.server"
+import { getAdminContext } from "~/business/auth/admin-context.server"
+import { getProfilesWithExtraDataById, getRejectedEventParticipants } from "~/business/application/event-participants.server"
+import { getAdminEventById, getEventDemographicsById } from "~/business/event/event.server"
 import {
   listmonkSyncFiltersSchema,
   updateEventListmonkList,
-} from "~/business/admin/event-listmonk-sync.server"
+} from "~/business/newsletter/event-listmonk-sync.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
 import { paymentProvider } from "~/business/payment/payment-provider.server"
 import { getPaymentsForEvent } from "~/business/payment/payment-totals.server"
@@ -42,7 +38,7 @@ import paths from "~/lib/paths"
 import type { ComposableFetcherData } from "~types/database/entities.types"
 import type { Route } from "./+types/view-event-page"
 import { sendToast } from "./send-toast"
-import { readFormData } from "~/lib/helpers/read-form-data.server"
+import { readFormData } from "~/lib/request/read-form-data.server"
 
 const {
   admin: { ADMIN_DASHBOARD },

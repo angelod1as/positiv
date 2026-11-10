@@ -1,7 +1,7 @@
 import { useState, type FC } from "react"
 import { useNavigate, useRevalidator } from "react-router"
 import { toast } from "sonner"
-import type { Demographics } from "~/business/admin/demographics/demographics"
+import type { Demographics } from "~/business/reporting/demographics/demographics"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
 import { commitJson } from "~/components/forms/runtime/commit-json"
 import { Button } from "~/components/ui/button"

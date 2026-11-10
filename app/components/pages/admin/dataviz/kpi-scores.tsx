@@ -1,7 +1,7 @@
 import type {
   EventAttendanceDataPoint,
   KpiScores as KpiScoresData,
-} from '~/business/admin/dataviz/dataviz.types'
+} from '~/business/reporting/dataviz/dataviz.types'
 import type { PageSection } from '~/business/cms/page.schema'
 import { StatsSection } from '~/components/pages/page/sections/stats-section'
 import { adminDatavizCopy } from '~/copy/admin/dataviz'

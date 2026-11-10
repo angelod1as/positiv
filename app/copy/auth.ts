@@ -1,5 +1,5 @@
 import type { z } from "zod"
-import type { forgotPasswordSchema, loginSchema } from "~/business/common"
+import type { forgotPasswordSchema, loginSchema } from "~/business/auth/auth-schemas"
 import { sharedCopy } from "~/copy/shared"
 
 export const authLayoutCopy = {

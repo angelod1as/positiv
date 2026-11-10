@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest"
 // reads forms through readFormData, which answers the client with a 4xx
 // instead. A clientAction runs in the browser, where the request is always one
 // of our own forms, so it keeps calling formData() directly.
-const READER = "app/lib/helpers/read-form-data.server.ts"
+const READER = "app/lib/request/read-form-data.server.ts"
 const DIRECT_READ = /\brequest(?:\.clone\(\))?\.formData\(\)|\binputFromForm\(/
 const TOP_LEVEL_DECLARATION =
   /^(?:export )?(?:default )?(?:async )?function (\w+)|^(?:export )?const (\w+)/

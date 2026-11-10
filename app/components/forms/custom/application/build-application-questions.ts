@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { applyToEventSchema } from "~/business/common"
+import { applyToEventSchema } from "~/business/application/application-schemas"
 import type {
   InputSpec,
   Question,

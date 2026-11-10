@@ -1,13 +1,13 @@
-import { NoResultError } from "kysely"
+import { isNoResultError } from "~/lib/helpers/kysely-helpers.server"
 import { redirectWithError } from "remix-toast"
+import { getAdminContext } from "~/business/auth/admin-context.server"
 import {
-  getAdminContext,
   getParticipantFullEventHistory,
   getProfileById,
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
-} from "~/business/admin/admin.server"
-import { setProfileCpfExempt } from "~/business/admin/cpf-exemption.server"
+} from "~/business/profile/profiles.server"
+import { setProfileCpfExempt } from "~/business/profile/cpf-exemption.server"
 import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
 import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { logger } from "~/lib/logger/logger.server"
@@ -15,7 +15,7 @@ import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-profile-page"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
-import { readFormData } from "~/lib/helpers/read-form-data.server"
+import { readFormData } from "~/lib/request/read-form-data.server"
 
 const {
   admin: { ADMIN_PARTICIPANTS },
@@ -42,7 +42,7 @@ export async function loader({ params }: Route.LoaderArgs) {
   ])
 
   if (!profileResult.success) {
-    if (profileResult.errors.every((error) => error instanceof NoResultError)) {
+    if (profileResult.errors.every(isNoResultError)) {
       logger.warn("Profile not found", { profileId })
     } else {
       logger.error("Failed to fetch profile", {

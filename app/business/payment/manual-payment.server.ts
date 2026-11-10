@@ -1,7 +1,7 @@
 import { applySchema } from "composable-functions"
 import { fromZonedTime } from "date-fns-tz"
 import { paymentsCopy } from "~/copy/payments"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { reaisToCents } from "~/lib/helpers/format-currency"
 import { zod } from "~/lib/helpers/zod"
 import { paymentLogger as logger } from "./payment-logger.server"
@@ -41,7 +41,7 @@ export const registerManualPayment = applySchema(manualPaymentSchema)(
     // Checking for an open charge and writing the payment are one statement.
     // Apart, a charge opening between the two would be recorded as paid and
     // charged, and the participant would be asked for money twice.
-    const write = kyselyDb.transaction().execute(async (trx) => {
+    const write = db.transaction().execute(async (trx) => {
       await trx
         .selectFrom("event_participants")
         .select("id")
@@ -111,7 +111,7 @@ export const editManualPayment = applySchema(editManualPaymentSchema)(
   async (values) => {
     const paidAt = fromZonedTime(values.paidAt, "America/Sao_Paulo").toISOString()
 
-    const updated = await kyselyDb
+    const updated = await db
       .updateTable("payments")
       .set({
         method: values.method,
@@ -152,7 +152,7 @@ export const cancelManualPaymentSchema = zod.object({
  */
 export const cancelManualPayment = applySchema(cancelManualPaymentSchema)(
   async (values) => {
-    const cancelled = await kyselyDb
+    const cancelled = await db
       .updateTable("payments")
       .set({ status: "cancelled", paid_at: null })
       .where("id", "=", values.paymentId)

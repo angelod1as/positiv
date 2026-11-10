@@ -1,4 +1,4 @@
-import { basicDataFieldsSchema, ExtraBasicDataSchema } from "~/business/common"
+import { basicDataFieldsSchema, ExtraBasicDataSchema } from "~/business/profile/profile-schemas"
 import type {
   Answers,
   Option,

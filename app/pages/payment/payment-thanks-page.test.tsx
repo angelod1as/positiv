@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { renderWithRouter } from "~/test/test-utils"
 import { paymentsCopy } from "~/copy/payments"
 import PaymentThanksPage from "./payment-thanks-page"
-import type { PaymentThanksData } from "./payment-page.server"
+import type { PaymentThanksData } from "~/business/payment/payment-page.server"
 
 // The page reads one prop of the many a route component is handed, and a test
 // that built the rest would be describing React Router, not this page.

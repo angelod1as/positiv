@@ -1,9 +1,6 @@
 import { NoResultError, type QueryNode } from "kysely"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import {
-  getParticipantFullEventHistory,
-  getProfileById,
-} from "~/business/admin/admin.server"
+import { getParticipantFullEventHistory, getProfileById } from "~/business/profile/profiles.server"
 import { loader } from "./view-profile-page"
 
 const { logger } = vi.hoisted(() => ({
@@ -12,12 +9,14 @@ const { logger } = vi.hoisted(() => ({
 
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
 
-vi.mock("~/business/admin/cpf-exemption.server", () => ({
+vi.mock("~/business/profile/cpf-exemption.server", () => ({
   setProfileCpfExempt: vi.fn(),
 }))
 
-vi.mock("~/business/admin/admin.server", () => ({
+vi.mock("~/business/auth/admin-context.server", () => ({
   getAdminContext: vi.fn(),
+}))
+vi.mock("~/business/profile/profiles.server", () => ({
   getParticipantFullEventHistory: vi.fn(),
   getProfileById: vi.fn(),
   updateProfileAdminNotes: vi.fn(),

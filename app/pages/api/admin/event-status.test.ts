@@ -6,8 +6,10 @@ import { action } from "./event-status"
 const updateEventStatus = vi.hoisted(() => vi.fn())
 const getAdminContext = vi.hoisted(() => vi.fn())
 
-vi.mock("~/business/admin/admin.server", () => ({
+vi.mock("~/business/event/event.server", () => ({
   updateEventStatus,
+}))
+vi.mock("~/business/auth/admin-context.server", () => ({
   getAdminContext,
 }))
 

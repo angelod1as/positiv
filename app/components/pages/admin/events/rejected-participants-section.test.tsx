@@ -1,7 +1,7 @@
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
 import { renderWithRouter, screen } from "~/test/test-utils"
-import type { RejectedEventParticipant } from "~/business/admin/admin.server"
+import type { RejectedEventParticipant } from "~/business/application/event-participants.server"
 import { adminEventsCopy } from "~/copy/admin/events"
 import { RejectedParticipantsSection } from "./rejected-participants-section"
 

@@ -1,6 +1,6 @@
 import { composable, type Composable } from "composable-functions"
 import "varlock/auto-load"
-import { kyselyDb } from "../../app/kysely-db"
+import { db } from "../../app/lib/supabase/db.server"
 
 /**
  * Get the ID of an active event from the database
@@ -9,7 +9,7 @@ import { kyselyDb } from "../../app/kysely-db"
 type GetActiveEventId = Composable<() => string>
 
 export const getActiveEventId: GetActiveEventId = composable(async () => {
-  const event = await kyselyDb
+  const event = await db
     .selectFrom("events")
     .select("id")
     .where("event_status", "=", "Registration Open")

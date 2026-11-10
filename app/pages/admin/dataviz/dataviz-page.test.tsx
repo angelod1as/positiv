@@ -2,23 +2,23 @@ import { describe, expect, it, vi } from "vitest"
 import { loader } from "./dataviz-page"
 
 // Mock the data layer functions
-vi.mock("~/business/admin/dataviz/kpi-scores.server", () => ({
+vi.mock("~/business/reporting/dataviz/kpi-scores.server", () => ({
   getKpiScores: vi.fn(),
 }))
 
-vi.mock("~/business/admin/dataviz/event-metrics.server", () => ({
+vi.mock("~/business/reporting/dataviz/event-metrics.server", () => ({
   getEventAttendanceData: vi.fn(),
   getEventRevenueData: vi.fn(),
   getConversionFunnelData: vi.fn(),
   getOccupancyData: vi.fn(),
 }))
 
-vi.mock("~/business/admin/dataviz/demographics-dataviz.server", () => ({
+vi.mock("~/business/reporting/dataviz/demographics-dataviz.server", () => ({
   getVeteranRookieData: vi.fn(),
   getDemographicsData: vi.fn(),
 }))
 
-vi.mock("~/business/admin/dataviz/growth-retention.server", () => ({
+vi.mock("~/business/reporting/dataviz/growth-retention.server", () => ({
   getGrowthData: vi.fn(),
   getRetentionData: vi.fn(),
   getSeasonalityData: vi.fn(),
@@ -37,19 +37,19 @@ function makeRequest(url = "http://localhost/admin/numeros") {
 describe("Numeros Page - Loader", () => {
   it("should fetch all required data in parallel", async () => {
     const { getKpiScores } = await import(
-      "~/business/admin/dataviz/kpi-scores.server"
+      "~/business/reporting/dataviz/kpi-scores.server"
     )
     const {
       getEventAttendanceData,
       getEventRevenueData,
       getConversionFunnelData,
       getOccupancyData,
-    } = await import("~/business/admin/dataviz/event-metrics.server")
+    } = await import("~/business/reporting/dataviz/event-metrics.server")
     const { getVeteranRookieData, getDemographicsData } = await import(
-      "~/business/admin/dataviz/demographics-dataviz.server"
+      "~/business/reporting/dataviz/demographics-dataviz.server"
     )
     const { getGrowthData, getRetentionData, getSeasonalityData } =
-      await import("~/business/admin/dataviz/growth-retention.server")
+      await import("~/business/reporting/dataviz/growth-retention.server")
 
     // Setup mocks with empty data
     vi.mocked(getKpiScores).mockResolvedValue({
@@ -112,10 +112,10 @@ describe("Numeros Page - Loader", () => {
 
   it("should return correct data structure", async () => {
     const { getKpiScores } = await import(
-      "~/business/admin/dataviz/kpi-scores.server"
+      "~/business/reporting/dataviz/kpi-scores.server"
     )
     const { getDemographicsData } = await import(
-      "~/business/admin/dataviz/demographics-dataviz.server"
+      "~/business/reporting/dataviz/demographics-dataviz.server"
     )
 
     const mockKpiScores = {
@@ -168,7 +168,7 @@ describe("Numeros Page - Loader", () => {
 
   it("should fetch demographics with 'attended' mode when ?mode=attended is set", async () => {
     const { getDemographicsData } = await import(
-      "~/business/admin/dataviz/demographics-dataviz.server"
+      "~/business/reporting/dataviz/demographics-dataviz.server"
     )
 
     const mockAttendedDemographics = {
@@ -190,7 +190,7 @@ describe("Numeros Page - Loader", () => {
 
   it("should default to 'all' mode when no mode param is provided", async () => {
     const { getDemographicsData } = await import(
-      "~/business/admin/dataviz/demographics-dataviz.server"
+      "~/business/reporting/dataviz/demographics-dataviz.server"
     )
 
     await loader(makeRequest())
@@ -200,7 +200,7 @@ describe("Numeros Page - Loader", () => {
 
   it("should default to 'all' mode when invalid mode param is provided", async () => {
     const { getDemographicsData } = await import(
-      "~/business/admin/dataviz/demographics-dataviz.server"
+      "~/business/reporting/dataviz/demographics-dataviz.server"
     )
 
     await loader(makeRequest("http://localhost/admin/numeros?mode=invalid"))

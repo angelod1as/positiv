@@ -13,7 +13,7 @@ vi.mock("@marsidev/react-turnstile", () => ({
   ),
 }))
 
-vi.mock("~/lib/helpers/get-turnstile-config.server", () => ({
+vi.mock("~/lib/request/get-turnstile-config.server", () => ({
   getTurnstileConfig: () => ({ siteKey: "site-key" }),
 }))
 

@@ -1,0 +1,187 @@
+import { sql } from "kysely"
+import { db } from "~/lib/supabase/db.server"
+import { DATAVIZ_EVENT_CUTOFF_DATE } from "~/lib/constants/constants"
+import type { KpiScores } from "./dataviz.types"
+
+export async function getKpiScores(): Promise<KpiScores> {
+  // Profile counts
+  const profileCounts = await db
+    .selectFrom("profiles")
+    .select([
+      sql<number>`count(*)::int`.as("total_profiles"),
+      sql<number>`count(*) filter (where became_veteran_date is not null)::int`.as(
+        "total_veterans"
+      ),
+      sql<number>`count(*) filter (where approved_to_attend = 'approved')::int`.as(
+        "total_approved"
+      ),
+      sql<number>`count(*) filter (where flag in ('yellow', 'red'))::int`.as(
+        "total_flagged"
+      ),
+    ])
+    .executeTakeFirstOrThrow()
+
+  // Event counts
+  const eventCounts = await db
+    .selectFrom("events")
+    .where("event_status", "=", "Completed")
+    .where("time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+    .select([
+      sql<number>`count(*)::int`.as("total_events_completed"),
+      sql<number>`coalesce(avg(ticket_price), 0)::int`.as("avg_ticket_price"),
+    ])
+    .executeTakeFirstOrThrow()
+
+  // Unique attendees
+  const attendeeCounts = await db
+    .selectFrom("event_participants")
+    .innerJoin("events", "events.id", "event_participants.event_id")
+    .where("events.event_status", "=", "Completed")
+    .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+    .where("event_participants.attendance_status", "=", "attended")
+    .select([
+      sql<number>`count(distinct event_participants.profile_id)::int`.as(
+        "total_unique_attendees"
+      ),
+    ])
+    .executeTakeFirstOrThrow()
+
+  // Average attendance per event
+  const avgAttendance = await db
+    .selectFrom("events")
+    .leftJoin(
+      "event_participants",
+      "event_participants.event_id",
+      "events.id"
+    )
+    .where("events.event_status", "=", "Completed")
+    .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+    .groupBy("events.id")
+    .select([
+      sql<number>`count(*) filter (where event_participants.attendance_status = 'attended')::int`.as(
+        "attendance"
+      ),
+    ])
+    .execute()
+
+  const totalAttendance = avgAttendance.reduce(
+    (sum, row) => sum + row.attendance,
+    0
+  )
+  const avgAttendancePerEvent =
+    eventCounts.total_events_completed > 0
+      ? Math.round(totalAttendance / eventCounts.total_events_completed)
+      : 0
+
+  // Average occupancy percentage (exclude events with 0 total_spots)
+  const occupancyData = await db
+    .selectFrom("events")
+    .leftJoin(
+      "event_participants",
+      "event_participants.event_id",
+      "events.id"
+    )
+    .where("events.event_status", "=", "Completed")
+    .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+    .where("events.total_spots", ">", 0)
+    .groupBy(["events.id", "events.total_spots"])
+    .select([
+      "events.total_spots",
+      sql<number>`count(*) filter (where event_participants.attendance_status = 'attended')::int`.as(
+        "attended"
+      ),
+    ])
+    .execute()
+
+  const occupancySum = occupancyData.reduce((sum, row) => {
+    const spots = row.total_spots ?? 0
+    return sum + (spots > 0 ? (row.attended / spots) * 100 : 0)
+  }, 0)
+  const avgOccupancyPct =
+    occupancyData.length > 0 ? Math.round(occupancySum / occupancyData.length) : 0
+
+  // Total revenue
+  const revenueData = await db
+    .selectFrom("event_participants")
+    .innerJoin("events", "events.id", "event_participants.event_id")
+    .leftJoin(
+      "event_participant_payments as epp",
+      "epp.event_participant_id",
+      "event_participants.id",
+    )
+    .where("events.event_status", "=", "Completed")
+    .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+    .select([
+      sql<number>`coalesce(sum(epp.net), 0)::int`.as("total_revenue"),
+    ])
+    .executeTakeFirstOrThrow()
+
+  const avgRevenuePerEvent =
+    eventCounts.total_events_completed > 0
+      ? Math.round(revenueData.total_revenue / eventCounts.total_events_completed)
+      : 0
+
+  // Attendance frequency (3+ and 5+ events)
+  const attendanceFrequency = await db
+    .selectFrom(
+      db
+        .selectFrom("event_participants")
+        .innerJoin("events", "events.id", "event_participants.event_id")
+        .where("event_participants.attendance_status", "=", "attended")
+        .where("events.event_status", "=", "Completed")
+        .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+        .groupBy("event_participants.profile_id")
+        .select([
+          "event_participants.profile_id",
+          sql<number>`count(*)::int`.as("events_count"),
+        ])
+        .as("attended_counts")
+    )
+    .select([
+      sql<number>`count(*) filter (where events_count >= 3)::int`.as("attended_3_plus"),
+      sql<number>`count(*) filter (where events_count >= 5)::int`.as("attended_5_plus"),
+    ])
+    .executeTakeFirstOrThrow()
+
+  // Average no-show rate (aggregate in database for better performance)
+  const noShowTotals = await db
+    .selectFrom("events")
+    .leftJoin(
+      "event_participants",
+      "event_participants.event_id",
+      "events.id"
+    )
+    .where("events.event_status", "=", "Completed")
+    .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+    .select([
+      sql<number>`coalesce(sum(case when event_participants.attendance_status = 'not-attended' then 1 else 0 end), 0)::int`.as(
+        "total_no_shows"
+      ),
+      sql<number>`coalesce(sum(case when event_participants.attendance_status in ('attended', 'not-attended') then 1 else 0 end), 0)::int`.as(
+        "total_expected"
+      ),
+    ])
+    .executeTakeFirstOrThrow()
+
+  const avgNoShowRate =
+    noShowTotals.total_expected > 0
+      ? Math.round((noShowTotals.total_no_shows / noShowTotals.total_expected) * 100)
+      : 0
+
+  return {
+    total_profiles: profileCounts.total_profiles,
+    total_veterans: profileCounts.total_veterans,
+    total_approved: profileCounts.total_approved,
+    total_events_completed: eventCounts.total_events_completed,
+    total_unique_attendees: attendeeCounts.total_unique_attendees,
+    avg_attendance_per_event: avgAttendancePerEvent,
+    avg_occupancy_pct: avgOccupancyPct,
+    total_revenue: revenueData.total_revenue,
+    avg_revenue_per_event: avgRevenuePerEvent,
+    avg_ticket_price: eventCounts.avg_ticket_price,
+    total_flagged: profileCounts.total_flagged,
+    attended_3_plus: attendanceFrequency.attended_3_plus,
+    attended_5_plus: attendanceFrequency.attended_5_plus,
+    avg_no_show_rate: avgNoShowRate,
+  }
+}

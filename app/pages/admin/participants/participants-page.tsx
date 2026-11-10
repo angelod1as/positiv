@@ -1,11 +1,8 @@
 import type { ActionFunctionArgs } from "react-router"
 import { useLoaderData } from "react-router"
 import { redirectWithError } from "remix-toast"
-import {
-  getAdminContext,
-  getAllProfiles,
-  updateProfileAdminNotes,
-} from "~/business/admin/admin.server"
+import { getAdminContext } from "~/business/auth/admin-context.server"
+import { getAllProfiles, updateProfileAdminNotes } from "~/business/profile/profiles.server"
 import { can, PERMISSIONS } from "~/business/auth/permissions"
 import { syncVeteransListmonkList } from "~/business/newsletter/veterans-list.server"
 import { AllParticipantsTable } from "~/components/organisms/tables/admin/all-participants-table"
@@ -16,7 +13,7 @@ import { createMetaArray } from "~/lib/helpers/meta"
 import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/participants-page"
-import { readFormData } from "~/lib/helpers/read-form-data.server"
+import { readFormData } from "~/lib/request/read-form-data.server"
 
 const {
   admin: { ADMIN_DASHBOARD },

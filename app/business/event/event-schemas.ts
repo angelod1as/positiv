@@ -1,0 +1,81 @@
+import { eventFormValidation } from "~/copy/admin/events"
+import { reaisToCents } from "~/lib/helpers/format-currency"
+import { zod } from "~/lib/helpers/zod"
+import { type EventStatus } from "~types/database/entities.types"
+import { ALL_EVENT_STATUS_OPTIONS } from "~/lib/helpers/propMaps"
+
+const preprocessDateTime = (value: unknown) => {
+  if (typeof value === "string") {
+    if (value === "") return ""
+    const date = new Date(value)
+    return date.toISOString()
+  }
+  return value
+}
+
+const datetime = zod.preprocess(preprocessDateTime, zod.string().datetime())
+
+export const eventFormSchema = zod.object({
+  id: zod.string().uuid().optional(),
+  title: zod.string().min(2).max(50),
+  description: zod.string().min(2).max(255),
+  emoji: zod.string().emoji(eventFormValidation.emojiInvalid).min(1),
+  location: zod.string().min(2).max(255),
+
+  // The admin types reais; the column is cents.
+  ticket_price: zod
+    .union([zod.string(), zod.number()])
+    .transform(reaisToCents)
+    .refine((cents) => Number.isFinite(cents) && cents >= 100, {
+      message: eventFormValidation.ticketPriceTooSmall,
+    }),
+  total_spots: zod.coerce.number().min(1),
+
+  auto_publish: zod.boolean().default(true),
+
+  time_event_start: datetime,
+  time_event_end: datetime,
+  time_application_start: datetime,
+  time_group_start: datetime,
+  time_group_end: datetime,
+  time_payment_start: datetime,
+  time_payment_end: datetime,
+})
+
+export const eventSchema = zod.object({
+  id: zod.string(),
+  title: zod.string().nullish(),
+  description: zod.string().nullish(),
+  emoji: zod.string().nullish(),
+  location: zod.string().nullish(),
+
+  ticket_price: zod.coerce.number().nullish(),
+  total_spots: zod.coerce.number().nullish(),
+
+  auto_publish: zod.boolean().nullish(),
+
+  time_event_start: datetime.nullish(),
+  time_event_end: datetime.nullish(),
+  time_application_start: datetime.nullish(),
+  time_group_start: datetime.nullish(),
+  time_group_end: datetime.nullish(),
+  time_payment_start: datetime.nullish(),
+  time_payment_end: datetime.nullish(),
+})
+
+/**
+ * The statuses an event can be in, read from the one list the admin screens
+ * offer, so that what the form shows and what the save accepts cannot drift.
+ * That list is built from a record keyed by `EventStatus`, so it cannot fall
+ * behind the database either; the cast here only says it is not empty, which
+ * zod asks for and a record with six keys cannot fail to be.
+ */
+export const eventStatusEnum = zod.enum(
+  ALL_EVENT_STATUS_OPTIONS as [EventStatus, ...EventStatus[]],
+)
+
+export const updateEventStatusSchema = zod.object({
+  event_status: eventStatusEnum,
+})
+
+export const updateEventDemographicsSchema = zod.object({})

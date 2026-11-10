@@ -1,7 +1,7 @@
 import { applySchema } from "composable-functions"
 import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
 import { paymentsCopy } from "~/copy/payments"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { reaisToCents } from "~/lib/helpers/format-currency"
 import { zod } from "~/lib/helpers/zod"
 import { paymentLogger as logger } from "./payment-logger.server"
@@ -123,7 +123,7 @@ async function deleteReplacedCharges(
  */
 export const createPaymentOffer = applySchema(createPaymentOfferSchema)(
   async (values) => {
-    const participant = await kyselyDb
+    const participant = await db
       .selectFrom("event_participants as ep")
       .innerJoin("events as e", "e.id", "ep.event_id")
       .select(["ep.id", "ep.spot_type", "e.ticket_price", "e.time_payment_end"])
@@ -169,7 +169,7 @@ export const createPaymentOffer = applySchema(createPaymentOfferSchema)(
         : now + OFFER_VALID_DAYS * dayMs,
     ).toISOString()
 
-    const { replaced, payment, emailId } = await kyselyDb
+    const { replaced, payment, emailId } = await db
       .transaction()
       .execute(async (trx) => {
         // The same lock registerManualPayment takes, for the same reason: a
@@ -286,7 +286,7 @@ export const resendPaymentOffer = applySchema(resendPaymentOfferSchema)(
       return { reason: "disabled" }
     }
 
-    const payment = await kyselyDb
+    const payment = await db
       .selectFrom("payments as pay")
       .innerJoin("event_participants as ep", "ep.id", "pay.event_participant_id")
       .innerJoin("profiles as p", "p.id", "ep.profile_id")
@@ -303,7 +303,7 @@ export const resendPaymentOffer = applySchema(resendPaymentOfferSchema)(
       throw new Error(paymentsCopy.errors.cpfExemptManualOnly)
     }
 
-    const emailId = await queuePaymentEmail(kyselyDb, {
+    const emailId = await queuePaymentEmail(db, {
       paymentId: payment.id,
       kind: "link",
     })
@@ -322,7 +322,7 @@ export async function cancelActivePayment({
 }: {
   eventParticipantId: string
 }): Promise<{ cancelled: boolean }> {
-  const active = await kyselyDb
+  const active = await db
     .selectFrom("payments")
     .select("id")
     .where("event_participant_id", "=", eventParticipantId)

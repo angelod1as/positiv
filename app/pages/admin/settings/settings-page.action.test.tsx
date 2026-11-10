@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { getAdminContext } from "~/business/admin/admin.server"
+import { getAdminContext } from "~/business/auth/admin-context.server"
 import {
   cleanupListmonkTestCampaign,
   testListmonkConnection,
@@ -11,7 +11,7 @@ import {
 } from "~/business/settings/app-settings.server"
 import { action } from "./settings-page"
 
-vi.mock("~/business/admin/admin.server", () => ({
+vi.mock("~/business/auth/admin-context.server", () => ({
   getAdminContext: vi.fn(),
 }))
 

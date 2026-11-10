@@ -6,7 +6,7 @@ import {
 } from "~/business/settings/app-settings.server"
 import type { Route } from "./+types/payment-page"
 import { loader } from "./payment-page"
-import { loadPaymentPage } from "./payment-page.server"
+import { loadPaymentPage } from "~/business/payment/payment-page.server"
 
 vi.mock("~/business/auth/auth.server", () => ({
   getUserContext: vi.fn(),
@@ -17,7 +17,7 @@ vi.mock("~/business/settings/app-settings.server", () => ({
   isOnlinePaymentsEnabled: vi.fn(),
 }))
 
-vi.mock("./payment-page.server", () => ({
+vi.mock("~/business/payment/payment-page.server", () => ({
   loadPaymentPage: vi.fn(async () => ({ state: "closed", eventTitle: "" })),
 }))
 

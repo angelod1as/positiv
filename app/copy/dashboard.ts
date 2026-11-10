@@ -1,5 +1,5 @@
 import type { z } from "zod"
-import type { agreeToTermsSchema } from "~/business/common"
+import type { agreeToTermsSchema } from "~/business/profile/profile-schemas"
 
 export const dashboardCopy = {
   termsRequired: "Você precisa aceitar os termos antes de continuar",

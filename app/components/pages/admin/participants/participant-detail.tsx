@@ -1,5 +1,5 @@
 import { useState } from "react"
-import type { ProfileWithExtraData } from "~/business/admin/admin.server"
+import type { ProfileWithExtraData } from "~/business/application/event-participants.server"
 import type { ParticipantPayments } from "~/business/payment/payment-totals.server"
 import { ApprovalStatusDropdown } from "~/components/molecules/approval-status-dropdown/approval-status-dropdown"
 import { Button } from "~/components/atoms/button/button"

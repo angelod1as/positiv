@@ -1,6 +1,6 @@
 import type { ActionFunctionArgs } from "react-router"
 import { getUserContext } from "~/business/auth/auth.server"
-import { saveBasicData } from "~/business/participant/basic-data.server"
+import { saveBasicData } from "~/business/profile/basic-data.server"
 
 /**
  * A route of its own rather than the page's action: a POST to a page route is a

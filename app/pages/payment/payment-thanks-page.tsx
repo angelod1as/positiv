@@ -22,7 +22,7 @@ import type { Route } from "./+types/payment-thanks-page"
 import {
   loadPaymentThanks,
   type PaymentThanksData,
-} from "./payment-page.server"
+} from "~/business/payment/payment-page.server"
 
 const { page } = paymentsCopy
 

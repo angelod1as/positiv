@@ -1,6 +1,6 @@
 import "varlock/auto-load"
 import { createEventOpeningCampaign } from "~/business/newsletter/create-event-opening-campaign.server"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { LISTMONK_TEST_LIST_ID } from "~/lib/constants/constants"
 
 async function main() {
@@ -25,7 +25,7 @@ async function main() {
 
   console.info(`\n🔍 Fetching event: ${eventId}`)
 
-  const event = await kyselyDb
+  const event = await db
     .selectFrom("events")
     .selectAll("events")
     .where("id", "=", eventId)

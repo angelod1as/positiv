@@ -1,7 +1,7 @@
 import type { ActionFunctionArgs } from "react-router"
 import { getContext } from "~/business/auth/auth.server"
 import { requestPasswordReset } from "~/business/auth/request-password-reset.server"
-import { getClientIp } from "~/lib/helpers/get-client-ip.server"
+import { getClientIp } from "~/lib/request/get-client-ip.server"
 
 /**
  * A route of its own rather than the page's action: a POST to a page route is

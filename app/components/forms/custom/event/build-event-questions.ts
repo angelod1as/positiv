@@ -1,4 +1,4 @@
-import { eventFormSchema } from "~/business/admin/common"
+import { eventFormSchema } from "~/business/event/event-schemas"
 import type { Question } from "~/components/forms/runtime/question.types"
 import { adminEventsCopy } from "~/copy/admin/events"
 

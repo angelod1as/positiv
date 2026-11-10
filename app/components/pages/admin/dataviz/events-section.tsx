@@ -6,7 +6,7 @@ import type {
   OccupancyDataPoint,
   SeasonalityDataPoint,
   VeteranRookieDataPoint,
-} from "~/business/admin/dataviz/dataviz.types"
+} from "~/business/reporting/dataviz/dataviz.types"
 import { adminDatavizCopy } from "~/copy/admin/dataviz"
 import { buildEventLabel } from "~/lib/helpers/chart-utils"
 import { useBrushState } from "~/lib/hooks/use-brush-state"

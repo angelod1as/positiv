@@ -8,14 +8,14 @@ import {
 import { metaCopy } from "~/copy/meta"
 import { paymentsCopy } from "~/copy/payments"
 import { createMetaArray } from "~/lib/helpers/meta"
-import { readFormData } from "~/lib/helpers/read-form-data.server"
+import { readFormData } from "~/lib/request/read-form-data.server"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/payment-token-page"
 import PaymentPage from "./payment-page"
 import {
   findPaymentByToken,
   loadPaymentPageByToken,
-} from "./payment-page.server"
+} from "~/business/payment/payment-page.server"
 
 const { errors } = paymentsCopy
 

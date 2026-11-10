@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import type { Demographics } from "~/business/admin/demographics/demographics"
+import type { Demographics } from "~/business/reporting/demographics/demographics"
 import { adminEventsCopy } from "~/copy/admin/events"
 import { DemographicsData } from "./demographics"
 

@@ -1,7 +1,7 @@
 import { applySchema } from "composable-functions"
 import { sql } from "kysely"
 import { paymentsCopy } from "~/copy/payments"
-import { kyselyDb } from "~/kysely-db"
+import { db } from "~/lib/supabase/db.server"
 import { zod } from "~/lib/helpers/zod"
 import { paymentLogger as logger } from "./payment-logger.server"
 import type { ProviderRefund } from "./payment-provider"
@@ -28,7 +28,7 @@ export const syncPaymentSchema = zod.object({ paymentId: zod.string().uuid() })
  */
 export const syncPaymentFromProvider = applySchema(syncPaymentSchema)(
   async (values) => {
-    const payment = await kyselyDb
+    const payment = await db
       .selectFrom("payments")
       .select(["kind", "provider_charge_id", "provider_plan_id"])
       .where("id", "=", values.paymentId)
@@ -40,7 +40,7 @@ export const syncPaymentFromProvider = applySchema(syncPaymentSchema)(
 
     // Recorded before the provider is asked, so a payment it cannot answer
     // about does not stay first in the sync job's line.
-    await kyselyDb
+    await db
       .updateTable("payments")
       .set({ refunds_sync_attempted_at: new Date().toISOString() })
       .where("id", "=", values.paymentId)
@@ -63,7 +63,7 @@ export const syncPaymentFromProvider = applySchema(syncPaymentSchema)(
 
     const syncedAt = new Date().toISOString()
 
-    const refundEmailId = await kyselyDb.transaction().execute(async (trx) => {
+    const refundEmailId = await db.transaction().execute(async (trx) => {
       // Locked like the webhook locks it, so the two cannot both decide the
       // refund is complete and both send the notice.
       const row = await trx
@@ -127,7 +127,7 @@ export async function syncOpenPayments(): Promise<{
     now - SYNC_AGAIN_AFTER_MINUTES * 60 * 1000,
   ).toISOString()
 
-  const candidates = await kyselyDb
+  const candidates = await db
     .selectFrom("payments")
     .select("id")
     .where("kind", "=", "online")

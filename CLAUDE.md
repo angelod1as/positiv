@@ -219,12 +219,6 @@ The "Default privileges on new objects in public" test in
   `app/components/pages/`, which holds the components a given page renders.
 - Dependencies point one way: `pages → business → lib`. Full rule:
   [the ADR](docs/architecture/decisions/20261106-server-side-code-is-organized-by-domain.md).
-  The code is still moving into this layout (WEB-42); new code follows it now.
-  Until then, `app/routes/`, `~/kysely-db`, `business/admin/`,
-  `business/participant/` and `business/common.ts` still exist, and some route
-  modules (`payment-page.server.ts`, `get-next-events.ts`, `unsubscribe.tsx`
-  and others) still query the database. WEB-42 moves or removes all of
-  them — never a precedent for new code.
   `dependency-cruiser` checks these rules only from WEB-43 on — until then a
   green `pnpm lint` proves nothing about them.
 - `app/components/` — atomic design (`atoms`, `molecules`, `organisms`), plus
@@ -255,8 +249,7 @@ The "Default privileges on new objects in public" test in
 3. **Server-only code**: the `.server.ts` suffix keeps a module out of the
    client bundle. Any file that imports a server-only module carries it,
    except type-only imports and route modules registered in `app/routes.ts`.
-   Not enforced yet: WEB-42 renames today's offenders and WEB-43 adds the
-   check, so **do not rename them piecemeal**.
+   Not enforced until WEB-43 adds the check.
 
 4. **Environment variables**: Every variable the project reads is declared in `.env.schema`, with its type and whether it is required — read that file, never `.env`, which holds the values. Application code reads them through `ENV` from `varlock/env`, not `process.env`. Every variable resolves at runtime; the handful the browser reads carry `@static` and are inlined into the bundle at build time. Adding `@static` to a server-only variable freezes its build-time value into the artifact and lets the bundler delete any `if (ENV.FLAG)` around it — `scripts/env-schema.test.ts` guards that line. The replacement matches `ENV.X` and not `const { X } = ENV`, so the two forms do not behave alike for a `@static` variable: destructuring keeps the runtime read that dot access gives up. Local development requires Supabase setup.
 
@@ -344,7 +337,7 @@ explicit yes.
   ternaries by eye.
 - **Some Portuguese is not copy and must never move here**: the values in
   `app/lib/constants/constants.ts` are written to the database, the Listmonk list
-  name in `app/business/admin/event-listmonk-sync.server.ts` is an external
+  name in `app/business/newsletter/event-listmonk-sync.server.ts` is an external
   label, and the news items under `news-dialog/items/` have their own workflow.
 - Full convention, including the Markdown traps and the `as const satisfies`
   rules: `app/copy/README.md`.

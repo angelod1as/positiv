@@ -144,7 +144,7 @@ it("should render badge for gender identity (case-insensitive)", () => {
 
 ```
 // ✅ Good: Feature-based organization
-app/business/admin/dataviz/
+app/business/reporting/dataviz/
   └── dataviz.integration.test.ts
       ├── Demographics DataViz
       ├── Event Metrics
@@ -152,7 +152,7 @@ app/business/admin/dataviz/
       └── KPI Scores
 
 // ❌ Bad: Function-based organization (creates many small files)
-app/business/admin/dataviz/
+app/business/reporting/dataviz/
   ├── demographics-dataviz.integration.test.ts
   ├── event-metrics.integration.test.ts
   ├── growth-retention.integration.test.ts

@@ -1,8 +1,6 @@
 import type { ActionFunctionArgs } from "react-router"
-import {
-  getAdminContext,
-  updateEventParticipantById,
-} from "~/business/admin/admin.server"
+import { getAdminContext } from "~/business/auth/admin-context.server"
+import { updateEventParticipantById } from "~/business/application/event-participants.server"
 import { toCommitResult } from "~/lib/helpers/to-commit-result"
 
 /**

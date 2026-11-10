@@ -1,21 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const getAdminContext = vi.fn()
-vi.mock("~/business/admin/admin.server", () => ({
+vi.mock("~/business/auth/admin-context.server", () => ({
   getAdminContext: (...args: unknown[]) => getAdminContext(...args),
 }))
 
 const createInvite = vi.fn()
 const revokeInvite = vi.fn()
 const listInvitesForEvent = vi.fn()
-vi.mock("~/business/admin/event-invites.server", () => ({
+vi.mock("~/business/event/event-invites.server", () => ({
   createInvite: (...args: unknown[]) => createInvite(...args),
   revokeInvite: (...args: unknown[]) => revokeInvite(...args),
   listInvitesForEvent: (...args: unknown[]) => listInvitesForEvent(...args),
 }))
 
 const searchProfilesForInvite = vi.fn()
-vi.mock("~/business/admin/search-profiles.server", () => ({
+vi.mock("~/business/reporting/search-profiles.server", () => ({
   searchProfilesForInvite: (...args: unknown[]) =>
     searchProfilesForInvite(...args),
 }))

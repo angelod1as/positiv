@@ -1,7 +1,7 @@
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter } from "react-router"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import type { ProfileWithExtraData } from "~/business/admin/admin.server"
+import type { ProfileWithExtraData } from "~/business/application/event-participants.server"
 import { render, screen, waitFor } from "~/test/test-utils"
 import { AdminViewEventParticipantsTable } from "./view-event-participants-table"
 

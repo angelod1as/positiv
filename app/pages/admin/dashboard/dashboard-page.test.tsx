@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 // Mock the getAdminContext to return without events
-vi.mock("~/business/admin/admin.server", () => ({
+vi.mock("~/business/auth/admin-context.server", () => ({
   getAdminContext: vi.fn().mockResolvedValue({
     user: {
       id: "test-user-id",
@@ -10,6 +10,22 @@ vi.mock("~/business/admin/admin.server", () => ({
     },
     supabase: {} as SupabaseClient,
   }),
+}))
+vi.mock("~/business/profile/profiles.server", () => ({
+  getRecentProfiles: vi.fn().mockResolvedValue([
+    {
+      id: "profile-1",
+      social_name: "Test User",
+      full_name: "Test User Full",
+      created_at: "2025-01-15T10:00:00Z",
+      gender: ["mulher cis"],
+      orientation: ["bissexual"],
+      is_veteran: false,
+      approved_to_attend: "approved",
+    },
+  ]),
+}))
+vi.mock("~/business/event/event.server", () => ({
   getEventsForDashboard: vi.fn().mockResolvedValue([
     {
       id: "event-1",
@@ -58,18 +74,6 @@ vi.mock("~/business/admin/admin.server", () => ({
       time_group_end: null,
       time_payment_start: null,
       time_payment_end: null,
-    },
-  ]),
-  getRecentProfiles: vi.fn().mockResolvedValue([
-    {
-      id: "profile-1",
-      social_name: "Test User",
-      full_name: "Test User Full",
-      created_at: "2025-01-15T10:00:00Z",
-      gender: ["mulher cis"],
-      orientation: ["bissexual"],
-      is_veteran: false,
-      approved_to_attend: "approved",
     },
   ]),
 }))

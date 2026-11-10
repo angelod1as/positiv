@@ -1,5 +1,5 @@
 import type { z } from "zod"
-import type { applyToEventSchema } from "~/business/common"
+import type { applyToEventSchema } from "~/business/application/application-schemas"
 
 type RulesAlert = {
   title: string

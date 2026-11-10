@@ -8,7 +8,7 @@ import {
 import { ENV } from "varlock/env"
 import { getUserContext } from "~/business/auth/auth.server"
 import { findVisibleEvent } from "~/business/event/find-visible-event.server"
-import { isVeteran } from "~/business/participant/is-veteran.server"
+import { isVeteran } from "~/business/profile/is-veteran.server"
 import { buildCorrectRulesAnswers } from "~/components/forms/custom/rules/build-correct-rules-answers"
 import {
   buildRulesFlow,

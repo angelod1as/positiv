@@ -5,7 +5,7 @@ import { action } from "./basic-data"
 const save = vi.hoisted(() => vi.fn())
 const getUserContext = vi.hoisted(() => vi.fn())
 
-vi.mock("~/business/participant/basic-data.server", () => ({
+vi.mock("~/business/profile/basic-data.server", () => ({
   saveBasicData: save,
 }))
 
