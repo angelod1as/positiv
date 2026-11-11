@@ -115,7 +115,8 @@ describe("Database Indexes - Integration Tests", () => {
           "idx_event_participants_event_id",
           "idx_event_participants_event_id_is_user_applied",
           "idx_event_participants_profile_id",
-          "idx_event_participants_profile_id_event_id"
+          "idx_event_participants_profile_id_event_id",
+          "event_participants_event_id_profile_id_key"
         ]
         expect(validIndexes).toContain(plan["Index Name"])
       }
@@ -199,7 +200,8 @@ describe("Database Indexes - Integration Tests", () => {
           "idx_event_participants_event_id",
           "idx_event_participants_event_id_is_user_applied",
           "idx_event_participants_profile_id",
-          "idx_event_participants_profile_id_event_id"
+          "idx_event_participants_profile_id_event_id",
+          "event_participants_event_id_profile_id_key"
         ]
         expect(validIndexes).toContain(indexScan["Index Name"])
       }
