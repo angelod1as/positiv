@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto"
+import { sql } from "kysely"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { z } from "zod"
 import type { userContextSchema } from "../auth/auth-schemas"
@@ -159,6 +160,22 @@ describe("applying to a closed event with an invite", () => {
   // The admin's revoke holds the invite row while the application is on its
   // way in. Read, write and stamp share one transaction that locks the invite,
   // so the application waits for the revoke and then sees it.
+  // The revoke commits only once the application is blocked on the invite
+  // row. A fixed sleep could let it commit first, and the application would
+  // then read the revoke with or without the lock.
+  const untilWaitingOnLock = async () => {
+    const deadline = Date.now() + 5000
+    while (Date.now() < deadline) {
+      const { rows } = await sql<{ waiting: number }>`
+        SELECT count(*)::int AS waiting FROM pg_stat_activity
+         WHERE wait_event_type = 'Lock' AND query ILIKE '%event_invites%'
+      `.execute(kysely)
+      if (rows[0].waiting > 0) return
+      await new Promise((resolve) => setTimeout(resolve, 20))
+    }
+    throw new Error("the application never waited on the invite lock")
+  }
+
   it("refuses an application racing an admin who revokes the invite", async () => {
     await createTestEventInvite(tracker, kysely, {
       event_id: eventId,
@@ -176,7 +193,7 @@ describe("applying to a closed event with an invite", () => {
         .execute()
 
       applications.push(applyToEvent(answers(), context()))
-      await new Promise((resolve) => setTimeout(resolve, 300))
+      await untilWaitingOnLock()
     })
 
     const [result] = await Promise.all(applications)

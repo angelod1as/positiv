@@ -136,6 +136,23 @@ describe("createOrUpdateEvent - Integration Tests", () => {
     expect(saved.title).toBe("Untouched")
   })
 
+  it("refuses an id that names no event, and creates nothing under it", async () => {
+    const unknownId = "6b1f0c2e-4d7a-4e8b-9c3d-2a5f7e9b1c04"
+
+    const result = await createOrUpdateEvent(formValues("Phantom"), {
+      ...context(),
+      eventId: unknownId,
+    })
+
+    expect(result.success).toBe(false)
+    const rows = await kysely
+      .selectFrom("events")
+      .select("id")
+      .where("id", "=", unknownId)
+      .execute()
+    expect(rows).toHaveLength(0)
+  })
+
   it("logs why the event could not be saved", async () => {
     const error = vi.spyOn(logger, "error").mockImplementation(() => logger)
 
