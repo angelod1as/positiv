@@ -9,6 +9,12 @@ import { sendApplicationMail } from "./send-application-mail.server"
 import { db } from "~/lib/supabase/db.server"
 import { logger } from "~/lib/logger/logger.server"
 
+class RegistrationClosedError extends Error {
+  constructor() {
+    super(participantCopy.application.registrationClosed)
+  }
+}
+
 export const applyToEvent = applySchema(
   applyToEventInputSchema,
   userContextSchema,
@@ -68,13 +74,13 @@ export const applyToEvent = applySchema(
       : undefined
 
     if (needsInvite && !invite) {
-      throw new Error(participantCopy.application.registrationClosed)
+      throw new RegistrationClosedError()
     }
 
     // profile_id is the signed-in profile's, never anything the request sent.
     await trx
       .insertInto("event_participants")
-      .values({ event_id: eventId, profile_id: profileId, ...application })
+      .values({ ...application, event_id: eventId, profile_id: profileId })
       .onConflict((oc) =>
         oc.columns(["event_id", "profile_id"]).doUpdateSet(application),
       )
@@ -85,12 +91,7 @@ export const applyToEvent = applySchema(
     // A closed door is the person's to know about. Anything else -- a lock
     // timeout, a dropped connection, a failed commit -- is not, and reaches
     // them as the generic failure while the log keeps the cause.
-    if (
-      error instanceof Error &&
-      error.message === participantCopy.application.registrationClosed
-    ) {
-      throw error
-    }
+    if (error instanceof RegistrationClosedError) throw error
     logger.error("Could not write the application", { eventId, error })
     throw new Error(participantCopy.application.upsertFailed)
   })
