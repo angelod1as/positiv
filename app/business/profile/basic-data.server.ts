@@ -147,7 +147,7 @@ export async function saveBasicData({
     logger.error(
       participantCopy.basicData.profileUpdateFailed(
         "NO_ROW",
-        `profile ${profileId} is not this user's to write`,
+        `profile ${profileId} is not user ${currentUser.id}'s to write`,
       ),
     )
     return { ok: false, errors: [] }
