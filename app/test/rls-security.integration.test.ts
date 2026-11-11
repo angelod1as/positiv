@@ -234,6 +234,8 @@ describe("RLS Security - Integration Tests", () => {
     const writes = ["INSERT", "UPDATE", "DELETE", "TRUNCATE"] as const
 
     it("should grant anon and authenticated no write on either table", async () => {
+      // has_table_privilege does not see a grant on a single column, which
+      // would let a participant write that column all the same.
       const { rows } = await sql<{
         role: string
         table_name: string
@@ -241,7 +243,10 @@ describe("RLS Security - Integration Tests", () => {
         granted: boolean
       }>`
         SELECT r.role, t.table_name, w.privilege,
-               has_table_privilege(r.role, 'public.' || t.table_name, w.privilege) AS granted
+               CASE WHEN w.privilege IN ('INSERT', 'UPDATE')
+                 THEN has_any_column_privilege(r.role, 'public.' || t.table_name, w.privilege)
+                 ELSE has_table_privilege(r.role, 'public.' || t.table_name, w.privilege)
+               END AS granted
           FROM unnest(ARRAY['anon', 'authenticated']) AS r(role)
          CROSS JOIN unnest(${sql.val([...tables])}::text[]) AS t(table_name)
          CROSS JOIN unnest(${sql.val([...writes])}::text[]) AS w(privilege)
