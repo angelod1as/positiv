@@ -36,21 +36,17 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
-  const {
-    currentProfile: profile,
-    currentUser,
-    supabase,
-  } = await getUserContext(request, params)
+  const { currentProfile: profile, currentUser } = await getUserContext(
+    request,
+    params,
+  )
 
   // Check for orphaned profile with user's email
   let orphanedProfile = null
   if (currentUser?.email) {
-    const { data, error } = await findOrphanedProfile(supabase, currentUser.email)
-
-    // Only set orphanedProfile if we found one (ignore "no rows" error)
-    if (data && !error) {
-      orphanedProfile = data
-    } else if (error && error.code !== "PGRST116") {
+    try {
+      orphanedProfile = (await findOrphanedProfile(currentUser.email)) ?? null
+    } catch (error) {
       // Log unexpected errors but don't fail the loader
       logger.error("Error checking for orphaned profile", { error })
     }
