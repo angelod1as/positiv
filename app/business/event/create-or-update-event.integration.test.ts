@@ -3,18 +3,9 @@ import { logger } from "~/lib/logger/logger.server"
 import { createTestEvent } from "~/test/db-test-utils"
 import { cleanupAfterTest, setupIntegrationTest } from "~/test/integration-setup"
 import { createOrUpdateEvent } from "./event.server"
+import { sessionClientThatThrows } from "~/test/session-client-that-throws"
 
-// The save goes through Kysely alone. A session client that throws on use
-// proves it, and keeps the service_role -- which would mask any missing check
-// -- out of these tests.
-const noSupabase = new Proxy(
-  {},
-  {
-    get() {
-      throw new Error("createOrUpdateEvent must not reach supabase-js")
-    },
-  },
-)
+const noSupabase = sessionClientThatThrows("createOrUpdateEvent")
 
 describe("createOrUpdateEvent - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()

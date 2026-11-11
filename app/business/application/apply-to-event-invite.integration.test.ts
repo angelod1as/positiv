@@ -13,22 +13,13 @@ import {
   setupIntegrationTest,
 } from "~/test/integration-setup"
 import { applyToEvent } from "./apply-to-event.server"
+import { sessionClientThatThrows } from "~/test/session-client-that-throws"
 
 vi.mock("./send-application-mail.server", () => ({
   sendApplicationMail: vi.fn().mockResolvedValue({ emailSent: false }),
 }))
 
-// The application goes through Kysely alone. A session client that throws on
-// use proves it, and keeps the service_role -- which would mask any missing
-// check -- out of these tests.
-const noSupabase = new Proxy(
-  {},
-  {
-    get() {
-      throw new Error("applyToEvent must not reach supabase-js")
-    },
-  },
-)
+const noSupabase = sessionClientThatThrows("applyToEvent")
 
 describe("applying to a closed event with an invite", () => {
   const { tracker, kysely } = setupIntegrationTest()
@@ -168,7 +159,8 @@ describe("applying to a closed event with an invite", () => {
     while (Date.now() < deadline) {
       const { rows } = await sql<{ waiting: number }>`
         SELECT count(*)::int AS waiting FROM pg_stat_activity
-         WHERE wait_event_type = 'Lock' AND query ILIKE '%event_invites%'
+         WHERE datname = current_database()
+           AND wait_event_type = 'Lock' AND query ILIKE '%event_invites%'
       `.execute(kysely)
       if (rows[0].waiting > 0) return
       await new Promise((resolve) => setTimeout(resolve, 20))

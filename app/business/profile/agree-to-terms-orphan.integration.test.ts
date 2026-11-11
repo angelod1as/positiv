@@ -8,6 +8,7 @@ import { participantCopy } from "~/copy/participant"
 import { agreeToTerms } from "./agree-to-terms.server"
 import type { z } from "zod"
 import type { contextSchema } from "~/business/auth/auth-schemas"
+import { sessionClientThatThrows } from "~/test/session-client-that-throws"
 
 vi.mock("~/business/newsletter/auto-subscribe.server", () => ({
   subscribeProfileToNewsletter: vi.fn().mockResolvedValue({
@@ -24,17 +25,7 @@ vi.mock("~/business/newsletter/subscription-helpers.server", () => ({
   }),
 }))
 
-// Every write goes through Kysely. A session client that throws on use proves
-// it, and keeps the service_role -- which would mask any missing check -- out
-// of these tests.
-const noSupabase = new Proxy(
-  {},
-  {
-    get() {
-      throw new Error("agreeToTerms must not reach supabase-js")
-    },
-  },
-)
+const noSupabase = sessionClientThatThrows("agreeToTerms")
 
 describe("agreeToTerms orphan profile linking - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()

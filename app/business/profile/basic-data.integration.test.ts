@@ -6,6 +6,7 @@ import { basicDataValidation } from "~/copy/account"
 import * as listmonkClient from "../newsletter/listmonk-client.server"
 import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
 import { saveBasicData } from "./basic-data.server"
+import { sessionClientThatThrows } from "~/test/session-client-that-throws"
 
 vi.mock("~/lib/logger/logger.server", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
@@ -29,17 +30,7 @@ const answersFor = (email: string) => ({
   email,
 })
 
-// The save goes through Kysely alone. A session client that throws on use
-// proves it, and keeps the service_role -- which would mask any missing check
-// -- out of these tests.
-const noSupabase = new Proxy(
-  {},
-  {
-    get() {
-      throw new Error("saveBasicData must not reach supabase-js")
-    },
-  },
-)
+const noSupabase = sessionClientThatThrows("saveBasicData")
 
 describe("saveBasicData - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()
