@@ -1,4 +1,5 @@
 import {
+  existsSync,
   mkdirSync,
   mkdtempSync,
   realpathSync,
@@ -8,6 +9,7 @@ import {
 } from "node:fs"
 import { tmpdir } from "node:os"
 import path from "node:path"
+import extractDepcruiseConfig from "dependency-cruiser/config-utl/extract-depcruise-config"
 import { afterEach, describe, expect, it } from "vitest"
 import { checkDependencies } from "./check-dependencies"
 
@@ -102,6 +104,9 @@ describe("checkDependencies", () => {
       expect(result.domainCycles.map((cycle) => cycle.domains)).toEqual([
         ["cms", "email"],
       ])
+      expect(result.domainCycles[0].imports).toContain(
+        "app/business/cms/schema.test.ts → app/business/email/variables.ts (test)",
+      )
     })
   })
 
@@ -208,6 +213,32 @@ describe("checkDependencies", () => {
         }),
       ).toEqual([])
     })
+  })
+
+  // A rule that names a file or folder matches nothing once that path is
+  // renamed, and passes silently from then on.
+  it("names only paths that exist in this repository", async () => {
+    const { forbidden = [] } = await extractDepcruiseConfig(configFile)
+    const patterns = forbidden.flatMap((rule) =>
+      [
+        rule.from.path,
+        rule.from.pathNot,
+        ...("to" in rule ? [rule.to.path, rule.to.pathNot] : []),
+      ].flat(),
+    )
+    const literalPrefix = (pattern: string) =>
+      pattern
+        .replace(/^\^/, "")
+        .replace(/\$$/, "")
+        .replaceAll("\\.", ".")
+        .split(/[()[\]?*+|]/)[0]
+
+    const missing = patterns
+      .filter((pattern): pattern is string => pattern?.startsWith("^app/") ?? false)
+      .map(literalPrefix)
+      .filter((prefix) => !existsSync(path.join(repo, prefix)))
+
+    expect(missing).toEqual([])
   })
 
   it("passes on this repository", { timeout: 120_000 }, async () => {

@@ -10,6 +10,7 @@ export type Violation = { rule: string; from: string; to: string }
 export type DomainCycle = { domains: string[]; imports: string[] }
 
 const DOMAIN = /^app\/business\/([^/]+)\//
+const TEST = /(\.(test|spec)\.tsx?$)|(^app\/test\/)/
 
 const domainOf = (file: string) => DOMAIN.exec(file)?.[1]
 
@@ -32,7 +33,9 @@ export function findDomainCycles(modules: IModule[]): DomainCycle[] {
       edges.set(from, targets)
       const imports = targets.get(to) ?? []
       targets.set(to, imports)
-      imports.push(`${module.source} → ${dependency.resolved}`)
+      imports.push(
+        `${module.source} → ${dependency.resolved}${TEST.test(module.source) ? " (test)" : ""}`,
+      )
     }
   }
 
