@@ -1,25 +1,63 @@
-import type { SupabaseClient } from "@supabase/supabase-js"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { z } from "zod"
 import { cpfExemptionCopy } from "~/copy/account"
 import { participantCopy } from "~/copy/participant"
 import { logger } from "~/lib/logger/logger.server"
-import type { Database } from "~/types/database/database.types"
 import type { userContextSchema } from "../auth/auth-schemas"
 import { saveBasicData } from "./basic-data.server"
 
 const subscribe = vi.hoisted(() => vi.fn())
 const refresh = vi.hoisted(() => vi.fn())
-const selectFrom = vi.hoisted(() => vi.fn())
+const fake = vi.hoisted(() => ({
+  orphan: undefined as { id: string } | undefined,
+  saved: { id: "profile-1" } as { id: string } | undefined,
+  subscription: undefined as
+    | { consent_given: boolean; subscription_source: string }
+    | undefined,
+  failWith: undefined as unknown,
+  lookupFailsWith: undefined as unknown,
+  calls: [] as { table: string; method: string; args: unknown[] }[],
+}))
 
 vi.mock("../newsletter/auto-subscribe.server", () => ({
   subscribeProfileToNewsletter: subscribe,
   refreshNewsletterSubscriber: refresh,
 }))
 
-vi.mock("~/lib/supabase/db.server", () => ({
-  db: { selectFrom },
-}))
+// Every builder method records itself and hands the chain back; the terminal
+// call answers with what the test set up for that table.
+vi.mock("~/lib/supabase/db.server", () => {
+  const chain = (table: string, kind: string): unknown =>
+    new Proxy(
+      {},
+      {
+        get(_, method: string) {
+          if (method === "executeTakeFirst") {
+            return async () => {
+              if (fake.failWith && kind !== "select") throw fake.failWith
+              if (fake.lookupFailsWith && table === "profiles") {
+                throw fake.lookupFailsWith
+              }
+              if (kind !== "select") return fake.saved
+              return table === "profiles" ? fake.orphan : fake.subscription
+            }
+          }
+          return (...args: unknown[]) => {
+            fake.calls.push({ table, method, args })
+            return chain(table, kind)
+          }
+        },
+      },
+    )
+
+  return {
+    db: {
+      selectFrom: (table: string) => chain(table, "select"),
+      updateTable: (table: string) => chain(table, "update"),
+      insertInto: (table: string) => chain(table, "insert"),
+    },
+  }
+})
 
 vi.mock("~/lib/logger/logger.server", () => ({
   logger: { error: vi.fn() },
@@ -42,72 +80,34 @@ const answers = {
   race_color: ["Preta"],
 }
 
-type Orphan = { id: string } | null
-
-const mockSupabase = (orphan: Orphan = null, savedId = "profile-1") => {
-  const single = vi.fn().mockResolvedValue({ data: orphan, error: null })
-  const is = vi.fn().mockReturnValue({ single })
-  const lookupEq = vi.fn().mockReturnValue({ is })
-  const select = vi.fn().mockReturnValue({ eq: lookupEq })
-
-  const wroteSingle = vi
-    .fn()
-    .mockResolvedValue({ data: { id: savedId }, error: null })
-  const wroteSelect = vi.fn().mockReturnValue({ single: wroteSingle })
-
-  const upsert = vi.fn().mockReturnValue({ select: wroteSelect })
-  const updateEq = vi.fn().mockReturnValue({ select: wroteSelect })
-  const update = vi.fn().mockReturnValue({ eq: updateEq })
-
-  const from = vi.fn().mockReturnValue({ select, upsert, update })
-
-  return {
-    from,
-    select,
-    eq: lookupEq,
-    is,
-    single,
-    upsert,
-    update,
-    updateEq,
-    wroteSingle,
-  }
-}
-
-const contextWith = (supabase: {
-  from: ReturnType<typeof vi.fn>
-}): z.infer<typeof userContextSchema> => ({
-  supabase: supabase as unknown as SupabaseClient<Database>,
+const context = (): z.infer<typeof userContextSchema> => ({
+  supabase: {} as never,
   currentProfile: null,
   currentUser: { id: "user-123", email: "test@example.com" },
   supabaseHeaders: new Headers(),
   host: "localhost",
 })
 
-const noSubscription = () => ({
-  select: () => ({
-    where: () => ({
-      where: () => ({ executeTakeFirst: vi.fn().mockResolvedValue(undefined) }),
-    }),
-  }),
-})
+const called = (method: string) =>
+  fake.calls.filter((call) => call.method === method)
+const written = (method: "set" | "values") => called(method)[0]?.args[0]
 
 describe("saveBasicData", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    selectFrom.mockReturnValue(noSubscription())
+    fake.orphan = undefined
+    fake.saved = { id: "profile-1" }
+    fake.subscription = undefined
+    fake.failWith = undefined
+    fake.lookupFailsWith = undefined
+    fake.calls = []
   })
 
   it("saves what was answered", async () => {
-    const supabase = mockSupabase()
-
-    const result = await saveBasicData({
-      answers,
-      context: contextWith(supabase),
-    })
+    const result = await saveBasicData({ answers, context: context() })
 
     expect(result).toEqual({ ok: true })
-    expect(supabase.upsert).toHaveBeenCalledWith(
+    expect(written("values")).toEqual(
       expect.objectContaining({
         user_id: "user-123",
         email: "test@example.com",
@@ -117,27 +117,20 @@ describe("saveBasicData", () => {
         race_color: ["Preta"],
         basic_data_filled: true,
       }),
-      { onConflict: "user_id" },
     )
   })
 
   it("does not write the confirmation of the phone to the profile", async () => {
-    const supabase = mockSupabase()
+    await saveBasicData({ answers, context: context() })
 
-    await saveBasicData({ answers, context: contextWith(supabase) })
-
-    expect(supabase.upsert).toHaveBeenCalledWith(
+    expect(written("values")).toEqual(
       expect.not.objectContaining({ confirm_phone: expect.anything() }),
-      expect.anything(),
     )
   })
 
   describe("without a CPF", () => {
-    const signedInAs = (
-      supabase: { from: ReturnType<typeof vi.fn> },
-      cpfExempt: boolean,
-    ) => ({
-      ...contextWith(supabase),
+    const signedInAs = (cpfExempt: boolean) => ({
+      ...context(),
       currentProfile: {
         id: "profile-1",
         basic_data_filled: false,
@@ -147,123 +140,96 @@ describe("saveBasicData", () => {
     })
 
     it("saves an exempt profile with no CPF, whatever the form sent", async () => {
-      const supabase = mockSupabase()
-
       const result = await saveBasicData({
         answers: { ...answers, cpf: "52998224725" },
-        context: signedInAs(supabase, true),
+        context: signedInAs(true),
       })
 
       expect(result).toEqual({ ok: true })
-      expect(supabase.update).toHaveBeenCalledWith(
+      expect(written("set")).toEqual(
         expect.objectContaining({ cpf: null, rg: "123456789" }),
       )
     })
 
     it("refuses a missing CPF until an admin grants the exemption", async () => {
-      const supabase = mockSupabase()
-
       const result = await saveBasicData({
         answers: { ...answers, cpf: "", cpf_exempt_requested: true },
-        context: signedInAs(supabase, false),
+        context: signedInAs(false),
       })
 
       expect(result).toEqual({
         ok: false,
         errors: [{ questionId: "cpf", message: cpfExemptionCopy.notYetExempt }],
       })
-      expect(supabase.update).not.toHaveBeenCalled()
+      expect(called("set")).toHaveLength(0)
     })
 
     it("does not take the form's word for an exemption", async () => {
-      const supabase = mockSupabase()
-
       const result = await saveBasicData({
         answers: { ...answers, cpf: "", cpf_exempt: true },
-        context: signedInAs(supabase, false),
+        context: signedInAs(false),
       })
 
       expect(result.ok).toBe(false)
-      expect(supabase.update).not.toHaveBeenCalled()
+      expect(called("set")).toHaveLength(0)
     })
 
     it("saves a CPF typed in after asking for an exemption", async () => {
-      const supabase = mockSupabase()
-
       const result = await saveBasicData({
         answers: { ...answers, cpf_exempt_requested: true },
-        context: signedInAs(supabase, false),
+        context: signedInAs(false),
       })
 
       expect(result).toEqual({ ok: true })
-      expect(supabase.update).toHaveBeenCalledWith(
+      expect(written("set")).toEqual(
         expect.objectContaining({ cpf: "52998224725" }),
       )
     })
   })
 
   it("adopts a profile left behind with the same e-mail", async () => {
-    const supabase = mockSupabase({ id: "orphaned-123" })
+    fake.orphan = { id: "orphaned-123" }
 
-    await saveBasicData({ answers, context: contextWith(supabase) })
+    await saveBasicData({ answers, context: context() })
 
-    expect(supabase.eq).toHaveBeenCalledWith("email", "test@example.com")
-    expect(supabase.is).toHaveBeenCalledWith("user_id", null)
-    // Updated by its own id rather than upserted: a profile left behind has no
-    // user_id to conflict on, so an upsert would try to insert a second row
-    // under the same primary key.
-    expect(supabase.update).toHaveBeenCalledWith(
+    // Updated by its own id rather than inserted: a profile left behind has no
+    // user_id to conflict on, so an insert would collide on the e-mail.
+    expect(written("set")).toEqual(
       expect.objectContaining({ user_id: "user-123" }),
     )
-    expect(supabase.updateEq).toHaveBeenCalledWith("id", "orphaned-123")
-    expect(supabase.upsert).not.toHaveBeenCalled()
+    expect(called("where")).toContainEqual(
+      expect.objectContaining({
+        table: "profiles",
+        args: ["id", "=", "orphaned-123"],
+      }),
+    )
+    expect(called("values")).toHaveLength(0)
   })
 
-  it("keeps going when the orphan lookup finds nothing", async () => {
-    const supabase = mockSupabase()
-    supabase.single.mockResolvedValue({
-      data: null,
-      error: { code: "PGRST116", message: "no rows" },
-    })
+  it("refuses when the profile to write is not this person's", async () => {
+    fake.orphan = { id: "someone-else" }
+    fake.saved = undefined
 
-    const result = await saveBasicData({
-      answers,
-      context: contextWith(supabase),
-    })
+    const result = await saveBasicData({ answers, context: context() })
 
-    expect(result).toEqual({ ok: true })
+    expect(result).toEqual({ ok: false, errors: [] })
+    expect(refresh).not.toHaveBeenCalled()
   })
 
   it("refuses to guess when the orphan lookup itself failed", async () => {
-    const supabase = mockSupabase()
-    supabase.single.mockResolvedValue({
-      data: null,
-      error: { code: "08006", message: "connection failure" },
-    })
+    fake.lookupFailsWith = { code: "08006", message: "connection failure" }
 
-    const result = await saveBasicData({
-      answers,
-      context: contextWith(supabase),
-    })
+    const result = await saveBasicData({ answers, context: context() })
 
     expect(result).toEqual({ ok: false, errors: [] })
-    expect(supabase.upsert).not.toHaveBeenCalled()
-    expect(logger.error).toHaveBeenCalledWith(
-      "Error checking for orphaned profile: connection failure",
-    )
+    expect(called("values")).toHaveLength(0)
+    expect(called("set")).toHaveLength(0)
   })
 
   it("refuses rather than throws when the write itself failed", async () => {
-    const supabase = mockSupabase()
-    supabase.wroteSingle.mockResolvedValue({
-      data: null,
-      error: { code: "23505", message: "duplicate key" },
-    })
+    fake.failWith = { code: "23505", message: "duplicate key" }
 
-    const result = await saveBasicData({
-      answers,
-      context: contextWith(supabase),
-    })
+    const result = await saveBasicData({ answers, context: context() })
 
     expect(result).toEqual({ ok: false, errors: [] })
     expect(logger.error).toHaveBeenCalledWith(
@@ -271,20 +237,10 @@ describe("saveBasicData", () => {
     )
   })
 
-  it("asks the orphan lookup for the id it is there to find", async () => {
-    const supabase = mockSupabase()
-
-    await saveBasicData({ answers, context: contextWith(supabase) })
-
-    expect(supabase.select).toHaveBeenCalledWith("id")
-  })
-
   it("names the question behind each rejected field", async () => {
-    const supabase = mockSupabase()
-
     const result = await saveBasicData({
       answers: { ...answers, cpf: "", gender: [] },
-      context: contextWith(supabase),
+      context: context(),
     })
 
     expect(result.ok).toBe(false)
@@ -293,15 +249,13 @@ describe("saveBasicData", () => {
     expect(result.errors.map((error) => error.questionId)).toEqual(
       expect.arrayContaining(["cpf", "gender"]),
     )
-    expect(supabase.upsert).not.toHaveBeenCalled()
+    expect(called("values")).toHaveLength(0)
   })
 
   it("blames the confirmation, not the phone, when the two disagree", async () => {
-    const supabase = mockSupabase()
-
     const result = await saveBasicData({
       answers: { ...answers, confirm_phone: "11888888888" },
-      context: contextWith(supabase),
+      context: context(),
     })
 
     if (result.ok) throw new Error("expected a refusal")
@@ -309,30 +263,20 @@ describe("saveBasicData", () => {
   })
 
   it("refreshes the subscriber's name without resubscribing", async () => {
-    const supabase = mockSupabase(null, "profile-9")
-    selectFrom.mockReturnValue({
-      select: () => ({
-        where: () => ({
-          where: () => ({
-            executeTakeFirst: vi.fn().mockResolvedValue({
-              consent_given: true,
-              subscription_source: "terms_and_conditions",
-            }),
-          }),
-        }),
-      }),
-    })
+    fake.saved = { id: "profile-9" }
+    fake.subscription = {
+      consent_given: true,
+      subscription_source: "terms_and_conditions",
+    }
 
-    await saveBasicData({ answers, context: contextWith(supabase) })
+    await saveBasicData({ answers, context: context() })
 
     expect(refresh).toHaveBeenCalledWith("profile-9")
     expect(subscribe).not.toHaveBeenCalled()
   })
 
   it("leaves the newsletter alone when nobody consented", async () => {
-    const supabase = mockSupabase()
-
-    await saveBasicData({ answers, context: contextWith(supabase) })
+    await saveBasicData({ answers, context: context() })
 
     expect(subscribe).not.toHaveBeenCalled()
     expect(refresh).not.toHaveBeenCalled()

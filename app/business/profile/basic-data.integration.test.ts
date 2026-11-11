@@ -1,9 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import {
-  createTestAuthUser,
-  createTestProfile,
-  getTestSupabaseClient,
-} from "~/test/db-test-utils"
+import { createTestAuthUser, createTestProfile } from "~/test/db-test-utils"
 import { cleanupAfterTest, setupIntegrationTest } from "~/test/integration-setup"
 import { logger } from "~/lib/logger/logger.server"
 import { basicDataValidation } from "~/copy/account"
@@ -33,14 +29,24 @@ const answersFor = (email: string) => ({
   email,
 })
 
+// The save goes through Kysely alone. A session client that throws on use
+// proves it, and keeps the service_role -- which would mask any missing check
+// -- out of these tests.
+const noSupabase = new Proxy(
+  {},
+  {
+    get() {
+      throw new Error("saveBasicData must not reach supabase-js")
+    },
+  },
+)
+
 describe("saveBasicData - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()
-  let supabase: ReturnType<typeof getTestSupabaseClient>
 
   beforeEach(() => {
     tracker.clear()
     vi.clearAllMocks()
-    supabase = getTestSupabaseClient()
   })
 
   afterEach(async () => {
@@ -49,7 +55,7 @@ describe("saveBasicData - Integration Tests", () => {
   })
 
   const contextFor = (email: string, userId: string) => ({
-    supabase,
+    supabase: noSupabase,
     supabaseHeaders: new Headers(),
     currentUser: { id: userId, email },
     currentProfile: null,
@@ -91,6 +97,41 @@ describe("saveBasicData - Integration Tests", () => {
     expect(rows[0].basic_data_filled).toBe(true)
     // The history the orphan carried is why adopting it matters at all.
     expect(rows[0].is_veteran).toBe(true)
+  })
+
+  it("refuses to write over another person's profile", async () => {
+    const email = "test-basic-data-forged@example.com"
+    const userId = await createTestAuthUser(email, "test1234", tracker)
+    const otherUserId = await createTestAuthUser(
+      "test-basic-data-victim@example.com",
+      "test1234",
+      tracker,
+    )
+    const victim = await createTestProfile(tracker, kysely, {
+      email: "test-basic-data-victim@example.com",
+      user_id: otherUserId,
+      full_name: "Victim",
+    })
+
+    const result = await saveBasicData({
+      answers: answersFor(email),
+      context: {
+        ...contextFor(email, userId),
+        currentProfile: victim,
+      } as never,
+    })
+
+    expect(result.ok).toBe(false)
+    const untouched = await kysely
+      .selectFrom("profiles")
+      .select(["user_id", "email", "full_name"])
+      .where("id", "=", victim.id)
+      .executeTakeFirstOrThrow()
+    expect(untouched).toEqual({
+      user_id: otherUserId,
+      email: "test-basic-data-victim@example.com",
+      full_name: "Victim",
+    })
   })
 
   it("writes every field of the profile, including the demographic ones", async () => {
