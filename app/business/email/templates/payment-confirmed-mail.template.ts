@@ -4,7 +4,7 @@ import {
   type PaymentConfirmedCopy,
   paymentConfirmedCopyFallback,
 } from "~/business/email/payment-confirmed-mail-copy"
-import { PAYMENT_CONFIRMED_MAIL_VARIABLES } from "~/business/email/payment-confirmed-mail.variables"
+import { PAYMENT_CONFIRMED_MAIL_VARIABLES } from "~/business/cms/payment-confirmed-mail.variables"
 import { paymentConfirmedMailCopy } from "~/copy/emails/payment-confirmed"
 import { paymentsCopy } from "~/copy/payments"
 import { POSITIV_URL } from "~/lib/constants/constants"

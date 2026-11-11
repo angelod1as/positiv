@@ -2,7 +2,7 @@ import { htmlToText } from "html-to-text"
 import { renderTemplate } from "~/business/cms/placeholders"
 import { paymentLinkCopyFallback } from "./payment-link-mail-copy"
 import { loadPaymentLinkCopy } from "./payment-link-mail-copy.server"
-import { PAYMENT_LINK_MAIL_VARIABLES } from "./payment-link-mail.variables"
+import { PAYMENT_LINK_MAIL_VARIABLES } from "~/business/cms/payment-link-mail.variables"
 import { renderWithFallback } from "./render-with-fallback.server"
 import type { PaymentLinkCopy } from "./payment-link-mail-copy"
 import {

@@ -4,7 +4,7 @@ import {
   type PaymentLinkCopy,
   paymentLinkCopyFallback,
 } from "~/business/email/payment-link-mail-copy"
-import { PAYMENT_LINK_MAIL_VARIABLES } from "~/business/email/payment-link-mail.variables"
+import { PAYMENT_LINK_MAIL_VARIABLES } from "~/business/cms/payment-link-mail.variables"
 import {
   PIX_DISCOUNT_PERCENT,
   type PaymentOption,

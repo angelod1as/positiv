@@ -1,5 +1,5 @@
 import { paymentRefundMailContent } from "~/copy/emails/payment-refund"
-import { renderInlineBlocks } from "./render-inline-portable-text"
+import { renderInlineBlocks } from "~/business/cms/render-inline-portable-text"
 
 export type PaymentRefundCopy = {
   subject: string

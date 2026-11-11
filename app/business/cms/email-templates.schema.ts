@@ -2,11 +2,11 @@ import type { z } from "zod"
 import {
   renderInlineBlocks,
   unknownBlockVariables,
-} from "~/business/email/render-inline-portable-text"
-import { APPLICATION_MAIL_VARIABLES } from "~/business/email/application-mail.variables"
-import { PAYMENT_CONFIRMED_MAIL_VARIABLES } from "~/business/email/payment-confirmed-mail.variables"
-import { PAYMENT_LINK_MAIL_VARIABLES } from "~/business/email/payment-link-mail.variables"
-import { PAYMENT_REFUND_MAIL_VARIABLES } from "~/business/email/payment-refund-mail.variables"
+} from "./render-inline-portable-text"
+import { APPLICATION_MAIL_VARIABLES } from "./application-mail.variables"
+import { PAYMENT_CONFIRMED_MAIL_VARIABLES } from "./payment-confirmed-mail.variables"
+import { PAYMENT_LINK_MAIL_VARIABLES } from "./payment-link-mail.variables"
+import { PAYMENT_REFUND_MAIL_VARIABLES } from "./payment-refund-mail.variables"
 import { zod } from "~/lib/helpers/zod"
 import { portableTextSchema } from "./content.schema"
 import { unknownVariables } from "./placeholders"

@@ -6,14 +6,14 @@ import {
   type PortableTextBlock,
 } from "sanity"
 
-import { APPLICATION_MAIL_VARIABLES } from "../../../app/business/email/application-mail.variables"
-import { PAYMENT_CONFIRMED_MAIL_VARIABLES } from "../../../app/business/email/payment-confirmed-mail.variables"
-import { PAYMENT_LINK_MAIL_VARIABLES } from "../../../app/business/email/payment-link-mail.variables"
-import { PAYMENT_REFUND_MAIL_VARIABLES } from "../../../app/business/email/payment-refund-mail.variables"
+import { APPLICATION_MAIL_VARIABLES } from "../../../app/business/cms/application-mail.variables"
+import { PAYMENT_CONFIRMED_MAIL_VARIABLES } from "../../../app/business/cms/payment-confirmed-mail.variables"
+import { PAYMENT_LINK_MAIL_VARIABLES } from "../../../app/business/cms/payment-link-mail.variables"
+import { PAYMENT_REFUND_MAIL_VARIABLES } from "../../../app/business/cms/payment-refund-mail.variables"
 import {
   renderInlineBlocks,
   unknownBlockVariables,
-} from "../../../app/business/email/render-inline-portable-text"
+} from "../../../app/business/cms/render-inline-portable-text"
 import { decorators } from "../objects/rich-text"
 import { unknownVariableProblem } from "../placeholder-validation"
 

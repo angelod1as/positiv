@@ -5,7 +5,7 @@ import {
   paymentRefundCopyFallback,
 } from "./payment-refund-mail-copy"
 import { loadPaymentRefundCopy } from "./payment-refund-mail-copy.server"
-import { PAYMENT_REFUND_MAIL_VARIABLES } from "./payment-refund-mail.variables"
+import { PAYMENT_REFUND_MAIL_VARIABLES } from "~/business/cms/payment-refund-mail.variables"
 import { renderWithFallback } from "./render-with-fallback.server"
 import {
   paymentRefundMailTemplate,

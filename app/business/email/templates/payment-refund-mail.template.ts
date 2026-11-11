@@ -3,7 +3,7 @@ import {
   type PaymentRefundCopy,
   paymentRefundCopyFallback,
 } from "~/business/email/payment-refund-mail-copy"
-import { PAYMENT_REFUND_MAIL_VARIABLES } from "~/business/email/payment-refund-mail.variables"
+import { PAYMENT_REFUND_MAIL_VARIABLES } from "~/business/cms/payment-refund-mail.variables"
 import { paymentRefundMailCopy } from "~/copy/emails/payment-refund"
 import { paymentsCopy } from "~/copy/payments"
 import { POSITIV_URL } from "~/lib/constants/constants"
