@@ -87,13 +87,9 @@ export function findDomainCycles(modules: IModule[]): DomainCycle[] {
   }))
 }
 
-export async function checkDependencies({
-  baseDir,
-  configFile,
-}: {
-  baseDir: string
-  configFile: string
-}) {
+type CruiseTarget = { baseDir: string; configFile: string }
+
+export async function cruiseApp({ baseDir, configFile }: CruiseTarget) {
   const tsConfigFile = path.join(baseDir, "tsconfig.json")
   const hasTsConfig = existsSync(tsConfigFile)
   const options = {
@@ -108,7 +104,11 @@ export async function checkDependencies({
     {},
     hasTsConfig ? { tsConfig: extractTSConfig(tsConfigFile) } : {},
   )
-  const result = output as ICruiseResult
+  return output as ICruiseResult
+}
+
+export async function checkDependencies(target: CruiseTarget) {
+  const result = await cruiseApp(target)
 
   return {
     violations: result.summary.violations.map(
