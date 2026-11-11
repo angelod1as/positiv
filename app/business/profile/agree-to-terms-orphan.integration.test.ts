@@ -3,11 +3,8 @@ import {
   cleanupAfterTest,
   setupIntegrationTest,
 } from "~/test/integration-setup"
-import {
-  createTestProfile,
-  createTestAuthUser,
-  getTestSupabaseClient,
-} from "~/test/db-test-utils"
+import { createTestProfile, createTestAuthUser } from "~/test/db-test-utils"
+import { participantCopy } from "~/copy/participant"
 import { agreeToTerms } from "./agree-to-terms.server"
 import type { z } from "zod"
 import type { contextSchema } from "~/business/auth/auth-schemas"
@@ -27,6 +24,18 @@ vi.mock("~/business/newsletter/subscription-helpers.server", () => ({
   }),
 }))
 
+// Every write goes through Kysely. A session client that throws on use proves
+// it, and keeps the service_role -- which would mask any missing check -- out
+// of these tests.
+const noSupabase = new Proxy(
+  {},
+  {
+    get() {
+      throw new Error("agreeToTerms must not reach supabase-js")
+    },
+  },
+)
+
 describe("agreeToTerms orphan profile linking - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()
 
@@ -43,9 +52,7 @@ describe("agreeToTerms orphan profile linking - Integration Tests", () => {
     userId: string,
     email: string,
   ): z.infer<typeof contextSchema> => ({
-    supabase: getTestSupabaseClient() as unknown as z.infer<
-      typeof contextSchema
-    >["supabase"],
+    supabase: noSupabase as z.infer<typeof contextSchema>["supabase"],
     supabaseHeaders: new Headers(),
     currentUser: { id: userId, email },
     currentProfile: null,
@@ -98,5 +105,35 @@ describe("agreeToTerms orphan profile linking - Integration Tests", () => {
 
     expect(newProfile.user_id).toBe(userId)
     expect(newProfile.email).toBe(testEmail)
+  })
+
+  it("refuses to create a profile under another person's e-mail", async () => {
+    const victimEmail = "test-terms-victim@example.com"
+    const victimId = await createTestAuthUser(victimEmail, "test1234", tracker)
+    const victim = await createTestProfile(tracker, kysely, {
+      user_id: victimId,
+      email: victimEmail,
+    })
+    const userId = await createTestAuthUser(
+      "test-terms-intruder@example.com",
+      "test1234",
+      tracker,
+    )
+
+    const result = await agreeToTerms(
+      { agree: true, commonEmails: true, mktEmails: false },
+      buildContext(userId, victimEmail),
+    )
+
+    expect(result).toMatchObject({
+      success: false,
+      errors: [{ message: participantCopy.terms.profileCreateFailed }],
+    })
+    const profiles = await kysely
+      .selectFrom("profiles")
+      .select(["id", "user_id"])
+      .where("email", "=", victimEmail)
+      .execute()
+    expect(profiles).toEqual([{ id: victim.id, user_id: victimId }])
   })
 })

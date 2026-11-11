@@ -16,6 +16,7 @@ vi.mock("~/lib/supabase/db.server", () => ({
   db: {
     selectFrom: vi.fn(),
     updateTable: vi.fn(),
+    insertInto: vi.fn(),
   },
 }))
 
@@ -24,10 +25,8 @@ import { unsubscribeProfile } from "../newsletter/subscription-helpers.server"
 import { db } from "~/lib/supabase/db.server"
 
 describe("agreeToTerms", () => {
-  let mockFrom: Mock
-  let mockInsert: Mock
-  let mockSelect: Mock
-  let mockSingle: Mock
+  let mockValues: Mock
+  let mockInsertTakeFirst: Mock
 
   const mockKyselySelectReturning = (result: { id: string } | undefined) => {
     ;(db.selectFrom as unknown as Mock).mockReturnValue({
@@ -57,16 +56,11 @@ describe("agreeToTerms", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockSingle = vi.fn(() => Promise.resolve({ data: { id: "new-profile-123" }, error: null }))
-    mockSelect = vi.fn(() => ({
-      single: mockSingle,
+    mockInsertTakeFirst = vi.fn(() => Promise.resolve({ id: "new-profile-123" }))
+    mockValues = vi.fn(() => ({
+      returning: vi.fn(() => ({ executeTakeFirst: mockInsertTakeFirst })),
     }))
-    mockInsert = vi.fn(() => ({
-      select: mockSelect,
-    }))
-    mockFrom = vi.fn(() => ({
-      insert: mockInsert,
-    }))
+    ;(db.insertInto as unknown as Mock).mockReturnValue({ values: mockValues })
 
     // Default: no orphan found → INSERT path
     mockKyselySelectReturning(undefined)
@@ -103,7 +97,7 @@ describe("agreeToTerms", () => {
   })
 
   const createContext = (overrides?: Partial<z.infer<typeof contextSchema>>) => ({
-    supabase: { from: mockFrom } as unknown as z.infer<typeof contextSchema>["supabase"],
+    supabase: {} as z.infer<typeof contextSchema>["supabase"],
     supabaseHeaders: new Headers(),
     currentUser: { id: "user-123", email: "test@example.com" },
     currentProfile: null,
@@ -123,12 +117,11 @@ describe("agreeToTerms", () => {
 
     await agreeToTerms(values, context)
 
-    expect(mockFrom).toHaveBeenCalledWith("profiles")
-    expect(mockInsert).toHaveBeenCalledWith({
+    expect(db.insertInto).toHaveBeenCalledWith("profiles")
+    expect(mockValues).toHaveBeenCalledWith({
       user_id: "user-123",
       email: "test@example.com",
     })
-    expect(mockSelect).toHaveBeenCalledWith("id")
     expect(subscribeProfileToNewsletter).toHaveBeenCalledWith("new-profile-123", "onboarding_auto")
     expect(unsubscribeProfile).not.toHaveBeenCalled()
   })
@@ -141,7 +134,7 @@ describe("agreeToTerms", () => {
 
     await agreeToTerms(values, context)
 
-    expect(mockInsert).not.toHaveBeenCalled()
+    expect(db.insertInto).not.toHaveBeenCalled()
     expect(db.updateTable).toHaveBeenCalledWith("profiles")
     expect(unsubscribeProfile).toHaveBeenCalledWith("orphan-profile-456")
   })
@@ -158,7 +151,7 @@ describe("agreeToTerms", () => {
     expect(result).toMatchObject({
       errors: [{ message: "Problema ao vincular perfil" }],
     })
-    expect(mockInsert).not.toHaveBeenCalled()
+    expect(db.insertInto).not.toHaveBeenCalled()
   })
 
   it("should unsubscribe existing profile when mktEmails is false", async () => {
@@ -191,7 +184,7 @@ describe("agreeToTerms", () => {
 
     await agreeToTerms(values, context)
 
-    expect(mockFrom).not.toHaveBeenCalled()
+    expect(db.insertInto).not.toHaveBeenCalled()
     expect(unsubscribeProfile).toHaveBeenCalledWith("profile-123")
     expect(subscribeProfileToNewsletter).not.toHaveBeenCalled()
   })
@@ -215,13 +208,11 @@ describe("agreeToTerms", () => {
     if ('errors' in result && result.errors) {
       expect(result.errors[0].message).toBe("Usuário não autenticado")
     }
-    expect(mockFrom).not.toHaveBeenCalled()
+    expect(db.insertInto).not.toHaveBeenCalled()
   })
 
-  it("should return error when Supabase insert fails", async () => {
-    mockSelect.mockReturnValue({
-      single: vi.fn(() => Promise.resolve({ data: null, error: { message: "Database error" } })),
-    })
+  it("should return error when the insert fails", async () => {
+    mockInsertTakeFirst.mockRejectedValue(new Error("Database error"))
     const context = createContext({ currentProfile: null })
 
     const values = {
@@ -232,7 +223,7 @@ describe("agreeToTerms", () => {
 
     const result = await agreeToTerms(values, context)
 
-    expect(mockFrom).toHaveBeenCalledWith("profiles")
+    expect(db.insertInto).toHaveBeenCalledWith("profiles")
     expect(result).toMatchObject({
       errors: [{ message: "Problema ao criar perfil" }],
     })
