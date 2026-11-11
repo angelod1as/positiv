@@ -7,9 +7,14 @@ vi.mock("./send-application-mail.server", () => ({
   sendApplicationMail: vi.fn(),
 }))
 
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+}))
+
 vi.mock("~/lib/supabase/db.server", () => ({
   db: {
     selectFrom: vi.fn(),
+    transaction: vi.fn(),
   },
 }))
 
@@ -23,38 +28,30 @@ vi.mock("../event/event-invite.server", () => ({
 import { sendApplicationMail } from "./send-application-mail.server"
 import { db } from "~/lib/supabase/db.server"
 import { findValidInvite } from "../event/event-invite.server"
+import { logger } from "~/lib/logger/logger.server"
+import { participantCopy } from "~/copy/participant"
 
 describe("applyToEvent", () => {
-  let mockFrom: Mock
-  let mockUpsert: Mock
-  let mockSelect: Mock
-  let mockEq: Mock
-  let mockSingle: Mock
+  let mockValues: Mock
 
   beforeEach(() => {
     vi.clearAllMocks()
 
-    mockSingle = vi.fn()
-    mockEq = vi.fn(() => ({ single: mockSingle, eq: mockEq }))
-    mockSelect = vi.fn(() => ({ eq: mockEq }))
-    mockUpsert = vi.fn(() => Promise.resolve({ error: null }))
-    mockFrom = vi.fn((table: string) => {
-      if (table === "event_participants") {
-        return {
-          select: mockSelect,
-          upsert: mockUpsert,
-        }
-      }
-      return { select: mockSelect, upsert: mockUpsert }
-    })
+    // The transaction runs its callback against a fake whose insert records
+    // the row it was handed.
+    mockValues = vi.fn(() => ({
+      onConflict: vi.fn(() => ({ execute: vi.fn().mockResolvedValue([]) })),
+    }))
+    const trx = { insertInto: vi.fn(() => ({ values: mockValues })) }
+    vi.mocked(db.transaction).mockReturnValue({
+      execute: (run: (trx: unknown) => Promise<unknown>) => run(trx),
+    } as never)
   })
 
   const createContext = (
     overrides?: Partial<z.infer<typeof userContextSchema>>,
   ) => ({
-    supabase: { from: mockFrom } as unknown as z.infer<
-      typeof userContextSchema
-    >["supabase"],
+    supabase: {} as z.infer<typeof userContextSchema>["supabase"],
     supabaseHeaders: new Headers(),
     currentUser: { id: "user-123", email: "test@example.com" },
     currentProfile: {
@@ -121,9 +118,6 @@ describe("applyToEvent", () => {
         selectAll: mockSelectAll,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
-
-      // Only participant check needed — no second event query
-      mockSingle.mockResolvedValueOnce({ data: null, error: null })
     })
 
     it("should return emailSent: true when email sends successfully", async () => {
@@ -174,9 +168,26 @@ describe("applyToEvent", () => {
 
       await applyToEvent(validValues, createContext())
 
-      expect(mockUpsert.mock.calls[0][0]).toMatchObject({
+      expect(mockValues.mock.calls[0][0]).toMatchObject({
         cancellation_reason: null,
       })
+    })
+
+    it("logs why the application could not be written", async () => {
+      const cause = { code: "08006", message: "connection failure" }
+      mockValues.mockReturnValue({
+        onConflict: vi.fn(() => ({ execute: vi.fn().mockRejectedValue(cause) })),
+      })
+
+      const result = await applyToEvent(validValues, createContext())
+
+      expect(result).toMatchObject({
+        errors: [{ message: participantCopy.application.upsertFailed }],
+      })
+      expect(logger.error).toHaveBeenCalledWith(
+        "Could not write the application",
+        { eventId: validValues.eventId, error: cause },
+      )
     })
 
     it("should keep the opt-out flag out of the participant row", async () => {
@@ -184,8 +195,8 @@ describe("applyToEvent", () => {
 
       await applyToEvent({ ...validValues, skipEmail: true }, createContext())
 
-      expect(mockUpsert).toHaveBeenCalledTimes(1)
-      expect(mockUpsert.mock.calls[0][0]).not.toHaveProperty("skipEmail")
+      expect(mockValues).toHaveBeenCalledTimes(1)
+      expect(mockValues.mock.calls[0][0]).not.toHaveProperty("skipEmail")
     })
 
     it("should return emailSent: false when profile has no email", async () => {
@@ -233,8 +244,6 @@ describe("applyToEvent", () => {
         selectAll: mockSelectAll,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
-
-      mockSingle.mockResolvedValueOnce({ data: null, error: null })
       vi.mocked(sendApplicationMail).mockResolvedValue({ emailSent: true })
     })
 
@@ -249,7 +258,7 @@ describe("applyToEvent", () => {
     it("writes a staff spot for whoever may apply as staff", async () => {
       await applyToEvent(validValues, contextWith(["events.apply_as_staff"]))
 
-      expect(mockUpsert.mock.calls[0][0]).toMatchObject({
+      expect(mockValues.mock.calls[0][0]).toMatchObject({
         spot_type: "staff",
       })
     })
@@ -259,7 +268,7 @@ describe("applyToEvent", () => {
     it("leaves the spot type alone for everybody else", async () => {
       await applyToEvent(validValues, contextWith(["events.apply_direct"]))
 
-      expect(mockUpsert.mock.calls[0][0]).not.toHaveProperty("spot_type")
+      expect(mockValues.mock.calls[0][0]).not.toHaveProperty("spot_type")
     })
 
     it("ignores a spot type sent along with the answers", async () => {
@@ -268,7 +277,7 @@ describe("applyToEvent", () => {
         contextWith([]),
       )
 
-      expect(mockUpsert.mock.calls[0][0]).not.toHaveProperty("spot_type")
+      expect(mockValues.mock.calls[0][0]).not.toHaveProperty("spot_type")
     })
   })
 
@@ -315,8 +324,7 @@ describe("applyToEvent", () => {
               )
             }
             expect(findValidInvite).not.toHaveBeenCalled()
-            expect(mockSingle).not.toHaveBeenCalled()
-            expect(mockUpsert).not.toHaveBeenCalled()
+            expect(mockValues).not.toHaveBeenCalled()
             expect(sendApplicationMail).not.toHaveBeenCalled()
           },
         )
@@ -361,6 +369,31 @@ describe("applyToEvent", () => {
       expect(mockWhere).toHaveBeenCalledWith("id", "=", "event-123")
     })
 
+    it("says the application failed, not what the database said, when the invite read fails", async () => {
+      vi.mocked(db.selectFrom).mockReturnValue({
+        selectAll: () => ({
+          where: () => ({
+            executeTakeFirst: async () => ({
+              ...mockEvent,
+              event_status: "Registration Closed",
+            }),
+          }),
+        }),
+      } as never)
+      const cause = new Error("canceling statement due to lock timeout")
+      vi.mocked(findValidInvite).mockRejectedValueOnce(cause)
+
+      const result = await applyToEvent(validValues, createContext())
+
+      expect(result).toMatchObject({
+        errors: [{ message: participantCopy.application.upsertFailed }],
+      })
+      expect(logger.error).toHaveBeenCalledWith(
+        "Could not write the application",
+        { eventId: validValues.eventId, error: cause },
+      )
+    })
+
     it("lets whoever may apply as staff in without an invite", async () => {
       const mockExecuteTakeFirst = vi.fn().mockResolvedValue({
         ...mockEvent,
@@ -372,7 +405,6 @@ describe("applyToEvent", () => {
         })),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
-      mockSingle.mockResolvedValueOnce({ data: null, error: null })
 
       const context = createContext()
       const result = await applyToEvent(validValues, {
@@ -385,7 +417,7 @@ describe("applyToEvent", () => {
 
       expect(result.success).toBe(true)
       expect(findValidInvite).not.toHaveBeenCalled()
-      expect(mockUpsert.mock.calls[0][0]).toMatchObject({
+      expect(mockValues.mock.calls[0][0]).toMatchObject({
         spot_type: "staff",
       })
     })
@@ -429,10 +461,6 @@ describe("applyToEvent", () => {
         selectAll: mockSelectAll,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
-
-      // Only participant check needed
-      mockSingle.mockResolvedValueOnce({ data: null, error: null })
-      mockUpsert.mockResolvedValueOnce({ error: null })
 
       vi.mocked(sendApplicationMail).mockResolvedValue({ emailSent: true })
 

@@ -12,7 +12,7 @@ export const agreeToTerms = applySchema(
   agreeToTermsSchema,
   contextSchema,
 )(async (values, context) => {
-  const { supabase, currentProfile, currentUser } = context
+  const { currentProfile, currentUser } = context
 
   // If no user is authenticated, throw an error for proper handling
   if (!currentUser || !currentUser.email) {
@@ -27,9 +27,6 @@ export const agreeToTerms = applySchema(
   } else {
     const normalizedEmail = currentUser.email.toLowerCase().trim()
 
-    // Use db (server-side, bypasses RLS) for orphan operations.
-    // The session client cannot SELECT/UPDATE orphan profiles because the RLS
-    // policy requires auth.uid() = user_id, which is never true when user_id IS NULL.
     const orphanProfile = await db
       .selectFrom("profiles")
       .select("id")
@@ -55,16 +52,26 @@ export const agreeToTerms = applySchema(
 
       profileId = linkedProfile.id
     } else {
-      const { data: newProfile, error } = await supabase
-        .from("profiles")
-        .insert({
+      // user_id comes from the session alone; an e-mail or account that
+      // already has a profile is refused by profiles_email_unique or the
+      // user_id unique key rather than written over.
+      const newProfile = await db
+        .insertInto("profiles")
+        .values({
           user_id: currentUser.id,
           email: normalizedEmail,
         })
-        .select("id")
-        .single()
+        .returning("id")
+        .executeTakeFirst()
+        .catch((error) => {
+          logger.error("Could not create the profile", {
+            userId: currentUser.id,
+            error,
+          })
+          return undefined
+        })
 
-      if (error || !newProfile) {
+      if (!newProfile) {
         throw new Error(participantCopy.terms.profileCreateFailed)
       }
 

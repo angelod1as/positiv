@@ -30,7 +30,7 @@ export async function saveBasicData({
   answers,
   context,
 }: SaveBasicDataProps): Promise<CommitResult> {
-  const { supabase, currentUser } = context
+  const { currentUser } = context
 
   // The e-mail is how a profile left behind is found and how a new one is
   // keyed, so there is nothing to save without it.
@@ -72,25 +72,6 @@ export async function saveBasicData({
   // one clears it on the row too.
   const { confirm_phone, ...values } = schemaValuesToDB(basic.data)
 
-  const { data: orphanedProfile, error: orphanedError } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("email", email)
-    .is("user_id", null)
-    .single()
-
-  // Anything other than "no rows" means the question of whether a profile is
-  // waiting under this e-mail went unanswered, and writing a second one would
-  // strand the first.
-  if (orphanedError && orphanedError.code !== "PGRST116") {
-    logger.error(
-      `Error checking for orphaned profile: ${orphanedError.message}`,
-    )
-    return { ok: false, errors: [] }
-  }
-
-  const profileId = orphanedProfile?.id ?? context.currentProfile?.id
-
   const written = {
     ...values,
     ...extra.data,
@@ -105,32 +86,70 @@ export async function saveBasicData({
   // when it is not. An upsert cannot do both: its conflict target is user_id,
   // which a profile left behind has none of — so adopting one used to insert a
   // second row with the same primary key and fail on it.
-  const { data: saved, error: upsertError } = profileId
-    ? await supabase
-        .from("profiles")
-        .update(written)
-        .eq("id", profileId)
-        .select("id")
-        .single()
-    : await supabase
-        .from("profiles")
-        .upsert(written, { onConflict: "user_id" })
-        .select("id")
-        .single()
+  //
+  // The update only lands on a row that is this person's or nobody's yet: a
+  // profile id belonging to someone else matches nothing and is refused.
+  let profileId: string | undefined
+  let saved: { id: string } | undefined
+  try {
+    // A failed lookup leaves unanswered whether a profile is waiting under
+    // this e-mail, and writing a second one would strand the first -- so it
+    // refuses like a failed write does.
+    const orphanedProfile = await db
+      .selectFrom("profiles")
+      .select("id")
+      .where("email", "=", email)
+      .where("user_id", "is", null)
+      .executeTakeFirst()
 
-  // One profile per CPF. Said on the field, since it is the person's to
-  // correct -- or, if the CPF is theirs, to take up with the organisation.
-  if (upsertError && isUniqueViolation(upsertError, "profiles_cpf_unique")) {
-    return {
-      ok: false,
-      errors: [{ questionId: "cpf", message: basicDataValidation.cpfTaken }],
+    profileId = orphanedProfile?.id ?? context.currentProfile?.id
+
+    saved = profileId
+      ? await db
+          .updateTable("profiles")
+          .set(written)
+          .where("id", "=", profileId)
+          .where((eb) =>
+            eb.or([
+              eb("user_id", "=", currentUser.id),
+              eb("user_id", "is", null),
+            ]),
+          )
+          .returning("id")
+          .executeTakeFirst()
+      : await db
+          .insertInto("profiles")
+          .values(written)
+          .onConflict((oc) => oc.column("user_id").doUpdateSet(written))
+          .returning("id")
+          .executeTakeFirst()
+  } catch (error) {
+    // One profile per CPF. Said on the field, since it is the person's to
+    // correct -- or, if the CPF is theirs, to take up with the organisation.
+    if (isUniqueViolation(error, "profiles_cpf_unique")) {
+      return {
+        ok: false,
+        errors: [{ questionId: "cpf", message: basicDataValidation.cpfTaken }],
+      }
     }
+
+    const { code, message } = error as { code?: string; message?: string }
+    logger.error(
+      participantCopy.basicData.profileUpdateFailed(
+        code ?? "UNKNOWN",
+        message ?? String(error),
+      ),
+    )
+    return { ok: false, errors: [] }
   }
 
-  if (upsertError || !saved) {
-    const code = upsertError?.code ?? "UNKNOWN"
-    const message = upsertError?.message ?? String(upsertError)
-    logger.error(participantCopy.basicData.profileUpdateFailed(code, message))
+  if (!saved) {
+    logger.error(
+      participantCopy.basicData.profileUpdateFailed(
+        "NO_ROW",
+        `profile ${profileId} is not user ${currentUser.id}'s to write`,
+      ),
+    )
     return { ok: false, errors: [] }
   }
 

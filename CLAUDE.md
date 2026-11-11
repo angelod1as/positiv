@@ -232,7 +232,13 @@ The "Default privileges on new objects in public" test in
 
 ### Key Architectural Patterns
 
-1. **Database Access**: All database queries use Kysely through the `~/lib/supabase/db.server` module. Types are auto-generated from Supabase schema.
+1. **Database Access**: Every read and write of data goes through Kysely, via
+   `~/lib/supabase/db.server`. supabase-js is only for what is Supabase's own:
+   authentication (`.auth.*`) and the `get_profile_with_roles` RPC. Kysely
+   connects as `postgres`, which bypasses RLS, so the check that a person may
+   act on a row lives in the query — and an integration test proves the
+   refusal without the service_role. Types are auto-generated from the
+   Supabase schema.
 
 2. **Authentication**: Supabase Auth with SSR support. Auth state is managed through React Router's session handling.
 

@@ -1,5 +1,6 @@
 import { applySchema, composable } from "composable-functions"
 import { sql } from "kysely"
+import { can, PERMISSIONS } from "~/business/auth/permissions"
 import { adminEventsCopy } from "~/copy/admin/events"
 import { db } from "~/lib/supabase/db.server"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
@@ -15,7 +16,6 @@ import {
   updateEventListmonkList,
 } from "../newsletter/event-listmonk-sync.server"
 import { syncVeteransListmonkList } from "../newsletter/veterans-list.server"
-import type { DBClient } from "~types/utils/utils.types"
 
 export const getEventsForDashboard = async () => {
   const events = await db
@@ -41,24 +41,38 @@ export const createOrUpdateEvent = applySchema(
   eventFormSchema,
   adminContextSchema,
 )(async (values, context) => {
-  const { supabase, eventId } = context
+  const { currentProfile, eventId } = context
 
-  const parsedValues = schemaValuesToDB(values)
-
-  const { error, data } = await supabase
-    .from("events")
-    .upsert({
-      ...parsedValues,
-      id: eventId,
-    })
-    .select("id")
-    .single()
-
-  if (error) {
+  // The admin panel is not the same grant as managing events, even if only
+  // the admin role holds either today.
+  if (!can(currentProfile, PERMISSIONS.EVENTS_MANAGE)) {
     throw new Error(adminEventsCopy.saveFailed)
   }
 
-  return data.id
+  const parsedValues = schemaValuesToDB(values)
+
+  const saved = await (eventId
+    ? db
+        .updateTable("events")
+        .set(parsedValues)
+        .where("id", "=", eventId)
+        .returning("id")
+        .executeTakeFirst()
+    : db
+        .insertInto("events")
+        .values(parsedValues)
+        .returning("id")
+        .executeTakeFirst()
+  ).catch((error) => {
+    logger.error("Could not save the event", { eventId, error })
+    return undefined
+  })
+
+  if (!saved) {
+    throw new Error(adminEventsCopy.saveFailed)
+  }
+
+  return saved.id
 })
 
 export const updateEventStatus = applySchema(
@@ -247,8 +261,14 @@ export const getEventDemographicsById = composable(
   },
 )
 
-export const findCalendarEvent = async (supabase: DBClient, eventId: string) =>
-  supabase.from("events").select("*").eq("id", eventId).single()
+// Every status but Draft, the same rule as findVisibleEvent.
+export const findCalendarEvent = async (eventId: string) =>
+  db
+    .selectFrom("events")
+    .selectAll()
+    .where("id", "=", eventId)
+    .where("event_status", "!=", "Draft")
+    .executeTakeFirst()
 
 export const findEventId = async (eventId: string) =>
   db

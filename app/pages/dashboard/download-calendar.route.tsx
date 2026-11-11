@@ -1,5 +1,5 @@
 import { redirectWithError } from "remix-toast"
-import { getContext } from "~/business/auth/auth.server"
+import { getUserContext } from "~/business/auth/auth.server"
 import { findCalendarEvent } from "~/business/event/event.server"
 import { formatCalendarEvent } from "~/business/event/format-calendar-event.server"
 import { dashboardCopy } from "~/copy/dashboard"
@@ -15,10 +15,19 @@ const {
 export async function loader({ request, params }: Route.LoaderArgs) {
   assertUuidParams(params.eventId)
 
-  const { supabase } = await getContext(request, params)
-  const { data, error } = await findCalendarEvent(supabase, params.eventId)
+  // A resource route requested directly does not run the private layout's
+  // loader, so it signs the visitor in itself.
+  await getUserContext(request, params)
 
-  if (error || !data) {
+  const data = await findCalendarEvent(params.eventId).catch((error) => {
+    logger.error("Could not read the event for a calendar", {
+      eventId: params.eventId,
+      error,
+    })
+    return undefined
+  })
+
+  if (!data) {
     throw await redirectWithError(DASHBOARD, dashboardCopy.calendarFailed)
   }
 

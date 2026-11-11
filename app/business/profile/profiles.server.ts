@@ -15,7 +15,6 @@ import {
 } from "./profile-schemas"
 import { syncVeteransListmonkList } from "../newsletter/veterans-list.server"
 import { participantHistoryFields } from "../application/event-participants.server"
-import type { DBClient } from "~types/utils/utils.types"
 
 const globalProfileBaseQuery = db
   .selectFrom("profiles as p")
@@ -220,10 +219,10 @@ export const updateProfileAdminNotes = applySchema(
   return { profile_id, ...updateData }
 })
 
-export const findOrphanedProfile = async (supabase: DBClient, email: string) =>
-  supabase
-    .from("profiles")
-    .select("*")
-    .eq("email", email)
-    .is("user_id", null)
-    .single()
+export const findOrphanedProfile = async (email: string) =>
+  db
+    .selectFrom("profiles")
+    .selectAll()
+    .where("email", "=", email)
+    .where("user_id", "is", null)
+    .executeTakeFirst()

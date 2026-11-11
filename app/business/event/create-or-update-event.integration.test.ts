@@ -1,7 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
-import { createTestEvent, getTestSupabaseClient } from "~/test/db-test-utils"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { logger } from "~/lib/logger/logger.server"
+import { createTestEvent } from "~/test/db-test-utils"
 import { cleanupAfterTest, setupIntegrationTest } from "~/test/integration-setup"
 import { createOrUpdateEvent } from "./event.server"
+import { sessionClientThatThrows } from "~/test/session-client-that-throws"
+
+const noSupabase = sessionClientThatThrows("createOrUpdateEvent")
 
 describe("createOrUpdateEvent - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()
@@ -14,25 +18,20 @@ describe("createOrUpdateEvent - Integration Tests", () => {
     await cleanupAfterTest(tracker, kysely)
   })
 
-  const context = () => ({
-    supabase: getTestSupabaseClient(),
+  const contextAs = (permissions: string[]) => ({
+    supabase: noSupabase as never,
     supabaseHeaders: new Headers(),
     currentUser: { id: "00000000-0000-4000-8000-000000000001" },
-    currentProfile: null,
+    currentProfile: {
+      id: "00000000-0000-4000-8000-000000000002",
+      basic_data_filled: true,
+      created_at: "2026-11-11T00:00:00Z",
+      permissions,
+    },
     host: null,
   })
 
-  // The local Supabase REST layer sometimes drops an idle keep-alive socket
-  // between test files, which surfaces as a failed mutation. A deterministic
-  // failure fails the retry too, so only transport hiccups are absorbed.
-  const save = async (
-    values: ReturnType<typeof formValues>,
-    ctx: ReturnType<typeof context> & { eventId?: string },
-  ) => {
-    const first = await createOrUpdateEvent(values, ctx)
-    if (first.success) return first
-    return await createOrUpdateEvent(values, ctx)
-  }
+  const context = () => contextAs(["admin.panel", "events.manage"])
 
   const formValues = (title: string) => {
     const start = new Date("2026-09-01T20:00:00.000Z").toISOString()
@@ -69,7 +68,7 @@ describe("createOrUpdateEvent - Integration Tests", () => {
       total_spots: 60,
     })
 
-    const result = await save(formValues("Legacy edition renamed"), {
+    const result = await createOrUpdateEvent(formValues("Legacy edition renamed"), {
       ...context(),
       eventId: event.id,
     })
@@ -87,7 +86,7 @@ describe("createOrUpdateEvent - Integration Tests", () => {
   })
 
   it("creates new events as regular", async () => {
-    const result = await save(formValues("Evento novo"), {
+    const result = await createOrUpdateEvent(formValues("Evento novo"), {
       ...context(),
       eventId: undefined,
     })
@@ -103,5 +102,64 @@ describe("createOrUpdateEvent - Integration Tests", () => {
       .executeTakeFirstOrThrow()
 
     expect(saved.event_type).toBe("regular")
+  })
+
+  it("refuses whoever may not manage events, and writes nothing", async () => {
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Untouched",
+      emoji: "🔒",
+      description: "Não mexa",
+      location: "Motel Harmony",
+      event_status: "Draft",
+    })
+
+    const result = await createOrUpdateEvent(formValues("Hijacked"), {
+      ...contextAs(["admin.panel"]),
+      eventId: event.id,
+    })
+
+    expect(result.success).toBe(false)
+    const saved = await kysely
+      .selectFrom("events")
+      .select("title")
+      .where("id", "=", event.id)
+      .executeTakeFirstOrThrow()
+    expect(saved.title).toBe("Untouched")
+  })
+
+  it("refuses an id that names no event, and creates nothing under it", async () => {
+    const unknownId = "6b1f0c2e-4d7a-4e8b-9c3d-2a5f7e9b1c04"
+
+    const result = await createOrUpdateEvent(formValues("Phantom"), {
+      ...context(),
+      eventId: unknownId,
+    })
+
+    expect(result.success).toBe(false)
+    const rows = await kysely
+      .selectFrom("events")
+      .select("id")
+      .where("id", "=", unknownId)
+      .execute()
+    expect(rows).toHaveLength(0)
+  })
+
+  it("logs why the event could not be saved", async () => {
+    const error = vi.spyOn(logger, "error").mockImplementation(() => logger)
+
+    try {
+      const result = await createOrUpdateEvent(formValues("Broken id"), {
+        ...context(),
+        eventId: "not-a-uuid",
+      })
+
+      expect(result.success).toBe(false)
+      expect(error).toHaveBeenCalledWith("Could not save the event", {
+        eventId: "not-a-uuid",
+        error: expect.objectContaining({ code: "22P02" }),
+      })
+    } finally {
+      error.mockRestore()
+    }
   })
 })
