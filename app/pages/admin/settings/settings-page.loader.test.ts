@@ -1,16 +1,16 @@
 import { describe, expect, it, vi } from "vitest"
-import {
-  getOnlinePaymentsSetting,
-  getRegistrationLimit,
-  isCardPaymentsEnabled,
-} from "~/business/settings/app-settings.server"
+import { getRegistrationLimit, isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
+import { getOnlinePaymentsSetting } from "~/business/payment/online-payments.server"
 import { defaultOnlinePaymentsSetting } from "~/test/online-payments-setting"
 import { loader } from "./settings-page"
 
 vi.mock("~/business/settings/app-settings.server", () => ({
-  getOnlinePaymentsSetting: vi.fn(),
   getRegistrationLimit: vi.fn(),
   isCardPaymentsEnabled: vi.fn(),
+}))
+
+vi.mock("~/business/payment/online-payments.server", () => ({
+  getOnlinePaymentsSetting: vi.fn(),
 }))
 
 describe("SettingsPage loader", () => {

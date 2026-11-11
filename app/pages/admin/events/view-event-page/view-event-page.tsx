@@ -12,10 +12,8 @@ import {
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
 import { paymentProvider } from "~/business/payment/payment-provider.server"
 import { getPaymentsForEvent } from "~/business/payment/payment-totals.server"
-import {
-  isCardPaymentsEnabled,
-  isOnlinePaymentsEnabled,
-} from "~/business/settings/app-settings.server"
+import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
+import { isOnlinePaymentsEnabled } from "~/business/payment/online-payments.server"
 import { InviteParticipantSection } from "~/components/organisms/event-invite-modal/invite-participant-section"
 import { ManagePaymentModal } from "~/components/organisms/payment/manage-payment-modal"
 import { AdminViewEventParticipantsTable } from "~/components/organisms/tables/admin/participants-table/view-event-participants-table"

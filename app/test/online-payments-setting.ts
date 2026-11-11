@@ -1,4 +1,4 @@
-import type { getOnlinePaymentsSetting } from "~/business/settings/app-settings.server"
+import type { getOnlinePaymentsSetting } from "~/business/payment/online-payments.server"
 
 /** The online payments setting as a fresh install has it. */
 export const defaultOnlinePaymentsSetting: Awaited<

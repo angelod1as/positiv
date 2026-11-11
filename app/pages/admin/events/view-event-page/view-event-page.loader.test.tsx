@@ -3,7 +3,7 @@ import { getAdminEventById } from "~/business/event/event.server"
 import { getProfilesWithExtraDataById, getRejectedEventParticipants } from "~/business/application/event-participants.server"
 import { listInvitesForEvent } from "~/business/event/event-invites.server"
 import { getPaymentsForEvent } from "~/business/payment/payment-totals.server"
-import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
+import { isOnlinePaymentsEnabled } from "~/business/payment/online-payments.server"
 import { loader } from "./view-event-page"
 
 const { logger } = vi.hoisted(() => ({
@@ -28,6 +28,9 @@ vi.mock("~/business/event/event.server", () => ({
 
 vi.mock("~/business/settings/app-settings.server", () => ({
   isCardPaymentsEnabled: vi.fn(async () => true),
+}))
+
+vi.mock("~/business/payment/online-payments.server", () => ({
   isOnlinePaymentsEnabled: vi.fn(),
 }))
 

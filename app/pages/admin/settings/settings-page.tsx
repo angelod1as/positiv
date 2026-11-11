@@ -3,8 +3,8 @@ import {
   cleanupListmonkTestCampaign,
   testListmonkConnection,
 } from "~/business/newsletter/test-listmonk-connection.server"
+import { getOnlinePaymentsSetting } from "~/business/payment/online-payments.server"
 import {
-  getOnlinePaymentsSetting,
   getRegistrationLimit,
   isCardPaymentsEnabled,
   setCardPaymentsEnabled,
