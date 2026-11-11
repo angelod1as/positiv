@@ -6,7 +6,6 @@ import {
   createTestEvent,
   createTestEventInvite,
   createTestProfile,
-  getTestSupabaseClient,
 } from "~/test/db-test-utils"
 import {
   cleanupAfterTest,
@@ -17,6 +16,18 @@ import { applyToEvent } from "./apply-to-event.server"
 vi.mock("./send-application-mail.server", () => ({
   sendApplicationMail: vi.fn().mockResolvedValue({ emailSent: false }),
 }))
+
+// The application goes through Kysely alone. A session client that throws on
+// use proves it, and keeps the service_role -- which would mask any missing
+// check -- out of these tests.
+const noSupabase = new Proxy(
+  {},
+  {
+    get() {
+      throw new Error("applyToEvent must not reach supabase-js")
+    },
+  },
+)
 
 describe("applying to a closed event with an invite", () => {
   const { tracker, kysely } = setupIntegrationTest()
@@ -34,7 +45,7 @@ describe("applying to a closed event with an invite", () => {
 
   const context = () =>
     ({
-      supabase: getTestSupabaseClient(),
+      supabase: noSupabase,
       supabaseHeaders: new Headers(),
       currentUser: { id: profileId, email: profileEmail },
       currentProfile: {
@@ -117,5 +128,66 @@ describe("applying to a closed event with an invite", () => {
       .executeTakeFirstOrThrow()
 
     expect(invite.used_at).not.toBeNull()
+  })
+
+  it("writes the application for the signed-in profile, whatever the body names", async () => {
+    await createTestEventInvite(tracker, kysely, {
+      event_id: eventId,
+      profile_id: profileId,
+      token: `tok-${randomUUID()}`,
+    })
+    const victim = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: `victim-${randomUUID()}@test.com`,
+    })
+
+    const result = await applyToEvent(
+      { ...answers(), profile_id: victim.id } as ReturnType<typeof answers>,
+      context(),
+    )
+
+    expect(result.success).toBe(true)
+    const rows = await kysely
+      .selectFrom("event_participants")
+      .select(["id", "profile_id"])
+      .where("event_id", "=", eventId)
+      .execute()
+    rows.forEach((row) => tracker.track("event_participants", row.id))
+    expect(rows.map((row) => row.profile_id)).toEqual([profileId])
+  })
+
+  // The admin's revoke holds the invite row while the application is on its
+  // way in. Read, write and stamp share one transaction that locks the invite,
+  // so the application waits for the revoke and then sees it.
+  it("refuses an application racing an admin who revokes the invite", async () => {
+    await createTestEventInvite(tracker, kysely, {
+      event_id: eventId,
+      profile_id: profileId,
+      token: `tok-${randomUUID()}`,
+    })
+
+    const applications: ReturnType<typeof applyToEvent>[] = []
+    await kysely.transaction().execute(async (trx) => {
+      await trx
+        .updateTable("event_invites")
+        .set({ revoked_at: new Date().toISOString() })
+        .where("event_id", "=", eventId)
+        .where("profile_id", "=", profileId)
+        .execute()
+
+      applications.push(applyToEvent(answers(), context()))
+      await new Promise((resolve) => setTimeout(resolve, 300))
+    })
+
+    const [result] = await Promise.all(applications)
+
+    expect(result.success).toBe(false)
+    const rows = await kysely
+      .selectFrom("event_participants")
+      .select("id")
+      .where("event_id", "=", eventId)
+      .execute()
+    rows.forEach((row) => tracker.track("event_participants", row.id))
+    expect(rows).toHaveLength(0)
   })
 })

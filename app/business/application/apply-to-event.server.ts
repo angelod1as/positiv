@@ -12,7 +12,7 @@ export const applyToEvent = applySchema(
   applyToEventInputSchema,
   userContextSchema,
 )(async (allValues, context) => {
-  const { supabase, currentProfile } = context
+  const { currentProfile } = context
   const { eventId, applicationDate, skipEmail, ...values } = allValues
 
   if (!currentProfile || !eventId) {
@@ -45,45 +45,47 @@ export const applyToEvent = applySchema(
   // it, and whoever holds an invite for it. The invite is read against the
   // signed-in profile, so the link is worthless to anybody else who is handed
   // it.
-  //
-  // Read here and acted on below, outside any transaction: an admin revoking
-  // the invite in between still lets this one application through. Accepted
-  // rather than solved, because the read is Kysely and the write below is the
-  // supabase client -- two connections, so no transaction can cover both. See
-  // POS-537.
   const needsInvite =
     event.event_status === "Registration Closed" && !appliesAsStaff
-  const invite = needsInvite
-    ? await findValidInvite(eventId, profileId)
-    : undefined
 
-  if (needsInvite && !invite) {
-    throw new Error(participantCopy.application.registrationClosed)
-  }
-
-  const { data } = await supabase
-    .from("event_participants")
-    .select("id")
-    .eq("event_id", eventId)
-    .eq("profile_id", profileId)
-    .single()
-
-  const { error } = await supabase.from("event_participants").upsert({
-    id: data?.id,
-    event_id: eventId,
-    profile_id: profileId,
+  const application = {
     application_date: dateToString(applicationDate),
-    ...values, // Supabase sanitizes automatically
+    referrals: values.referrals,
+    referred: values.referred,
+    companions: values.companions,
+    bond: values.bond,
+    notes: values.notes,
     is_user_applied: true,
     cancellation_reason: null,
     ...(appliesAsStaff && { spot_type: "staff" as const }),
-  })
-
-  if (error) {
-    throw new Error(participantCopy.application.upsertFailed)
   }
 
-  if (invite) await markInviteUsed(eventId, profileId)
+  // The invite is read locked, and the application and the stamp on the
+  // invite are written in the same transaction: an admin revoking the invite
+  // meanwhile either lands first and is seen, or waits until this is in.
+  await db.transaction().execute(async (trx) => {
+    const invite = needsInvite
+      ? await findValidInvite(eventId, profileId, trx)
+      : undefined
+
+    if (needsInvite && !invite) {
+      throw new Error(participantCopy.application.registrationClosed)
+    }
+
+    // profile_id is the signed-in profile's, never anything the request sent.
+    await trx
+      .insertInto("event_participants")
+      .values({ event_id: eventId, profile_id: profileId, ...application })
+      .onConflict((oc) =>
+        oc.columns(["event_id", "profile_id"]).doUpdateSet(application),
+      )
+      .execute()
+      .catch(() => {
+        throw new Error(participantCopy.application.upsertFailed)
+      })
+
+    if (invite) await markInviteUsed(eventId, profileId, trx)
+  })
 
   let emailSent = false
 
