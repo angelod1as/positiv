@@ -369,6 +369,31 @@ describe("applyToEvent", () => {
       expect(mockWhere).toHaveBeenCalledWith("id", "=", "event-123")
     })
 
+    it("says the application failed, not what the database said, when the invite read fails", async () => {
+      vi.mocked(db.selectFrom).mockReturnValue({
+        selectAll: () => ({
+          where: () => ({
+            executeTakeFirst: async () => ({
+              ...mockEvent,
+              event_status: "Registration Closed",
+            }),
+          }),
+        }),
+      } as never)
+      const cause = new Error("canceling statement due to lock timeout")
+      vi.mocked(findValidInvite).mockRejectedValueOnce(cause)
+
+      const result = await applyToEvent(validValues, createContext())
+
+      expect(result).toMatchObject({
+        errors: [{ message: participantCopy.application.upsertFailed }],
+      })
+      expect(logger.error).toHaveBeenCalledWith(
+        "Could not write the application",
+        { eventId: validValues.eventId, error: cause },
+      )
+    })
+
     it("lets whoever may apply as staff in without an invite", async () => {
       const mockExecuteTakeFirst = vi.fn().mockResolvedValue({
         ...mockEvent,

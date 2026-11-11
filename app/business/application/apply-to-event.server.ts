@@ -79,12 +79,20 @@ export const applyToEvent = applySchema(
         oc.columns(["event_id", "profile_id"]).doUpdateSet(application),
       )
       .execute()
-      .catch((error) => {
-        logger.error("Could not write the application", { eventId, error })
-        throw new Error(participantCopy.application.upsertFailed)
-      })
 
     if (invite) await markInviteUsed(eventId, profileId, trx)
+  }).catch((error) => {
+    // A closed door is the person's to know about. Anything else -- a lock
+    // timeout, a dropped connection, a failed commit -- is not, and reaches
+    // them as the generic failure while the log keeps the cause.
+    if (
+      error instanceof Error &&
+      error.message === participantCopy.application.registrationClosed
+    ) {
+      throw error
+    }
+    logger.error("Could not write the application", { eventId, error })
+    throw new Error(participantCopy.application.upsertFailed)
   })
 
   let emailSent = false
