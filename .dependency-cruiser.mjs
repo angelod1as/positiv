@@ -80,7 +80,7 @@ export default {
     {
       name: "settings-imports-no-domain",
       comment:
-        "business/settings stores the app-wide flags; the domains read them, never the other way round.",
+        "business/settings stores the app-wide flags; the domains read them, never the other way round. Type-only imports count too.",
       severity: "error",
       from: { path: "^app/business/settings/" },
       to: { path: "^app/business/(?!settings/)" },

@@ -119,15 +119,24 @@ export async function checkDependencies(target: CruiseTarget) {
       }),
     ),
     domainCycles: findDomainCycles(result.modules),
+    modules: result.modules,
   }
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   const root = path.resolve(import.meta.dirname, "..")
-  const { violations, domainCycles } = await checkDependencies({
+  const { violations, domainCycles, modules } = await checkDependencies({
     baseDir: root,
     configFile: path.join(root, ".dependency-cruiser.mjs"),
   })
+  const { default: routes } = await import("../app/routes")
+  const { findServerSuffixViolations, routeModuleFiles } = await import(
+    "./server-suffix"
+  )
+  const suffixViolations = findServerSuffixViolations(
+    modules,
+    routeModuleFiles(routes),
+  )
 
   for (const { rule, from, to } of violations) {
     console.error(`✖ ${rule}: ${from} → ${to}`)
@@ -137,7 +146,12 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
     for (const line of imports) console.error(`    ${line}`)
   }
 
-  const problems = violations.length + domainCycles.length
+  for (const line of suffixViolations) {
+    console.error(`✖ server-suffix: ${line}, so it needs the .server suffix`)
+  }
+
+  const problems =
+    violations.length + domainCycles.length + suffixViolations.length
   if (problems > 0) {
     console.error(
       `\n${problems} dependency problem(s). The rules: docs/architecture/decisions/20261106-server-side-code-is-organized-by-domain.md`,
