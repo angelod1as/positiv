@@ -33,14 +33,19 @@ import { participantCopy } from "~/copy/participant"
 
 describe("applyToEvent", () => {
   let mockValues: Mock
+  let mockDoUpdateSet: Mock
 
   beforeEach(() => {
     vi.clearAllMocks()
 
     // The transaction runs its callback against a fake whose insert records
-    // the row it was handed.
+    // the row it was handed, and what a re-apply would overwrite it with.
+    mockDoUpdateSet = vi.fn()
     mockValues = vi.fn(() => ({
-      onConflict: vi.fn(() => ({ execute: vi.fn().mockResolvedValue([]) })),
+      onConflict: vi.fn((build: (oc: unknown) => unknown) => {
+        build({ columns: () => ({ doUpdateSet: mockDoUpdateSet }) })
+        return { execute: vi.fn().mockResolvedValue([]) }
+      }),
     }))
     const trx = { insertInto: vi.fn(() => ({ values: mockValues })) }
     vi.mocked(db.transaction).mockReturnValue({
@@ -163,12 +168,25 @@ describe("applyToEvent", () => {
       expect(sendApplicationMail).not.toHaveBeenCalled()
     })
 
-    it("should clear the reason a previous cancellation left", async () => {
+    it("should clear what a previous cancellation left", async () => {
       vi.mocked(sendApplicationMail).mockResolvedValue({ emailSent: true })
 
       await applyToEvent(validValues, createContext())
 
       expect(mockValues.mock.calls[0][0]).toMatchObject({
+        cancellation_date: null,
+        cancellation_reason: null,
+      })
+    })
+
+    it("should clear what a previous cancellation left when re-applying", async () => {
+      vi.mocked(sendApplicationMail).mockResolvedValue({ emailSent: true })
+
+      await applyToEvent(validValues, createContext())
+
+      expect(mockDoUpdateSet.mock.calls[0][0]).toMatchObject({
+        is_user_applied: true,
+        cancellation_date: null,
         cancellation_reason: null,
       })
     })

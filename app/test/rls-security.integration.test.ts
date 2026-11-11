@@ -7,6 +7,7 @@ import {
 import {
   createTestAuthUser,
   createTestEvent,
+  createTestEventParticipant,
   createTestProfile,
   runAsAuthenticatedUser,
 } from "~/test/db-test-utils"
@@ -221,6 +222,155 @@ describe("RLS Security - Integration Tests", () => {
           `.execute(trx),
         ),
       ).rejects.toThrow(/own profile/i)
+    })
+  })
+
+  describe("Participant writes to registrations and subscriptions", () => {
+    // The server writes both tables through Kysely as the owner, and the e2e
+    // helpers as service_role. A participant holding their session and the anon
+    // key must not: on their own registration they could mark themselves
+    // attended, staff or paid, and on their subscription rewrite the sync state.
+    const tables = ["event_participants", "newsletter_subscriptions"] as const
+    const writes = ["INSERT", "UPDATE", "DELETE", "TRUNCATE"] as const
+
+    it("should grant anon and authenticated no write on either table", async () => {
+      // has_table_privilege does not see a grant on a single column, which
+      // would let a participant write that column all the same.
+      const { rows } = await sql<{
+        role: string
+        table_name: string
+        privilege: string
+        granted: boolean
+      }>`
+        SELECT r.role, t.table_name, w.privilege,
+               CASE WHEN w.privilege IN ('INSERT', 'UPDATE')
+                 THEN has_any_column_privilege(r.role, 'public.' || t.table_name, w.privilege)
+                 ELSE has_table_privilege(r.role, 'public.' || t.table_name, w.privilege)
+               END AS granted
+          FROM unnest(ARRAY['anon', 'authenticated']) AS r(role)
+         CROSS JOIN unnest(${sql.val([...tables])}::text[]) AS t(table_name)
+         CROSS JOIN unnest(${sql.val([...writes])}::text[]) AS w(privilege)
+      `.execute(db)
+
+      expect(rows).toHaveLength(2 * tables.length * writes.length)
+      expect(rows.filter((row) => row.granted)).toEqual([])
+    })
+
+    const createParticipant = async () => {
+      const email = `web47-${Date.now()}-${Math.random()}@example.com`
+      const userId = await createTestAuthUser(email, "test1234", tracker)
+      const profile = await createTestProfile(tracker, db, {
+        user_id: userId,
+        email,
+        full_name: "WEB-47 Participant",
+      })
+      const event = await createTestEvent(tracker, db, {
+        title: "WEB-47 Event",
+        event_status: "Registration Open",
+      })
+      const registration = await createTestEventParticipant(tracker, db, {
+        event_id: event.id,
+        profile_id: profile.id,
+        is_user_applied: true,
+      })
+      await db
+        .insertInto("newsletter_subscriptions")
+        .values({ profile_id: profile.id, consent_given: true })
+        .execute()
+
+      return { userId, profile, registration }
+    }
+
+    it("should still let a participant read their own registration", async () => {
+      const { userId, registration } = await createParticipant()
+
+      const rows = await runAsAuthenticatedUser(db, userId, (trx) =>
+        trx
+          .selectFrom("event_participants")
+          .select("id")
+          .where("id", "=", registration.id)
+          .execute(),
+      )
+
+      expect(rows).toEqual([{ id: registration.id }])
+    })
+
+    it("should refuse a participant inserting a registration", async () => {
+      const { userId, profile } = await createParticipant()
+      const event = await createTestEvent(tracker, db, {
+        title: "WEB-47 Second Event",
+        event_status: "Registration Open",
+      })
+
+      await expect(
+        runAsAuthenticatedUser(db, userId, (trx) =>
+          trx
+            .insertInto("event_participants")
+            .values({ event_id: event.id, profile_id: profile.id })
+            .execute(),
+        ),
+      ).rejects.toThrow(/permission denied for table event_participants/)
+    })
+
+    it.each([
+      { attendance_status: "attended" },
+      { spot_type: "staff" },
+      { application_status: "paid" },
+    ] as const)(
+      "should refuse a participant setting %o on their registration",
+      async (change) => {
+        const { userId, registration } = await createParticipant()
+
+        await expect(
+          runAsAuthenticatedUser(db, userId, (trx) =>
+            trx
+              .updateTable("event_participants")
+              .set(change)
+              .where("id", "=", registration.id)
+              .execute(),
+          ),
+        ).rejects.toThrow(/permission denied for table event_participants/)
+      },
+    )
+
+    it("should refuse a participant deleting their registration", async () => {
+      const { userId, registration } = await createParticipant()
+
+      await expect(
+        runAsAuthenticatedUser(db, userId, (trx) =>
+          trx
+            .deleteFrom("event_participants")
+            .where("id", "=", registration.id)
+            .execute(),
+        ),
+      ).rejects.toThrow(/permission denied for table event_participants/)
+    })
+
+    it("should refuse a participant rewriting their subscription", async () => {
+      const { userId, profile } = await createParticipant()
+
+      await expect(
+        runAsAuthenticatedUser(db, userId, (trx) =>
+          trx
+            .updateTable("newsletter_subscriptions")
+            .set({ sync_status: "synced", listmonk_subscriber_id: 1 })
+            .where("profile_id", "=", profile.id)
+            .execute(),
+        ),
+      ).rejects.toThrow(/permission denied for table newsletter_subscriptions/)
+    })
+
+    it("should refuse a participant deleting their subscription", async () => {
+      const { userId, profile } = await createParticipant()
+
+      await expect(
+        runAsAuthenticatedUser(db, userId, (trx) =>
+          trx
+            .deleteFrom("newsletter_subscriptions")
+            .where("profile_id", "=", profile.id)
+            .execute(),
+        ),
+      ).rejects.toThrow(/permission denied for table newsletter_subscriptions/)
     })
   })
 
