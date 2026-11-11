@@ -1,7 +1,7 @@
 import {
   renderTemplate,
   unknownVariables as unknownVariablesIn,
-} from "../cms/placeholders"
+} from "./placeholders"
 
 export const PAYMENT_MESSAGE_VARIABLES = [
   "link",

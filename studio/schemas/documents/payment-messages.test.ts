@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   PAYMENT_MESSAGE_VARIABLES as APP_PAYMENT_MESSAGE_VARIABLES,
   unknownVariables as appUnknownVariables,
-} from "../../../app/business/payment/payment-message"
+} from "../../../app/business/cms/payment-message"
 import { pathsOf } from "../../test/errors"
 import { validateDocumentOf } from "../../test/validate"
 import {

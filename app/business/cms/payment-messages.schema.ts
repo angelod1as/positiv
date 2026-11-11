@@ -1,5 +1,5 @@
 import type { z } from "zod"
-import { unknownVariables } from "~/business/payment/payment-message"
+import { unknownVariables } from "./payment-message"
 import { zod } from "~/lib/helpers/zod"
 
 export const paymentMessagesSchema = zod.object({
