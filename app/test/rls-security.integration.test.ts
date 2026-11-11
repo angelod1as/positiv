@@ -295,21 +295,21 @@ describe("RLS Security - Integration Tests", () => {
       expect(rows).toEqual([{ id: registration.id }])
     })
 
-    it("should refuse a participant registering themselves", async () => {
+    it("should refuse a participant inserting a registration", async () => {
       const { userId, profile } = await createParticipant()
-      const draft = await createTestEvent(tracker, db, {
-        title: "WEB-47 Draft Event",
-        event_status: "Draft",
+      const event = await createTestEvent(tracker, db, {
+        title: "WEB-47 Second Event",
+        event_status: "Registration Open",
       })
 
       await expect(
         runAsAuthenticatedUser(db, userId, (trx) =>
           trx
             .insertInto("event_participants")
-            .values({ event_id: draft.id, profile_id: profile.id })
+            .values({ event_id: event.id, profile_id: profile.id })
             .execute(),
         ),
-      ).rejects.toThrow(/permission denied/i)
+      ).rejects.toThrow(/permission denied for table event_participants/)
     })
 
     it.each([
@@ -329,7 +329,7 @@ describe("RLS Security - Integration Tests", () => {
               .where("id", "=", registration.id)
               .execute(),
           ),
-        ).rejects.toThrow(/permission denied/i)
+        ).rejects.toThrow(/permission denied for table event_participants/)
       },
     )
 
@@ -343,7 +343,7 @@ describe("RLS Security - Integration Tests", () => {
             .where("id", "=", registration.id)
             .execute(),
         ),
-      ).rejects.toThrow(/permission denied/i)
+      ).rejects.toThrow(/permission denied for table event_participants/)
     })
 
     it("should refuse a participant rewriting their subscription", async () => {
@@ -357,7 +357,7 @@ describe("RLS Security - Integration Tests", () => {
             .where("profile_id", "=", profile.id)
             .execute(),
         ),
-      ).rejects.toThrow(/permission denied/i)
+      ).rejects.toThrow(/permission denied for table newsletter_subscriptions/)
     })
 
     it("should refuse a participant deleting their subscription", async () => {
@@ -370,7 +370,7 @@ describe("RLS Security - Integration Tests", () => {
             .where("profile_id", "=", profile.id)
             .execute(),
         ),
-      ).rejects.toThrow(/permission denied/i)
+      ).rejects.toThrow(/permission denied for table newsletter_subscriptions/)
     })
   })
 
