@@ -51,11 +51,9 @@ export const applyToEvent = applySchema(
 
   const application = {
     application_date: dateToString(applicationDate),
-    referrals: values.referrals,
-    referred: values.referred,
-    companions: values.companions,
-    bond: values.bond,
-    notes: values.notes,
+    // The schema strips any key it does not declare, so this is the answers
+    // and nothing a request added -- and a field added to it is written too.
+    ...values,
     is_user_applied: true,
     cancellation_reason: null,
     ...(appliesAsStaff && { spot_type: "staff" as const }),
