@@ -1,10 +1,8 @@
 import { redirect } from "react-router"
 import { redirectWithError } from "remix-toast"
 import { pickOption } from "~/business/payment/payment-checkout.server"
-import {
-  isCardPaymentsEnabled,
-  isOnlinePaymentsEnabled,
-} from "~/business/settings/app-settings.server"
+import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
+import { isOnlinePaymentsEnabled } from "~/business/payment/online-payments.server"
 import { metaCopy } from "~/copy/meta"
 import { paymentsCopy } from "~/copy/payments"
 import { createMetaArray } from "~/lib/helpers/meta"

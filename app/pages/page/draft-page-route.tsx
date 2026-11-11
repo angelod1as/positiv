@@ -1,6 +1,6 @@
-import type { QueryResponseInitial } from "@sanity/react-loader"
 import { useEffect, useMemo } from "react"
-import { type LiveClientConfig, useQuery } from "~/business/cms/live-loader"
+import { useQuery } from "~/business/cms/live-loader"
+import type { DraftSnapshotQuery } from "~/business/cms/live-loader.server"
 import type { Page } from "~/business/cms/page.schema"
 import {
   draftPagesSchema,
@@ -8,11 +8,7 @@ import {
   resolvePagesSnapshot,
 } from "~/business/cms/resolve-snapshot"
 
-type DraftPageRouteProps = {
-  initial: QueryResponseInitial<unknown>
-  query: string
-  params: Record<string, never>
-  clientConfig: LiveClientConfig
+type DraftPageRouteProps = DraftSnapshotQuery & {
   address: string
   onPage: (page: Page | null) => void
 }

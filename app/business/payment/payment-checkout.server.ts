@@ -8,10 +8,8 @@ import { isProd } from "~/lib/env/is-prod.server"
 import { zod } from "~/lib/helpers/zod"
 import { paymentLogger as logger } from "./payment-logger.server"
 import paths from "~/lib/paths"
-import {
-  isCardPaymentsEnabled,
-  isOnlinePaymentsEnabled,
-} from "~/business/settings/app-settings.server"
+import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
+import { isOnlinePaymentsEnabled } from "./online-payments.server"
 import { paymentProvider } from "./payment-provider.server"
 import { ACTIVE_PAYMENT_STATUSES } from "./payment-totals.server"
 import { isValidCpf } from "~/lib/helpers/cpf"

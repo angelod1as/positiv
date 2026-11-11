@@ -1,4 +1,4 @@
-import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
+import { isOnlinePaymentsEnabled } from "~/business/payment/online-payments.server"
 import { metaCopy } from "~/copy/meta"
 import { createMetaArray } from "~/lib/helpers/meta"
 import type { Route } from "./+types/payment-token-thanks-page"

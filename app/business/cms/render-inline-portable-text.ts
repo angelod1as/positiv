@@ -1,7 +1,7 @@
 // Relative imports, not the ~ alias: the Studio package imports this module
 // across the package boundary to validate email copy, and its build cannot
 // resolve ~.
-import { unknownVariables } from "../cms/placeholders"
+import { unknownVariables } from "./placeholders"
 import { escapeHtml } from "../../lib/helpers/escape-html"
 
 type InlineChild = {

@@ -4,7 +4,7 @@ import {
   type PaymentRefundCopy,
   paymentRefundCopyFallback,
 } from "./payment-refund-mail-copy"
-import { renderInlineBlocks } from "./render-inline-portable-text"
+import { renderInlineBlocks } from "~/business/cms/render-inline-portable-text"
 
 function toCopy(content: EmailTemplates["paymentRefund"]): PaymentRefundCopy {
   const { subject, heading, body, cta } = content

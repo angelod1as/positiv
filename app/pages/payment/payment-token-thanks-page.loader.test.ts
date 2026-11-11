@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 import * as authServer from "~/business/auth/auth.server"
-import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
+import { isOnlinePaymentsEnabled } from "~/business/payment/online-payments.server"
 import type { Route } from "./+types/payment-token-thanks-page"
 import { headers, loader, meta } from "./payment-token-thanks-page"
 import { loadPaymentThanksByToken } from "~/business/payment/payment-page.server"
@@ -10,7 +10,7 @@ vi.mock("~/business/auth/auth.server", () => ({
   getUserContext: vi.fn(),
 }))
 
-vi.mock("~/business/settings/app-settings.server", () => ({
+vi.mock("~/business/payment/online-payments.server", () => ({
   isOnlinePaymentsEnabled: vi.fn(),
 }))
 

@@ -1,10 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import * as authServer from "~/business/auth/auth.server"
 import { pickOption } from "~/business/payment/payment-checkout.server"
-import {
-  isCardPaymentsEnabled,
-  isOnlinePaymentsEnabled,
-} from "~/business/settings/app-settings.server"
+import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
+import { isOnlinePaymentsEnabled } from "~/business/payment/online-payments.server"
 import type { Route } from "./+types/payment-token-page"
 import { action, headers, loader, meta } from "./payment-token-page"
 import {
@@ -19,6 +17,9 @@ vi.mock("~/business/auth/auth.server", () => ({
 
 vi.mock("~/business/settings/app-settings.server", () => ({
   isCardPaymentsEnabled: vi.fn(),
+}))
+
+vi.mock("~/business/payment/online-payments.server", () => ({
   isOnlinePaymentsEnabled: vi.fn(),
 }))
 

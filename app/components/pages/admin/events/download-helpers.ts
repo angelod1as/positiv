@@ -1,7 +1,7 @@
 import type { ProfileWithExtraData } from "~/business/application/event-participants.server"
 import { adminEventsCopy } from "~/copy/admin/events"
-import { formatCpf } from "./cpf"
-import { profilePropMap } from "./propMaps"
+import { formatCpf } from "~/lib/helpers/cpf"
+import { profilePropMap } from "~/lib/helpers/propMaps"
 
 // The list goes to the motel, so it carries only what the motel asks for. The
 // CPF is formatted so Excel keeps it as text instead of dropping leading zeros.

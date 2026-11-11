@@ -1,46 +1,24 @@
 import { sql } from "kysely"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import {
   cleanupAfterTest,
   setupIntegrationTest,
 } from "~/test/integration-setup"
 import { createTestProfile } from "~/test/db-test-utils"
-
-const uniqueEmail = () =>
-  `test${Date.now()}-${Math.random().toString(36).slice(2, 8)}-admin@example.com`
-
-const { asaas } = vi.hoisted(() => ({
-  asaas: { configured: true },
-}))
-
-// This suite talks to a real Supabase, so ENV cannot be replaced with a blank
-// object. Only the Asaas values are pinned; everything else falls through.
-vi.mock("varlock/env", async (importOriginal) => {
-  const original = await importOriginal<{ ENV: Record<string, unknown> }>()
-  const asaasKeys = ["ASAAS_API_URL", "ASAAS_API_KEY", "ASAAS_WEBHOOK_TOKEN"]
-  return {
-    ENV: new Proxy(original.ENV, {
-      get: (target, key: string) =>
-        asaasKeys.includes(key)
-          ? asaas.configured
-            ? `test-${key}`
-            : undefined
-          : Reflect.get(target, key),
-    }),
-  }
-})
-
 import {
-  getOnlinePaymentsSetting,
+  getOnlinePaymentsSwitch,
   getRegistrationLimit,
   isCardPaymentsEnabled,
-  isOnlinePaymentsEnabled,
+  isOnlinePaymentsSwitchedOn,
   setCardPaymentsEnabled,
   setOnlinePaymentsEnabled,
   setRegistrationLimit,
 } from "./app-settings.server"
 
-describe("online payments setting", () => {
+const uniqueEmail = () =>
+  `test${Date.now()}-${Math.random().toString(36).slice(2, 8)}-admin@example.com`
+
+describe("online payments switch", () => {
   const { tracker, kysely } = setupIntegrationTest()
 
   const resetSettings = () =>
@@ -55,7 +33,6 @@ describe("online payments setting", () => {
       .execute()
 
   beforeEach(async () => {
-    asaas.configured = true
     tracker.clear()
     await resetSettings()
   })
@@ -66,16 +43,11 @@ describe("online payments setting", () => {
   })
 
   it("starts switched off", async () => {
-    expect(await isOnlinePaymentsEnabled()).toBe(false)
-    expect(await getOnlinePaymentsSetting()).toMatchObject({
-      switchedOn: false,
-      providerName: "Asaas",
-      providerConfigured: true,
-      enabled: false,
-    })
+    expect(await isOnlinePaymentsSwitchedOn()).toBe(false)
+    expect(await getOnlinePaymentsSwitch()).toMatchObject({ switchedOn: false })
   })
 
-  it("is enabled once an admin switches it on", async () => {
+  it("is on once an admin switches it on, and records who did", async () => {
     const admin = await createTestProfile(tracker, kysely, {
       user_id: null,
       email: uniqueEmail(),
@@ -84,16 +56,15 @@ describe("online payments setting", () => {
 
     await setOnlinePaymentsEnabled({ enabled: true, profileId: admin.id })
 
-    expect(await isOnlinePaymentsEnabled()).toBe(true)
-    expect(await getOnlinePaymentsSetting()).toMatchObject({
+    expect(await isOnlinePaymentsSwitchedOn()).toBe(true)
+    expect(await getOnlinePaymentsSwitch()).toMatchObject({
       switchedOn: true,
-      enabled: true,
       updatedAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
       updatedByName: "Admin Souza",
     })
   })
 
-  it("is disabled again once an admin switches it off", async () => {
+  it("is off again once an admin switches it off", async () => {
     const admin = await createTestProfile(tracker, kysely, {
       user_id: null,
       email: uniqueEmail(),
@@ -102,24 +73,7 @@ describe("online payments setting", () => {
     await setOnlinePaymentsEnabled({ enabled: true, profileId: admin.id })
     await setOnlinePaymentsEnabled({ enabled: false, profileId: admin.id })
 
-    expect(await isOnlinePaymentsEnabled()).toBe(false)
-  })
-
-  it("stays disabled while Asaas is not configured, whatever the switch says", async () => {
-    const admin = await createTestProfile(tracker, kysely, {
-      user_id: null,
-      email: uniqueEmail(),
-    })
-    await setOnlinePaymentsEnabled({ enabled: true, profileId: admin.id })
-
-    asaas.configured = false
-
-    expect(await isOnlinePaymentsEnabled()).toBe(false)
-    expect(await getOnlinePaymentsSetting()).toMatchObject({
-      switchedOn: true,
-      providerConfigured: false,
-      enabled: false,
-    })
+    expect(await isOnlinePaymentsSwitchedOn()).toBe(false)
   })
 
   // The row hangs off profiles, so a TRUNCATE ... CASCADE on profiles takes it
@@ -131,11 +85,11 @@ describe("online payments setting", () => {
     })
     await kysely.deleteFrom("app_settings").execute()
 
-    expect(await isOnlinePaymentsEnabled()).toBe(false)
+    expect(await isOnlinePaymentsSwitchedOn()).toBe(false)
 
     await setOnlinePaymentsEnabled({ enabled: true, profileId: admin.id })
 
-    expect(await isOnlinePaymentsEnabled()).toBe(true)
+    expect(await isOnlinePaymentsSwitchedOn()).toBe(true)
   })
 
   // The E2E suite flips the switch through supabase-js as service_role. No
@@ -218,7 +172,7 @@ describe("card payments setting", () => {
 
     await setCardPaymentsEnabled({ enabled: true, profileId: admin.id })
 
-    expect(await isOnlinePaymentsEnabled()).toBe(true)
+    expect(await isOnlinePaymentsSwitchedOn()).toBe(true)
     await setOnlinePaymentsEnabled({ enabled: false, profileId: admin.id })
     expect(await isCardPaymentsEnabled()).toBe(true)
   })

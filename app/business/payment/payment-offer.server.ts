@@ -1,5 +1,5 @@
 import { applySchema } from "composable-functions"
-import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
+import { isOnlinePaymentsEnabled } from "./online-payments.server"
 import { paymentsCopy } from "~/copy/payments"
 import { db } from "~/lib/supabase/db.server"
 import { reaisToCents } from "~/lib/helpers/format-currency"

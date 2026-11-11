@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { getEventParticipantBasic } from "~/business/application/event-participants.server"
 import { getParticipantFullEventHistory, getProfileById } from "~/business/profile/profiles.server"
 import { getPaymentsForParticipant } from "~/business/payment/payment-totals.server"
-import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
+import { isOnlinePaymentsEnabled } from "~/business/payment/online-payments.server"
 import { loader } from "./view-event-participant"
 
 const { logger } = vi.hoisted(() => ({
@@ -30,6 +30,9 @@ vi.mock("~/business/application/event-participants.server", () => ({
 
 vi.mock("~/business/settings/app-settings.server", () => ({
   isCardPaymentsEnabled: vi.fn(async () => true),
+}))
+
+vi.mock("~/business/payment/online-payments.server", () => ({
   isOnlinePaymentsEnabled: vi.fn(),
 }))
 

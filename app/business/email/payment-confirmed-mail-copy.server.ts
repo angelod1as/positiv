@@ -4,7 +4,7 @@ import {
   type PaymentConfirmedCopy,
   paymentConfirmedCopyFallback,
 } from "./payment-confirmed-mail-copy"
-import { renderInlineBlocks } from "./render-inline-portable-text"
+import { renderInlineBlocks } from "~/business/cms/render-inline-portable-text"
 
 function toCopy(content: EmailTemplates["paymentConfirmed"]): PaymentConfirmedCopy {
   const { subject, heading, body, cta, closing } = content

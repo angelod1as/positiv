@@ -1,13 +1,6 @@
 import { db } from "~/lib/supabase/db.server"
-import { paymentProvider } from "~/business/payment/payment-provider.server"
 
-/**
- * The secrets say whether the payment provider can be reached at all. The
- * admin switch says whether it should be. Online payments need both.
- */
-export const isProviderConfigured = () => paymentProvider().isConfigured()
-
-export const getOnlinePaymentsSetting = async () => {
+export const getOnlinePaymentsSwitch = async () => {
   const row = await db
     .selectFrom("app_settings as s")
     .leftJoin("profiles as p", "p.id", "s.updated_by")
@@ -21,22 +14,14 @@ export const getOnlinePaymentsSetting = async () => {
 
   // The row hangs off profiles, so a TRUNCATE ... CASCADE there empties the
   // table. Every page reads this; a missing row is the default, off.
-  const switchedOn = row?.online_payments_enabled ?? false
-  const providerConfigured = isProviderConfigured()
-
   return {
-    switchedOn,
-    providerName: paymentProvider().name,
-    providerConfigured,
-    enabled: providerConfigured && switchedOn,
+    switchedOn: row?.online_payments_enabled ?? false,
     updatedAt: row ? new Date(row.updated_at).toISOString() : null,
     updatedByName: row?.social_name || row?.full_name || null,
   }
 }
 
-export const isOnlinePaymentsEnabled = async () => {
-  if (!isProviderConfigured()) return false
-
+export const isOnlinePaymentsSwitchedOn = async () => {
   const row = await db
     .selectFrom("app_settings")
     .select("online_payments_enabled")

@@ -1,7 +1,7 @@
 import { useEffect } from "react"
 import { redirectWithError } from "remix-toast"
 import { getUserContext } from "~/business/auth/auth.server"
-import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
+import { isOnlinePaymentsEnabled } from "~/business/payment/online-payments.server"
 import { Button } from "~/components/atoms/button/button"
 import { Copy } from "~/components/atoms/copy/copy"
 import { PaymentBetaNotice } from "~/components/molecules/payment-beta-notice/payment-beta-notice"

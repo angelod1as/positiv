@@ -1,5 +1,5 @@
 import { applicationMailContent } from "~/copy/emails/application-mail"
-import { renderInlineBlocks } from "./render-inline-portable-text"
+import { renderInlineBlocks } from "~/business/cms/render-inline-portable-text"
 
 export type ApplicationCopy = {
   subject: string

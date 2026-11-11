@@ -13,10 +13,8 @@ import { setProfileCpfExempt } from "~/business/profile/cpf-exemption.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
 import { paymentProvider } from "~/business/payment/payment-provider.server"
 import { getPaymentsForParticipant } from "~/business/payment/payment-totals.server"
-import {
-  isCardPaymentsEnabled,
-  isOnlinePaymentsEnabled,
-} from "~/business/settings/app-settings.server"
+import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
+import { isOnlinePaymentsEnabled } from "~/business/payment/online-payments.server"
 import {
   buildWhatsappPaymentMessage,
   loadWhatsappPaymentMessage,

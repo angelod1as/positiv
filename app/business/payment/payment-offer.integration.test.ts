@@ -57,9 +57,9 @@ vi.mock("~/lib/logger/logger.server", () => ({
 }))
 
 // The admin switch, pinned per test. Everything else reads the real settings.
-vi.mock("~/business/settings/app-settings.server", async (importOriginal) => ({
+vi.mock("~/business/payment/online-payments.server", async (importOriginal) => ({
   ...(await importOriginal<
-    typeof import("~/business/settings/app-settings.server")
+    typeof import("~/business/payment/online-payments.server")
   >()),
   isOnlinePaymentsEnabled: async () => paymentsEnabled.value,
 }))

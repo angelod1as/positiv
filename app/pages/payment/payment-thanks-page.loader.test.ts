@@ -3,13 +3,13 @@ import * as authServer from "~/business/auth/auth.server"
 import type { Route } from "./+types/payment-thanks-page"
 import { loader } from "./payment-thanks-page"
 import { loadPaymentThanks } from "~/business/payment/payment-page.server"
-import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
+import { isOnlinePaymentsEnabled } from "~/business/payment/online-payments.server"
 
 vi.mock("~/business/auth/auth.server", () => ({
   getUserContext: vi.fn(),
 }))
 
-vi.mock("~/business/settings/app-settings.server", () => ({
+vi.mock("~/business/payment/online-payments.server", () => ({
   isOnlinePaymentsEnabled: vi.fn(),
 }))
 

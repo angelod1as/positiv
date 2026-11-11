@@ -4,7 +4,7 @@ import {
   type PaymentLinkCopy,
   paymentLinkCopyFallback,
 } from "./payment-link-mail-copy"
-import { renderInlineBlocks } from "./render-inline-portable-text"
+import { renderInlineBlocks } from "~/business/cms/render-inline-portable-text"
 
 function toCopy(content: EmailTemplates["paymentLink"]): PaymentLinkCopy {
   const { subject, heading, body } = content

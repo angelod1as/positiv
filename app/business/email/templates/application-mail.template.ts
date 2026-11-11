@@ -3,7 +3,7 @@ import {
   type ApplicationCopy,
   applicationCopyFallback,
 } from "~/business/email/application-mail-copy"
-import { APPLICATION_MAIL_VARIABLES } from "~/business/email/application-mail.variables"
+import { APPLICATION_MAIL_VARIABLES } from "~/business/cms/application-mail.variables"
 import { applicationMailCopy } from "~/copy/emails/application-mail"
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"

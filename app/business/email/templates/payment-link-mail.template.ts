@@ -4,11 +4,7 @@ import {
   type PaymentLinkCopy,
   paymentLinkCopyFallback,
 } from "~/business/email/payment-link-mail-copy"
-import { PAYMENT_LINK_MAIL_VARIABLES } from "~/business/email/payment-link-mail.variables"
-import {
-  PIX_DISCOUNT_PERCENT,
-  type PaymentOption,
-} from "~/business/payment/pricing"
+import { PAYMENT_LINK_MAIL_VARIABLES } from "~/business/cms/payment-link-mail.variables"
 import { paymentLinkMailCopy } from "~/copy/emails/payment-link"
 import { formatCurrency } from "~/lib/helpers/format-currency"
 import { POSITIV_URL } from "~/lib/constants/constants"
@@ -24,13 +20,20 @@ const siteLink = (path = "") =>
     }),
   )
 
+export type PaymentLinkMailOption = {
+  method: "pix" | "credit_card"
+  installmentCount: number | null
+  total: number
+}
+
 export type PaymentLinkMailInput = {
   displayName: string
   eventTitle: string
   eventEmoji: string | null
   paymentUrl: string
   dueAt: string
-  options: PaymentOption[]
+  options: PaymentLinkMailOption[]
+  pixDiscountPercent: number
 }
 
 /**
@@ -38,7 +41,10 @@ export type PaymentLinkMailInput = {
  * on offer. Pix is discounted only when it sits beside a card priced higher;
  * a resend after the participant chose restates just that choice.
  */
-const summaryLines = (options: PaymentOption[]): string[] => {
+const summaryLines = (
+  options: PaymentLinkMailOption[],
+  pixDiscountPercent: number,
+): string[] => {
   const pix = options.find((option) => option.method === "pix")
   const cards = options.filter((option) => option.method === "credit_card")
   const lines: string[] = []
@@ -48,7 +54,7 @@ const summaryLines = (options: PaymentOption[]): string[] => {
     lines.push(
       paymentLinkMailCopy.pix(
         formatCurrency(pix.total),
-        discounted ? PIX_DISCOUNT_PERCENT : null,
+        discounted ? pixDiscountPercent : null,
       ),
     )
   }
@@ -160,7 +166,7 @@ export const paymentLinkMailTemplate = (
 
               <!-- Prices -->
               <div style="background-color: #f9f9f9; border-radius: 8px; padding: 16px; margin: 0 0 20px 0;">
-                ${summaryLines(input.options)
+                ${summaryLines(input.options, input.pixDiscountPercent)
                   .map(
                     (line) => `
                 <div style="margin-bottom: 8px; font-size: 16px; color: #333;">
