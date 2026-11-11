@@ -1,6 +1,6 @@
 import { redirectWithError } from "remix-toast"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { getContext } from "~/business/auth/auth.server"
+import { findCalendarEvent } from "~/business/event/event.server"
 import { formatCalendarEvent } from "~/business/event/format-calendar-event.server"
 import { dashboardCopy } from "~/copy/dashboard"
 import paths from "~/lib/paths"
@@ -19,8 +19,8 @@ vi.mock("remix-toast", () => ({
   ),
 }))
 
-vi.mock("~/business/auth/auth.server", () => ({
-  getContext: vi.fn(),
+vi.mock("~/business/event/event.server", () => ({
+  findCalendarEvent: vi.fn(),
 }))
 
 vi.mock("~/business/event/format-calendar-event.server", () => ({
@@ -38,17 +38,9 @@ const runLoader = () =>
 describe("download calendar loader", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    const single = vi
-      .fn()
-      .mockResolvedValue({
-        data: { id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" },
-        error: null,
-      })
-    vi.mocked(getContext).mockResolvedValue({
-      supabase: {
-        from: () => ({ select: () => ({ eq: () => ({ single }) }) }),
-      },
-    } as unknown as Awaited<ReturnType<typeof getContext>>)
+    vi.mocked(findCalendarEvent).mockResolvedValue({
+      id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c",
+    } as Awaited<ReturnType<typeof findCalendarEvent>>)
   })
 
   it("logs which event could not be turned into a calendar", async () => {

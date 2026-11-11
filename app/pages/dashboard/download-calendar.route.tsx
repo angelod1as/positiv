@@ -1,5 +1,4 @@
 import { redirectWithError } from "remix-toast"
-import { getContext } from "~/business/auth/auth.server"
 import { findCalendarEvent } from "~/business/event/event.server"
 import { formatCalendarEvent } from "~/business/event/format-calendar-event.server"
 import { dashboardCopy } from "~/copy/dashboard"
@@ -12,13 +11,12 @@ const {
   dash: { DASHBOARD },
 } = paths
 
-export async function loader({ request, params }: Route.LoaderArgs) {
+export async function loader({ params }: Route.LoaderArgs) {
   assertUuidParams(params.eventId)
 
-  const { supabase } = await getContext(request, params)
-  const { data, error } = await findCalendarEvent(supabase, params.eventId)
+  const data = await findCalendarEvent(params.eventId).catch(() => undefined)
 
-  if (error || !data) {
+  if (!data) {
     throw await redirectWithError(DASHBOARD, dashboardCopy.calendarFailed)
   }
 
