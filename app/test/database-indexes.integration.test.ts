@@ -243,4 +243,37 @@ describe("Database Indexes - Integration Tests", () => {
       },
     )
   })
+
+  describe("one application per person per event (WEB-46)", () => {
+    it("refuses a second application row for the same profile and event", async () => {
+      const profile = await createTestProfile(tracker, kysely, {
+        user_id: null,
+        email: "test-unique-application@example.com",
+      })
+      const event = await createTestEvent(tracker, kysely, {
+        title: "Test Event for Unique Application",
+        emoji: "🎯",
+        location: "Test Location",
+        description: "Test Description",
+        event_status: "Registration Open",
+        event_type: "regular",
+        time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        time_event_end: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000).toISOString(),
+        time_application_start: new Date().toISOString(),
+        ticket_price: 10000,
+        total_spots: 50,
+      })
+      await createTestEventParticipant(tracker, kysely, {
+        profile_id: profile.id,
+        event_id: event.id,
+      })
+
+      await expect(
+        createTestEventParticipant(tracker, kysely, {
+          profile_id: profile.id,
+          event_id: event.id,
+        }),
+      ).rejects.toThrow(/event_participants_event_id_profile_id_key/)
+    })
+  })
 })
