@@ -1,5 +1,3 @@
-import type { PaymentMethod } from "~/business/payment/pricing"
-
 type PersonalDataField =
   | "email"
   | "name"
@@ -40,7 +38,10 @@ export type AnalyticsEvents = AnonymousRegistry<{
   signup_refused: { reason: "blocked_domain" | "rate_limited" }
   claimed_profile_signup_blocked: undefined
   payment_page_opened: { state: "needs_cpf" | "ready" | "paid" | "closed" }
-  payment_method_picked: { method: PaymentMethod; installments: number }
+  payment_method_picked: {
+    method: "pix" | "credit_card"
+    installments: number
+  }
   payment_thanks_reached: undefined
   nav_link_clicked: { area: "header" | "footer"; label: string; href: string }
   page_cta_clicked: { page: string; section: string; label: string }

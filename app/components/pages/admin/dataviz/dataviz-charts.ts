@@ -14,7 +14,7 @@ import type {
 } from '~/business/reporting/dataviz/dataviz.types'
 import type { ChartContent } from '~/components/pages/page/sections/chart-section'
 import { adminDatavizCopy as copy } from '~/copy/admin/dataviz'
-import { buildEventLabel, groupSmallCategories, sortByAgeRange } from '~/lib/helpers/chart-utils'
+import { buildEventLabel, groupSmallCategories, sortByAgeRange } from './chart-utils'
 
 type Row = ChartContent['rows'][number]
 type Fields = Pick<ChartContent, 'title' | 'summary' | 'chartType' | 'unit' | 'series'>

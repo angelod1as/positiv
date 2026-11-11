@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "~/components/ui/table"
 import { homepageCopy } from "~/copy/homepage"
-import { formatStatValue } from "~/lib/helpers/format-stat"
+import { formatStatValue } from "./format-stat"
 import { ProportionBar } from "./proportion-bar"
 import { SectionTitle } from "./section-title"
 

@@ -8,7 +8,7 @@ import type {
   VeteranRookieDataPoint,
 } from "~/business/reporting/dataviz/dataviz.types"
 import { adminDatavizCopy } from "~/copy/admin/dataviz"
-import { buildEventLabel } from "~/lib/helpers/chart-utils"
+import { buildEventLabel } from "./chart-utils"
 import { useBrushState } from "~/lib/hooks/use-brush-state"
 import { DatavizChart } from "./dataviz-chart"
 import {

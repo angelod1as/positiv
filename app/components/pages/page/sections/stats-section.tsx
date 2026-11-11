@@ -1,6 +1,6 @@
 import type { PageSection } from "~/business/cms/page.schema"
 import { homepageCopy } from "~/copy/homepage"
-import { formatStatChange, formatStatValue } from "~/lib/helpers/format-stat"
+import { formatStatChange, formatStatValue } from "./format-stat"
 import { cn } from "~/lib/utils"
 import { SectionTitle } from "./section-title"
 
