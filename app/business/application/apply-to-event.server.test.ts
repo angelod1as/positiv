@@ -7,6 +7,10 @@ vi.mock("./send-application-mail.server", () => ({
   sendApplicationMail: vi.fn(),
 }))
 
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+}))
+
 vi.mock("~/lib/supabase/db.server", () => ({
   db: {
     selectFrom: vi.fn(),
@@ -24,6 +28,8 @@ vi.mock("../event/event-invite.server", () => ({
 import { sendApplicationMail } from "./send-application-mail.server"
 import { db } from "~/lib/supabase/db.server"
 import { findValidInvite } from "../event/event-invite.server"
+import { logger } from "~/lib/logger/logger.server"
+import { participantCopy } from "~/copy/participant"
 
 describe("applyToEvent", () => {
   let mockValues: Mock
@@ -39,8 +45,7 @@ describe("applyToEvent", () => {
     const trx = { insertInto: vi.fn(() => ({ values: mockValues })) }
     vi.mocked(db.transaction).mockReturnValue({
       execute: (run: (trx: unknown) => Promise<unknown>) => run(trx),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any)
+    } as never)
   })
 
   const createContext = (
@@ -166,6 +171,23 @@ describe("applyToEvent", () => {
       expect(mockValues.mock.calls[0][0]).toMatchObject({
         cancellation_reason: null,
       })
+    })
+
+    it("logs why the application could not be written", async () => {
+      const cause = { code: "08006", message: "connection failure" }
+      mockValues.mockReturnValue({
+        onConflict: vi.fn(() => ({ execute: vi.fn().mockRejectedValue(cause) })),
+      })
+
+      const result = await applyToEvent(validValues, createContext())
+
+      expect(result).toMatchObject({
+        errors: [{ message: participantCopy.application.upsertFailed }],
+      })
+      expect(logger.error).toHaveBeenCalledWith(
+        "Could not write the application",
+        { eventId: validValues.eventId, error: cause },
+      )
     })
 
     it("should keep the opt-out flag out of the participant row", async () => {

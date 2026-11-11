@@ -7,6 +7,7 @@ import { userContextSchema } from "../auth/auth-schemas"
 import { findValidInvite, markInviteUsed } from "../event/event-invite.server"
 import { sendApplicationMail } from "./send-application-mail.server"
 import { db } from "~/lib/supabase/db.server"
+import { logger } from "~/lib/logger/logger.server"
 
 export const applyToEvent = applySchema(
   applyToEventInputSchema,
@@ -80,7 +81,8 @@ export const applyToEvent = applySchema(
         oc.columns(["event_id", "profile_id"]).doUpdateSet(application),
       )
       .execute()
-      .catch(() => {
+      .catch((error) => {
+        logger.error("Could not write the application", { eventId, error })
         throw new Error(participantCopy.application.upsertFailed)
       })
 

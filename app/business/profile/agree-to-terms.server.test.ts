@@ -12,6 +12,10 @@ vi.mock("../newsletter/subscription-helpers.server", () => ({
   unsubscribeProfile: vi.fn(),
 }))
 
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+}))
+
 vi.mock("~/lib/supabase/db.server", () => ({
   db: {
     selectFrom: vi.fn(),
@@ -23,6 +27,7 @@ vi.mock("~/lib/supabase/db.server", () => ({
 import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
 import { unsubscribeProfile } from "../newsletter/subscription-helpers.server"
 import { db } from "~/lib/supabase/db.server"
+import { logger } from "~/lib/logger/logger.server"
 
 describe("agreeToTerms", () => {
   let mockValues: Mock
@@ -212,7 +217,8 @@ describe("agreeToTerms", () => {
   })
 
   it("should return error when the insert fails", async () => {
-    mockInsertTakeFirst.mockRejectedValue(new Error("Database error"))
+    const cause = new Error("Database error")
+    mockInsertTakeFirst.mockRejectedValue(cause)
     const context = createContext({ currentProfile: null })
 
     const values = {
@@ -226,6 +232,10 @@ describe("agreeToTerms", () => {
     expect(db.insertInto).toHaveBeenCalledWith("profiles")
     expect(result).toMatchObject({
       errors: [{ message: "Problema ao criar perfil" }],
+    })
+    expect(logger.error).toHaveBeenCalledWith("Could not create the profile", {
+      userId: "user-123",
+      error: cause,
     })
   })
 

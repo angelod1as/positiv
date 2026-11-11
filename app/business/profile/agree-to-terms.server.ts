@@ -63,7 +63,13 @@ export const agreeToTerms = applySchema(
         })
         .returning("id")
         .executeTakeFirst()
-        .catch(() => undefined)
+        .catch((error) => {
+          logger.error("Could not create the profile", {
+            userId: currentUser.id,
+            error,
+          })
+          return undefined
+        })
 
       if (!newProfile) {
         throw new Error(participantCopy.terms.profileCreateFailed)

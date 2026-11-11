@@ -63,7 +63,10 @@ export const createOrUpdateEvent = applySchema(
         .values(parsedValues)
         .returning("id")
         .executeTakeFirst()
-  ).catch(() => undefined)
+  ).catch((error) => {
+    logger.error("Could not save the event", { eventId, error })
+    return undefined
+  })
 
   if (!saved) {
     throw new Error(adminEventsCopy.saveFailed)

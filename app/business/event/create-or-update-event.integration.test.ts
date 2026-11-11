@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { logger } from "~/lib/logger/logger.server"
 import { createTestEvent } from "~/test/db-test-utils"
 import { cleanupAfterTest, setupIntegrationTest } from "~/test/integration-setup"
 import { createOrUpdateEvent } from "./event.server"
@@ -133,5 +134,24 @@ describe("createOrUpdateEvent - Integration Tests", () => {
       .where("id", "=", event.id)
       .executeTakeFirstOrThrow()
     expect(saved.title).toBe("Untouched")
+  })
+
+  it("logs why the event could not be saved", async () => {
+    const error = vi.spyOn(logger, "error").mockImplementation(() => logger)
+
+    try {
+      const result = await createOrUpdateEvent(formValues("Broken id"), {
+        ...context(),
+        eventId: "not-a-uuid",
+      })
+
+      expect(result.success).toBe(false)
+      expect(error).toHaveBeenCalledWith("Could not save the event", {
+        eventId: "not-a-uuid",
+        error: expect.objectContaining({ code: "22P02" }),
+      })
+    } finally {
+      error.mockRestore()
+    }
   })
 })
