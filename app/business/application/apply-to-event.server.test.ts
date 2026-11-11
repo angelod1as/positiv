@@ -163,12 +163,13 @@ describe("applyToEvent", () => {
       expect(sendApplicationMail).not.toHaveBeenCalled()
     })
 
-    it("should clear the reason a previous cancellation left", async () => {
+    it("should clear what a previous cancellation left", async () => {
       vi.mocked(sendApplicationMail).mockResolvedValue({ emailSent: true })
 
       await applyToEvent(validValues, createContext())
 
       expect(mockValues.mock.calls[0][0]).toMatchObject({
+        cancellation_date: null,
         cancellation_reason: null,
       })
     })

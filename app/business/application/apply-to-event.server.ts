@@ -61,6 +61,7 @@ export const applyToEvent = applySchema(
     // and nothing a request added -- and a field added to it is written too.
     ...values,
     is_user_applied: true,
+    cancellation_date: null,
     cancellation_reason: null,
     ...(appliesAsStaff && { spot_type: "staff" as const }),
   }
