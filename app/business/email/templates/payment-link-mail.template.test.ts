@@ -1,15 +1,11 @@
 import { describe, expect, it } from "vitest"
+import { paymentLinkOptions } from "./payment-link-mail.fixture"
 import {
-  buildPaymentOptions,
-  type PaymentOption,
-} from "~/business/payment/pricing"
-import { asaasConnector } from "~/business/payment/provider/asaas/asaas-connector.server"
-import { paymentLinkMailTemplate } from "./payment-link-mail.template"
+  type PaymentLinkMailOption,
+  paymentLinkMailTemplate,
+} from "./payment-link-mail.template"
 
-const options = buildPaymentOptions(22000, {
-  cardEnabled: true,
-  splitInstallments: asaasConnector.splitInstallments,
-})
+const options = paymentLinkOptions({ pix: 19800, card: 22000 })
 
 const base = {
   displayName: "Ana",
@@ -18,6 +14,7 @@ const base = {
   paymentUrl: "https://www.positivparty.com/pagamento/abc",
   dueAt: "2026-09-01T12:00:00Z",
   options,
+  pixDiscountPercent: 10,
 }
 
 describe("paymentLinkMailTemplate", () => {
@@ -44,10 +41,7 @@ describe("paymentLinkMailTemplate", () => {
     const html = textOf(
       paymentLinkMailTemplate({
         ...base,
-        options: buildPaymentOptions(22000, {
-          cardEnabled: false,
-          splitInstallments: asaasConnector.splitInstallments,
-        }),
+        options: paymentLinkOptions({ pix: 22000 }),
       }),
     )
 
@@ -56,16 +50,18 @@ describe("paymentLinkMailTemplate", () => {
     expect(html).not.toContain("cartão")
   })
 
+  it("states the Pix discount the caller gives it", () => {
+    const html = textOf(
+      paymentLinkMailTemplate({ ...base, pixDiscountPercent: 15 }),
+    )
+
+    expect(html).toContain("No Pix (15% de desconto)")
+  })
+
   // A resend after the participant picked restates that one choice.
   it("restates a card plan already chosen", () => {
-    const chosen: PaymentOption[] = [
-      {
-        id: "card_3",
-        method: "credit_card",
-        installmentCount: 3,
-        perInstallment: 7333,
-        total: 22000,
-      },
+    const chosen: PaymentLinkMailOption[] = [
+      { method: "credit_card", installmentCount: 3, total: 22000 },
     ]
     const html = textOf(paymentLinkMailTemplate({ ...base, options: chosen }))
 

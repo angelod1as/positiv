@@ -9,7 +9,7 @@ import { paymentLogger as logger } from "./payment-logger.server"
 import paths from "~/lib/paths"
 import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
 import { paymentProvider } from "./payment-provider.server"
-import { buildPaymentOptions } from "./pricing"
+import { buildPaymentOptions, PIX_DISCOUNT_PERCENT } from "./pricing"
 import type { PaymentOption, PaymentOptionId } from "./pricing"
 
 type CommittedRow = {
@@ -118,6 +118,7 @@ export async function sendPaymentLinkEmail({
       ),
       dueAt: payment.due_at,
       options,
+      pixDiscountPercent: PIX_DISCOUNT_PERCENT,
     })
   } catch (error) {
     logger.error("Could not build the payment link email", {
