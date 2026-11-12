@@ -225,15 +225,20 @@ describe("RLS Security - Integration Tests", () => {
     })
   })
 
-  describe("Participant writes to registrations and subscriptions", () => {
-    // The server writes both tables through Kysely as the owner, and the e2e
+  describe("Participant writes to registrations, subscriptions and profiles", () => {
+    // The server writes these tables through Kysely as the owner, and the e2e
     // helpers as service_role. A participant holding their session and the anon
     // key must not: on their own registration they could mark themselves
-    // attended, staff or paid, and on their subscription rewrite the sync state.
-    const tables = ["event_participants", "newsletter_subscriptions"] as const
+    // attended, staff or paid, on their subscription rewrite the sync state, and
+    // on their profile store a CPF the server never validated.
+    const tables = [
+      "event_participants",
+      "newsletter_subscriptions",
+      "profiles",
+    ] as const
     const writes = ["INSERT", "UPDATE", "DELETE", "TRUNCATE"] as const
 
-    it("should grant anon and authenticated no write on either table", async () => {
+    it("should grant anon and authenticated no write on any of them", async () => {
       // has_table_privilege does not see a grant on a single column, which
       // would let a participant write that column all the same.
       const { rows } = await sql<{
@@ -371,6 +376,125 @@ describe("RLS Security - Integration Tests", () => {
             .execute(),
         ),
       ).rejects.toThrow(/permission denied for table newsletter_subscriptions/)
+    })
+  })
+
+  describe("Admin-only columns read through the API", () => {
+    // The organisation's notes about a person live next to that person's own
+    // data. Row-level policies hand a participant their own rows; only the
+    // column grants keep these columns out of what PostgREST returns them.
+    const adminOnly = {
+      profiles: ["flag", "flag_notes", "general_notes", "approved_to_attend"],
+      event_participants: ["admin_general_notes"],
+    } as const
+    const tables = Object.keys(adminOnly)
+
+    const columnGrants = async (role: string) => {
+      const { rows } = await sql<{
+        table_name: keyof typeof adminOnly
+        column_name: string
+        granted: boolean
+      }>`
+        SELECT c.table_name, c.column_name,
+               has_column_privilege(${role}, 'public.' || c.table_name, c.column_name, 'SELECT') AS granted
+          FROM information_schema.columns c
+         WHERE c.table_schema = 'public'
+           AND c.table_name = ANY(${sql.val(tables)}::text[])
+         ORDER BY c.table_name, c.column_name
+      `.execute(db)
+      return rows
+    }
+
+    it("should let authenticated read every column but the admin-only ones", async () => {
+      const rows = await columnGrants("authenticated")
+
+      const isAdminOnly = (row: (typeof rows)[number]) =>
+        (adminOnly[row.table_name] as readonly string[]).includes(row.column_name)
+      expect(rows.filter((row) => isAdminOnly(row) && row.granted)).toEqual([])
+      expect(rows.filter((row) => !isAdminOnly(row) && !row.granted)).toEqual([])
+    })
+
+    it("should let anon read no column at all", async () => {
+      const rows = await columnGrants("anon")
+
+      expect(rows.length).toBeGreaterThan(0)
+      expect(rows.filter((row) => row.granted)).toEqual([])
+    })
+
+    const createParticipant = async () => {
+      const email = `web48-${Date.now()}-${Math.random()}@example.com`
+      const userId = await createTestAuthUser(email, "test1234", tracker)
+      const profile = await createTestProfile(tracker, db, {
+        user_id: userId,
+        email,
+        full_name: "WEB-48 Participant",
+        flag_notes: "Organisation only",
+      })
+      const event = await createTestEvent(tracker, db, {
+        title: "WEB-48 Event",
+        event_status: "Registration Open",
+      })
+      const registration = await createTestEventParticipant(tracker, db, {
+        event_id: event.id,
+        profile_id: profile.id,
+        notes: "Written by the participant",
+        admin_general_notes: "Organisation only",
+      })
+
+      return { userId, profile, registration }
+    }
+
+    it("should still let a participant read their own data", async () => {
+      const { userId, profile, registration } = await createParticipant()
+
+      const own = await runAsAuthenticatedUser(db, userId, async (trx) => ({
+        profile: await trx
+          .selectFrom("profiles")
+          .select("full_name")
+          .where("id", "=", profile.id)
+          .execute(),
+        registration: await trx
+          .selectFrom("event_participants")
+          .select("notes")
+          .where("id", "=", registration.id)
+          .execute(),
+      }))
+
+      expect(own).toEqual({
+        profile: [{ full_name: "WEB-48 Participant" }],
+        registration: [{ notes: "Written by the participant" }],
+      })
+    })
+
+    it.each(adminOnly.profiles)(
+      "should refuse a participant reading %s on their profile",
+      async (column) => {
+        const { userId, profile } = await createParticipant()
+
+        await expect(
+          runAsAuthenticatedUser(db, userId, (trx) =>
+            trx
+              .selectFrom("profiles")
+              .select(column)
+              .where("id", "=", profile.id)
+              .execute(),
+          ),
+        ).rejects.toThrow(/permission denied for table profiles/)
+      },
+    )
+
+    it("should refuse a participant reading admin_general_notes on their registration", async () => {
+      const { userId, registration } = await createParticipant()
+
+      await expect(
+        runAsAuthenticatedUser(db, userId, (trx) =>
+          trx
+            .selectFrom("event_participants")
+            .select("admin_general_notes")
+            .where("id", "=", registration.id)
+            .execute(),
+        ),
+      ).rejects.toThrow(/permission denied for table event_participants/)
     })
   })
 
