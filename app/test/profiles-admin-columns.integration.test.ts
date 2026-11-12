@@ -188,6 +188,33 @@ describe("Admin-only profile columns", () => {
     })
   })
 
+  describe("the guard trigger, should a write grant come back", () => {
+    // Nothing reaches guard_admin_only_profile_columns through the Data API
+    // since WEB-48 revoked the writes. It stays as a second layer, so this
+    // restores a grant and a policy inside a transaction that never commits.
+    it("still refuses a participant changing an admin-only column", async () => {
+      const { userId, profile } = await createUserWithProfile("regrant")
+
+      await expect(
+        db.transaction().execute(async (trx) => {
+          await sql`GRANT UPDATE ON public.profiles TO authenticated`.execute(trx)
+          await sql`
+            CREATE POLICY web48_regrant ON public.profiles FOR UPDATE TO authenticated
+              USING (user_id = (SELECT auth.uid()))
+          `.execute(trx)
+          await sql`SET LOCAL ROLE authenticated`.execute(trx)
+          await sql`SELECT set_config('request.jwt.claims', ${JSON.stringify({
+            sub: userId,
+            role: "authenticated",
+          })}, true)`.execute(trx)
+          await sql`UPDATE public.profiles SET cpf_exempt = true WHERE id = ${profile.id}`.execute(
+            trx,
+          )
+        }),
+      ).rejects.toThrow(/cpf_exempt is admin-only/)
+    })
+  })
+
   describe("service_role", () => {
     it("writes them, as the e2e helpers and the server's supabase client do", async () => {
       const { profile } = await createUserWithProfile("service-role")

@@ -411,7 +411,17 @@ describe("RLS Security - Integration Tests", () => {
       const isAdminOnly = (row: (typeof rows)[number]) =>
         (adminOnly[row.table_name] as readonly string[]).includes(row.column_name)
       expect(rows.filter((row) => isAdminOnly(row) && row.granted)).toEqual([])
-      expect(rows.filter((row) => !isAdminOnly(row) && !row.granted)).toEqual([])
+      expect(
+        rows.filter((row) => !isAdminOnly(row) && !row.granted),
+        "a column participants may read needs GRANT SELECT (column) TO authenticated in its migration",
+      ).toEqual([])
+    })
+
+    it("should leave service_role reading every column, as the e2e helpers do", async () => {
+      const rows = await columnGrants("service_role")
+
+      expect(rows.length).toBeGreaterThan(0)
+      expect(rows.filter((row) => !row.granted)).toEqual([])
     })
 
     it("should let anon read no column at all", async () => {
