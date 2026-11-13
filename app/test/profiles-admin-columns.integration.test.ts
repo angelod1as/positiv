@@ -87,6 +87,9 @@ describe("Admin-only profile columns", () => {
   })
 
   describe("a participant writing their own profile", () => {
+    // WEB-48: the server writes profiles through Kysely as the owner, so the
+    // Data API holds no write grant at all and every attempt is refused before
+    // the guard trigger is reached.
     const adminOnlyChanges = {
       cpf_exempt: sql`cpf_exempt = true`,
       approved_to_attend: sql`approved_to_attend = 'approved'`,
@@ -108,19 +111,21 @@ describe("Admin-only profile columns", () => {
               trx,
             ),
           ),
-        ).rejects.toThrow(/admin-only/i)
+        ).rejects.toThrow(/permission denied for table profiles/)
       })
     }
 
     it("cannot change them with the anon key either", async () => {
       const { profile } = await createUserWithProfile("anon")
 
-      await db.transaction().execute(async (trx) => {
-        await sql`SET LOCAL ROLE anon`.execute(trx)
-        await sql`UPDATE public.profiles SET cpf_exempt = true WHERE id = ${profile.id}`.execute(
-          trx,
-        )
-      })
+      await expect(
+        db.transaction().execute(async (trx) => {
+          await sql`SET LOCAL ROLE anon`.execute(trx)
+          await sql`UPDATE public.profiles SET cpf_exempt = true WHERE id = ${profile.id}`.execute(
+            trx,
+          )
+        }),
+      ).rejects.toThrow(/permission denied for table profiles/)
 
       const saved = await db
         .selectFrom("profiles")
@@ -130,43 +135,42 @@ describe("Admin-only profile columns", () => {
       expect(saved.cpf_exempt).toBe(false)
     })
 
-    it("still changes their own data", async () => {
+    it("cannot change their own data either", async () => {
       const { userId, profile } = await createUserWithProfile("own-data")
 
-      await runAsAuthenticatedUser(db, userId, (trx) =>
-        sql`
-          UPDATE public.profiles
-             SET full_name = 'Renamed', cpf = '529.982.247-25', rg = '12345'
-           WHERE id = ${profile.id}
-        `.execute(trx),
-      )
-
-      const saved = await db
-        .selectFrom("profiles")
-        .select(["full_name", "cpf", "rg"])
-        .where("id", "=", profile.id)
-        .executeTakeFirstOrThrow()
-
-      expect(saved).toEqual({
-        full_name: "Renamed",
-        cpf: "529.982.247-25",
-        rg: "12345",
-      })
+      await expect(
+        runAsAuthenticatedUser(db, userId, (trx) =>
+          sql`
+            UPDATE public.profiles
+               SET full_name = 'Renamed', cpf = '529.982.247-25', rg = '12345'
+             WHERE id = ${profile.id}
+          `.execute(trx),
+        ),
+      ).rejects.toThrow(/permission denied for table profiles/)
     })
 
-    it("can create their profile with the defaults", async () => {
+    it("cannot create their profile, not even with the defaults", async () => {
       const email = `web40-insert-${testId}@example.com`
       const userId = await createTestAuthUser(email, "test1234", tracker)
 
-      const { rows } = await runAsAuthenticatedUser(db, userId, (trx) =>
-        sql<{ id: string }>`
-          INSERT INTO public.profiles (user_id, email)
-          VALUES (${userId}::uuid, ${email})
-          RETURNING id
-        `.execute(trx),
-      )
-      expect(rows).toHaveLength(1)
-      tracker.track("profiles", rows[0]?.id ?? "")
+      await expect(
+        runAsAuthenticatedUser(db, userId, (trx) =>
+          sql`
+            INSERT INTO public.profiles (user_id, email)
+            VALUES (${userId}::uuid, ${email})
+          `.execute(trx),
+        ),
+      ).rejects.toThrow(/permission denied for table profiles/)
+    })
+
+    it("cannot delete their profile", async () => {
+      const { userId, profile } = await createUserWithProfile("own-delete")
+
+      await expect(
+        runAsAuthenticatedUser(db, userId, (trx) =>
+          sql`DELETE FROM public.profiles WHERE id = ${profile.id}`.execute(trx),
+        ),
+      ).rejects.toThrow(/permission denied for table profiles/)
     })
 
     it("cannot create their profile already exempt or approved", async () => {
@@ -180,7 +184,34 @@ describe("Admin-only profile columns", () => {
             VALUES (${userId}::uuid, ${email}, true, 'approved')
           `.execute(trx),
         ),
-      ).rejects.toThrow(/admin-only/i)
+      ).rejects.toThrow(/permission denied for table profiles/)
+    })
+  })
+
+  describe("the guard trigger, should a write grant come back", () => {
+    // Nothing reaches guard_admin_only_profile_columns through the Data API
+    // since WEB-48 revoked the writes. It stays as a second layer, so this
+    // restores a grant and a policy inside a transaction that never commits.
+    it("still refuses a participant changing an admin-only column", async () => {
+      const { userId, profile } = await createUserWithProfile("regrant")
+
+      await expect(
+        db.transaction().execute(async (trx) => {
+          await sql`GRANT UPDATE ON public.profiles TO authenticated`.execute(trx)
+          await sql`
+            CREATE POLICY web48_regrant ON public.profiles FOR UPDATE TO authenticated
+              USING (user_id = (SELECT auth.uid()))
+          `.execute(trx)
+          await sql`SET LOCAL ROLE authenticated`.execute(trx)
+          await sql`SELECT set_config('request.jwt.claims', ${JSON.stringify({
+            sub: userId,
+            role: "authenticated",
+          })}, true)`.execute(trx)
+          await sql`UPDATE public.profiles SET cpf_exempt = true WHERE id = ${profile.id}`.execute(
+            trx,
+          )
+        }),
+      ).rejects.toThrow(/cpf_exempt is admin-only/)
     })
   })
 
@@ -207,7 +238,8 @@ describe("Admin-only profile columns", () => {
   })
 
   describe("an admin through the API", () => {
-    it("can change another profile's admin-only columns", async () => {
+    // The admin panel writes through the server; the Data API is no way in.
+    it("cannot change another profile's admin-only columns either", async () => {
       const { userId: adminId } = await createTestAdminUser(
         tracker,
         db,
@@ -215,21 +247,15 @@ describe("Admin-only profile columns", () => {
       )
       const { profile } = await createUserWithProfile("managed")
 
-      await runAsAuthenticatedUser(db, adminId, (trx) =>
-        sql`
-          UPDATE public.profiles
-             SET cpf_exempt = true, approved_to_attend = 'approved'
-           WHERE id = ${profile.id}
-        `.execute(trx),
-      )
-
-      const saved = await db
-        .selectFrom("profiles")
-        .select(["cpf_exempt", "approved_to_attend"])
-        .where("id", "=", profile.id)
-        .executeTakeFirstOrThrow()
-
-      expect(saved).toEqual({ cpf_exempt: true, approved_to_attend: "approved" })
+      await expect(
+        runAsAuthenticatedUser(db, adminId, (trx) =>
+          sql`
+            UPDATE public.profiles
+               SET cpf_exempt = true, approved_to_attend = 'approved'
+             WHERE id = ${profile.id}
+          `.execute(trx),
+        ),
+      ).rejects.toThrow(/permission denied for table profiles/)
     })
   })
 })
