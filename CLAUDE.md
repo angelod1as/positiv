@@ -177,6 +177,11 @@ supabase-js does:
   `IDENTITY` column does not.
 - `CREATE OR REPLACE` keeps a function's or view's grants; `DROP` and `CREATE`
   loses them.
+- `authenticated` reads `profiles` and `event_participants` column by column
+  (WEB-48), so the organisation's notes stay out of a participant's reach. A
+  new column there gets `GRANT SELECT (column) TO authenticated` in its
+  migration, unless it is admin-only; the "Admin-only columns read through the
+  API" test fails until it does.
 
 The "Default privileges on new objects in public" test in
 `app/test/rls-security.integration.test.ts` fails if the defaults come back.
