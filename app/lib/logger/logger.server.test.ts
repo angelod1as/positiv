@@ -140,6 +140,27 @@ describe("logger", () => {
       })
     })
 
+    it("masks emails and CPFs before they reach the file", async () => {
+      ENV.APP_ENV = "production"
+      ENV.LOG_DIR = logDir
+
+      const { logger } = await import("./logger.server")
+      logger.info("reset held back", {
+        error: { message: "rate limited for ana@example.com" },
+        cpf: "123.456.789-09",
+      })
+
+      await vi.waitFor(async () => {
+        const [file] = (await readdir(logDir)).filter((name) =>
+          name.endsWith(".log"),
+        )
+        const content = await readFile(join(logDir, file), "utf8")
+        expect(content).toContain("***@example.com")
+        expect(content).not.toContain("ana@")
+        expect(content).not.toContain("123.456.789-09")
+      })
+    })
+
     it("keeps 60 days of files capped at 20 MB each", async () => {
       ENV.LOG_DIR = logDir
 

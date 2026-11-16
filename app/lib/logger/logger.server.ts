@@ -8,8 +8,25 @@ import { TelegramTransport } from "./telegram-transport.server"
 
 const isProduction = ENV.APP_ENV === "production"
 
+// winston keeps the serialized line under this symbol (triple-beam's MESSAGE).
+const MESSAGE = Symbol.for("message")
+
+// Masks emails and CPFs in the serialized line, whatever object carried them:
+// production lines are kept on disk for 60 days.
+const redactLine = winston.format((info) => {
+  const line = info[MESSAGE]
+  if (typeof line === "string") info[MESSAGE] = redact(line)
+  return info
+})
+
+const jsonLines = winston.format.combine(
+  winston.format.timestamp(),
+  winston.format.json(),
+  redactLine(),
+)
+
 const consoleFormat = isProduction
-  ? winston.format.combine(winston.format.timestamp(), winston.format.json())
+  ? jsonLines
   : winston.format.combine(
       winston.format.colorize(),
       winston.format.simple(),
@@ -35,10 +52,7 @@ if (ENV.LOG_DIR) {
       datePattern: "YYYY-MM-DD",
       maxFiles: "60d",
       maxSize: "20m",
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.json(),
-      ),
+      format: jsonLines,
     }),
   )
 }
