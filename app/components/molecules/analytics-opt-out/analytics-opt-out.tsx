@@ -14,6 +14,7 @@ export const AnalyticsOptOut = ({
   reload = () => window.location.reload(),
 }: AnalyticsOptOutProps) => {
   const [optedOut, setOptedOut] = useState(false)
+  const [storageFailed, setStorageFailed] = useState(false)
 
   useEffect(() => {
     try {
@@ -24,14 +25,22 @@ export const AnalyticsOptOut = ({
   }, [])
 
   const toggle = () => {
-    if (optedOut) window.localStorage.removeItem(OPT_OUT_KEY)
-    else window.localStorage.setItem(OPT_OUT_KEY, "1")
+    try {
+      if (optedOut) window.localStorage.removeItem(OPT_OUT_KEY)
+      else window.localStorage.setItem(OPT_OUT_KEY, "1")
+    } catch {
+      setStorageFailed(true)
+      return
+    }
     reload()
   }
 
   return (
     <div className="flex flex-col items-start gap-2">
       {optedOut && <p>{analyticsOptOutCopy.optedOut}</p>}
+      {storageFailed && (
+        <p role="alert">{analyticsOptOutCopy.storageFailed}</p>
+      )}
       <Button variant="outline" onClick={toggle}>
         {optedOut ? analyticsOptOutCopy.optIn : analyticsOptOutCopy.optOut}
       </Button>

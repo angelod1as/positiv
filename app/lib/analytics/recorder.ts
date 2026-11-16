@@ -6,9 +6,13 @@
 //
 // `umami.disabled` is the opt-out flag Umami's own tracker reads; the recorder
 // does not, so the loader checks it.
+//
+// The script is emitted verbatim into an inline <script>, so the regex's
+// slashes are escaped twice: once for this template string, once for the regex.
+// The `i` flag matters: React Router matches paths regardless of case.
 export function umamiRecorderLoaderScript(url: string, websiteId: string) {
   return `(function () {
-  var privatePath = /^\\/(admin|dashboard|conta|pagamento|convite|auth|newsletter)(\\/|$)/
+  var privatePath = /^\\/(admin|dashboard|conta|pagamento|convite|auth|newsletter)(\\/|$)/i
   if (privatePath.test(window.location.pathname)) return
   try {
     if (window.localStorage.getItem("umami.disabled")) return

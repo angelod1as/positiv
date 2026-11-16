@@ -8,6 +8,7 @@ import { AnalyticsOptOut } from "./analytics-opt-out"
 // the recorder loader reads before adding the recorder.
 describe("AnalyticsOptOut", () => {
   afterEach(() => {
+    vi.restoreAllMocks()
     window.localStorage.removeItem("umami.disabled")
   })
 
@@ -34,5 +35,22 @@ describe("AnalyticsOptOut", () => {
 
     expect(window.localStorage.getItem("umami.disabled")).toBeNull()
     expect(reload).toHaveBeenCalledOnce()
+  })
+
+  it("says so, and does not reload, when the browser refuses to store the choice", async () => {
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new DOMException("Quota exceeded", "QuotaExceededError")
+    })
+    const reload = vi.fn()
+    render(<AnalyticsOptOut reload={reload} />)
+
+    await userEvent.click(
+      screen.getByRole("button", { name: analyticsOptOutCopy.optOut }),
+    )
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      analyticsOptOutCopy.storageFailed,
+    )
+    expect(reload).not.toHaveBeenCalled()
   })
 })

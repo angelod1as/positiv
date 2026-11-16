@@ -47,6 +47,10 @@ describe("umamiRecorderLoaderScript", () => {
     "/convite/abc123",
     "/auth/confirm?token_hash=abc123",
     "/newsletter/unsubscribe?email=x",
+    "/Admin",
+    "/DASHBOARD/1/dados",
+    "/Auth/confirm?token_hash=abc123",
+    "/Pagamento/T/abc123",
   ])("does not load the recorder for a visit that starts on %s", (path) => {
     window.history.replaceState(null, "", path)
 
