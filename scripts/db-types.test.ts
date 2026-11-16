@@ -133,7 +133,8 @@ describe('db-types', () => {
 
     const argv = readFileSync(argvLog, 'utf8')
     expect(argv).toContain('status')
-    expect(argv).toContain('--db-url')
+    expect(argv).toMatch(/gen types typescript --remote=postgresql:\/\/\S+/)
+    expect(argv).not.toContain('--db-url')
     expect(argv).not.toContain('gen types typescript --local')
   })
 })
