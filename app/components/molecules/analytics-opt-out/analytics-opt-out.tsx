@@ -18,7 +18,7 @@ export const AnalyticsOptOut = ({
 
   useEffect(() => {
     try {
-      setOptedOut(window.localStorage.getItem(OPT_OUT_KEY) !== null)
+      setOptedOut(Boolean(window.localStorage.getItem(OPT_OUT_KEY)))
     } catch {
       setOptedOut(false)
     }

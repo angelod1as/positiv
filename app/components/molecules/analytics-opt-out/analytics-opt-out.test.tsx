@@ -37,6 +37,18 @@ describe("AnalyticsOptOut", () => {
     expect(reload).toHaveBeenCalledOnce()
   })
 
+  // The loader and Umami's tracker treat an empty flag as no opt-out.
+  it("offers the opt-out when the stored flag is empty", async () => {
+    window.localStorage.setItem("umami.disabled", "")
+    render(<AnalyticsOptOut reload={vi.fn()} />)
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(
+      screen.getByRole("button", { name: analyticsOptOutCopy.optOut }),
+    ).toBeInTheDocument()
+  })
+
   it("says so, and does not reload, when the browser refuses to store the choice", async () => {
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
       throw new DOMException("Quota exceeded", "QuotaExceededError")
