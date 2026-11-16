@@ -43,7 +43,6 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       title: "Test Event 1",
       emoji: "🎉",
       location: "Test Location 1",
-      description: "Test Description 1",
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -57,7 +56,6 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       title: "Test Event 2",
       emoji: "🎭",
       location: "Test Location 2",
-      description: "Test Description 2",
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
@@ -160,7 +158,6 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       title: "Event with User Application",
       emoji: "📝",
       location: "Location 1",
-      description: "User applied themselves",
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
@@ -174,7 +171,6 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       title: "Event Admin Added",
       emoji: "👤",
       location: "Location 2",
-      description: "Admin added participant",
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(),
@@ -188,7 +184,6 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       title: "Event No Show",
       emoji: "❌",
       location: "Location 3",
-      description: "User didn't attend",
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -268,7 +263,6 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       title: "Event to Include",
       emoji: "✅",
       location: "Location 1",
-      description: "Description 1",
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -282,7 +276,6 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       title: "Event to Exclude",
       emoji: "❌",
       location: "Location 2",
-      description: "Description 2",
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
@@ -334,7 +327,6 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       title: "Older Event",
       emoji: "📅",
       location: "Location 1",
-      description: "Description 1",
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days from now
@@ -348,7 +340,6 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       title: "Newer Event",
       emoji: "🆕",
       location: "Location 2",
-      description: "Description 2",
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
@@ -434,7 +425,6 @@ describe("getProfileWithExtraDataById - Integration Tests", () => {
       title: "Test Event for Profile",
       emoji: "🔍",
       location: "Test Location",
-      description: "Test Description",
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -477,7 +467,6 @@ describe("getProfileWithExtraDataById - Integration Tests", () => {
       title: "Test Event No Registration",
       emoji: "❌",
       location: "Test Location",
-      description: "Test Description",
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -560,7 +549,6 @@ describe("getEventParticipantHistoryById - Integration Tests", () => {
       title: "Test Event History",
       emoji: "📜",
       location: "Test Location",
-      description: "Test Description",
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -606,7 +594,6 @@ describe("getEventParticipantHistoryById - Integration Tests", () => {
       title: "Test Event No History",
       emoji: "🚫",
       location: "Test Location",
-      description: "Test Description",
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -2185,7 +2172,6 @@ describe("getEventsForDashboard - Integration Tests", () => {
     const event = await createTestEvent(tracker, kysely, {
       title: "Full Event Data Test",
       emoji: "🎉",
-      description: "This is a full test event",
       location: "Test Location",
       ticket_price: 10000,
       event_status: "Registration Open",
@@ -2211,7 +2197,6 @@ describe("getEventsForDashboard - Integration Tests", () => {
     // Verify all Event fields are present
     expect(createdEvent).toHaveProperty("id")
     expect(createdEvent).toHaveProperty("title")
-    expect(createdEvent).toHaveProperty("description")
     expect(createdEvent).toHaveProperty("emoji")
     expect(createdEvent).toHaveProperty("event_status")
     expect(createdEvent).toHaveProperty("location")

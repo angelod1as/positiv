@@ -8,7 +8,6 @@ const makeEvent = (overrides: Partial<Event>): Event =>
   ({
     id: "event-id",
     title: "Evento",
-    description: "Uma festa",
     emoji: "🎉",
     event_status: "Registration Open",
     event_type: "regular",

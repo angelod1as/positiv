@@ -39,7 +39,6 @@ describe("createOrUpdateEvent - Integration Tests", () => {
 
     return {
       title,
-      description: "Descrição do evento",
       emoji: "🎉",
       location: "Motel Harmony",
       // Form values: the admin types reais, the schema converts to cents.
@@ -60,7 +59,6 @@ describe("createOrUpdateEvent - Integration Tests", () => {
     const event = await createTestEvent(tracker, kysely, {
       title: "Legacy BDSM edition",
       emoji: "🔒",
-      description: "Uma edição antiga",
       location: "Motel Harmony",
       event_status: "Completed",
       event_type: "bdsm",
@@ -108,7 +106,6 @@ describe("createOrUpdateEvent - Integration Tests", () => {
     const event = await createTestEvent(tracker, kysely, {
       title: "Untouched",
       emoji: "🔒",
-      description: "Não mexa",
       location: "Motel Harmony",
       event_status: "Draft",
     })
