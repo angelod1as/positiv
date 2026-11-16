@@ -675,4 +675,14 @@ describe("RLS Security - Integration Tests", () => {
       expect(result?.nspname).toBe("extensions")
     })
   })
+
+  describe("Extensions unsupported on Postgres 17", () => {
+    it("should not have pgjwt installed", async () => {
+      const { rows } = await sql<{ extname: string }>`
+        SELECT extname FROM pg_extension WHERE extname = 'pgjwt'
+      `.execute(db)
+
+      expect(rows).toEqual([])
+    })
+  })
 })
