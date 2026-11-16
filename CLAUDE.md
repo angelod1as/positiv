@@ -113,6 +113,11 @@ pnpm db:types --local    # regenerate types from local Supabase
 3. If you need to fix something in an already-applied migration:
    - Create a NEW migration that rolls back the problematic changes
    - Create another NEW migration that applies the correct changes
+4. The one exception: a migration that can no longer replay on a fresh database
+   because the platform dropped something it uses (pgjwt on Postgres 17). Remove
+   only the failing statement, add a new migration that brings every database to
+   the same state, and get explicit approval.
+   [The ADR](docs/architecture/decisions/20261116-an-applied-migration-is-edited-only-when-it-cannot-replay.md).
 
 ### Before Pushing Migration Changes
 
