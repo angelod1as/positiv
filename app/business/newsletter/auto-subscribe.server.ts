@@ -139,14 +139,32 @@ export const refreshNewsletterSubscriber = composable(
     // The stored id follows the person across an email change; a lookup by
     // the new address would find nothing and create a second subscriber.
     const subscriberId = subscription?.listmonk_subscriber_id
-    const result = subscriberId
-      ? await updateSubscriberById(subscriberId, details)
-      : await addSubscriber({ ...details, lists: [] })
+    if (subscriberId) {
+      const updated = await updateSubscriberById(subscriberId, details)
+      if (!updated.success) {
+        throw new Error(
+          updated.errors[0]?.message ?? "Failed to refresh newsletter subscriber",
+        )
+      }
+      if (updated.data.found) return
+    }
+
+    const result = await addSubscriber({ ...details, lists: [] })
 
     if (!result.success) {
       throw new Error(
         result.errors[0]?.message ?? "Failed to refresh newsletter subscriber",
       )
+    }
+
+    // The stored subscriber is gone from Listmonk: keep the one found or
+    // created by email from now on.
+    if (subscriberId) {
+      await db
+        .updateTable("newsletter_subscriptions")
+        .set({ listmonk_subscriber_id: result.data.subscriberId })
+        .where("profile_id", "=", profileId)
+        .execute()
     }
   },
 )

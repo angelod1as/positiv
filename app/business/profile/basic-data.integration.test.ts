@@ -283,7 +283,7 @@ describe("saveBasicData - Integration Tests", () => {
     const updateSubscriberById = vi.spyOn(listmonkClient, "updateSubscriberById")
     updateSubscriberById.mockResolvedValue({
       success: true,
-      data: undefined,
+      data: { found: true },
       errors: [],
     })
 

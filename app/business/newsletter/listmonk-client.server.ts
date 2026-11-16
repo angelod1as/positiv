@@ -337,9 +337,9 @@ export const updateSubscriberById = composable(
   async (
     subscriberId: number,
     params: Omit<AddSubscriberParams, "lists">
-  ): Promise<void> => {
+  ): Promise<{ found: boolean }> => {
     if (ENV.E2E_MODE) {
-      return
+      return { found: true }
     }
 
     const { listmonkApiUrl, headers } = getListmonkConfig()
@@ -348,6 +348,10 @@ export const updateSubscriberById = composable(
       `${listmonkApiUrl}/api/subscribers/${subscriberId}`,
       { method: "GET", headers }
     )
+
+    if (response.status === 404) {
+      return { found: false }
+    }
 
     if (!response.ok) {
       const errorBody = await response.text().catch(() => "Unable to read error body")
@@ -368,6 +372,8 @@ export const updateSubscriberById = composable(
       subscriber.lists.map((list) => list.id),
       subscriber.attribs
     )
+
+    return { found: true }
   }
 )
 

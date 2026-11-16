@@ -605,9 +605,14 @@ describe("updateSubscriberById", () => {
     })
 
     expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data).toEqual({ found: true })
+    }
     expect(fetchSpy).toHaveBeenCalledTimes(2)
-    expect(fetchSpy.mock.calls[0][0]).toBe(
-      "https://listmonk.test/api/subscribers/456"
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      1,
+      "https://listmonk.test/api/subscribers/456",
+      expect.objectContaining({ method: "GET" })
     )
     expect(fetchSpy).toHaveBeenLastCalledWith(
       "https://listmonk.test/api/subscribers/456",
@@ -623,7 +628,7 @@ describe("updateSubscriberById", () => {
     )
   })
 
-  it("should fail when the subscriber cannot be found", async () => {
+  it("should report the subscriber as not found when Listmonk no longer has it", async () => {
     fetchSpy.mockResolvedValueOnce({
       ok: false,
       status: 404,
@@ -637,8 +642,28 @@ describe("updateSubscriberById", () => {
       attributes: {},
     })
 
-    expect(result.success).toBe(false)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data).toEqual({ found: false })
+    }
     expect(fetchSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it("should fail when the subscriber lookup errors", async () => {
+    fetchSpy.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      statusText: "Internal Server Error",
+      text: async () => "boom",
+    } as Response)
+
+    const result = await updateSubscriberById(456, {
+      email: "new@example.com",
+      name: "New Name",
+      attributes: {},
+    })
+
+    expect(result.success).toBe(false)
   })
 
   it("should fail when Listmonk refuses the update", async () => {
