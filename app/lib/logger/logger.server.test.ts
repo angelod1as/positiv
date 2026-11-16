@@ -161,6 +161,24 @@ describe("logger", () => {
       })
     })
 
+    it("keeps every line valid JSON when a number looks like a CPF", async () => {
+      ENV.APP_ENV = "production"
+      ENV.LOG_DIR = logDir
+
+      const { logger } = await import("./logger.server")
+      logger.info("synced", { phone: 11987654321 })
+
+      await vi.waitFor(async () => {
+        const [file] = (await readdir(logDir)).filter((name) =>
+          name.endsWith(".log"),
+        )
+        const [line] = (await readFile(join(logDir, file), "utf8"))
+          .trim()
+          .split("\n")
+        expect(JSON.parse(line)).toMatchObject({ message: "synced" })
+      })
+    })
+
     it("keeps 60 days of files capped at 20 MB each", async () => {
       ENV.LOG_DIR = logDir
 

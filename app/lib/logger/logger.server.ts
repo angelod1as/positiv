@@ -12,10 +12,17 @@ const isProduction = ENV.APP_ENV === "production"
 const MESSAGE = Symbol.for("message")
 
 // Masks emails and CPFs in the serialized line, whatever object carried them:
-// production lines are kept on disk for 60 days.
+// production lines are kept on disk for 60 days. Only string values are
+// redacted, so a number that looks like a CPF cannot break the JSON.
 const redactLine = winston.format((info) => {
   const line = info[MESSAGE]
-  if (typeof line === "string") info[MESSAGE] = redact(line)
+  if (typeof line === "string") {
+    info[MESSAGE] = JSON.stringify(
+      JSON.parse(line, (_key, value: unknown) =>
+        typeof value === "string" ? redact(value) : value,
+      ),
+    )
+  }
   return info
 })
 
