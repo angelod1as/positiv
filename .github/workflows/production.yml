@@ -90,7 +90,7 @@ jobs:
           package-manager-cache: false
       - uses: supabase/setup-cli@v3
         with:
-          version: 2.117.0
+          version: 3.1.0
 
       # The dump below is the only thing standing between a bad migration and
       # permanent data loss: `db push` runs unattended on every merge, and a
@@ -212,7 +212,7 @@ jobs:
       # --include-all: applies migrations whose timestamps fall before the last
       # migration already on the remote. This happens when a branch with an older
       # timestamp is merged after a newer migration is already deployed to production.
-      - run: supabase db push --include-all --db-url "$SUPABASE_CONNECT_URL"
+      - run: supabase db push --include-all --remote="$SUPABASE_CONNECT_URL" --yes
 
   # Starts the Coolify deployment, only once the migration has run. The token
   # is a Coolify API token with the `deploy` and `read` abilities and nothing
