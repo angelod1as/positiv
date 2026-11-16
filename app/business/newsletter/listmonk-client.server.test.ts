@@ -3,6 +3,7 @@ import { logger } from "~/lib/logger/logger.server"
 import {
   testConnection,
   addSubscriber,
+  updateSubscriberById,
   addSubscribersToListBulk,
   removeSubscribersFromListBulk,
   removeSubscriber,
@@ -563,6 +564,105 @@ describe("addSubscriber", () => {
         }),
       })
     )
+  })
+})
+
+describe("updateSubscriberById", () => {
+  let fetchSpy: MockInstance
+
+  beforeEach(() => {
+    fetchSpy = vi.spyOn(global, "fetch")
+  })
+
+  afterEach(() => {
+    fetchSpy.mockRestore()
+    vi.clearAllMocks()
+  })
+
+  it("should move the subscriber to the new email, keeping its subscriptions and attributes", async () => {
+    fetchSpy
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            id: 456,
+            email: "old@example.com",
+            name: "Old Name",
+            lists: [{ id: 4 }, { id: 141 }],
+            attribs: { profile_id: "abc-123", legacy: "kept" },
+          },
+        }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { id: 456 } }),
+      } as Response)
+
+    const result = await updateSubscriberById(456, {
+      email: "new@example.com",
+      name: "New Name",
+      attributes: { profile_id: "abc-123", name: "New Name" },
+    })
+
+    expect(result.success).toBe(true)
+    expect(fetchSpy).toHaveBeenCalledTimes(2)
+    expect(fetchSpy.mock.calls[0][0]).toBe(
+      "https://listmonk.test/api/subscribers/456"
+    )
+    expect(fetchSpy).toHaveBeenLastCalledWith(
+      "https://listmonk.test/api/subscribers/456",
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({
+          email: "new@example.com",
+          name: "New Name",
+          attribs: { profile_id: "abc-123", legacy: "kept", name: "New Name" },
+          lists: [4, 141],
+        }),
+      })
+    )
+  })
+
+  it("should fail when the subscriber cannot be found", async () => {
+    fetchSpy.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+      text: async () => "Subscriber not found",
+    } as Response)
+
+    const result = await updateSubscriberById(456, {
+      email: "new@example.com",
+      name: "New Name",
+      attributes: {},
+    })
+
+    expect(result.success).toBe(false)
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it("should fail when Listmonk refuses the update", async () => {
+    fetchSpy
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: { id: 456, email: "old@example.com", lists: [], attribs: {} },
+        }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 409,
+        statusText: "Conflict",
+        text: async () => "E-mail already exists",
+      } as Response)
+
+    const result = await updateSubscriberById(456, {
+      email: "taken@example.com",
+      name: "New Name",
+      attributes: {},
+    })
+
+    expect(result.success).toBe(false)
   })
 })
 

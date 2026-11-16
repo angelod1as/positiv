@@ -333,6 +333,44 @@ export const addSubscriber = composable(
   }
 )
 
+export const updateSubscriberById = composable(
+  async (
+    subscriberId: number,
+    params: Omit<AddSubscriberParams, "lists">
+  ): Promise<void> => {
+    if (ENV.E2E_MODE) {
+      return
+    }
+
+    const { listmonkApiUrl, headers } = getListmonkConfig()
+
+    const response = await fetch(
+      `${listmonkApiUrl}/api/subscribers/${subscriberId}`,
+      { method: "GET", headers }
+    )
+
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => "Unable to read error body")
+      throw new Error(
+        `Failed to get subscriber: ${response.status} ${response.statusText}. Response: ${errorBody}`
+      )
+    }
+
+    const { data: subscriber } = (await response.json()) as {
+      data: ListmonkSubscriber
+    }
+
+    await updateSubscriberAttributes(
+      subscriber.id,
+      params.email,
+      params.name,
+      params.attributes,
+      subscriber.lists.map((list) => list.id),
+      subscriber.attribs
+    )
+  }
+)
+
 export const removeSubscriber = composable(
   async (email: string, options?: { force?: boolean }): Promise<void> => {
     if (!options?.force && ENV.E2E_MODE) {
