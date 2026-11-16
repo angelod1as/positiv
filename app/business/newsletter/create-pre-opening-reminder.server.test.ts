@@ -384,29 +384,6 @@ describe("createPreOpeningReminder", () => {
       expect(callBody.body).not.toContain("onerror")
       expect(callBody.body).not.toContain("alert")
     })
-
-    it("should sanitize HTML in event description", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          data: { id: 123, name: "", subject: "", status: "draft" },
-        }),
-      })
-
-      const maliciousEvent = {
-        ...mockEvent,
-        description: '<iframe src="evil.com"></iframe>Description',
-      }
-
-      await createPreOpeningReminder({
-        event: maliciousEvent,
-        listIds: [4],
-      })
-
-      const callBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(callBody.body).not.toContain("<iframe")
-      expect(callBody.body).not.toContain("evil.com")
-    })
   })
 
   describe("Error Handling", () => {

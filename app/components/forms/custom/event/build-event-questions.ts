@@ -29,13 +29,6 @@ export function buildEventQuestions(): Question[] {
       schema: shape.emoji,
     },
     {
-      id: "description",
-      prompt: labels.description,
-      help: descriptions.description,
-      input: { kind: "textarea", placeholder: placeholders.description },
-      schema: shape.description,
-    },
-    {
       id: "location",
       prompt: labels.location,
       input: { kind: "text", placeholder: placeholders.location },

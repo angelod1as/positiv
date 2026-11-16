@@ -39,7 +39,6 @@ export async function ensureMinimumOpenEvents(count: number = 2): Promise<{ id: 
       time_event_start: eventDate.toISOString(),
       time_event_end: new Date(eventDate.getTime() + 3 * 60 * 60 * 1000).toISOString(), // 3 hours later
       time_application_start: now.toISOString(),
-      description: 'Test event created for E2E testing',
       location: 'Test Location',
       total_spots: 100
     }
@@ -86,7 +85,6 @@ export async function createOpenRegularEvent(): Promise<{ id: string; title: str
       time_event_start: eventDate.toISOString(),
       time_event_end: new Date(eventDate.getTime() + 3 * 60 * 60 * 1000).toISOString(),
       time_application_start: now.toISOString(),
-      description: 'Test event created for E2E testing',
       location: 'Test Location',
       total_spots: 100,
     })

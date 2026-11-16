@@ -18,7 +18,6 @@ export function buildEventLayout(): GridSlot[] {
     },
     { kind: "question", id: "title", span: 9 },
     { kind: "question", id: "emoji", span: 3 },
-    { kind: "question", id: "description", span: 12 },
     { kind: "question", id: "location", span: 7 },
     { kind: "question", id: "ticket_price", span: 2 },
     { kind: "question", id: "total_spots", span: 3 },

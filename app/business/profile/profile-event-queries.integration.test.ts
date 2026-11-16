@@ -41,7 +41,6 @@ describe("getEventParticipantBasic - Integration Tests", () => {
       title: "Test Event EP Basic",
       emoji: "🔍",
       location: "Test Location",
-      description: "Test Description",
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(
@@ -95,7 +94,6 @@ describe("getEventParticipantBasic - Integration Tests", () => {
       title: "Test Event No EP",
       emoji: "❌",
       location: "Test Location",
-      description: "Test Description",
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(
@@ -131,7 +129,6 @@ describe("getEventParticipantBasic - Integration Tests", () => {
       title: "Test Event All Fields",
       emoji: "📋",
       location: "Test Location",
-      description: "Test Description",
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(
@@ -409,7 +406,6 @@ describe("ledger totals on the admin queries - Integration Tests", () => {
       title: "Test Event Ledger Totals",
       emoji: "💰",
       location: "Test Location",
-      description: "Test Description",
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(

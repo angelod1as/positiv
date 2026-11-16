@@ -51,6 +51,14 @@ vi.mock("./event-card-footer", () => ({
 }))
 
 describe("EventCard", () => {
+  it("does not show the event description", () => {
+    const { queryByText } = render(
+      <EventCard event={mockEvent} data-testid="test-card" />,
+    )
+
+    expect(queryByText("Test Description")).not.toBeInTheDocument()
+  })
+
   it("shows the price formatted from cents", () => {
     const { getByText } = render(
       <EventCard event={mockEvent} data-testid="test-card" />,

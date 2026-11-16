@@ -20,7 +20,6 @@ const EVENT_ID = "3f2c9a1e-5b7d-4c8e-9f10-2a3b4c5d6e7f"
 const answers = {
   title: "Rapa do Tacho",
   emoji: "🎉",
-  description: "Para quem sobreviveu ao carnaval",
   location: "Motel Harmony",
   ticket_price: "200",
   total_spots: "60",

@@ -18,7 +18,6 @@ const datetime = zod.preprocess(preprocessDateTime, zod.string().datetime())
 export const eventFormSchema = zod.object({
   id: zod.string().uuid().optional(),
   title: zod.string().min(2).max(50),
-  description: zod.string().min(2).max(255),
   emoji: zod.string().emoji(eventFormValidation.emojiInvalid).min(1),
   location: zod.string().min(2).max(255),
 
@@ -45,7 +44,6 @@ export const eventFormSchema = zod.object({
 export const eventSchema = zod.object({
   id: zod.string(),
   title: zod.string().nullish(),
-  description: zod.string().nullish(),
   emoji: zod.string().nullish(),
   location: zod.string().nullish(),
 

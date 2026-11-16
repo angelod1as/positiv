@@ -11,7 +11,6 @@ import { updateProfileAdminNotesSchema, updateProfileApprovalStatusSchema } from
 
 const base = {
   title: "Festa",
-  description: "Uma festa",
   emoji: "🎉",
   location: "Rua X",
   total_spots: 50,
@@ -23,6 +22,18 @@ const base = {
   time_payment_start: "2026-08-10T12:00",
   time_payment_end: "2026-08-25T12:00",
 }
+
+describe("eventFormSchema", () => {
+  it("takes an event without a description, and keeps none", () => {
+    const parsed = eventFormSchema.parse({
+      ...base,
+      description: "Uma festa",
+      ticket_price: "200",
+    })
+
+    expect(parsed).not.toHaveProperty("description")
+  })
+})
 
 describe("eventFormSchema.ticket_price", () => {
   it("converts the reais an admin types into cents", () => {

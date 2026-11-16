@@ -74,7 +74,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
       title: "Old Event",
       emoji: "📅",
       location: "Location 1",
-      description: "Description 1",
       event_status: "Completed",
       event_type: "regular",
       time_event_start: new Date(
@@ -94,7 +93,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
       title: "Middle Event (Last for participants)",
       emoji: "🎭",
       location: "Location 2",
-      description: "Description 2",
       event_status: "Completed",
       event_type: "regular",
       time_event_start: new Date(
@@ -114,7 +112,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
       title: "Current Event",
       emoji: "🎉",
       location: "Location 3",
-      description: "Description 3",
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(
@@ -243,7 +240,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
           title: `Plan Test Event ${i}`,
           emoji: "🎯",
           location: `Location ${i}`,
-          description: `Description ${i}`,
           event_status: "Completed",
           event_type: "regular",
           time_event_start: new Date(
@@ -265,7 +261,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
       title: "Current Plan Test Event",
       emoji: "🎯",
       location: "Location Current",
-      description: "Current Description",
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(
@@ -378,7 +373,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
       title: "Oldest Event - Finalised",
       emoji: "📅",
       location: "Location 1",
-      description: "Description 1",
       event_status: "Completed",
       event_type: "regular",
       time_event_start: new Date(
@@ -399,7 +393,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
       title: "Recent Event - Not Finalised",
       emoji: "⏱️",
       location: "Location 2",
-      description: "Description 2",
       event_status: "Completed",
       event_type: "regular",
       time_event_start: new Date(
@@ -420,7 +413,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
       title: "Current Event",
       emoji: "🎉",
       location: "Location 3",
-      description: "Description 3",
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(
@@ -496,7 +488,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
       title: "Past Edge Event",
       emoji: "🔙",
       location: "Location Past",
-      description: "Description Past",
       event_status: "Completed",
       event_type: "regular",
       time_event_start: new Date(
@@ -516,7 +507,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
       title: "Current Edge Event",
       emoji: "➡️",
       location: "Location Current",
-      description: "Description Current",
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(

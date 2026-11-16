@@ -63,7 +63,6 @@ test.describe("Admin User Management", () => {
     await eventManagement.fillBasicEventInfo({
       title: eventTitle,
       emoji: "🎭",
-      description: "Test event for user management E2E tests",
       location: "Test Location",
       price: "100",
       capacity: "50",
@@ -172,7 +171,6 @@ test.describe("Admin User Management", () => {
     await eventManagement.fillBasicEventInfo({
       title: eventTitle,
       emoji: "🎯",
-      description: "Test event for detail view E2E tests",
       location: "Test Location",
       price: "50",
       capacity: "30",

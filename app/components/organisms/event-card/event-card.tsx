@@ -3,7 +3,6 @@ import { DataPair } from "~/components/atoms/data-pair/data-pair"
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -37,7 +36,6 @@ export const EventCard: FC<EventCardProps> = ({
   const googleLink = generateGoogleCalendarLink(event)
 
   const {
-    description,
     emoji,
     event_status,
     id,
@@ -67,7 +65,6 @@ export const EventCard: FC<EventCardProps> = ({
             </div>
           </div>
         </CardTitle>
-        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="grow">
         <div className="flex flex-col gap-4">

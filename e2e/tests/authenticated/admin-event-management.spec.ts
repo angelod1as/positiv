@@ -37,7 +37,6 @@ test.describe('Admin Event Management', () => {
     await eventManagement.fillBasicEventInfo({
       title: eventTitle,
       emoji: '🎉',
-      description: 'This is a test event created by E2E tests',
       location: 'Test Location',
       price: '100',
       capacity: '50'

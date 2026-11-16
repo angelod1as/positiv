@@ -23,7 +23,6 @@ export async function markProfileAsVeteran(
       event_type: 'regular',
       time_event_start: start.toISOString(),
       time_event_end: new Date(start.getTime() + 3 * 60 * 60 * 1000).toISOString(),
-      description: 'Past event created for E2E testing',
       location: 'Test Location',
       total_spots: 100,
     })

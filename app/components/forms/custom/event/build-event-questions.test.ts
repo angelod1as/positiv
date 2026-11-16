@@ -48,14 +48,10 @@ describe("buildEventQuestions", () => {
     }
   })
 
-  it("gives the description room to breathe, and its hint", () => {
-    const description = byId("description")
+  it("asks for no description", () => {
+    const asked = buildEventQuestions().map((question) => question.id)
 
-    expect(description.input).toEqual({
-      kind: "textarea",
-      placeholder: formCopy.placeholders.description,
-    })
-    expect(description.help).toBe(formCopy.descriptions.description)
+    expect(asked).not.toContain("description")
   })
 
   it("says what the price and the capacity are counted in", () => {
