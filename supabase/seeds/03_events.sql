@@ -9,7 +9,6 @@ TRUNCATE public.events CASCADE;
 INSERT INTO public.events (
     title,
     location,
-    description,
     emoji,
     event_status,
     event_type,
@@ -26,7 +25,6 @@ INSERT INTO public.events (
 SELECT
     title,
     location,
-    description,
     emoji,
     event_status,
     event_type,
@@ -55,15 +53,6 @@ FROM (
             WHEN n = 25 THEN 'Suite Premium, Motel Harmony'
             ELSE 'Suite Nagoya, Motel Harmony'
         END AS location,
-        CASE
-            WHEN n <= 20 THEN 'Descricao do evento concluido ' || n || '. Este evento ja aconteceu e foi um sucesso!'
-            WHEN n <= 24 THEN 'Aviso: Este evento foi cancelado. Pedimos desculpas pelo inconveniente.'
-            WHEN n = 25 THEN 'Sed ut perspiciatis unde omnis iste natus error. Inscrições abertas!'
-            WHEN n = 26 THEN 'Morbi non velit sit amet felis fermentum fermentum ut eget dui. Inscrições abertas!'
-            WHEN n <= 28 THEN 'As inscricoes para este evento foram encerradas. Aguarde novas oportunidades.'
-            WHEN n = 29 THEN 'Prepare-se para este evento! Marque em seus calendarios!'
-            ELSE 'Evento em fase de planejamento. Mais informacoes em breve.'
-        END AS description,
         CASE
             WHEN n <= 20 THEN (ARRAY['🎉', '🥳', '✨', '🎊', '💃', '🕺', '🌟', '💫', '🔥', '❤️'])[((n - 1) % 10) + 1]
             WHEN n <= 24 THEN '🙅'
