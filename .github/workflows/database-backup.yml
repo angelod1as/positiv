@@ -13,17 +13,24 @@ jobs:
       # apt-get update first: the client is not on the runner image, it is
       # fetched every run, and the shipped package index goes stale as the image
       # ages. Installing against a stale index 404s when the mirror has moved on.
+      #
+      # pg_dump refuses a server newer than itself, and Ubuntu's own client
+      # lags production's Postgres 17. The client comes from the PGDG repo at
+      # the major version in supabase/config.toml, called by its full path so
+      # the runner's own older client cannot be picked instead.
       - name: Install PostgreSQL client
         run: |
           sudo apt-get update
-          sudo apt-get install -y postgresql-client
+          sudo apt-get install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y postgresql-client-17
 
       - name: Create database dump
         env:
           SUPABASE_CONNECT_URL: ${{ secrets.PRODUCTION_SUPABASE_CONNECT_URL }}
         run: |
           FILENAME="backup_$(date +%Y%m%d_%H%M%S).dump"
-          pg_dump -Fc "$SUPABASE_CONNECT_URL" -f "$FILENAME"
+          /usr/lib/postgresql/17/bin/pg_dump -Fc "$SUPABASE_CONNECT_URL" -f "$FILENAME"
           echo "DUMP_FILE=$FILENAME" >> "$GITHUB_ENV"
 
       # The host key is pinned, not discovered. `ssh-keyscan` asks the server
