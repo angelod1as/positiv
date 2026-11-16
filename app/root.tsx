@@ -19,6 +19,7 @@ import {
   UMAMI_BEFORE_SEND,
   umamiBeforeSendScript,
 } from "~/lib/analytics/admin-pages"
+import { umamiRecorderLoaderScript } from "~/lib/analytics/recorder"
 import { isValidCpf } from "~/lib/helpers/cpf"
 import { cpfExemptionLinks } from "~/lib/helpers/cpf-exemption-link"
 import { readFormData } from "~/lib/request/read-form-data.server"
@@ -360,6 +361,14 @@ export function Layout(props: { children: ReactNode }) {
                 src={`${ENV.VITE_UMAMI_URL}/script.js`}
                 data-website-id={ENV.VITE_UMAMI_WEBSITE_ID}
                 data-before-send={UMAMI_BEFORE_SEND}
+              />
+              <script
+                dangerouslySetInnerHTML={{
+                  __html: umamiRecorderLoaderScript(
+                    ENV.VITE_UMAMI_URL,
+                    ENV.VITE_UMAMI_WEBSITE_ID,
+                  ),
+                }}
               />
             </>
           )}
