@@ -29,7 +29,7 @@ jobs:
       - name: Start Supabase local development setup
         run: |
           for attempt in 1 2 3 4 5; do
-            supabase start -x studio,analytics,vector,edge-runtime,imgproxy && exit 0
+            supabase start -x studio,vector,edge-runtime,imgproxy && exit 0
             echo "supabase start failed (attempt $attempt/5), retrying in 30s"
             supabase stop --no-backup || true
             sleep 30
@@ -153,7 +153,7 @@ jobs:
       - name: Start Supabase local instance
         run: |
           for attempt in 1 2 3 4 5; do
-            supabase start -x studio,analytics,vector,edge-runtime,imgproxy && exit 0
+            supabase start -x studio,vector,edge-runtime,imgproxy && exit 0
             echo "supabase start failed (attempt $attempt/5), retrying in 30s"
             supabase stop --no-backup || true
             sleep 30
