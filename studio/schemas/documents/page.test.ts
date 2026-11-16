@@ -243,6 +243,7 @@ describe("page", () => {
         "imageSection",
         "statsSection",
         "chartSection",
+        "systemComponent",
       ])
     })
 

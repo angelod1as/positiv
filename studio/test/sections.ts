@@ -144,4 +144,9 @@ export const sections = {
       },
     ],
   },
+  systemComponent: {
+    _type: "systemComponent",
+    _key: "system-component",
+    component: "analyticsOptOut",
+  },
 }
