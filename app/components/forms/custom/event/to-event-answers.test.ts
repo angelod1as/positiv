@@ -39,6 +39,10 @@ describe("toEventAnswers", () => {
     expect(answers.auto_publish).toBe(true)
   })
 
+  it("leaves the description out, even when the event still has one", () => {
+    expect(toEventAnswers(event)).not.toHaveProperty("description")
+  })
+
   it("writes the numbers as the number fields read them back", () => {
     const answers = toEventAnswers(event)
 

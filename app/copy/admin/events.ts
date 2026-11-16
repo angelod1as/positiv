@@ -68,7 +68,6 @@ export const adminEventsCopy = {
     labels: {
       title: "Nome da festa",
       emoji: "Emoji",
-      description: "Descrição",
       location: "Local",
       ticket_price: "Valor",
       total_spots: "Lotação",
@@ -84,7 +83,6 @@ export const adminEventsCopy = {
       Record<keyof z.infer<typeof eventFormSchema>, string>
     >,
     descriptions: {
-      description: "Use uma frase divertida!",
       auto_publish:
         "Quando marcado, o evento será publicado automaticamente na data de abertura das candidaturas",
     } as const satisfies Partial<
@@ -92,7 +90,6 @@ export const adminEventsCopy = {
     >,
     placeholders: {
       title: "Rapa do Tacho",
-      description: "Para quem sobreviveu ao carnaval oficial",
       location: "Motel Harmony",
       ticket_price: "200",
       total_spots: "60",

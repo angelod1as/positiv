@@ -4,7 +4,7 @@ import { centsToReaisInput } from "~/lib/helpers/format-currency"
 import { dateTimeFormat } from "~/lib/utils"
 import type { Event } from "~types/database/entities.types"
 
-const TEXT_FIELDS = ["title", "emoji", "description", "location"] as const
+const TEXT_FIELDS = ["title", "emoji", "location"] as const
 
 const NUMBER_FIELDS = ["total_spots"] as const
 

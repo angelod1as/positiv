@@ -80,11 +80,16 @@ describe("EventForm", () => {
 
       expect(screen.getByLabelText(labels.title)).toBeInTheDocument()
       expect(screen.getByLabelText(labels.emoji)).toBeInTheDocument()
-      expect(screen.getByLabelText(labels.description)).toBeInTheDocument()
       expect(screen.getByLabelText(labels.location)).toBeInTheDocument()
       expect(screen.getByLabelText(labels.ticket_price)).toBeInTheDocument()
       expect(screen.getByLabelText(labels.total_spots)).toBeInTheDocument()
       expect(screen.getByLabelText(labels.auto_publish)).toBeInTheDocument()
+    })
+
+    it("does not ask for a description", () => {
+      render(<EventForm />)
+
+      expect(screen.queryByLabelText("Descrição")).not.toBeInTheDocument()
     })
 
     it("tells the four times apart by name", () => {
@@ -259,10 +264,6 @@ describe("EventForm", () => {
 
       await user.type(screen.getByLabelText(labels.title), "Rapa do Tacho")
       await user.type(screen.getByLabelText(labels.emoji), "🎉")
-      await user.type(
-        screen.getByLabelText(labels.description),
-        "Para quem sobreviveu",
-      )
       await user.type(screen.getByLabelText(labels.location), "Motel Harmony")
       await user.type(screen.getByLabelText(labels.ticket_price), "200")
       await user.type(screen.getByLabelText(labels.total_spots), "60")
