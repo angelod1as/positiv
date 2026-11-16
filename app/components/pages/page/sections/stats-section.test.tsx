@@ -98,14 +98,14 @@ describe("StatsSection", () => {
     expect(card.getByText("22%")).toBeInTheDocument()
     expect(card.getByText("2026")).toBeInTheDocument()
     expect(card.getByText("31%")).toBeInTheDocument()
-    expect(card.getByText("+9 p.p.")).toBeInTheDocument()
+    expect(card.getByText("+9 pontos")).toBeInTheDocument()
   })
 
   it("leads a comparison with the change, then its caption", () => {
     render(<StatsSection content={content} />)
 
     const card = screen.getByText("de novates").closest("li")
-    expect(card?.textContent).toMatch(/^\+9 p\.p\.de novates/)
+    expect(card?.textContent).toMatch(/^\+9 pontosde novates/)
   })
 
   it("leads a comparison from zero with the current value and no change", () => {
@@ -128,7 +128,7 @@ describe("StatsSection", () => {
 
     const card = screen.getByText("vagas sociais").closest("li")
     expect(card?.textContent).toMatch(/^40vagas sociais/)
-    expect(card?.textContent).not.toMatch(/[+%]|p\.p\./)
+    expect(card?.textContent).not.toMatch(/[+%]|ponto/)
   })
 
   it("puts every card's caption right after its headline value", () => {
