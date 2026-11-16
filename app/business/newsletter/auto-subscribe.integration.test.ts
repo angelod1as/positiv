@@ -3,7 +3,10 @@ import { randomUUID } from "crypto"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
 import { createTestProfile } from "~/test/db-test-utils"
 import { logger } from "~/lib/logger/logger.server"
-import { subscribeProfileToNewsletter } from "./auto-subscribe.server"
+import {
+  refreshNewsletterSubscriber,
+  subscribeProfileToNewsletter,
+} from "./auto-subscribe.server"
 import * as listmonkClient from "./listmonk-client.server"
 
 vi.mock("~/lib/logger/logger.server", () => ({
@@ -215,6 +218,84 @@ describe("Newsletter Auto-Subscription - Integration Tests", () => {
 
       const syncedAt = new Date(attrs.synced_at as string)
       expect(syncedAt.toString()).not.toBe("Invalid Date")
+    })
+  })
+
+  describe("Refreshing subscriber details", () => {
+    it("should update the stored subscriber by id when the profile's email has changed", async () => {
+      const updateSpy = vi.spyOn(listmonkClient, "updateSubscriberById")
+      updateSpy.mockResolvedValue({ success: true, data: undefined, errors: [] })
+      const addSubscriberSpy = vi.spyOn(listmonkClient, "addSubscriber")
+
+      const profile = await createTestProfile(tracker, kysely, {
+        email: "changed-address@example.com",
+        user_id: null,
+        social_name: "Changed",
+        full_name: "Changed Address",
+        is_veteran: true,
+        approved_to_attend: "approved",
+      })
+
+      await kysely
+        .insertInto("newsletter_subscriptions")
+        .values({
+          profile_id: profile.id,
+          consent_given: true,
+          sync_status: "synced",
+          subscription_source: "manual_button",
+          listmonk_subscriber_id: 900_000 + Math.floor(Math.random() * 99_999),
+        })
+        .execute()
+
+      const { listmonk_subscriber_id } = await kysely
+        .selectFrom("newsletter_subscriptions")
+        .select("listmonk_subscriber_id")
+        .where("profile_id", "=", profile.id)
+        .executeTakeFirstOrThrow()
+
+      const result = await refreshNewsletterSubscriber(profile.id)
+
+      expect(result.success).toBe(true)
+      expect(addSubscriberSpy).not.toHaveBeenCalled()
+      expect(updateSpy).toHaveBeenCalledOnce()
+      const [subscriberId, params] = updateSpy.mock.calls[0]
+      expect(subscriberId).toBe(listmonk_subscriber_id)
+      expect(params.email).toBe("changed-address@example.com")
+      expect(params.name).toBe("Changed")
+      expect(params.attributes.profile_id).toBe(profile.id)
+    })
+
+    it("should look the subscriber up by email when no subscriber id is stored", async () => {
+      const updateSpy = vi.spyOn(listmonkClient, "updateSubscriberById")
+      const addSubscriberSpy = vi.spyOn(listmonkClient, "addSubscriber")
+      addSubscriberSpy.mockResolvedValue({ success: true, data: { subscriberId: 123 }, errors: [] })
+
+      const profile = await createTestProfile(tracker, kysely, {
+        email: "no-stored-id@example.com",
+        user_id: null,
+        social_name: "Unsynced",
+        full_name: "Unsynced Person",
+        is_veteran: false,
+        approved_to_attend: "pending",
+      })
+
+      await kysely
+        .insertInto("newsletter_subscriptions")
+        .values({
+          profile_id: profile.id,
+          consent_given: true,
+          sync_status: "pending",
+          subscription_source: "manual_button",
+        })
+        .execute()
+
+      const result = await refreshNewsletterSubscriber(profile.id)
+
+      expect(result.success).toBe(true)
+      expect(updateSpy).not.toHaveBeenCalled()
+      expect(addSubscriberSpy).toHaveBeenCalledOnce()
+      expect(addSubscriberSpy.mock.calls[0][0].email).toBe("no-stored-id@example.com")
+      expect(addSubscriberSpy.mock.calls[0][0].lists).toEqual([])
     })
   })
 })
