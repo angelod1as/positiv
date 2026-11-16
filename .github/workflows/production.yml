@@ -212,6 +212,7 @@ jobs:
       # --include-all: applies migrations whose timestamps fall before the last
       # migration already on the remote. This happens when a branch with an older
       # timestamp is merged after a newer migration is already deployed to production.
+      # --yes: CLI v3 refuses to change a hosted project unattended without it.
       - run: supabase db push --include-all --remote="$SUPABASE_CONNECT_URL" --yes
 
   # Starts the Coolify deployment, only once the migration has run. The token

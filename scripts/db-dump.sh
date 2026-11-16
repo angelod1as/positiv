@@ -1,4 +1,4 @@
-# Docker MUST be running -- no containers required
+# Dumps the linked hosted project. Docker MUST be running -- no local stack required
 # Don't forget to chmod +x this file :)
 
 pnpm supabase db dump --remote -f dump/full.sql
