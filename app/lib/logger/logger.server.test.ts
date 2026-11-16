@@ -1,5 +1,9 @@
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type winston from "winston"
+import DailyRotateFile from "winston-daily-rotate-file"
 import TransportStream from "winston-transport"
 
 const { ENV } = vi.hoisted(() => ({ ENV: {} as Record<string, unknown> }))
@@ -83,6 +87,120 @@ describe("logger", () => {
       (t: winston.transport) => t.constructor.name === "TelegramTransport",
     )
     expect(telegram?.level).toBe("error")
+  })
+
+  it("logs info and above in production", async () => {
+    ENV.APP_ENV = "production"
+
+    const { logger } = await import("./logger.server")
+
+    expect(logger.level).toBe("info")
+  })
+
+  describe("log files", () => {
+    let logDir: string
+
+    beforeEach(async () => {
+      logDir = await mkdtemp(join(tmpdir(), "positiv-logs-"))
+    })
+
+    afterEach(async () => {
+      const { logger } = await import("./logger.server")
+      logger.close()
+      await rm(logDir, { recursive: true, force: true })
+    })
+
+    it("writes nothing to disk when LOG_DIR is not set", async () => {
+      const { logger } = await import("./logger.server")
+      const hasFile = logger.transports.some((t) => t instanceof DailyRotateFile)
+      expect(hasFile).toBe(false)
+    })
+
+    it("writes each entry as a JSON line to a dated file in LOG_DIR", async () => {
+      ENV.APP_ENV = "production"
+      ENV.LOG_DIR = logDir
+
+      const { logger } = await import("./logger.server")
+      logger.info("job finished", { job: "retry-payment-emails" })
+
+      await vi.waitFor(async () => {
+        const [file] = await readdir(logDir).then((names) =>
+          names.filter((name) => name.endsWith(".log")),
+        )
+        expect(file).toMatch(/^positiv-\d{4}-\d{2}-\d{2}\.log$/)
+        const [line] = (await readFile(join(logDir, file), "utf8"))
+          .trim()
+          .split("\n")
+        expect(JSON.parse(line)).toMatchObject({
+          level: "info",
+          message: "job finished",
+          job: "retry-payment-emails",
+          timestamp: expect.any(String),
+        })
+      })
+    })
+
+    it("masks emails and CPFs before they reach the file", async () => {
+      ENV.APP_ENV = "production"
+      ENV.LOG_DIR = logDir
+
+      const { logger } = await import("./logger.server")
+      logger.info("reset held back", {
+        error: { message: "rate limited for ana@example.com" },
+        cpf: "123.456.789-09",
+      })
+
+      await vi.waitFor(async () => {
+        const [file] = (await readdir(logDir)).filter((name) =>
+          name.endsWith(".log"),
+        )
+        const content = await readFile(join(logDir, file), "utf8")
+        expect(content).toContain("***@example.com")
+        expect(content).not.toContain("ana@")
+        expect(content).not.toContain("123.456.789-09")
+      })
+    })
+
+    it("keeps every line valid JSON when a number looks like a CPF", async () => {
+      ENV.APP_ENV = "production"
+      ENV.LOG_DIR = logDir
+
+      const { logger } = await import("./logger.server")
+      logger.info("synced", { phone: 11987654321 })
+
+      await vi.waitFor(async () => {
+        const [file] = (await readdir(logDir)).filter((name) =>
+          name.endsWith(".log"),
+        )
+        const [line] = (await readFile(join(logDir, file), "utf8"))
+          .trim()
+          .split("\n")
+        expect(JSON.parse(line)).toMatchObject({ message: "synced" })
+      })
+    })
+
+    it("keeps 60 days of files capped at 20 MB each", async () => {
+      ENV.LOG_DIR = logDir
+
+      const { logger } = await import("./logger.server")
+      const file = logger.transports.find((t) => t instanceof DailyRotateFile)
+
+      expect(file?.options).toMatchObject({ maxFiles: "60d", maxSize: "20m" })
+    })
+
+    it("survives a log file it cannot write, reporting it on stderr", async () => {
+      ENV.LOG_DIR = logDir
+      const stderr = vi.spyOn(console, "error").mockImplementation(() => {})
+
+      const { logger } = await import("./logger.server")
+      const file = logger.transports.find((t) => t instanceof DailyRotateFile)
+
+      expect(() => file?.emit("error", new Error("EACCES"))).not.toThrow()
+      expect(stderr).toHaveBeenCalledWith(
+        "Logger transport failed",
+        expect.objectContaining({ message: "EACCES" }),
+      )
+    })
   })
 
   describe("incident ID", () => {

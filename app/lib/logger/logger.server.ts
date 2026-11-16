@@ -1,14 +1,39 @@
 import { randomBytes } from "node:crypto"
 import { isRouteErrorResponse } from "react-router"
 import winston from "winston"
+import DailyRotateFile from "winston-daily-rotate-file"
 import { ENV } from "varlock/env"
 import { MASK, redact } from "./redact.server"
 import { TelegramTransport } from "./telegram-transport.server"
 
 const isProduction = ENV.APP_ENV === "production"
 
+// winston keeps the serialized line under this symbol (triple-beam's MESSAGE).
+const MESSAGE = Symbol.for("message")
+
+// Masks emails and CPFs in the serialized line, whatever object carried them:
+// production lines are kept on disk for 60 days. Only string values are
+// redacted, so a number that looks like a CPF cannot break the JSON.
+const redactLine = winston.format((info) => {
+  const line = info[MESSAGE]
+  if (typeof line === "string") {
+    info[MESSAGE] = JSON.stringify(
+      JSON.parse(line, (_key, value: unknown) =>
+        typeof value === "string" ? redact(value) : value,
+      ),
+    )
+  }
+  return info
+})
+
+const jsonLines = winston.format.combine(
+  winston.format.timestamp(),
+  winston.format.json(),
+  redactLine(),
+)
+
 const consoleFormat = isProduction
-  ? winston.format.combine(winston.format.timestamp(), winston.format.json())
+  ? jsonLines
   : winston.format.combine(
       winston.format.colorize(),
       winston.format.simple(),
@@ -23,6 +48,21 @@ const {
   TELEGRAM_BOT_TOKEN: botToken,
   TELEGRAM_CHAT_ID: chatId,
 } = ENV
+
+// The container's own filesystem is wiped on every deploy, so LOG_DIR has to
+// be a persistent volume for these files to outlive one.
+if (ENV.LOG_DIR) {
+  transports.push(
+    new DailyRotateFile({
+      dirname: ENV.LOG_DIR,
+      filename: "positiv-%DATE%.log",
+      datePattern: "YYYY-MM-DD",
+      maxFiles: "60d",
+      maxSize: "20m",
+      format: jsonLines,
+    }),
+  )
+}
 
 if (telegramEnabled && botToken && chatId) {
   transports.push(
@@ -44,9 +84,17 @@ const stampIncidentId = winston.format((info) => {
 })
 
 export const logger = winston.createLogger({
-  level: isProduction ? "warn" : "debug",
+  level: isProduction ? "info" : "debug",
   format: stampIncidentId(),
   transports,
+})
+
+// Winston re-emits a transport's error on the logger, and an unhandled
+// "error" event throws: a log file it cannot write (volume missing, disk
+// full) would take the app down. Reported outside the logger, which is the
+// thing failing.
+logger.on("error", (error) => {
+  console.error("Logger transport failed", error)
 })
 
 export interface SerializedError {

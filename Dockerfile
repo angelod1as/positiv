@@ -46,6 +46,11 @@ FROM node:24.22.1-alpine
 ENV APP_ENV=production \
     NODE_ENV=production
 
+# Log files land here, on the persistent volume Coolify mounts at this path, so
+# they survive the next deploy. Without the volume they vanish with the
+# container.
+ENV LOG_DIR=/app/logs
+
 # The server build ships with source maps, so stacks in the logs and in the
 # Telegram alerts point at app/... file:line rather than build/server/index.js.
 ENV NODE_OPTIONS=--enable-source-maps
