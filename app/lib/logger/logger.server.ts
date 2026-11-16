@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto"
 import { isRouteErrorResponse } from "react-router"
 import winston from "winston"
+import DailyRotateFile from "winston-daily-rotate-file"
 import { ENV } from "varlock/env"
 import { MASK, redact } from "./redact.server"
 import { TelegramTransport } from "./telegram-transport.server"
@@ -24,6 +25,24 @@ const {
   TELEGRAM_CHAT_ID: chatId,
 } = ENV
 
+// The container's own filesystem is wiped on every deploy, so LOG_DIR has to
+// be a persistent volume for these files to outlive one.
+if (ENV.LOG_DIR) {
+  transports.push(
+    new DailyRotateFile({
+      dirname: ENV.LOG_DIR,
+      filename: "positiv-%DATE%.log",
+      datePattern: "YYYY-MM-DD",
+      maxFiles: "60d",
+      maxSize: "20m",
+      format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.json(),
+      ),
+    }),
+  )
+}
+
 if (telegramEnabled && botToken && chatId) {
   transports.push(
     new TelegramTransport({
@@ -44,7 +63,7 @@ const stampIncidentId = winston.format((info) => {
 })
 
 export const logger = winston.createLogger({
-  level: isProduction ? "warn" : "debug",
+  level: isProduction ? "info" : "debug",
   format: stampIncidentId(),
   transports,
 })
