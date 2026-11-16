@@ -71,16 +71,11 @@ export class EventsPage extends BasePage {
   }
 
   async verifyEventDetails(eventTitle: string, expectedDetails: {
-    description?: string
     location?: string
     price?: string
   }): Promise<void> {
     const eventCard = await this.getEventCardByTitle(eventTitle)
     await expect(eventCard).toBeVisible()
-
-    if (expectedDetails.description) {
-      await expect(eventCard).toContainText(expectedDetails.description)
-    }
 
     if (expectedDetails.location) {
       await expect(eventCard).toContainText(expectedDetails.location)

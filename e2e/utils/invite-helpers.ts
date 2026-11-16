@@ -20,7 +20,6 @@ export async function createClosedEventSoon(label: string): Promise<{ id: string
       time_event_start: start.toISOString(),
       time_event_end: new Date(start.getTime() + 3 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      description: 'Test event for the invite flow',
       location: 'Test Location',
       total_spots: 100,
     })

@@ -5,7 +5,6 @@ export class EventManagementPage extends BasePage {
   // Form fields
   readonly titleInput: Locator
   readonly emojiInput: Locator
-  readonly descriptionInput: Locator
   readonly locationInput: Locator
   readonly priceInput: Locator
   readonly capacityInput: Locator
@@ -37,7 +36,6 @@ export class EventManagementPage extends BasePage {
     // Form fields
     this.titleInput = page.getByLabel('Nome da festa')
     this.emojiInput = page.getByLabel('Emoji')
-    this.descriptionInput = page.getByLabel('Descrição')
     this.locationInput = page.getByLabel('Local')
     this.priceInput = page.getByLabel('Valor')
     this.capacityInput = page.getByLabel('Lotação')
@@ -73,14 +71,12 @@ export class EventManagementPage extends BasePage {
   async fillBasicEventInfo(data: {
     title: string
     emoji: string
-    description: string
     location: string
     price: string
     capacity: string
   }): Promise<void> {
     await this.titleInput.fill(data.title)
     await this.emojiInput.fill(data.emoji)
-    await this.descriptionInput.fill(data.description)
     await this.locationInput.fill(data.location)
     await this.priceInput.fill(data.price)
     await this.capacityInput.fill(data.capacity)
