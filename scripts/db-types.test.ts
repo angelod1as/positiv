@@ -137,4 +137,16 @@ describe('db-types', () => {
     expect(argv).not.toContain('--db-url')
     expect(argv).not.toContain('gen types typescript --local')
   })
+
+  it('asks the hosted project by its ref when not told to use the local stack', async () => {
+    writeFakeCli('ok')
+    writeFileSync(join(workDir, '.env'), 'SUPABASE_PROJECT_ID=abcdefghijklmnop\n')
+
+    const result = await runScript([])
+
+    expect(result.code).toBe(0)
+    const argv = readFileSync(argvLog, 'utf8')
+    expect(argv).toContain('gen types typescript --remote=abcdefghijklmnop')
+    expect(argv).not.toContain('--project-id')
+  })
 })
