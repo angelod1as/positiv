@@ -18,6 +18,7 @@ const fieldLabels = {
   unit: "a unidade",
   series: "as séries",
   rows: "as linhas",
+  component: "o componente",
   _type: "o tipo",
 } as const
 

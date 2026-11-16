@@ -645,6 +645,11 @@
         "summary": "Mais da metade foi para o aluguel do espaço.",
         "title": "Para onde foi o dinheiro",
         "unit": "brl"
+      },
+      {
+        "_key": "system-component",
+        "_type": "systemComponent",
+        "component": "analyticsOptOut"
       }
     ],
     "seo": {
@@ -1810,6 +1815,11 @@
         "summary": "Mais da metade foi para o aluguel do espaço.",
         "title": "Para onde foi o dinheiro",
         "unit": "brl"
+      },
+      {
+        "_key": "system-component",
+        "_type": "systemComponent",
+        "component": "analyticsOptOut"
       }
     ],
     "seo": {

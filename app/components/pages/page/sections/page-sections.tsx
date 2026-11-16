@@ -15,6 +15,7 @@ import { ChartSection } from "./chart-section"
 import { ImageSection } from "./image-section"
 import { RichTextSection } from "./rich-text-section"
 import { StatsSection } from "./stats-section"
+import { SystemComponentSection } from "./system-component-section"
 
 type PageSectionsProps = {
   page: string
@@ -93,6 +94,8 @@ const renderSection = (
       return <StatsSection content={section} />
     case "chartSection":
       return <ChartSection content={section} />
+    case "systemComponent":
+      return <SystemComponentSection content={section} />
     case "placeholder":
       return <PagePlaceholder variant="section" missing={section.missing} />
   }

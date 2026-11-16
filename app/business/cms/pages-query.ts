@@ -64,7 +64,8 @@ export const pagesQuery = `*[_type == "page"]{
       unit,
       series,
       rows[]{ _key, label, values, highlight }
-    }
+    },
+    _type == "systemComponent" => { component }
   },
   seo{ title, description, image{ alt, hotspot, crop, asset }, noIndex }
 }`

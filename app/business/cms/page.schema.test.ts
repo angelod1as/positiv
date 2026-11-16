@@ -231,6 +231,10 @@ describe("pageDocumentSchema", () => {
         ],
       ],
       [
+        "a System Component the Platform does not have",
+        [{ ...sections.systemComponent, component: "somethingElse" }],
+      ],
+      [
         "a Stats Section without cards",
         [{ ...sections.statsSection, cards: [] }],
       ],

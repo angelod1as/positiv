@@ -6,6 +6,7 @@ import {
   pageSectionDocumentSchema,
 } from "~/business/cms/page.schema"
 import { homepageCopy } from "~/copy/homepage"
+import { analyticsOptOutCopy } from "~/copy/privacy"
 import { paragraph, sections } from "~/test/page-documents"
 import { pageFixture } from "~/test/pages-snapshot-fixture"
 import { renderWithRouter, screen, waitFor } from "~/test/test-utils"
@@ -115,6 +116,28 @@ describe("PageSections", () => {
 
     expect(
       screen.getByRole("heading", { level: 2, name: "Festas por ano" }),
+    ).toBeInTheDocument()
+  })
+
+  it("renders the System Component an Editor picked", () => {
+    const systemComponent = pageSectionDocumentSchema.parse(
+      sections.systemComponent,
+    )
+    if (systemComponent._type !== "systemComponent") {
+      throw new Error("Not a System Component")
+    }
+
+    renderWithRouter(
+      <PageSections
+        page="/privacidade"
+        sections={[systemComponent]}
+        events={undefined}
+        isLoggedIn={false}
+      />,
+    )
+
+    expect(
+      screen.getByRole("button", { name: analyticsOptOutCopy.optOut }),
     ).toBeInTheDocument()
   })
 

@@ -98,6 +98,7 @@ describe("seedDocuments", () => {
       "chartSection",
       "chartSection",
       "chartSection",
+      "systemComponent",
     ])
   })
 
@@ -121,6 +122,7 @@ describe("seedDocuments", () => {
       "chartSection",
       "chartSection",
       "chartSection",
+      "systemComponent",
     ])
     expect(JSON.stringify(testPage)).toContain(E2E_TEST_SENTINEL)
   })
