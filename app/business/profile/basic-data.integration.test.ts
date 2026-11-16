@@ -280,18 +280,27 @@ describe("saveBasicData - Integration Tests", () => {
       expect.objectContaining({ profileId: profile.id }),
     )
     addSubscriber.mockClear()
+    const updateSubscriberById = vi.spyOn(listmonkClient, "updateSubscriberById")
+    updateSubscriberById.mockResolvedValue({
+      success: true,
+      data: { found: true },
+      errors: [],
+    })
 
     await saveBasicData({
       answers: answersFor(email),
       context: contextFor(email, userId) as never,
     })
 
-    expect(addSubscriber).toHaveBeenCalledOnce()
-    expect(addSubscriber.mock.calls[0][0].attributes.full_name).toBe(
+    // The subscriber stored at subscription time is the one refreshed. A name
+    // refresh is not consent: updating by id keeps the lists as they are and
+    // confirms none.
+    expect(addSubscriber).not.toHaveBeenCalled()
+    expect(updateSubscriberById).toHaveBeenCalledOnce()
+    expect(updateSubscriberById.mock.calls[0][0]).toBe(123)
+    expect(updateSubscriberById.mock.calls[0][1].attributes.full_name).toBe(
       "Maria Silva",
     )
-    // A name refresh is not consent: it must not re-confirm any list.
-    expect(addSubscriber.mock.calls[0][0].lists).toEqual([])
   })
 
   it("writes nothing when an answer is refused", async () => {

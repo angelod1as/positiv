@@ -5,7 +5,7 @@ import {
 } from "~/lib/constants/constants"
 import { logger } from "~/lib/logger/logger.server"
 import { db } from "~/lib/supabase/db.server"
-import { addSubscriber } from "./listmonk-client.server"
+import { addSubscriber, updateSubscriberById } from "./listmonk-client.server"
 import {
   computeSubscriberName,
   subscribeProfile,
@@ -124,17 +124,47 @@ export const refreshNewsletterSubscriber = composable(
       profile.email,
     )
 
-    const result = await addSubscriber({
+    const subscription = await db
+      .selectFrom("newsletter_subscriptions")
+      .select("listmonk_subscriber_id")
+      .where("profile_id", "=", profileId)
+      .executeTakeFirst()
+
+    const details = {
       email: profile.email,
       name: computedName,
-      lists: [],
       attributes: subscriberAttributes(profile, computedName),
-    })
+    }
+
+    // The stored id follows the person across an email change; a lookup by
+    // the new address would find nothing and create a second subscriber.
+    const subscriberId = subscription?.listmonk_subscriber_id
+    if (subscriberId) {
+      const updated = await updateSubscriberById(subscriberId, details)
+      if (!updated.success) {
+        throw new Error(
+          updated.errors[0]?.message ?? "Failed to refresh newsletter subscriber",
+        )
+      }
+      if (updated.data.found) return
+    }
+
+    const result = await addSubscriber({ ...details, lists: [] })
 
     if (!result.success) {
       throw new Error(
         result.errors[0]?.message ?? "Failed to refresh newsletter subscriber",
       )
+    }
+
+    // The stored subscriber is gone from Listmonk: keep the one found or
+    // created by email from now on.
+    if (subscriberId) {
+      await db
+        .updateTable("newsletter_subscriptions")
+        .set({ listmonk_subscriber_id: result.data.subscriberId })
+        .where("profile_id", "=", profileId)
+        .execute()
     }
   },
 )
