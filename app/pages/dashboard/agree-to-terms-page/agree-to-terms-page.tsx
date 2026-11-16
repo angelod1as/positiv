@@ -115,6 +115,7 @@ const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
           <Copy>{section.body}</Copy>
         </Fragment>
       ))}
+      <Copy>{agreeToTermsCopy.privacyPolicy}</Copy>
 
       <FormRunner
         questions={questions}
