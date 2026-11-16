@@ -3,6 +3,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type winston from "winston"
+import DailyRotateFile from "winston-daily-rotate-file"
 import TransportStream from "winston-transport"
 
 const { ENV } = vi.hoisted(() => ({ ENV: {} as Record<string, unknown> }))
@@ -104,14 +105,14 @@ describe("logger", () => {
     })
 
     afterEach(async () => {
+      const { logger } = await import("./logger.server")
+      logger.close()
       await rm(logDir, { recursive: true, force: true })
     })
 
     it("writes nothing to disk when LOG_DIR is not set", async () => {
       const { logger } = await import("./logger.server")
-      const hasFile = logger.transports.some(
-        (t: winston.transport) => t.constructor.name === "DailyRotateFile",
-      )
+      const hasFile = logger.transports.some((t) => t instanceof DailyRotateFile)
       expect(hasFile).toBe(false)
     })
 
@@ -143,11 +144,23 @@ describe("logger", () => {
       ENV.LOG_DIR = logDir
 
       const { logger } = await import("./logger.server")
-      const file = logger.transports.find(
-        (t: winston.transport) => t.constructor.name === "DailyRotateFile",
-      ) as (winston.transport & { options: Record<string, unknown> }) | undefined
+      const file = logger.transports.find((t) => t instanceof DailyRotateFile)
 
       expect(file?.options).toMatchObject({ maxFiles: "60d", maxSize: "20m" })
+    })
+
+    it("survives a log file it cannot write, reporting it on stderr", async () => {
+      ENV.LOG_DIR = logDir
+      const stderr = vi.spyOn(console, "error").mockImplementation(() => {})
+
+      const { logger } = await import("./logger.server")
+      const file = logger.transports.find((t) => t instanceof DailyRotateFile)
+
+      expect(() => file?.emit("error", new Error("EACCES"))).not.toThrow()
+      expect(stderr).toHaveBeenCalledWith(
+        "Logger transport failed",
+        expect.objectContaining({ message: "EACCES" }),
+      )
     })
   })
 

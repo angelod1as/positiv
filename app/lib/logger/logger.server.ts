@@ -68,6 +68,14 @@ export const logger = winston.createLogger({
   transports,
 })
 
+// Winston re-emits a transport's error on the logger, and an unhandled
+// "error" event throws: a log file it cannot write (volume missing, disk
+// full) would take the app down. Reported outside the logger, which is the
+// thing failing.
+logger.on("error", (error) => {
+  console.error("Logger transport failed", error)
+})
+
 export interface SerializedError {
   name?: string
   message: string
