@@ -47,13 +47,13 @@ describe("NextEventsSection", () => {
     expect(screen.getByText("Subtítulo do editor.")).toBeInTheDocument()
   })
 
-  it("should render event title and description", () => {
+  it("should render the event title without its description", () => {
     renderWithRouter(
       <NextEventsSection content={content} events={[baseEvent]} />,
     )
 
     expect(screen.getByText("Test Event")).toBeInTheDocument()
-    expect(screen.getByText("A cool event")).toBeInTheDocument()
+    expect(screen.queryByText("A cool event")).not.toBeInTheDocument()
   })
 
   it("should show open registration message when event is open", () => {

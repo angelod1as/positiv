@@ -5,7 +5,6 @@ import { Button } from "~/components/atoms/button/button"
 import { Copy } from "~/components/atoms/copy/copy"
 import {
   Card,
-  CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
@@ -54,7 +53,6 @@ export const NextEventsSection: FC<NextEventsSectionProps> = ({
                     id,
                     time_application_start,
                     event_status,
-                    description,
                     emoji,
                     time_event_start,
                     time_event_end,
@@ -86,10 +84,7 @@ export const NextEventsSection: FC<NextEventsSectionProps> = ({
                             )}
                           </CardDescription>
                         </CardHeader>
-                        <CardContent className="text-muted-foreground grow gap-4 flex flex-col items-center">
-                          <p>{description}</p>
-                        </CardContent>
-                        <CardFooter className="flex flex-col gap-2">
+                        <CardFooter className="flex flex-col gap-2 mt-auto">
                           {isOpen ? (
                             <p className="text-sm">
                               <Copy inline>{nextEvents.registrationOpen}</Copy>

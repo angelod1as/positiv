@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card"
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card"
 import type { PageContent } from "~/business/cms/content.schema"
 import { SectionTitle } from "./section-title"
 import { Section } from "../section/section"
@@ -18,15 +18,7 @@ const EventCardSkeleton = () => {
           <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mx-auto mt-2" />
         </CardDescription>
       </CardHeader>
-      <CardContent className="text-muted-foreground grow gap-4 flex flex-col">
-        {/* Description placeholders */}
-        <div className="space-y-2">
-          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full" />
-          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-5/6 mx-auto" />
-          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-4/6 mx-auto" />
-        </div>
-      </CardContent>
-      <CardFooter className="flex flex-col gap-2">
+      <CardFooter className="flex flex-col gap-2 mt-auto">
         {/* Status text placeholder */}
         <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3 mx-auto" />
         {/* Button placeholder */}
