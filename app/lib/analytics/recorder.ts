@@ -1,3 +1,6 @@
+const asScriptLiteral = (value: string) =>
+  JSON.stringify(value).replace(/</g, "\\u003c")
+
 // The recorder behind Umami's replays and heatmaps keeps recording across
 // client-side navigations, stores the full address with its query string and
 // honours neither data-before-send nor any stop call. So it is only loaded for
@@ -19,8 +22,8 @@ export function umamiRecorderLoaderScript(url: string, websiteId: string) {
   } catch (error) {}
   var script = document.createElement("script")
   script.defer = true
-  script.src = ${JSON.stringify(`${url}/recorder.js`)}
-  script.setAttribute("data-website-id", ${JSON.stringify(websiteId)})
+  script.src = ${asScriptLiteral(`${url}/recorder.js`)}
+  script.setAttribute("data-website-id", ${asScriptLiteral(websiteId)})
   document.head.appendChild(script)
 })()`
 }

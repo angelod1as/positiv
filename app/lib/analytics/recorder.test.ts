@@ -71,4 +71,15 @@ describe("umamiRecorderLoaderScript", () => {
 
     expect(runLoader()).toBeNull()
   })
+
+  it("cannot be closed early by a value that carries a closing script tag", () => {
+    const script = umamiRecorderLoaderScript(
+      "https://umami.example.com",
+      "</script><script>alert(1)</script>",
+    )
+
+    expect(script).not.toContain("</script")
+    expect(script).not.toContain("<!--")
+  })
 })
+
