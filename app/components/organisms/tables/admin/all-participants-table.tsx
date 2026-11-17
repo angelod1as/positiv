@@ -331,8 +331,6 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
     </div>
   )
 
-  // The list leaves out profiles without basic data, so the search alone
-  // cannot reach them; the lookup behind this link can.
   const renderOpenProfile = (searchText: string) => {
     const query = searchText.trim()
     if (!query) return null

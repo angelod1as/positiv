@@ -1,3 +1,4 @@
+import { redirectWithError } from "remix-toast"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { getAdminContext } from "~/business/auth/admin-context.server"
 import {
@@ -16,6 +17,11 @@ vi.mock("~/business/profile/profiles.server", () => ({
   getAllProfiles: vi.fn(),
   updateProfileAdminNotes: vi.fn(),
 }))
+
+vi.mock("remix-toast", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("remix-toast")>()
+  return { ...actual, redirectWithError: vi.fn(actual.redirectWithError) }
+})
 
 vi.mock("~/business/newsletter/veterans-list.server", () => ({
   syncVeteransListmonkList: vi.fn(),
@@ -90,10 +96,10 @@ describe("ParticipantsPage loader", () => {
       const response = await runLoader(lookupUrl("ninguem"))
 
       expect(response).toBeInstanceOf(Response)
-      expect((response as Response).headers.get("Location")).toBe(
+      expect(redirectWithError).toHaveBeenCalledWith(
         paths.admin.ADMIN_PARTICIPANTS,
+        adminParticipantsCopy.list.openProfileNotFound("ninguem"),
       )
-      expect((response as Response).headers.get("Set-Cookie")).toBeTruthy()
     })
 
     it("should go back to the list with a failure message when the lookup fails", async () => {
@@ -104,14 +110,11 @@ describe("ParticipantsPage loader", () => {
 
       const response = await runLoader(lookupUrl(profileId))
 
-      expect((response as Response).headers.get("Location")).toBe(
+      expect(response).toBeInstanceOf(Response)
+      expect(redirectWithError).toHaveBeenCalledWith(
         paths.admin.ADMIN_PARTICIPANTS,
+        adminParticipantsCopy.list.openProfileFailed,
       )
-      const cookie = (response as Response).headers.get("Set-Cookie") ?? ""
-      const session = decodeURIComponent(cookie.split(";")[0].split("=")[1])
-      expect(
-        Buffer.from(session.split(".")[0], "base64").toString("utf8"),
-      ).toContain(adminParticipantsCopy.list.openProfileFailed)
     })
 
     it("should list the profiles when the lookup text is only whitespace", async () => {
