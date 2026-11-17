@@ -18,7 +18,8 @@ export function formatDateTime(
   const timeZone = "America/Sao_Paulo"
 
   let datePattern: string
-  const timePattern = "HH'h'"
+  const minutes = formatInTimeZone(dateString, timeZone, "mm")
+  const timePattern = minutes === "00" ? "HH'h'" : "HH'h'mm"
 
   switch (lengthOption) {
     case "numeric":
