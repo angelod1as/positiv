@@ -126,7 +126,9 @@ export const Header: FC<HeaderProps> = ({
                   {platformInMenu && (
                     <div className="flex flex-col gap-2 px-1 sm:hidden">
                       {!!displayName && (
-                        <p className="px-3">{headerCopy.greeting(displayName)}</p>
+                        <p className="px-3" data-umami-block>
+                          {headerCopy.greeting(displayName)}
+                        </p>
                       )}
                       <NewsDialog
                         isThereAnyNews={isThereAnyNews}
@@ -205,7 +207,9 @@ export const Header: FC<HeaderProps> = ({
               (showButtons ? (
                 <div className="hidden sm:flex items-center space-x-2">
                   {!!displayName && (
-                    <p className="hidden sm:block">{headerCopy.greeting(displayName)}</p>
+                    <p className="hidden sm:block" data-umami-block>
+                      {headerCopy.greeting(displayName)}
+                    </p>
                   )}
                   <NewsDialog isThereAnyNews={isThereAnyNews} isHeader={true} currentProfile={profile} />
                   <Button

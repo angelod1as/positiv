@@ -115,6 +115,9 @@ const sharedSections = [
     series: zod.array(zod.string()).min(1),
     rows: zod.array(chartRowSchema).min(1),
   }),
+  section("systemComponent", {
+    component: zod.enum(["analyticsOptOut"]),
+  }),
 ] as const
 
 const imageDimensionsSchema = zod.object({

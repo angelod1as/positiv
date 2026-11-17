@@ -124,6 +124,21 @@ describe("Layout", () => {
       expect(hookAt).toBeLessThan(umamiAt)
     })
 
+    it("renders the loader that adds Umami's recorder for replays and heatmaps", { timeout: 15000 }, async () => {
+      ENV.VITE_UMAMI_WEBSITE_ID = "test-website-id-123"
+      ENV.VITE_UMAMI_URL = "https://umami.example.com"
+
+      const document = await renderLayout("/eventos")
+      const loader = Array.from(document.querySelectorAll("head script")).find(
+        (script) => script.textContent?.includes("/recorder.js"),
+      )
+
+      expect(loader?.textContent).toContain(
+        '"https://umami.example.com/recorder.js"',
+      )
+      expect(loader?.textContent).toContain('"test-website-id-123"')
+    })
+
     it("should not render Umami script when VITE_UMAMI_WEBSITE_ID is not set", { timeout: 15000 }, async () => {
       ENV.VITE_UMAMI_WEBSITE_ID = ""
       ENV.VITE_UMAMI_URL = ""
@@ -144,6 +159,7 @@ describe("Layout", () => {
         const document = await renderLayout(path)
 
         expect(document.querySelector("script[data-website-id]")).toBeNull()
+        expect(document.head.innerHTML).not.toContain("/recorder.js")
       },
     )
 

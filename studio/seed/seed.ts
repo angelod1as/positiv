@@ -212,6 +212,12 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
     highlight = false,
   ) => ({ _type: "chartRow", _key, label, values, highlight })
 
+  const systemComponent = {
+    _type: "systemComponent",
+    _key: "system-component",
+    component: "analyticsOptOut",
+  }
+
   const chartSections = [
     {
       _type: "chartSection",
@@ -396,6 +402,7 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
         },
         statsSection,
         ...chartSections,
+        systemComponent,
       ],
       seo: seo(
         "Eventos naturistas para pessoas queer: conteúdo de exemplo do ambiente de desenvolvimento.",
@@ -517,6 +524,7 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
         },
         statsSection,
         ...chartSections,
+        systemComponent,
       ],
       seo: {
         _type: "seo",

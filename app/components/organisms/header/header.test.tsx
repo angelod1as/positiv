@@ -108,6 +108,20 @@ describe("Header — the Platform in the menu on small screens", () => {
     expect(follows(divider, nav)).toBe(true)
   })
 
+  // Umami's Block Selector is `[data-umami-block]`: the visitor's name never
+  // shows in a replay.
+  it("keeps the greeting out of session recordings, in the bar and in the menu", async () => {
+    renderLoggedIn()
+
+    await openMenu()
+
+    const greetings = screen.getAllByText(headerCopy.greeting("Someone"))
+    expect(greetings).toHaveLength(2)
+    for (const greeting of greetings) {
+      expect(greeting).toHaveAttribute("data-umami-block")
+    }
+  })
+
   it("keeps the menu for the Platform when there is no Navigation", async () => {
     renderLoggedIn({ links: [] })
 

@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { homepageCopy } from '../../../app/copy/homepage'
 import { errorsCopy } from '../../../app/copy/errors'
+import { analyticsOptOutCopy } from '../../../app/copy/privacy'
 import { testPageContent } from '../../fixtures/test-page-content'
 import { SitePage } from '../../pages/SitePage'
 
@@ -53,6 +54,9 @@ test.describe('Pages from Sanity', () => {
       chartSection
         .getByRole('table', { name: CHART_SECTION_TITLE })
         .getByRole('cell', { name: CHART_SECTION_VALUE }),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: analyticsOptOutCopy.optOut }),
     ).toBeVisible()
   })
 

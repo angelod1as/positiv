@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
+import { umamiRecorderLoaderScript } from "~/lib/analytics/recorder"
 
 async function routesFor(nodeEnv: string) {
   vi.stubEnv("NODE_ENV", nodeEnv)
@@ -80,4 +81,41 @@ describe("route config", () => {
     expect(await routesFor("production")).toContain("homepage")
     expect(await routesFor("development")).toContain("homepage")
   })
+
+  // The Block Selector hides what is behind the guards once a recorded visit
+  // gets there; a visit that starts there must not be recorded at all, since
+  // the recorder keeps the full address. The loader's list of private paths is
+  // written by hand, so every guarded route is checked against it.
+  it("never records a visit that starts on a page behind the private or admin guard", async () => {
+    vi.resetModules()
+    const routes = (await import("./routes")).default
+
+    type Route = { file: string; path?: string; children?: Route[] }
+    const guards = ["pages/guard/private.tsx", "pages/guard/admin.tsx"]
+    const guarded: string[] = []
+    const walk = (nodes: Route[], base: string, behindGuard: boolean) => {
+      for (const node of nodes) {
+        const path = node.path
+          ? `${base}/${node.path}`.replace(/\/+/g, "/")
+          : base
+        const isBehind = behindGuard || guards.includes(node.file)
+        if (isBehind && !node.children) guarded.push(path)
+        walk(node.children ?? [], path, isBehind)
+      }
+    }
+    walk(routes as Route[], "", false)
+
+    const recorded = guarded.filter((path) => {
+      window.history.replaceState(null, "", path.replace(/:\w+\??/g, "x"))
+      new Function(umamiRecorderLoaderScript("https://umami.example.com", "id"))()
+      const recorder = document.head.querySelector("script[src$='/recorder.js']")
+      recorder?.remove()
+      return recorder !== null
+    })
+    window.history.replaceState(null, "", "/")
+
+    expect(guarded.length).toBeGreaterThan(10)
+    expect(recorded).toEqual([])
+  })
 })
+

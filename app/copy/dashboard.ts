@@ -79,6 +79,8 @@ export const agreeToTermsCopy = {
     body: "Se não puder gastar uns minutos lendo isso, já não é uma pessoa que passaria em nossa entrevista",
   },
   sections: termsSections,
+  privacyPolicy:
+    "Leia também nossa [Política de Privacidade](/privacidade): ela explica quais dados coletamos e por quê.",
   labels: {
     agree: "Li tudo e estou de acordo!",
     commonEmails: "Aceito receber e-mails gerais do sistema",

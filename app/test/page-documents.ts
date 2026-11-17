@@ -139,6 +139,11 @@ export const sections = {
       { _key: "y2025", label: "2025", values: [14], highlight: true },
     ],
   },
+  systemComponent: {
+    _type: "systemComponent",
+    _key: "system-component",
+    component: "analyticsOptOut",
+  },
 }
 
 export const headers = {

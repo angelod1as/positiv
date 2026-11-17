@@ -86,6 +86,14 @@ describe("AgreeToTermsPage", () => {
     expect(container.querySelectorAll("li")).toHaveLength(8)
   })
 
+  it("links to the privacy policy before the person agrees", () => {
+    renderPage()
+
+    expect(
+      screen.getByRole("link", { name: "Política de Privacidade" }),
+    ).toHaveAttribute("href", "/privacidade")
+  })
+
   it("opens with the system e-mails ticked and the terms not", () => {
     renderPage()
 
