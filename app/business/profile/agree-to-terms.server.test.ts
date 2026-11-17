@@ -12,6 +12,12 @@ vi.mock("../newsletter/subscription-helpers.server", () => ({
   unsubscribeProfile: vi.fn(),
 }))
 
+vi.mock("../newsletter/email-consents.server", () => ({
+  recordNewsletterRefusal: vi
+    .fn()
+    .mockResolvedValue({ success: true, data: undefined, errors: [] }),
+}))
+
 vi.mock("~/lib/logger/logger.server", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
@@ -26,6 +32,7 @@ vi.mock("~/lib/supabase/db.server", () => ({
 
 import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
 import { unsubscribeProfile } from "../newsletter/subscription-helpers.server"
+import { recordNewsletterRefusal } from "../newsletter/email-consents.server"
 import { db } from "~/lib/supabase/db.server"
 import { logger } from "~/lib/logger/logger.server"
 
@@ -277,6 +284,7 @@ describe("agreeToTerms", () => {
     // Should succeed even if no subscription exists
     expect('success' in result ? result.success : true).toBe(true)
     expect(unsubscribeProfile).toHaveBeenCalledWith("profile-123")
+    expect(recordNewsletterRefusal).toHaveBeenCalledWith("profile-123")
   })
 
   it("should subscribe existing profile when mktEmails is true", async () => {

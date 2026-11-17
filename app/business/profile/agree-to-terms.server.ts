@@ -6,6 +6,7 @@ import { logger } from "~/lib/logger/logger.server"
 import { agreeToTermsSchema } from "./profile-schemas"
 import { contextSchema } from "../auth/auth-schemas"
 import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
+import { recordNewsletterRefusal } from "../newsletter/email-consents.server"
 import { unsubscribeProfile } from "../newsletter/subscription-helpers.server"
 
 export const agreeToTerms = applySchema(
@@ -119,6 +120,8 @@ export const agreeToTerms = applySchema(
         logger.error("Failed to unsubscribe profile:", { error: result.errors[0].message })
         throw result.errors[0]
       }
+      const refusal = await recordNewsletterRefusal(profileId)
+      if (!refusal.success) throw refusal.errors[0]
     }
   }
 

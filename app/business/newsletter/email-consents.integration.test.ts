@@ -79,8 +79,9 @@ describe("email_consents - Integration Tests", () => {
 
       const consent = await consentOf(profile.id)
       expect(consent.newsletter).toBe(false)
-      expect(consent.newsletter_at!.getTime()).toBeGreaterThanOrEqual(
-        subscribed.newsletter_at!.getTime(),
+      expect(consent.newsletter_at).toEqual(expect.any(Date))
+      expect(new Date(String(consent.newsletter_at)).getTime()).toBeGreaterThanOrEqual(
+        new Date(String(subscribed.newsletter_at)).getTime(),
       )
     })
 
