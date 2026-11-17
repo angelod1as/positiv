@@ -287,6 +287,48 @@ describe("agreeToTerms", () => {
     expect(recordNewsletterRefusal).toHaveBeenCalledWith("profile-123")
   })
 
+  it("should fail when the refusal cannot be recorded", async () => {
+    vi.mocked(unsubscribeProfile).mockResolvedValue({
+      success: false,
+      errors: [new Error("No subscription found")],
+    })
+    vi.mocked(recordNewsletterRefusal).mockResolvedValueOnce({
+      success: false,
+      errors: [new Error("connection refused")],
+    })
+
+    const context = createContext({
+      currentProfile: {
+        id: "profile-123",
+        email: "test@example.com",
+        full_name: null,
+        basic_data_filled: false,
+        social_name: null,
+        pronouns: null,
+        rg: null,
+        cpf: null,
+        phone: null,
+        date_of_birth: null,
+        gender: null,
+        orientation: null,
+        where_lives: null,
+        how_came_to_us: null,
+        rg_issuer: null,
+        created_at: "2025-01-01T00:00:00Z",
+      },
+    })
+
+    const result = await agreeToTerms(
+      { agree: true, commonEmails: true, mktEmails: false },
+      context,
+    )
+
+    expect(result).toMatchObject({ success: false })
+    expect(result.success ? [] : result.errors[0].message).toBe(
+      "connection refused",
+    )
+  })
+
   it("should subscribe existing profile when mktEmails is true", async () => {
     const context = createContext({
       currentProfile: {
