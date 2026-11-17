@@ -18,6 +18,7 @@ const TABLES = [
   "payment_webhook_events",     // independent, but snapshotted so a suite cannot leak events
   "event_demographics_history", // wiped by demographics-history (no WHERE)
   "newsletter_subscriptions",   // seeded; not in TestDataTracker tableOrder — relies on this global restore
+  "email_consents",             // one row per profile; the profiles TRUNCATE cascade empties it
 ]
 
 // auth.users is intentionally excluded from the backup/restore cycle: TRUNCATE on
@@ -168,6 +169,10 @@ export default async function setup() {
         for (const table of TABLES) {
           const columns = await getColumnNames(client, table)
           const foreignKeys = await getForeignKeys(client, table)
+          // A trigger may have filled this table while an earlier one was
+          // restored (profiles creates its email_consents row): the snapshot
+          // wins.
+          await client.query(`DELETE FROM ${table}`)
           await client.query(
             buildRestoreStatement(table, columns, `_backup_${RUN_ID}_${table}`, foreignKeys)
           )

@@ -12,6 +12,12 @@ vi.mock("../newsletter/subscription-helpers.server", () => ({
   unsubscribeProfile: vi.fn(),
 }))
 
+vi.mock("../newsletter/email-consents.server", () => ({
+  recordNewsletterRefusal: vi
+    .fn()
+    .mockResolvedValue({ success: true, data: undefined, errors: [] }),
+}))
+
 vi.mock("~/lib/logger/logger.server", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
@@ -26,6 +32,7 @@ vi.mock("~/lib/supabase/db.server", () => ({
 
 import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
 import { unsubscribeProfile } from "../newsletter/subscription-helpers.server"
+import { recordNewsletterRefusal } from "../newsletter/email-consents.server"
 import { db } from "~/lib/supabase/db.server"
 import { logger } from "~/lib/logger/logger.server"
 
@@ -277,6 +284,49 @@ describe("agreeToTerms", () => {
     // Should succeed even if no subscription exists
     expect('success' in result ? result.success : true).toBe(true)
     expect(unsubscribeProfile).toHaveBeenCalledWith("profile-123")
+    expect(recordNewsletterRefusal).toHaveBeenCalledWith("profile-123")
+  })
+
+  it("should fail when the refusal cannot be recorded", async () => {
+    vi.mocked(unsubscribeProfile).mockResolvedValue({
+      success: false,
+      errors: [new Error("No subscription found")],
+    })
+    vi.mocked(recordNewsletterRefusal).mockResolvedValueOnce({
+      success: false,
+      errors: [new Error("connection refused")],
+    })
+
+    const context = createContext({
+      currentProfile: {
+        id: "profile-123",
+        email: "test@example.com",
+        full_name: null,
+        basic_data_filled: false,
+        social_name: null,
+        pronouns: null,
+        rg: null,
+        cpf: null,
+        phone: null,
+        date_of_birth: null,
+        gender: null,
+        orientation: null,
+        where_lives: null,
+        how_came_to_us: null,
+        rg_issuer: null,
+        created_at: "2025-01-01T00:00:00Z",
+      },
+    })
+
+    const result = await agreeToTerms(
+      { agree: true, commonEmails: true, mktEmails: false },
+      context,
+    )
+
+    expect(result).toMatchObject({ success: false })
+    expect(result.success ? [] : result.errors[0].message).toBe(
+      "connection refused",
+    )
   })
 
   it("should subscribe existing profile when mktEmails is true", async () => {

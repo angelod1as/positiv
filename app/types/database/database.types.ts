@@ -53,6 +53,26 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"email_consents": {
+                  Row: {
+                    "access_token": string,"created_at": string,"marketing": boolean,"marketing_at": string | null,"newsletter": boolean,"newsletter_at": string | null,"profile_id": string,"registration_alerts": boolean,"registration_alerts_at": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "access_token"?: string,"created_at"?: string,"marketing"?: boolean,"marketing_at"?: string | null,"newsletter"?: boolean,"newsletter_at"?: string | null,"profile_id": string,"registration_alerts"?: boolean,"registration_alerts_at"?: string | null
+                  }
+                  Update: {
+                    "access_token"?: string,"created_at"?: string,"marketing"?: boolean,"marketing_at"?: string | null,"newsletter"?: boolean,"newsletter_at"?: string | null,"profile_id"?: string,"registration_alerts"?: boolean,"registration_alerts_at"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "email_consents_profile_id_fkey"
+      columns: ["profile_id"]
+isOneToOne: true
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"event_demographics_history": {
                   Row: {
                     "age_average": number | null,"age_max": number | null,"age_min": number | null,"calculated_at": string,"created_at": string,"event_id": string,"gender_cis": number,"gender_other_percentage": number,"gender_other_values": (string)[] | null,"gender_trans": number,"id": string,"orientation_ace_demi": number,"orientation_bi_pan": number,"orientation_homo": number,"orientation_other_percentage": number,"orientation_other_values": (string)[] | null,"orientation_straight": number,"race_color_black": number,"race_color_brown": number,"race_color_indigenous": number,"race_color_other_percentage": number,"race_color_other_values": (string)[] | null,"race_color_white": number,"race_color_yellow": number,"total": number,"veteran_no": number,"veteran_yes": number
