@@ -560,6 +560,26 @@ describe("RLS Security - Integration Tests", () => {
     })
   })
 
+  describe("email_consents stays out of the API", () => {
+    // Each row carries the token that opens someone's email preferences
+    // without a login (WEB-53). Only the server reads it, through Kysely.
+    it("should grant anon, authenticated and service_role nothing on it", async () => {
+      const privileges = ["SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE"]
+      const { rows } = await sql<{ role: string; privilege: string; granted: boolean }>`
+        SELECT r.role, p.privilege,
+               CASE WHEN p.privilege IN ('SELECT', 'INSERT', 'UPDATE')
+                 THEN has_any_column_privilege(r.role, 'public.email_consents', p.privilege)
+                 ELSE has_table_privilege(r.role, 'public.email_consents', p.privilege)
+               END AS granted
+          FROM unnest(ARRAY['anon', 'authenticated', 'service_role']) AS r(role)
+         CROSS JOIN unnest(${sql.val(privileges)}::text[]) AS p(privilege)
+      `.execute(db)
+
+      expect(rows).toHaveLength(3 * privileges.length)
+      expect(rows.filter((row) => row.granted)).toEqual([])
+    })
+  })
+
   describe("Row level security coverage", () => {
     it("should have RLS enabled on every table in public", async () => {
       const { rows } = await sql<{ relname: string; relrowsecurity: boolean }>`

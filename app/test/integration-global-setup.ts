@@ -18,6 +18,7 @@ const TABLES = [
   "payment_webhook_events",     // independent, but snapshotted so a suite cannot leak events
   "event_demographics_history", // wiped by demographics-history (no WHERE)
   "newsletter_subscriptions",   // seeded; not in TestDataTracker tableOrder — relies on this global restore
+  "email_consents",             // one row per profile; the profiles TRUNCATE cascade empties it
 ]
 
 // auth.users is intentionally excluded from the backup/restore cycle: TRUNCATE on
