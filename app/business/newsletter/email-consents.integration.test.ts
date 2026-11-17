@@ -1,9 +1,22 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { createTestProfile } from "~/test/db-test-utils"
 import {
   cleanupAfterTest,
   setupIntegrationTest,
 } from "~/test/integration-setup"
+
+vi.mock("./listmonk-client.server", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  unsubscribeSubscriber: vi
+    .fn()
+    .mockResolvedValue({ success: true, data: undefined, errors: [] }),
+}))
+
+import {
+  subscribeProfile,
+  unsubscribeProfile,
+  updateSyncStatus,
+} from "./subscription-helpers.server"
 
 describe("email_consents - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()
@@ -43,6 +56,71 @@ describe("email_consents - Integration Tests", () => {
         marketing_at: null,
       })
       expect(consent.access_token).toEqual(expect.any(String))
+    })
+  })
+
+  describe("Newsletter follows consent_given until WEB-54", () => {
+    it("should record a yes, dated, when someone subscribes", async () => {
+      const profile = await newProfile()
+
+      await subscribeProfile(profile.id, "manual_button")
+
+      const consent = await consentOf(profile.id)
+      expect(consent.newsletter).toBe(true)
+      expect(consent.newsletter_at).toEqual(expect.any(Date))
+    })
+
+    it("should record a no, dated, when someone unsubscribes", async () => {
+      const profile = await newProfile()
+      await subscribeProfile(profile.id, "manual_button")
+      const subscribed = await consentOf(profile.id)
+
+      await unsubscribeProfile(profile.id)
+
+      const consent = await consentOf(profile.id)
+      expect(consent.newsletter).toBe(false)
+      expect(consent.newsletter_at!.getTime()).toBeGreaterThanOrEqual(
+        subscribed.newsletter_at!.getTime(),
+      )
+    })
+
+    it("should record a no when the subscription is created declined", async () => {
+      const profile = await newProfile()
+
+      await kysely
+        .insertInto("newsletter_subscriptions")
+        .values({ profile_id: profile.id, consent_given: false })
+        .execute()
+
+      const consent = await consentOf(profile.id)
+      expect(consent.newsletter).toBe(false)
+      expect(consent.newsletter_at).toEqual(expect.any(Date))
+    })
+
+    it("should keep the date of the choice when the same answer is written again", async () => {
+      const profile = await newProfile()
+      await subscribeProfile(profile.id, "manual_button")
+      const chosen = await consentOf(profile.id)
+
+      await updateSyncStatus(profile.id, "synced", 4242)
+
+      expect((await consentOf(profile.id)).newsletter_at).toEqual(
+        chosen.newsletter_at,
+      )
+    })
+
+    it("should leave Registration alerts and Marketing alone", async () => {
+      const profile = await newProfile()
+
+      await subscribeProfile(profile.id, "manual_button")
+      await unsubscribeProfile(profile.id)
+
+      expect(await consentOf(profile.id)).toMatchObject({
+        registration_alerts: true,
+        registration_alerts_at: null,
+        marketing: false,
+        marketing_at: null,
+      })
     })
   })
 })
