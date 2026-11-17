@@ -15,7 +15,7 @@ const mockParticipantHistory: ParticipantEventHistoryData[] = [
     event_id: "event-1",
     event_title: "Workshop de Introdução",
     event_emoji: "🌱",
-    time_event_start: "2024-03-01T10:00:00",
+    time_event_start: "2026-03-01T10:00:00",
     ticket_price: 10000,
     application_status: "finalised",
     attendance_status: "attended",
@@ -47,7 +47,7 @@ const mockParticipantHistory: ParticipantEventHistoryData[] = [
     event_id: "event-2",
     event_title: "Roda de Conversa",
     event_emoji: "💬",
-    time_event_start: "2024-02-15T14:00:00",
+    time_event_start: "2026-02-15T14:00:00",
     ticket_price: 8000,
     application_status: "finalised",
     attendance_status: "not-attended",
@@ -420,5 +420,41 @@ describe("ParticipantEventHistory", () => {
 
     expect(screen.queryByText(/\+R\$/)).not.toBeInTheDocument()
     expect(screen.queryByText(/-R\$/)).not.toBeInTheDocument()
+  })
+
+  it("shows no amount or surplus for an event from before the platform launch", async () => {
+    const history: ParticipantEventHistoryData[] = [
+      {
+        ...mockParticipantHistory[0],
+        time_event_start: "2025-05-17T22:00:00-03:00",
+        ticket_price: 10000,
+        paid_gross: 15000,
+        net: 15000,
+        payment_status: "paid",
+      },
+      {
+        ...mockParticipantHistory[1],
+        ticket_price: 10000,
+        paid_gross: 13000,
+        net: 13000,
+        payment_status: "paid",
+      },
+    ]
+    renderWithRouter(<ParticipantEventHistory participantHistory={history} />)
+
+    // the row after the launch paints its amount, so the absence below is the
+    // cutoff at work and not a grid that never rendered
+    await waitFor(() => {
+      expect(screen.getByText("R$ 130,00")).toBeInTheDocument()
+    })
+    expect(screen.getByText("+R$ 30,00")).toBeInTheDocument()
+    expect(screen.queryByText("R$ 150,00")).not.toBeInTheDocument()
+    expect(screen.queryByText("+R$ 50,00")).not.toBeInTheDocument()
+  })
+
+  it("says from when the amounts count", () => {
+    renderWithRouter(<ParticipantEventHistory participantHistory={[]} />)
+
+    expect(screen.getByText(historyCopy.cutoffNotice)).toBeInTheDocument()
   })
 })
