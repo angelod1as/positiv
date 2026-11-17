@@ -142,3 +142,104 @@ describe("email_consents migration - Integration Tests", () => {
     expect(Number(result.rows[0].tokens)).toBeGreaterThan(0)
   })
 })
+
+/**
+ * db push applies each migration in its own transaction while the previous
+ * app keeps serving, so a profile created between the backfill and the
+ * profiles trigger has no row. The last migration runs the backfill again
+ * once both triggers exist, and the next one carries a Newsletter answer
+ * written before the mirror did.
+ */
+describe("email_consents backfill after the triggers - Integration Tests", () => {
+  const pool = new Pool({
+    connectionString: assertLocalDatabaseUrl(process.env.SUPABASE_CONNECT_URL),
+  })
+  let client: PoolClient
+  let profileId = ""
+  let unmirroredId = ""
+  const withdrawnAt = new Date("2026-06-01T12:00:00.000Z")
+  const consentedAt = new Date("2026-03-01T12:00:00.000Z")
+
+  beforeAll(async () => {
+    client = await pool.connect()
+    await client.query("BEGIN")
+
+    const profile = await client.query<{ id: string }>(
+      "INSERT INTO public.profiles (email) VALUES ('web51-gap@example.com') RETURNING id",
+    )
+    profileId = profile.rows[0].id
+    await client.query(
+      `INSERT INTO public.newsletter_subscriptions
+         (profile_id, consent_given, unsubscribed_at, sync_status)
+       VALUES ($1, false, $2, 'unsubscribed')`,
+      [profileId, withdrawnAt],
+    )
+    await client.query(
+      "DELETE FROM public.email_consents WHERE profile_id = $1",
+      [profileId],
+    )
+
+    await client.query(
+      "ALTER TABLE public.newsletter_subscriptions DISABLE TRIGGER mirror_newsletter_consent",
+    )
+    const unmirrored = await client.query<{ id: string }>(
+      "INSERT INTO public.profiles (email) VALUES ('web51-unmirrored@example.com') RETURNING id",
+    )
+    unmirroredId = unmirrored.rows[0].id
+    await client.query(
+      `INSERT INTO public.newsletter_subscriptions
+         (profile_id, consent_given, last_consent_given_at, sync_status)
+       VALUES ($1, true, $2, 'synced')`,
+      [unmirroredId, consentedAt],
+    )
+    await client.query(
+      "ALTER TABLE public.newsletter_subscriptions ENABLE TRIGGER mirror_newsletter_consent",
+    )
+
+    for (const migration of [
+      "20261117120300_backfill_email_consents_after_triggers.sql",
+      "20261117120400_mirror_newsletter_consent_written_before_trigger.sql",
+    ]) {
+      await client.query(
+        readFileSync(join(process.cwd(), "supabase/migrations", migration), "utf8"),
+      )
+    }
+  })
+
+  afterAll(async () => {
+    await client.query("ROLLBACK")
+    client.release()
+    await pool.end()
+  })
+
+  it("should give a profile created in the gap its row, carrying its consent", async () => {
+    const result = await client.query<ConsentRow>(
+      "SELECT * FROM public.email_consents WHERE profile_id = $1",
+      [profileId],
+    )
+
+    expect(result.rows).toHaveLength(1)
+    expect(result.rows[0]).toMatchObject({
+      newsletter: false,
+      newsletter_at: withdrawnAt,
+      marketing: false,
+      marketing_at: withdrawnAt,
+      registration_alerts: false,
+      registration_alerts_at: withdrawnAt,
+    })
+  })
+
+  it("should carry a Newsletter answer written before the mirror existed", async () => {
+    const result = await client.query<ConsentRow>(
+      "SELECT * FROM public.email_consents WHERE profile_id = $1",
+      [unmirroredId],
+    )
+
+    expect(result.rows[0]).toMatchObject({
+      newsletter: true,
+      newsletter_at: consentedAt,
+      registration_alerts: true,
+      marketing: false,
+    })
+  })
+})
