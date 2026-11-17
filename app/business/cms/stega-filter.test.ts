@@ -20,7 +20,7 @@ function props(sourcePath: FilterProps["sourcePath"]): FilterProps {
 }
 
 describe("stegaFilter", () => {
-  it.each(["instagram", "alt", "videoTitle", "network", "address"])(
+  it.each(["instagram", "alt", "videoTitle", "network", "address", "component"])(
     "skips the non-display field %s",
     (field) => {
       expect(stegaFilter(props([field]))).toBe(false)
@@ -62,6 +62,8 @@ const result = {
   network: "instagram",
   seo: { title: "Positiv | Sobre", description: "Quem organiza a Positiv" },
   section: { title: "Nossa equipe", alt: "Foto da Nana" },
+  systemComponent: { component: "analyticsOptOut" },
+  chart: { chartType: "bar", unit: "percent" },
 }
 
 const paths = [
@@ -75,6 +77,9 @@ const paths = [
   "$['seo']['description']",
   "$['section']['title']",
   "$['section']['alt']",
+  "$['systemComponent']['component']",
+  "$['chart']['chartType']",
+  "$['chart']['unit']",
 ]
 
 const sourceMap: ContentSourceMap = {
@@ -111,6 +116,14 @@ describe("stegaFilter end to end", () => {
     expect(isClean(encoded.seo.title)).toBe(true)
     expect(isClean(encoded.seo.description)).toBe(true)
     expect(isClean(encoded.section.alt)).toBe(true)
+    expect(isClean(encoded.systemComponent.component)).toBe(true)
+  })
+
+  it("keeps the enum fields the default filter already skips clean", () => {
+    const encoded = encode(stegaFilter)
+
+    expect(isClean(encoded.chart.chartType)).toBe(true)
+    expect(isClean(encoded.chart.unit)).toBe(true)
   })
 
   it("encodes display text so the overlay can trace it, and it round-trips clean", () => {
@@ -127,5 +140,6 @@ describe("stegaFilter end to end", () => {
 
     expect(isClean(withDefault.instagram)).toBe(false)
     expect(isClean(withDefault.videoTitle)).toBe(false)
+    expect(isClean(withDefault.systemComponent.component)).toBe(false)
   })
 })
