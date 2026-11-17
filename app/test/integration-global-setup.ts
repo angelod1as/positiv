@@ -169,6 +169,10 @@ export default async function setup() {
         for (const table of TABLES) {
           const columns = await getColumnNames(client, table)
           const foreignKeys = await getForeignKeys(client, table)
+          // A trigger may have filled this table while an earlier one was
+          // restored (profiles creates its email_consents row): the snapshot
+          // wins.
+          await client.query(`DELETE FROM ${table}`)
           await client.query(
             buildRestoreStatement(table, columns, `_backup_${RUN_ID}_${table}`, foreignKeys)
           )
