@@ -38,15 +38,15 @@ describe("AnalyticsOptOut", () => {
   })
 
   // The loader and Umami's tracker treat an empty flag as no opt-out.
-  it("offers the opt-out when the stored flag is empty", async () => {
+  it("treats an empty stored flag as no opt-out", async () => {
     window.localStorage.setItem("umami.disabled", "")
     render(<AnalyticsOptOut reload={vi.fn()} />)
 
-    await new Promise((resolve) => setTimeout(resolve, 0))
-
-    expect(
+    await userEvent.click(
       screen.getByRole("button", { name: analyticsOptOutCopy.optOut }),
-    ).toBeInTheDocument()
+    )
+
+    expect(window.localStorage.getItem("umami.disabled")).toBe("1")
   })
 
   it("says so, and does not reload, when the browser refuses to store the choice", async () => {
