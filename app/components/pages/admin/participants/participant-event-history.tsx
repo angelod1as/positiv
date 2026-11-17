@@ -10,7 +10,10 @@ import {
   formatSignedCurrency,
 } from "~/lib/helpers/format-currency"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
-import { isSettledPayment } from "~/lib/helpers/payment-status"
+import {
+  countsTowardsFinances,
+  isSettledPayment,
+} from "~/lib/helpers/payment-status"
 import {
   applicationStatusOptions,
   attendanceStatusOptions,
@@ -118,6 +121,7 @@ function PaymentRenderer(
   // social spot owed nothing — and nothing at all when the charge is still
   // open or was never made.
   if (!isSettledPayment(params.data?.payment_status)) return null
+  if (!countsTowardsFinances(params.data?.time_event_start)) return null
   return formatCurrency(params.value as number | null | undefined)
 }
 
@@ -130,6 +134,7 @@ function SurplusRenderer(
   // A refunded participation keeps its gross — the charge happened — but there
   // is no difference to report on money that went back.
   if (data.net === 0) return null
+  if (!countsTowardsFinances(data.time_event_start)) return null
 
   const ticketPrice = data.ticket_price ?? 0
   const surplus = data.net - ticketPrice

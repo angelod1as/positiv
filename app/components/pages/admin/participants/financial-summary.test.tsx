@@ -12,7 +12,7 @@ const createMockHistoryItem = (
   event_id: "event-1",
   event_title: "Test Event",
   event_emoji: "🎉",
-  time_event_start: "2024-03-01T10:00:00",
+  time_event_start: "2026-03-01T10:00:00",
   ticket_price: 10000,
   application_status: "finalised",
   attendance_status: "attended",
@@ -321,5 +321,42 @@ describe("FinancialSummary", () => {
     expect(screen.getByText(/Evento Pago/)).toBeInTheDocument()
     expect(screen.getByText(/Evento Gratis/)).toBeInTheDocument()
     expect(screen.queryByText(/Evento Sem Pagamento/)).not.toBeInTheDocument()
+  })
+
+  describe("before the platform launch", () => {
+    const beforeLaunch = (
+      overrides: Partial<ParticipantEventHistoryData> = {},
+    ) =>
+      createMockHistoryItem({
+        event_title: "Festa Importada",
+        time_event_start: "2025-05-17T22:00:00-03:00",
+        ticket_price: 20000,
+        paid_gross: 0,
+        net: 0,
+        ...overrides,
+      })
+
+    it("leaves an imported event out of every figure", () => {
+      const history: ParticipantEventHistoryData[] = [
+        beforeLaunch({ id: "old" }),
+        createMockHistoryItem({ id: "1", paid_gross: 20000, net: 20000, ticket_price: 22000 }),
+        createMockHistoryItem({ id: "2", paid_gross: 30000, net: 30000, ticket_price: 22000 }),
+      ]
+
+      render(<FinancialSummary participantHistory={history} />)
+
+      expect(screen.getByText("R$ 500,00")).toBeInTheDocument()
+      expect(screen.getByText("2")).toBeInTheDocument()
+      expect(screen.getByText("R$ 250,00")).toBeInTheDocument()
+      expect(screen.queryByText(/Festa Importada/)).not.toBeInTheDocument()
+    })
+
+    it("renders nothing when every payment predates the launch", () => {
+      const { container } = render(
+        <FinancialSummary participantHistory={[beforeLaunch()]} />,
+      )
+
+      expect(container).toBeEmptyDOMElement()
+    })
   })
 })

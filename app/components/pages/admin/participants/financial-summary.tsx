@@ -6,7 +6,10 @@ import {
   formatSignedCurrency,
 } from "~/lib/helpers/format-currency"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
-import { holdsPayment } from "~/lib/helpers/payment-status"
+import {
+  countsTowardsFinances,
+  holdsPayment,
+} from "~/lib/helpers/payment-status"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
 
 const financialCopy = adminParticipantsCopy.financialSummary
@@ -22,8 +25,12 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
   // owed nothing and still took part, an open charge collected nothing, and a
   // refund gave back what it collected. All three read as zero, so the status
   // is what separates them.
-  const paidEvents = participantHistory.filter((item) =>
-    holdsPayment(item.payment_status),
+  // An event from before the platform launch was imported with no amount, so
+  // its zero says nothing about what was paid.
+  const paidEvents = participantHistory.filter(
+    (item) =>
+      holdsPayment(item.payment_status) &&
+      countsTowardsFinances(item.time_event_start),
   )
 
   if (paidEvents.length === 0) {
