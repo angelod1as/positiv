@@ -1,3 +1,4 @@
+import { PAYMENT_RECORDS_START_DATE } from "~/lib/constants/constants"
 import type { Database } from "~types/database/database.types"
 
 type PaymentStatus = Database["public"]["Enums"]["payment_status"]
@@ -38,3 +39,10 @@ export const NO_PAYMENT_STATUS = "none"
 export const paymentStatusFilterValue = (
   row: { payment_status?: PaymentStatus | null } | null | undefined,
 ): string => row?.payment_status ?? NO_PAYMENT_STATUS
+
+/** Whether an event's money is a record: it happened after the platform launched. */
+export const countsTowardsFinances = (
+  timeEventStart: string | null | undefined,
+): boolean =>
+  timeEventStart != null &&
+  new Date(timeEventStart) >= new Date(PAYMENT_RECORDS_START_DATE)

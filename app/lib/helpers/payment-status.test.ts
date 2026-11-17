@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import {
+  countsTowardsFinances,
   holdsPayment,
   isSettledPayment,
   paymentStatusFilterValue,
@@ -45,5 +46,21 @@ describe("paymentStatusFilterValue", () => {
     expect(paymentStatusFilterValue({ payment_status: "awaiting_payment" })).toBe(
       "awaiting_payment",
     )
+  })
+})
+
+describe("countsTowardsFinances", () => {
+  it("counts an event from the day the platform launched", () => {
+    expect(countsTowardsFinances("2025-05-20T00:00:00-03:00")).toBe(true)
+    expect(countsTowardsFinances("2025-06-21T22:00:00-03:00")).toBe(true)
+  })
+
+  it("leaves out an event imported from before the launch", () => {
+    expect(countsTowardsFinances("2025-05-17T22:00:00-03:00")).toBe(false)
+    expect(countsTowardsFinances("2023-02-25T22:00:00")).toBe(false)
+  })
+
+  it("leaves out an event with no date", () => {
+    expect(countsTowardsFinances(null)).toBe(false)
   })
 })

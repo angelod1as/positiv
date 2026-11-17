@@ -59,4 +59,8 @@ export const LISTMONK_EVENT_OPENING_TEMPLATE_ID = 7
 // Events before this date contain legacy/incomplete imported data
 export const DATAVIZ_EVENT_CUTOFF_DATE = "2025-07-01"
 
+// The platform went live on this day. Events before it were imported later with
+// no amount recorded, so a participant's money figures start here.
+export const PAYMENT_RECORDS_START_DATE = "2025-05-20T00:00:00-03:00"
+
 export const MAX_REGISTRATION_LIMIT = 10_000
