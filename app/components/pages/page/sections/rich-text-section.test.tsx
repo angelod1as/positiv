@@ -31,6 +31,16 @@ describe("RichTextSection", () => {
     ).toBeInTheDocument()
   })
 
+  it("leads the body with its first heading, below the title", () => {
+    renderWithRouter(<RichTextSection content={content} />)
+
+    const heading = screen.getByRole("heading", {
+      level: 3,
+      name: "Consentimento",
+    })
+    expect(heading.parentElement?.firstElementChild).toBe(heading)
+  })
+
   it("renders no title when the Editor left it empty", () => {
     renderWithRouter(<RichTextSection content={{ ...content, title: null }} />)
 

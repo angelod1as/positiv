@@ -37,6 +37,27 @@ describe("LongRichText", () => {
     ).toBeInTheDocument()
   })
 
+  it("spaces headings from the block above, except a leading one", () => {
+    const { container } = renderWithRouter(
+      <LongRichText
+        value={[
+          block("p", "Um parágrafo."),
+          block("h2", "Consentimento", { style: "h2" }),
+          block("h3", "Antes do evento", { style: "h3" }),
+        ]}
+      />,
+    )
+
+    const spacing = ["mt-6", "first:mt-0"]
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Consentimento" }),
+    ).toHaveClass(...spacing)
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Antes do evento" }),
+    ).toHaveClass(...spacing)
+    expect(container.querySelector("p")).not.toHaveClass("mt-6")
+  })
+
   it("renders paragraphs and quotes", () => {
     const { container } = renderWithRouter(
       <LongRichText

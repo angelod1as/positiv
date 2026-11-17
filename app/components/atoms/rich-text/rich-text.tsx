@@ -36,8 +36,8 @@ const INLINE_COMPONENTS: PortableTextComponents = {
 const LONG_COMPONENTS: PortableTextComponents = {
   block: {
     normal: ({ children }) => <p>{children}</p>,
-    h2: ({ children }) => <h2>{children}</h2>,
-    h3: ({ children }) => <h3>{children}</h3>,
+    h2: ({ children }) => <h2 className="mt-6 first:mt-0">{children}</h2>,
+    h3: ({ children }) => <h3 className="mt-6 first:mt-0">{children}</h3>,
     blockquote: ({ children }) => <blockquote>{children}</blockquote>,
   },
   list: {
