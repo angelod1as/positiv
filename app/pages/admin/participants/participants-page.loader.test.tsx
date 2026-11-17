@@ -4,6 +4,7 @@ import {
   findProfileIdForAdminLookup,
   getAllProfiles,
 } from "~/business/profile/profiles.server"
+import { adminParticipantsCopy } from "~/copy/admin/participants"
 import paths from "~/lib/paths"
 import { loader } from "./participants-page"
 
@@ -93,6 +94,31 @@ describe("ParticipantsPage loader", () => {
         paths.admin.ADMIN_PARTICIPANTS,
       )
       expect((response as Response).headers.get("Set-Cookie")).toBeTruthy()
+    })
+
+    it("should go back to the list with a failure message when the lookup fails", async () => {
+      vi.mocked(findProfileIdForAdminLookup).mockResolvedValue({
+        success: false,
+        errors: [new Error("db down")],
+      } as never)
+
+      const response = await runLoader(lookupUrl(profileId))
+
+      expect((response as Response).headers.get("Location")).toBe(
+        paths.admin.ADMIN_PARTICIPANTS,
+      )
+      const cookie = (response as Response).headers.get("Set-Cookie") ?? ""
+      const session = decodeURIComponent(cookie.split(";")[0].split("=")[1])
+      expect(
+        Buffer.from(session.split(".")[0], "base64").toString("utf8"),
+      ).toContain(adminParticipantsCopy.list.openProfileFailed)
+    })
+
+    it("should list the profiles when the lookup text is only whitespace", async () => {
+      const result = await runLoader(lookupUrl("   "))
+
+      expect(findProfileIdForAdminLookup).not.toHaveBeenCalled()
+      expect(result).toMatchObject({ profiles: [] })
     })
   })
 })

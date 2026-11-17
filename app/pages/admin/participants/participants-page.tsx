@@ -33,7 +33,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const lookup = new URL(request.url).searchParams.get("perfil")?.trim()
   if (lookup) {
     const found = await findProfileIdForAdminLookup({ query: lookup })
-    if (found.success && found.data) {
+    if (!found.success) {
+      return redirectWithError(
+        ADMIN_PARTICIPANTS,
+        adminParticipantsCopy.list.openProfileFailed,
+      )
+    }
+    if (found.data) {
       return redirect(ADMIN_VIEW_PARTICIPANT(found.data))
     }
     return redirectWithError(

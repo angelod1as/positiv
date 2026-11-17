@@ -3248,6 +3248,7 @@ describe("updateEventParticipantById - approved_to_attend update via inline tabl
     expect(updatedProfile?.approved_to_attend).toBe("pending")
   })
 })
+
 describe("findProfileIdForAdminLookup - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()
 

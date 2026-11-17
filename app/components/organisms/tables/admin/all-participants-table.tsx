@@ -340,7 +340,6 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
       <Button
         variant="outline"
         size="sm"
-        className="mb-2"
         to={`${paths.admin.ADMIN_PARTICIPANTS}?${new URLSearchParams({ perfil: query })}`}
       >
         {allParticipantsCopy.openProfile}
