@@ -11,7 +11,7 @@ type GetNextEvents = Composable<
 >
 
 export const getNextEvents: GetNextEvents = composable(
-  async (profileId, limit = 3, isHomepage = false) => {
+  async (profileId, limit, isHomepage = false) => {
     const now = new Date().toISOString()
 
     const homepageStatus: EventStatus[] = ["Registration Open", "Scheduled"]
@@ -21,7 +21,7 @@ export const getNextEvents: GetNextEvents = composable(
       "Registration Closed",
     ]
 
-    const baseQuery = db
+    const upcomingQuery = db
       .selectFrom("events")
       .where("events.time_event_start", ">=", now)
       .where(
@@ -30,7 +30,9 @@ export const getNextEvents: GetNextEvents = composable(
         isHomepage ? homepageStatus : dashboardStatus,
       )
       .orderBy("events.time_event_start", "asc")
-      .limit(limit)
+
+    const baseQuery =
+      limit === undefined ? upcomingQuery : upcomingQuery.limit(limit)
 
     if (profileId) {
       const data = await baseQuery

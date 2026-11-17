@@ -28,8 +28,15 @@ describe("formatDateTime - GMT-3 Timezone Verification", () => {
       const utcDate = "2024-12-26T02:30:00Z"
       const result = formatDateTime(utcDate)
 
-      expect(result.time).toBe("23h")
+      expect(result.time).toBe("23h30")
       expect(result.date).toBe("25 de dezembro de 2024")
+    })
+
+    it("keeps the minutes when the time is not on the hour", () => {
+      const result = formatDateTime("2027-01-09T15:30:00Z")
+
+      expect(result.time).toBe("12h30")
+      expect(result.full).toBe("09 de janeiro de 2027, às 12h30")
     })
 
     it("should correctly format morning time in GMT-3", () => {

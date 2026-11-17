@@ -324,6 +324,36 @@ describe("getNextEvents - Query Optimization Integration Tests", () => {
       expect(events.length).toBeLessThanOrEqual(3)
     })
 
+    it("returns every upcoming event when no limit is given", async () => {
+      const futureDate = new Date()
+      futureDate.setDate(futureDate.getDate() + 1)
+
+      const created = []
+      for (let i = 0; i < 14; i++) {
+        const eventDate = new Date(futureDate)
+        eventDate.setHours(eventDate.getHours() + i)
+
+        created.push(
+          await createTestEvent(tracker, kysely, {
+            title: `Test Event - Unlimited ${i + 1}`,
+            event_status: "Scheduled" as EventStatus,
+            time_event_start: eventDate.toISOString(),
+            time_event_end: new Date(eventDate.getTime() + 3600000).toISOString(),
+          }),
+        )
+      }
+
+      const result = await getNextEvents(undefined)
+
+      expect(result.success).toBe(true)
+      if (!result.success) return
+
+      const returnedIds = result.data.map((event) => event.id)
+      for (const event of created) {
+        expect(returnedIds).toContain(event.id)
+      }
+    })
+
     it("should filter by homepage status when isHomepage=true", async () => {
       const futureDate = new Date()
       futureDate.setDate(futureDate.getDate() + 7)
