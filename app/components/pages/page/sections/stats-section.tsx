@@ -17,11 +17,14 @@ export const StatsSection = ({ content }: StatsSectionProps) => {
     <section className="w-full px-4 py-12 md:px-6 md:py-16">
       <div className="mx-auto flex max-w-5xl flex-col gap-8">
         {content.title && <SectionTitle>{content.title}</SectionTitle>}
-        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {content.cards.map((card) => (
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+          {content.cards.map((card, index) => (
             <li
               key={card._key}
-              className="flex min-w-0 flex-col gap-4 rounded-xl border bg-card p-5 shadow-sm sm:p-6"
+              className={cn(
+                "flex min-w-0 flex-col gap-4 rounded-xl border bg-card p-5 shadow-sm sm:col-span-2 sm:p-6",
+                placement(index, content.cards.length),
+              )}
             >
               <StatCard card={card} />
             </li>
@@ -30,6 +33,22 @@ export const StatsSection = ({ content }: StatsSectionProps) => {
       </div>
     </section>
   )
+}
+
+// Each card spans two columns, so a row that is not full starts one column
+// in and sits centred. Four cards split two and two rather than three and one.
+const placement = (index: number, count: number) => {
+  const left = count % 3
+  const wide =
+    count === 4
+      ? index % 2 === 0 && "lg:col-start-2"
+      : left > 0 &&
+        index === count - left &&
+        (left === 1 ? "lg:col-start-3" : "lg:col-start-2")
+  const medium =
+    count % 2 === 1 && index === count - 1 && "sm:max-lg:col-start-2"
+
+  return cn(wide, medium)
 }
 
 const StatCard = ({ card }: { card: Card }) => {

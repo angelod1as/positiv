@@ -143,6 +143,55 @@ describe("StatsSection", () => {
     ).toMatch(/31,4anos de idade/)
   })
 
+  const cardsOf = (count: number): Card[] =>
+    Array.from({ length: count }, (_, index) => ({
+      ...bigNumber,
+      _key: `card-${index}`,
+      caption: `cartão ${index}`,
+    }))
+
+  const startsOf = (breakpoint: "sm:max-lg" | "lg") =>
+    screen
+      .getAllByRole("listitem")
+      .map(
+        (card) =>
+          [...card.classList].find((name) =>
+            name.startsWith(`${breakpoint}:col-start-`),
+          ) ?? null,
+      )
+
+  it.each([
+    [1, ["lg:col-start-3"]],
+    [2, ["lg:col-start-2", null]],
+    [3, [null, null, null]],
+    [4, ["lg:col-start-2", null, "lg:col-start-2", null]],
+    [5, [null, null, null, "lg:col-start-2", null]],
+    [6, [null, null, null, null, null, null]],
+    [7, [null, null, null, null, null, null, "lg:col-start-3"]],
+  ])(
+    "centres the cards of a short row on a wide screen, %i cards",
+    (count, starts) => {
+      render(<StatsSection content={{ ...content, cards: cardsOf(count) }} />)
+
+      expect(startsOf("lg")).toEqual(starts)
+    },
+  )
+
+  it.each([
+    [1, ["sm:max-lg:col-start-2"]],
+    [2, [null, null]],
+    [3, [null, null, "sm:max-lg:col-start-2"]],
+    [4, [null, null, null, null]],
+    [5, [null, null, null, null, "sm:max-lg:col-start-2"]],
+  ])(
+    "centres a card left alone in its row on a medium screen, %i cards",
+    (count, starts) => {
+      render(<StatsSection content={{ ...content, cards: cardsOf(count) }} />)
+
+      expect(startsOf("sm:max-lg")).toEqual(starts)
+    },
+  )
+
   const markerOf = (caption: string) =>
     screen
       .getByText(caption)
