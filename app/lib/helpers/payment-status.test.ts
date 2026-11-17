@@ -58,6 +58,7 @@ describe("countsTowardsFinances", () => {
   it("leaves out an event imported from before the launch", () => {
     expect(countsTowardsFinances("2025-05-17T22:00:00-03:00")).toBe(false)
     expect(countsTowardsFinances("2023-02-25T22:00:00")).toBe(false)
+    expect(countsTowardsFinances("2025-05-19T23:59:59-03:00")).toBe(false)
   })
 
   it("leaves out an event with no date", () => {
