@@ -105,6 +105,7 @@ export function AGDataTable<TData>({
   showSearch = false,
   searchPlaceholder = adminTablesCopy.base.searchPlaceholder,
   searchAriaLabel = adminTablesCopy.base.searchAriaLabel,
+  searchAction,
   onSave,
   autoSaveOptions,
   fetcher,
@@ -319,6 +320,7 @@ export function AGDataTable<TData>({
           />
         </div>
       )}
+      {showSearch && searchAction?.(internalSearchText)}
       {headerContent && (
         <div className={cn("mb-2", isFullscreen && "px-4 pt-4")}>
           {headerContent}

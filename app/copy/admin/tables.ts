@@ -79,6 +79,7 @@ export const adminTablesCopy = {
   },
   allParticipants: {
     searchAriaLabel: "Buscar perfis",
+    openProfile: "Abrir perfil",
     emptyMessage: "Nenhum perfil encontrado",
     profileCount: (count: number) => `**${count}** perfis`,
     filteredProfileCount: (shown: number, total: number) =>

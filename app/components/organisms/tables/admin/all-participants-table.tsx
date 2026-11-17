@@ -10,10 +10,12 @@ import { FlagBadgeRenderer } from "~/components/organisms/tables/ag-grid/rendere
 import { LastAttendedEventRenderer } from "~/components/organisms/tables/ag-grid/renderers/last-attended-event-renderer"
 import { SocialNameRenderer } from "~/components/organisms/tables/ag-grid/renderers/social-name-renderer"
 import { WarningIndicatorRenderer } from "~/components/organisms/tables/ag-grid/renderers/warning-indicator-renderer"
+import { Button } from "~/components/atoms/button/button"
 import { Copy } from "~/components/atoms/copy/copy"
 import { adminTablesCopy } from "~/copy/admin/tables"
 import { getEventCountColors } from "~/lib/helpers/cell-colors"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
+import paths from "~/lib/paths"
 import {
   approvedToAttendStatusOptions,
   flagStatusOptions,
@@ -329,6 +331,23 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
     </div>
   )
 
+  // The list leaves out profiles without basic data, so the search alone
+  // cannot reach them; the lookup behind this link can.
+  const renderOpenProfile = (searchText: string) => {
+    const query = searchText.trim()
+    if (!query) return null
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        className="mb-2"
+        to={`${paths.admin.ADMIN_PARTICIPANTS}?${new URLSearchParams({ perfil: query })}`}
+      >
+        {allParticipantsCopy.openProfile}
+      </Button>
+    )
+  }
+
   return (
     <AGDataTable
       id="all-participants-table"
@@ -339,6 +358,7 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
       paginationAutoPageSize
       showSearch
       searchAriaLabel={allParticipantsCopy.searchAriaLabel}
+      searchAction={renderOpenProfile}
       emptyMessage={allParticipantsCopy.emptyMessage}
       persistState
       showToolbar
