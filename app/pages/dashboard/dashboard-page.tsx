@@ -39,7 +39,7 @@ const {
 const ADMIN_APPLICATION_REFERRED = "Administração"
 
 async function loadEvents(profileId: string) {
-  const result = await getNextEvents(profileId, 12)
+  const result = await getNextEvents(profileId)
 
   if (!result.success) {
     // Throwing an error allows the <Await> component's errorElement to catch it

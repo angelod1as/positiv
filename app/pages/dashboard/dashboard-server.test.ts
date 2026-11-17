@@ -288,6 +288,15 @@ describe("dashboard loader", () => {
     } as unknown as Parameters<typeof loader>[0])
   }
 
+  it("asks for every upcoming event, with no cap on how many", async () => {
+    await load(USER)
+
+    expect(mockGetNextEvents).toHaveBeenCalledTimes(1)
+    const [profileId, limit] = mockGetNextEvents.mock.calls[0]
+    expect(profileId).toBe("profile-123")
+    expect(limit).toBeUndefined()
+  })
+
   it("tells the page that an admin may apply directly", async () => {
     await expect(load(ADMIN)).resolves.toMatchObject({ canApplyDirectly: true })
   })
