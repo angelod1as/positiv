@@ -6,7 +6,6 @@ const event: Event = {
   id: "123",
   title: "Rapa do Tacho",
   emoji: "🎉",
-  description: "Para quem sobreviveu ao carnaval",
   location: "Motel Harmony",
   ticket_price: 20000,
   total_spots: 60,
@@ -37,10 +36,6 @@ describe("toEventAnswers", () => {
     expect(answers.emoji).toBe("🎉")
     expect(answers.location).toBe("Motel Harmony")
     expect(answers.auto_publish).toBe(true)
-  })
-
-  it("leaves the description out, even when the event still has one", () => {
-    expect(toEventAnswers(event)).not.toHaveProperty("description")
   })
 
   it("writes the numbers as the number fields read them back", () => {

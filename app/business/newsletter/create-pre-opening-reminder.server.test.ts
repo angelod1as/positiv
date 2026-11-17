@@ -29,7 +29,6 @@ describe("createPreOpeningReminder", () => {
     time_group_end: null,
     time_payment_start: null,
     time_payment_end: null,
-    description: "Test Description",
     ticket_price: null,
     event_status: "Scheduled",
     event_type: "regular",

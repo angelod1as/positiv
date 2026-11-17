@@ -35,7 +35,6 @@ const event: Event = {
   time_group_end: null,
   time_payment_start: null,
   time_payment_end: null,
-  description: "",
   ticket_price: null,
   event_status: "Registration Open",
   event_type: "regular",
