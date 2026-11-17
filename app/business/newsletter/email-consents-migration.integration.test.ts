@@ -157,6 +157,7 @@ describe("email_consents backfill after the triggers - Integration Tests", () =>
   let client: PoolClient
   let profileId = ""
   let unmirroredId = ""
+  let earlyNoId = ""
   const withdrawnAt = new Date("2026-06-01T12:00:00.000Z")
   const consentedAt = new Date("2026-03-01T12:00:00.000Z")
 
@@ -192,6 +193,22 @@ describe("email_consents backfill after the triggers - Integration Tests", () =>
        VALUES ($1, true, $2, 'synced')`,
       [unmirroredId, consentedAt],
     )
+    const earlyNo = await client.query<{ id: string }>(
+      "INSERT INTO public.profiles (email) VALUES ('web51-early-no@example.com') RETURNING id",
+    )
+    earlyNoId = earlyNo.rows[0].id
+    await client.query(
+      `UPDATE public.email_consents
+          SET newsletter = false, newsletter_at = $2
+        WHERE profile_id = $1`,
+      [earlyNoId, withdrawnAt],
+    )
+    await client.query(
+      `INSERT INTO public.newsletter_subscriptions
+         (profile_id, consent_given, unsubscribed_at, sync_status)
+       VALUES ($1, false, $2, 'unsubscribed')`,
+      [earlyNoId, withdrawnAt],
+    )
     await client.query(
       "ALTER TABLE public.newsletter_subscriptions ENABLE TRIGGER mirror_newsletter_consent",
     )
@@ -199,6 +216,7 @@ describe("email_consents backfill after the triggers - Integration Tests", () =>
     for (const migration of [
       "20261117120300_backfill_email_consents_after_triggers.sql",
       "20261117120400_mirror_newsletter_consent_written_before_trigger.sql",
+      "20261117120600_turn_alerts_off_for_no_written_before_trigger.sql",
     ]) {
       await client.query(
         readFileSync(join(process.cwd(), "supabase/migrations", migration), "utf8"),
@@ -240,6 +258,22 @@ describe("email_consents backfill after the triggers - Integration Tests", () =>
       newsletter_at: consentedAt,
       registration_alerts: true,
       marketing: false,
+    })
+  })
+
+  it("should turn alerts off for a no the mirror carried before it did so", async () => {
+    const result = await client.query<ConsentRow>(
+      "SELECT * FROM public.email_consents WHERE profile_id = $1",
+      [earlyNoId],
+    )
+
+    expect(result.rows[0]).toMatchObject({
+      newsletter: false,
+      newsletter_at: withdrawnAt,
+      registration_alerts: false,
+      registration_alerts_at: withdrawnAt,
+      marketing: false,
+      marketing_at: null,
     })
   })
 })
