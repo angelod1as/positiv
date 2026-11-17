@@ -105,6 +105,7 @@ export function AGDataTable<TData>({
   showSearch = false,
   searchPlaceholder = adminTablesCopy.base.searchPlaceholder,
   searchAriaLabel = adminTablesCopy.base.searchAriaLabel,
+  searchAction,
   onSave,
   autoSaveOptions,
   fetcher,
@@ -303,20 +304,20 @@ export function AGDataTable<TData>({
     >
       {showSearch && (
         <div
-          className={cn(
-            "relative w-full max-w-sm mb-2",
-            isFullscreen && "px-4",
-          )}
+          className={cn("flex items-center gap-2 mb-2", isFullscreen && "px-4")}
         >
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder={searchPlaceholder}
-            value={internalSearchText}
-            onChange={(e) => setInternalSearchText(e.target.value)}
-            className="pl-9"
-            aria-label={searchAriaLabel}
-          />
+          <div className="relative w-full max-w-sm">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder={searchPlaceholder}
+              value={internalSearchText}
+              onChange={(e) => setInternalSearchText(e.target.value)}
+              className="pl-9"
+              aria-label={searchAriaLabel}
+            />
+          </div>
+          {searchAction?.(internalSearchText)}
         </div>
       )}
       {headerContent && (

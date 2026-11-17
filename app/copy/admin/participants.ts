@@ -2,6 +2,9 @@ export const adminParticipantsCopy = {
   list: {
     title: "Perfis",
     loadFailed: "Erro ao carregar perfis. Tente novamente.",
+    openProfileNotFound: (query: string) =>
+      `Nenhum perfil com o ID ou e-mail "${query}".`,
+    openProfileFailed: "Erro ao buscar o perfil. Tente novamente.",
   },
   veteransSync: {
     button: "Sincronizar lista de veteranos",

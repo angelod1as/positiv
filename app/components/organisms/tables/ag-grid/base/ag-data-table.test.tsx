@@ -85,6 +85,25 @@ describe("AGDataTable", () => {
     })
   })
 
+  describe("Search Action", () => {
+    it("should render the search action with the text typed in the search", async () => {
+      const user = userEvent.setup()
+      render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          showSearch
+          searchAction={(searchText) => <span>{`action: ${searchText}`}</span>}
+        />,
+      )
+
+      await user.type(screen.getByRole("textbox", { name: "Buscar" }), "abc")
+
+      expect(screen.getByText("action: abc")).toBeInTheDocument()
+    })
+  })
+
   describe("Loading State", () => {
     it("should not show loading overlay by default", async () => {
       const { container } = render(

@@ -48,6 +48,8 @@ export interface AGDataTableProps<TData> {
   showSearch?: boolean
   searchPlaceholder?: string
   searchAriaLabel?: string
+  /** Rendered beside the search input, given what was typed there */
+  searchAction?: (searchText: string) => React.ReactNode
 
   onSave?: (params: AutoSaveParams) => Promise<void>
   autoSaveOptions?: AutoSaveOptions

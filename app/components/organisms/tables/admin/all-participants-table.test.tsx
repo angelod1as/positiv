@@ -2,6 +2,7 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { renderWithDataRouter, screen, waitFor } from "~/test/test-utils"
 import type { ProfileGlobal } from "~types/database/entities.types"
+import paths from "~/lib/paths"
 import { AllParticipantsTable } from "./all-participants-table"
 
 const mockSessionStorage = (() => {
@@ -106,6 +107,35 @@ describe("AllParticipantsTable", () => {
 
   afterEach(() => {
     mockSessionStorage.clear()
+  })
+
+  describe("open profile from the search", () => {
+    const unlistedId = "11111111-1111-4111-8111-111111111111"
+
+    it("does not offer to open a profile while the search is empty", () => {
+      renderWithDataRouter(<AllParticipantsTable profiles={mockProfiles} />)
+
+      expect(
+        screen.queryByRole("link", { name: "Abrir perfil" }),
+      ).not.toBeInTheDocument()
+    })
+
+    it("links the typed search to the profile lookup, even for a profile not in the list", async () => {
+      const user = userEvent.setup()
+      renderWithDataRouter(<AllParticipantsTable profiles={mockProfiles} />)
+
+      await user.type(
+        screen.getByRole("textbox", { name: "Buscar perfis" }),
+        ` ${unlistedId} `,
+      )
+
+      expect(
+        screen.getByRole("link", { name: "Abrir perfil" }),
+      ).toHaveAttribute(
+        "href",
+        `${paths.admin.ADMIN_PARTICIPANTS}?perfil=${unlistedId}`,
+      )
+    })
   })
 
   describe("rendering", () => {
