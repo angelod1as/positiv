@@ -3,7 +3,7 @@
 set -eu
 
 OUT="${DB_TYPES_OUT:-app/types/database/database.types.ts}"
-SUPABASE="${SUPABASE_BIN:-pnpx supabase}"
+SUPABASE="${SUPABASE_BIN:-pnpm exec supabase}"
 
 echo "Generating Types from Supabase"
 
@@ -16,10 +16,10 @@ if [ "${1:-}" = "--local" ]; then
     echo "Could not read DB_URL from supabase status. Is the local stack up?" >&2
     exit 1
   fi
-  set -- gen types typescript --db-url "$DB_URL" --schema public
+  set -- gen types typescript --remote="$DB_URL" --schema public
 else
   . ./.env
-  set -- gen types typescript --project-id "$SUPABASE_PROJECT_ID" --schema public
+  set -- gen types typescript --remote="$SUPABASE_PROJECT_ID" --schema public
 fi
 
 # Generated into a temporary file first. Redirecting straight into the
