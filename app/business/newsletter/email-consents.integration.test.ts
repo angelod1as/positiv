@@ -111,18 +111,44 @@ describe("email_consents - Integration Tests", () => {
       )
     })
 
-    it("should leave Registration alerts and Marketing alone", async () => {
+    it("should turn Registration alerts off with a no, as the migration does, and leave Marketing alone", async () => {
+      const profile = await newProfile()
+      await subscribeProfile(profile.id, "manual_button")
+
+      await unsubscribeProfile(profile.id)
+
+      const consent = await consentOf(profile.id)
+      expect(consent).toMatchObject({
+        registration_alerts: false,
+        marketing: false,
+        marketing_at: null,
+      })
+      expect(consent.registration_alerts_at).toEqual(consent.newsletter_at)
+    })
+
+    it("should leave Registration alerts alone on a yes", async () => {
       const profile = await newProfile()
 
       await subscribeProfile(profile.id, "manual_button")
-      await unsubscribeProfile(profile.id)
 
       expect(await consentOf(profile.id)).toMatchObject({
         registration_alerts: true,
         registration_alerts_at: null,
-        marketing: false,
-        marketing_at: null,
       })
+    })
+
+    it("should keep the date alerts were turned off when another no follows", async () => {
+      const profile = await newProfile()
+      await subscribeProfile(profile.id, "manual_button")
+      await unsubscribeProfile(profile.id)
+      const off = await consentOf(profile.id)
+
+      await subscribeProfile(profile.id, "manual_button")
+      await unsubscribeProfile(profile.id)
+
+      expect((await consentOf(profile.id)).registration_alerts_at).toEqual(
+        off.registration_alerts_at,
+      )
     })
   })
 
@@ -140,6 +166,20 @@ describe("email_consents - Integration Tests", () => {
       const consent = await consentOf(profile.id)
       expect(consent.newsletter).toBe(false)
       expect(consent.newsletter_at).toEqual(expect.any(Date))
+    })
+
+    it("should turn Registration alerts off too, dated, and leave Marketing alone", async () => {
+      const profile = await newProfile()
+
+      await recordNewsletterRefusal(profile.id)
+
+      const consent = await consentOf(profile.id)
+      expect(consent).toMatchObject({
+        registration_alerts: false,
+        marketing: false,
+        marketing_at: null,
+      })
+      expect(consent.registration_alerts_at).toEqual(consent.newsletter_at)
     })
 
     it("should keep the date of the first refusal when it is repeated", async () => {
