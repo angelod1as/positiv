@@ -226,3 +226,23 @@ export const findOrphanedProfile = async (email: string) =>
     .where("email", "=", email)
     .where("user_id", "is", null)
     .executeTakeFirst()
+
+export const findProfileIdForAdminLookup = composable(
+  async ({ query }: { query: string }): Promise<string | null> => {
+    const text = query.trim()
+    const isUuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(text)
+
+    const profile = await db
+      .selectFrom("profiles")
+      .select("id")
+      .where(({ eb }) =>
+        isUuid
+          ? eb("id", "=", text)
+          : eb(eb.fn("lower", ["email"]), "=", text.toLowerCase()),
+      )
+      .executeTakeFirst()
+
+    return profile?.id ?? null
+  },
+)

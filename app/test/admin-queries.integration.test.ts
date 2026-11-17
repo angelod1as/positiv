@@ -3,6 +3,7 @@ import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup
 import { clearParticipantsForProfiles, createTestEvent, createTestEventParticipant, createTestPayment, createTestProfile } from "~/test/db-test-utils"
 import {
   getParticipantFullEventHistory,
+  findProfileIdForAdminLookup,
   getAllProfiles,
   getProfileById,
   updateProfileApprovalStatus,
@@ -3245,5 +3246,53 @@ describe("updateEventParticipantById - approved_to_attend update via inline tabl
       .executeTakeFirst()
 
     expect(updatedProfile?.approved_to_attend).toBe("pending")
+  })
+})
+describe("findProfileIdForAdminLookup - Integration Tests", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+
+  beforeEach(() => {
+    tracker.clear()
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  const createProfileWithoutBasicData = () =>
+    createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-lookup-unfilled@example.com",
+      basic_data_filled: false,
+    })
+
+  it("should find a profile without basic data by its ID", async () => {
+    const profile = await createProfileWithoutBasicData()
+
+    const result = await findProfileIdForAdminLookup({ query: ` ${profile.id} ` })
+
+    expect(result).toEqual({ success: true, data: profile.id, errors: [] })
+  })
+
+  it("should find a profile without basic data by its e-mail, in any case", async () => {
+    const profile = await createProfileWithoutBasicData()
+
+    const result = await findProfileIdForAdminLookup({
+      query: "Test-Lookup-Unfilled@Example.com",
+    })
+
+    expect(result).toEqual({ success: true, data: profile.id, errors: [] })
+  })
+
+  it("should find nothing for text that matches no profile", async () => {
+    await createProfileWithoutBasicData()
+
+    const byText = await findProfileIdForAdminLookup({ query: "not-an-id" })
+    const byUnknownId = await findProfileIdForAdminLookup({
+      query: "00000000-0000-4000-8000-000000000000",
+    })
+
+    expect(byText).toEqual({ success: true, data: null, errors: [] })
+    expect(byUnknownId).toEqual({ success: true, data: null, errors: [] })
   })
 })
