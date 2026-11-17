@@ -1,8 +1,12 @@
 import type { ActionFunctionArgs } from "react-router"
-import { useLoaderData } from "react-router"
+import { redirect, useLoaderData } from "react-router"
 import { redirectWithError } from "remix-toast"
 import { getAdminContext } from "~/business/auth/admin-context.server"
-import { getAllProfiles, updateProfileAdminNotes } from "~/business/profile/profiles.server"
+import {
+  findProfileIdForAdminLookup,
+  getAllProfiles,
+  updateProfileAdminNotes,
+} from "~/business/profile/profiles.server"
 import { can, PERMISSIONS } from "~/business/auth/permissions"
 import { syncVeteransListmonkList } from "~/business/newsletter/veterans-list.server"
 import { AllParticipantsTable } from "~/components/organisms/tables/admin/all-participants-table"
@@ -16,7 +20,7 @@ import type { Route } from "./+types/participants-page"
 import { readFormData } from "~/lib/request/read-form-data.server"
 
 const {
-  admin: { ADMIN_DASHBOARD },
+  admin: { ADMIN_DASHBOARD, ADMIN_PARTICIPANTS, ADMIN_VIEW_PARTICIPANT },
 } = paths
 
 export function meta({}: Route.MetaArgs) {
@@ -25,6 +29,19 @@ export function meta({}: Route.MetaArgs) {
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { currentProfile } = await getAdminContext(request, params)
+
+  const lookup = new URL(request.url).searchParams.get("perfil")?.trim()
+  if (lookup) {
+    const found = await findProfileIdForAdminLookup({ query: lookup })
+    if (found.success && found.data) {
+      return redirect(ADMIN_VIEW_PARTICIPANT(found.data))
+    }
+    return redirectWithError(
+      ADMIN_PARTICIPANTS,
+      adminParticipantsCopy.list.openProfileNotFound(lookup),
+    )
+  }
+
   const result = await getAllProfiles()
   if (!result.success) {
     return redirectWithError(
