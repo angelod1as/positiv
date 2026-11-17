@@ -42,7 +42,6 @@ describe("sendApplicationMail", () => {
     id: "event-123",
     title: "Test Event",
     emoji: "🎉",
-    description: "Test description",
     time_event_start: "2025-02-01T18:00:00Z",
     time_event_end: "2025-02-01T23:00:00Z",
     time_application_start: "2025-01-15T00:00:00Z",

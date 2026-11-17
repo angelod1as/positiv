@@ -33,7 +33,6 @@ const event: Event = {
   id: EVENT_ID,
   title: "Rapa do Tacho",
   emoji: "🎉",
-  description: "Para quem sobreviveu ao carnaval",
   location: "Motel Harmony",
   ticket_price: 20000,
   total_spots: 60,

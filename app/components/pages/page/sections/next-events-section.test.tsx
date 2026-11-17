@@ -15,7 +15,6 @@ const asRendered = (markdown: string) => markdown.replaceAll("**", "")
 const baseEvent: Event = {
   id: "test-event-id",
   title: "Test Event",
-  description: "A cool event",
   emoji: "🎉",
   time_event_start: "2025-12-25T20:00:00-03:00",
   time_event_end: "2025-12-26T04:00:00-03:00",
@@ -47,13 +46,12 @@ describe("NextEventsSection", () => {
     expect(screen.getByText("Subtítulo do editor.")).toBeInTheDocument()
   })
 
-  it("should render the event title without its description", () => {
+  it("should render the event title", () => {
     renderWithRouter(
       <NextEventsSection content={content} events={[baseEvent]} />,
     )
 
     expect(screen.getByText("Test Event")).toBeInTheDocument()
-    expect(screen.queryByText("A cool event")).not.toBeInTheDocument()
   })
 
   it("should show open registration message when event is open", () => {

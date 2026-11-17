@@ -7,7 +7,6 @@ import { EventCard } from "./event-card"
 const mockEvent: Event = {
   id: "test-event-id",
   title: "Test Event",
-  description: "Test Description",
   emoji: "🎉",
   time_event_start: "2025-12-25T10:00:00Z",
   time_event_end: "2025-12-25T12:00:00Z",
@@ -51,14 +50,6 @@ vi.mock("./event-card-footer", () => ({
 }))
 
 describe("EventCard", () => {
-  it("does not show the event description", () => {
-    const { queryByText } = render(
-      <EventCard event={mockEvent} data-testid="test-card" />,
-    )
-
-    expect(queryByText("Test Description")).not.toBeInTheDocument()
-  })
-
   it("shows the price formatted from cents", () => {
     const { getByText } = render(
       <EventCard event={mockEvent} data-testid="test-card" />,

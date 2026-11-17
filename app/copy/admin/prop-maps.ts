@@ -33,7 +33,6 @@ export const adminPropMapsCopy = {
     created_at: "Criado em",
     id: "Id do evento",
     time_application_start: "Início das candidaturas",
-    description: "Descrição",
     emoji: "Emoji",
     time_event_end: "Fim do evento",
     event_status: "Status",

@@ -22,7 +22,6 @@ vi.mock("~/lib/hooks/use-analytics", () => ({
 const event = {
   id: "event-1",
   title: "Encontro de primavera",
-  description: "Um evento",
   emoji: "🌸",
   time_event_start: "2026-12-25T20:00:00-03:00",
   time_event_end: "2026-12-26T04:00:00-03:00",
