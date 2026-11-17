@@ -242,6 +242,9 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
   return (
     <>
       <h2>{historyCopy.title}</h2>
+      <p className="text-sm text-muted-foreground">
+        {historyCopy.cutoffNotice}
+      </p>
       <AGDataTable
         id="participant-event-history"
         data={participantHistory}

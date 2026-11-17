@@ -83,6 +83,8 @@ export const adminParticipantsCopy = {
     payment: "Pagamento",
     surplus: "Diferença",
     empty: "Nenhuma candidatura anterior encontrada",
+    cutoffNotice:
+      "Valores financeiros contam a partir de 20/05/2025, quando a plataforma entrou no ar. Eventos anteriores foram importados sem o valor pago.",
   },
   financialSummary: {
     title: "Resumo Financeiro",
@@ -91,5 +93,7 @@ export const adminParticipantsCopy = {
     averagePerEvent: "Média por evento",
     totalSurplus: "Diferença total",
     payments: "Pagamentos",
+    cutoffNotice:
+      "Valores financeiros contam a partir de 20/05/2025, quando a plataforma entrou no ar. Eventos anteriores foram importados sem o valor pago.",
   },
 } as const

@@ -59,7 +59,10 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
   return (
     <Card>
       <CardContent>
-        <h3 className="text-lg font-semibold mb-4">{financialCopy.title}</h3>
+        <h3 className="text-lg font-semibold mb-1">{financialCopy.title}</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          {financialCopy.cutoffNotice}
+        </p>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
           <div>

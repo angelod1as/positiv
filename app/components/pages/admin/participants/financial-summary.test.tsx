@@ -358,5 +358,15 @@ describe("FinancialSummary", () => {
 
       expect(container).toBeEmptyDOMElement()
     })
+
+    it("says from when the figures count", () => {
+      render(
+        <FinancialSummary participantHistory={[createMockHistoryItem()]} />,
+      )
+
+      expect(
+        screen.getByText(adminParticipantsCopy.financialSummary.cutoffNotice),
+      ).toBeInTheDocument()
+    })
   })
 })

@@ -439,4 +439,10 @@ describe("ParticipantEventHistory", () => {
     })
     expect(screen.queryByText("R$ 0,00")).not.toBeInTheDocument()
   })
+
+  it("says from when the amounts count", () => {
+    renderWithRouter(<ParticipantEventHistory participantHistory={[]} />)
+
+    expect(screen.getByText(historyCopy.cutoffNotice)).toBeInTheDocument()
+  })
 })
