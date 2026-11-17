@@ -13,6 +13,7 @@ const NON_DISPLAY_FIELDS = new Set([
   "videoTitle", // founders iframe title attribute
   "network", // siteSettings social: a zod.literal, and the icon key
   "address", // a Page's routing key, matched by addressSchema's regex
+  "component", // systemComponent: a zod.enum naming the React component
 ])
 
 // Paths that only feed <head> through meta(), never a rendered node: the
