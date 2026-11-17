@@ -19,7 +19,7 @@ const {
   seoDescription: SEO_DESCRIPTION,
 } = testPageContent
 // Computed by the app from the seeded comparison, 22% in 2025 to 31% in 2026.
-const STATS_SECTION_CHANGE = '+9 p.p.'
+const STATS_SECTION_CHANGE = '+9 pontos'
 // The seeded 100% bar's largest part, written in full by the data table.
 const CHART_SECTION_VALUE = 'R$ 12.400'
 const CANONICAL = `https://www.positivparty.com${TEST_PAGE_ADDRESS}`

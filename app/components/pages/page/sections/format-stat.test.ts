@@ -37,14 +37,17 @@ describe("formatStatValue", () => {
 
 describe("formatStatChange", () => {
   it.each([
-    [22, 31, "+9 p.p."],
-    [31, 22, "-9 p.p."],
-    [10, 12.5, "+2,5 p.p."],
-    [14, 14, "0 p.p."],
-    [14, 13.96, "0 p.p."],
-    [10, 10.333, "+0,3 p.p."],
+    [22, 31, "+9 pontos"],
+    [31, 22, "-9 pontos"],
+    [10, 12.5, "+2,5 pontos"],
+    [14, 14, "0 pontos"],
+    [14, 13.96, "0 pontos"],
+    [10, 10.333, "+0,3 pontos"],
+    [10, 11, "+1 ponto"],
+    [11, 10, "-1 ponto"],
+    [10, 10.96, "+1 ponto"],
   ])(
-    "measures a percent going from %s to %s in percentage points: %s",
+    "measures a percent going from %s to %s in points: %s",
     (before, after, expected) => {
       expect(formatStatChange(before, after, "percent")).toBe(expected)
     },
@@ -73,6 +76,6 @@ describe("formatStatChange", () => {
   )
 
   it("still measures percentage points from zero", () => {
-    expect(formatStatChange(0, 10, "percent")).toBe("+10 p.p.")
+    expect(formatStatChange(0, 10, "percent")).toBe("+10 pontos")
   })
 })

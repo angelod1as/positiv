@@ -21,7 +21,8 @@ export const homepageCopy = {
     min: "mín.",
     average: "média",
     max: "máx.",
-    percentagePoints: (change: string) => `${change} p.p.`,
+    percentagePoints: (change: string) =>
+      `${change} ${/^[+-]?1$/.test(change) ? "ponto" : "pontos"}`,
   },
   chart: {
     viewData: "Ver dados",
