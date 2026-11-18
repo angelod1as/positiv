@@ -62,6 +62,11 @@ export type InputSpec =
    * statement belongs to, drawn above it by the presentation.
    */
   | { kind: "likert"; theme?: string }
+  /**
+   * A month and a year, answered `MonthYearAnswer`. With `optOut` the person
+   * may tick a box saying the question does not apply, answered `{ none: true }`.
+   */
+  | { kind: "monthyear"; optOut?: { label: string } }
 
 export type Question = {
   id: string

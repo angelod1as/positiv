@@ -33,3 +33,24 @@ export const likertCopy = {
   commentLabel: "Comentário (opcional)",
   choiceRequired: "Escolha uma opção",
 } as const
+
+export const monthYearCopy = {
+  month: "Mês",
+  year: "Ano",
+  months: [
+    "Janeiro",
+    "Fevereiro",
+    "Março",
+    "Abril",
+    "Maio",
+    "Junho",
+    "Julho",
+    "Agosto",
+    "Setembro",
+    "Outubro",
+    "Novembro",
+    "Dezembro",
+  ],
+  incomplete: "Informe o mês e o ano",
+  future: "A data não pode estar no futuro",
+} as const
