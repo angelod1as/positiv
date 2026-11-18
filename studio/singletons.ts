@@ -6,7 +6,14 @@ export const PAYMENT_MESSAGES_ID = "paymentMessages"
 
 export const EMAIL_TEMPLATES_ID = "emailTemplates"
 
-const singletonTypes = ["siteSettings", "paymentMessages", "emailTemplates"]
+export const LIKERT_SCALE_ID = "likertScale"
+
+const singletonTypes = [
+  "siteSettings",
+  "paymentMessages",
+  "emailTemplates",
+  "likertScale",
+]
 
 const actionsSingletonsKeep = ["publish", "discardChanges", "restore"]
 

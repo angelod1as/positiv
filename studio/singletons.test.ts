@@ -35,6 +35,12 @@ describe("singletonActions", () => {
     ).toEqual(["publish", "discardChanges", "restore"])
   })
 
+  it("keeps the Likert scale from being deleted, duplicated or unpublished", () => {
+    expect(
+      names(singletonActions(allActions, { schemaType: "likertScale" })),
+    ).toEqual(["publish", "discardChanges", "restore"])
+  })
+
   it("leaves every other document's actions alone", () => {
     expect(singletonActions(allActions, { schemaType: "person" })).toEqual(
       allActions,
@@ -56,6 +62,7 @@ describe("withoutSingletons", () => {
     const templates: TemplateItem[] = [
       { templateId: "siteSettings" },
       { templateId: "paymentMessages" },
+      { templateId: "likertScale" },
       { templateId: "page" },
     ]
 
