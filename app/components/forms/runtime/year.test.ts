@@ -34,6 +34,14 @@ describe("yearSchema", () => {
     expect(message({})).toBe("Informe o ano")
   })
 
+  it("accepts the first year the select offers", () => {
+    expect(parse({ year: 1950 }).success).toBe(true)
+  })
+
+  it("refuses a year before the ones the select offers", () => {
+    expect(message({ year: 1949 })).toBe("Escolha um ano a partir de 1950")
+  })
+
   it("refuses a year still to come", () => {
     expect(message({ year: 2027 })).toBe("O ano não pode estar no futuro")
   })

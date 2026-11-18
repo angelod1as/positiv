@@ -71,6 +71,23 @@ describe("QuestionField", () => {
     ).toBeInTheDocument()
   })
 
+  it("names a Likert statement's theme above the statement", () => {
+    field({
+      id: "ciume",
+      prompt: "Sinto ciúme com facilidade.",
+      input: { kind: "likert", theme: "Ciúme" },
+      schema: zod.unknown(),
+    })
+
+    const theme = screen.getByText("Ciúme")
+    const statement = screen.getByText("Sinto ciúme com facilidade.")
+
+    expect(
+      theme.compareDocumentPosition(statement) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+  })
+
   it("names a year with the question", () => {
     field({
       id: "desde",

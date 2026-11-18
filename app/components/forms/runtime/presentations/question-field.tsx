@@ -59,6 +59,12 @@ export const QuestionField = ({
     >
       {carriesPrompt ? (
         <div className="flex flex-col gap-0.5">
+          {question.input.kind === "likert" && question.input.theme ? (
+            <span className="text-xs font-medium text-muted-foreground uppercase">
+              {question.input.theme}
+            </span>
+          ) : null}
+
           {choice ? (
             <span id={promptId} className="text-sm leading-5 font-medium">
               {question.prompt}
