@@ -49,4 +49,10 @@ describe("datavizRange", () => {
       to: "2027-02-01T00:00:00.000Z",
     })
   })
+
+  it("takes a date-only end as the whole of that day in São Paulo", () => {
+    expect(datavizRange(params("to=2025-12-01"), now).to).toBe(
+      "2025-12-02T02:59:59.999Z",
+    )
+  })
 })
