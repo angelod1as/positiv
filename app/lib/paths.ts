@@ -68,6 +68,7 @@ const ADMIN_EVENT_STATUS_COMMIT = (id: string) =>
   `/api/admin/event-status/${id}`
 const ADMIN_EVENT_PARTICIPANT_COMMIT = "/api/admin/event-participant"
 const ADMIN_EVENT_INVITE_COMMIT = "/api/admin/event-invite"
+const ADMIN_EVENT_ADD_PARTICIPANTS_COMMIT = "/api/admin/event-add-participants"
 const ADMIN_EVENT_DEMOGRAPHICS_COMMIT = (id: string) =>
   `/api/admin/event-demographics/${id}`
 const ADMIN_EVENT_VIEW_PARTICIPANT = (eventId: string, participantId: string) =>
@@ -106,6 +107,7 @@ const paths = {
       ADMIN_EVENT_STATUS_COMMIT,
       ADMIN_EVENT_PARTICIPANT_COMMIT,
       ADMIN_EVENT_INVITE_COMMIT,
+      ADMIN_EVENT_ADD_PARTICIPANTS_COMMIT,
       ADMIN_EVENT_DEMOGRAPHICS_COMMIT,
       ADMIN_EVENT_VIEW_PARTICIPANT,
     },

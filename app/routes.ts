@@ -52,6 +52,10 @@ export default [
   ),
   route("/api/admin/event-invite", "pages/api/admin/event-invite.ts"),
   route(
+    "/api/admin/event-add-participants",
+    "pages/api/admin/event-add-participants.ts",
+  ),
+  route(
     "/api/admin/event-demographics/:id",
     "pages/api/admin/event-demographics.ts",
   ),
