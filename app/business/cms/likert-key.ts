@@ -1,4 +1,4 @@
-// The stable identifier of a Likert statement or option. Answers are stored
+// The stable identifier of a Likert statement. Answers are stored
 // against it, so it never changes once published.
 export const LIKERT_KEY_PATTERN = /^[a-z0-9][a-z0-9-]*$/
 

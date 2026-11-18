@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import { LIKERT_KEY_PATTERN } from "../../../app/business/cms/likert-key"
 import { pathsOf } from "../../test/errors"
 import { validateDocumentOf } from "../../test/validate"
 import { likertScale as likertScaleType, newLikertKey } from "./likert-scale"
@@ -43,12 +44,18 @@ describe("likertScale", () => {
     ).toContain("statements.Chave Ruim.key")
   })
 
-  it("rejects two statements with the same key", async () => {
+  // The key is hidden, so the error lands on the duplicated statements
+  // themselves: on a long list the editor can see which ones to fix.
+  it("flags each statement that shares its key with another", async () => {
     const statements = [
       statement("s1", "Um."),
       { ...statement("s2", "Dois."), key: "s1" },
+      statement("s3", "Três."),
     ]
-    expect(pathsOf(await validate({ statements }))).toContain("statements")
+    expect(pathsOf(await validate({ statements }))).toEqual([
+      "statements.s1",
+      "statements.s2",
+    ])
   })
 
   it("describes the page to whoever edits it", () => {
@@ -76,7 +83,7 @@ describe("likertScale", () => {
 describe("newLikertKey", () => {
   it("makes a fresh key in the allowed format every time", () => {
     const first = newLikertKey()
-    expect(first).toMatch(/^[a-z0-9][a-z0-9-]*$/)
+    expect(first).toMatch(LIKERT_KEY_PATTERN)
     expect(newLikertKey()).not.toBe(first)
   })
 })
