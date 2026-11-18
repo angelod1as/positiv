@@ -1,6 +1,6 @@
 import { composable } from "composable-functions"
 import { db } from "~/lib/supabase/db.server"
-import { LISTMONK_REGISTERED_LIST_ID } from "~/lib/constants/constants"
+import { LISTMONK_REGISTRATION_ALERTS_LIST_ID } from "~/lib/constants/constants"
 import {
   updateCampaignCreated,
   updateCampaignError,
@@ -35,12 +35,12 @@ export const createCampaignForEvent = composable(
       campaignType === "pre_opening"
         ? await createPreOpeningReminder({
             event,
-            listIds: [LISTMONK_REGISTERED_LIST_ID],
+            listIds: [LISTMONK_REGISTRATION_ALERTS_LIST_ID],
             sendImmediately: false,
           })
         : await createEventOpeningCampaign({
             event,
-            listIds: [LISTMONK_REGISTERED_LIST_ID],
+            listIds: [LISTMONK_REGISTRATION_ALERTS_LIST_ID],
             sendImmediately: false,
           })
 
