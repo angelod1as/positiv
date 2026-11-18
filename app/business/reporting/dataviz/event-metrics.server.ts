@@ -284,7 +284,11 @@ export async function getTimingData(
 
   const result = await db
     .selectFrom("events")
-    .leftJoin("event_participants", "event_participants.event_id", "events.id")
+    .leftJoin("event_participants", (join) =>
+      join
+        .onRef("event_participants.event_id", "=", "events.id")
+        .on("event_participants.spot_type", "<>", "staff")
+    )
     .leftJoin(
       (eb) =>
         eb

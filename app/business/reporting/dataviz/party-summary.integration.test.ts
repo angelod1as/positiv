@@ -112,11 +112,17 @@ describe("getPartySummary", () => {
 
   it("tells how many days before each party people applied and paid, by the median", async () => {
     const september = await party("September", "2025-09-20T22:00:00.000Z")
-    const applied = async (name: string, appliedAt: string, paidAt: string | null) => {
+    const applied = async (
+      name: string,
+      appliedAt: string,
+      paidAt: string | null,
+      spotType: "regular" | "staff" = "regular",
+    ) => {
       const participant = await createTestEventParticipant(tracker, kysely, {
         event_id: september.id,
         profile_id: (await person(name)).id,
         application_date: appliedAt,
+        spot_type: spotType,
       })
       if (paidAt) {
         await createTestPayment(tracker, kysely, {
@@ -129,6 +135,7 @@ describe("getPartySummary", () => {
     await applied("early", "2025-08-21T22:00:00.000Z", "2025-08-31T22:00:00.000Z")
     await applied("middle", "2025-09-06T22:00:00.000Z", "2025-09-10T22:00:00.000Z")
     await applied("late", "2025-09-15T22:00:00.000Z", null)
+    await applied("staff", "2025-06-01T22:00:00.000Z", "2025-06-01T22:00:00.000Z", "staff")
 
     expect(await getTimingData(range)).toEqual([
       expect.objectContaining({
