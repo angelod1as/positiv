@@ -323,4 +323,73 @@ describe("renderQuestion", () => {
 
     expect(screen.getByLabelText("Pergunta")).not.toHaveAttribute("placeholder")
   })
+
+  describe("likert", () => {
+    it("draws the five points of the scale as one labelled group", () => {
+      draw({ kind: "likert" })
+
+      const group = screen.getByRole("radiogroup", { name: "Pergunta" })
+      expect(group).toBeInTheDocument()
+      expect(
+        screen
+          .getAllByRole("radio")
+          .map((radio) => radio.closest("label")?.textContent),
+      ).toEqual([
+        "Discordo totalmente",
+        "Discordo",
+        "Depende",
+        "Concordo",
+        "Concordo totalmente",
+      ])
+    })
+
+    it("reports the choice picked", async () => {
+      const user = userEvent.setup()
+      const onChange = draw({ kind: "likert" })
+
+      await user.click(screen.getByRole("radio", { name: "Concordo" }))
+
+      expect(onChange).toHaveBeenCalledWith({ choice: "agree" })
+    })
+
+    it("keeps the comment already written when the choice changes", async () => {
+      const user = userEvent.setup()
+      const onChange = draw(
+        { kind: "likert" },
+        { choice: "agree", comment: "Às vezes" },
+      )
+
+      await user.click(screen.getByRole("radio", { name: "Depende" }))
+
+      expect(onChange).toHaveBeenCalledWith({
+        choice: "depends",
+        comment: "Às vezes",
+      })
+    })
+
+    it("keeps the choice when a comment is written", () => {
+      const onChange = draw({ kind: "likert" }, { choice: "disagree" })
+
+      fireEvent.change(
+        screen.getByRole("textbox", { name: "Comentário (opcional)" }),
+        { target: { value: "Já mudei de ideia" } },
+      )
+
+      expect(onChange).toHaveBeenCalledWith({
+        choice: "disagree",
+        comment: "Já mudei de ideia",
+      })
+    })
+
+    it("shows the answer it was given", () => {
+      draw({ kind: "likert" }, { choice: "strongly_agree", comment: "Sim" })
+
+      expect(
+        screen.getByRole("radio", { name: "Concordo totalmente" }),
+      ).toBeChecked()
+      expect(
+        screen.getByRole("textbox", { name: "Comentário (opcional)" }),
+      ).toHaveValue("Sim")
+    })
+  })
 })

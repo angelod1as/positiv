@@ -5,7 +5,8 @@ import { TextArea } from "~/components/ui/textarea"
 import { ChipSelect } from "~/components/forms/base/chip-select"
 import { Radio } from "~/components/forms/base/radio"
 import { Select } from "~/components/forms/base/select"
-import { formRuntimeCopy } from "~/copy/forms"
+import { formRuntimeCopy, likertCopy } from "~/copy/forms"
+import { LIKERT_CHOICES, type LikertAnswer } from "./likert"
 import type { RenderQuestion } from "./presentations/presentation.types"
 
 const asText = (value: unknown) => (typeof value === "string" ? value : "")
@@ -18,6 +19,11 @@ const asList = (value: unknown) =>
 // separate questions.
 const choiceClassName =
   "flex items-start gap-2 py-0.5 cursor-pointer mb-0 pointer-coarse:min-h-11 pointer-coarse:py-2"
+
+const asLikert = (value: unknown): Partial<LikertAnswer> =>
+  typeof value === "object" && value !== null
+    ? (value as Partial<LikertAnswer>)
+    : {}
 
 const affixClassName = "text-sm text-muted-foreground shrink-0"
 
@@ -216,5 +222,45 @@ export const renderQuestion: RenderQuestion = ({
           <span>{question.prompt}</span>
         </Label>
       )
+
+    case "likert": {
+      const answer = asLikert(value)
+      const commentId = `${question.id}-comment`
+
+      return (
+        <div className="flex flex-col gap-4">
+          <div
+            role="radiogroup"
+            aria-labelledby={labelledBy}
+            className="flex flex-col gap-0.5 pointer-coarse:gap-2"
+          >
+            {LIKERT_CHOICES.map((choice) => (
+              <Label key={choice} className={choiceClassName}>
+                <Radio
+                  name={question.id}
+                  value={choice}
+                  checked={answer.choice === choice}
+                  onChange={() => onChange({ ...answer, choice })}
+                />
+                <span>{likertCopy.choices[choice]}</span>
+              </Label>
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <Label htmlFor={commentId} className="mb-0 text-muted-foreground">
+              {likertCopy.commentLabel}
+            </Label>
+            <TextArea
+              id={commentId}
+              value={answer.comment ?? ""}
+              onChange={(event) =>
+                onChange({ ...answer, comment: event.target.value })
+              }
+            />
+          </div>
+        </div>
+      )
+    }
   }
 }
