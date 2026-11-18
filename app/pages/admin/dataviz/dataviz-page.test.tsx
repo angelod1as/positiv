@@ -92,7 +92,7 @@ describe("Numeros Page - Loader", () => {
     expect(getConversionFunnelData).toHaveBeenCalledTimes(1)
     expect(getOccupancyData).toHaveBeenCalledTimes(1)
     expect(getVeteranRookieData).toHaveBeenCalledTimes(1)
-    expect(getDemographicsData).toHaveBeenCalledWith("all")
+    expect(getDemographicsData).toHaveBeenCalledWith("all", expect.anything())
     expect(getGrowthData).toHaveBeenCalledTimes(1)
     expect(getRetentionData).toHaveBeenCalledTimes(1)
     expect(getSeasonalityData).toHaveBeenCalledTimes(1)
@@ -184,7 +184,7 @@ describe("Numeros Page - Loader", () => {
       makeRequest("http://localhost/admin/numeros?mode=attended")
     )
 
-    expect(getDemographicsData).toHaveBeenCalledWith("attended")
+    expect(getDemographicsData).toHaveBeenCalledWith("attended", expect.anything())
     expect(result.demographics).toEqual(mockAttendedDemographics)
   })
 
@@ -195,7 +195,7 @@ describe("Numeros Page - Loader", () => {
 
     await loader(makeRequest())
 
-    expect(getDemographicsData).toHaveBeenCalledWith("all")
+    expect(getDemographicsData).toHaveBeenCalledWith("all", expect.anything())
   })
 
   it("should default to 'all' mode when invalid mode param is provided", async () => {
@@ -205,6 +205,71 @@ describe("Numeros Page - Loader", () => {
 
     await loader(makeRequest("http://localhost/admin/numeros?mode=invalid"))
 
-    expect(getDemographicsData).toHaveBeenCalledWith("all")
+    expect(getDemographicsData).toHaveBeenCalledWith("all", expect.anything())
+  })
+
+  it("measures every query over the party range in the URL", async () => {
+    const { getKpiScores } = await import(
+      "~/business/reporting/dataviz/kpi-scores.server"
+    )
+    const { getEventRevenueData } = await import(
+      "~/business/reporting/dataviz/event-metrics.server"
+    )
+    const { getDemographicsData, getVeteranRookieData } = await import(
+      "~/business/reporting/dataviz/demographics-dataviz.server"
+    )
+    const { getRetentionData } = await import(
+      "~/business/reporting/dataviz/growth-retention.server"
+    )
+    const range = {
+      from: "2025-09-01T22:00:00.000Z",
+      to: "2026-03-01T22:00:00.000Z",
+    }
+
+    await loader(
+      makeRequest(
+        `http://localhost/admin/numeros?from=${range.from}&to=${range.to}&mode=attended`
+      )
+    )
+
+    expect(getKpiScores).toHaveBeenCalledWith(range)
+    expect(getEventRevenueData).toHaveBeenCalledWith(range)
+    expect(getVeteranRookieData).toHaveBeenCalledWith(range)
+    expect(getRetentionData).toHaveBeenCalledWith(range)
+    expect(getDemographicsData).toHaveBeenCalledWith("attended", range)
+  })
+
+  it("lists every party since 21/06/2025 for the selector, and only the range's for the charts", async () => {
+    const { getEventAttendanceData } = await import(
+      "~/business/reporting/dataviz/event-metrics.server"
+    )
+    const party = (title: string, date: string) => ({
+      title,
+      emoji: "🎉",
+      date,
+      inscritos: 1,
+      compareceram: 1,
+      nao_foram: 0,
+      withdrew: 0,
+      not_selected: 0,
+      skipped: 0,
+      rodizio: 0,
+      vagas_sociais: 0,
+      staff: 0,
+    })
+    vi.mocked(getEventAttendanceData).mockResolvedValue([
+      party("Junho", "2025-06-21T22:00:00.000Z"),
+      party("Setembro", "2025-09-20T22:00:00.000Z"),
+    ])
+
+    const result = await loader(
+      makeRequest(
+        "http://localhost/admin/numeros?from=2025-09-20T22:00:00.000Z"
+      )
+    )
+
+    expect(result.parties.map((p) => p.title)).toEqual(["Junho", "Setembro"])
+    expect(result.eventAttendance.map((p) => p.title)).toEqual(["Setembro"])
+    expect(result.range.from).toBe("2025-09-20T22:00:00.000Z")
   })
 })

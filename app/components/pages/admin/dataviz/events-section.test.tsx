@@ -107,22 +107,19 @@ const chartTitled = (title: string) => {
 }
 
 describe('EventsSection', () => {
-  it('renders the range selector when data has multiple events', () => {
+  it('leaves choosing the parties to the page', () => {
     renderSection(5)
 
-    expect(screen.getByText(adminDatavizCopy.eventRangeSelector.label)).toBeInTheDocument()
-  })
-
-  it('does not render the range selector for empty data', () => {
-    renderSection(0)
-
     expect(screen.queryByText(adminDatavizCopy.eventRangeSelector.label)).not.toBeInTheDocument()
   })
 
-  it('does not render the range selector for single event', () => {
-    renderSection(1)
+  it('draws every party it is given, the page having chosen them', async () => {
+    renderSection(3)
 
-    expect(screen.queryByText(adminDatavizCopy.eventRangeSelector.label)).not.toBeInTheDocument()
+    const veterans = chartTitled('Veteranes e Novates')
+    await userEvent.click(veterans.getByRole('button', { name: 'Ver dados' }))
+
+    expect(veterans.getAllByRole('rowheader')).toHaveLength(3)
   })
 
   it('draws every event chart as a Chart Section, in order', () => {
@@ -153,29 +150,6 @@ describe('EventsSection', () => {
       '🎉 Evento 1 · 15/01/24',
       '🎉 Evento 2 · 15/02/24',
       '🎉 Evento 3 · 15/03/24',
-    ])
-  })
-
-  it('keeps each chart to the selected events, even when one leaves an event out', async () => {
-    localStorage.setItem('dataviz-brush-events', JSON.stringify({ startIndex: 0, endIndex: 1 }))
-    const withoutTheSecond = makeVeteranRookie(3).filter((_, index) => index !== 1)
-    render(
-      <EventsSection
-        attendance={makeAttendance(3)}
-        revenue={makeRevenue(3)}
-        funnel={makeFunnel(3)}
-        occupancy={makeOccupancy(3)}
-        veteranRookie={withoutTheSecond}
-        seasonality={seasonality}
-      />
-    )
-    localStorage.removeItem('dataviz-brush-events')
-
-    const veterans = chartTitled('Veteranes e Novates')
-    await userEvent.click(veterans.getByRole('button', { name: 'Ver dados' }))
-
-    expect(veterans.getAllByRole('rowheader').map((cell) => cell.textContent)).toEqual([
-      '🎉 Evento 1 · 15/01/24',
     ])
   })
 

@@ -1,10 +1,13 @@
-import { useCallback, useState } from "react"
 import {
   type LoaderFunctionArgs,
-  useFetcher,
   useLoaderData,
+  useSearchParams,
 } from "react-router"
-import type { DemographicsDataResult } from "~/business/reporting/dataviz/dataviz.types"
+import {
+  type DatavizRange,
+  datavizRange,
+  fullDatavizRange,
+} from "~/business/reporting/dataviz/dataviz-range"
 import {
   getDemographicsData,
   getVeteranRookieData,
@@ -25,17 +28,18 @@ import type { FilterMode } from "~/components/atoms/charts/demographic-filter-to
 import { CommunitySection } from "~/components/pages/admin/dataviz/community-section"
 import { EventsSection } from "~/components/pages/admin/dataviz/events-section"
 import { KpiScores } from "~/components/pages/admin/dataviz/kpi-scores"
+import { PartyRangeSelector } from "~/components/pages/admin/dataviz/party-range-selector"
 import { adminDatavizCopy } from "~/copy/admin/dataviz"
-import paths from "~/lib/paths"
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url)
   const modeParam = url.searchParams.get("mode")
   const demographicsMode: "all" | "attended" =
     modeParam === "attended" ? "attended" : "all"
+  const range = datavizRange(url.searchParams)
   const [
+    parties,
     kpiScores,
-    eventAttendance,
     eventRevenue,
     conversionFunnel,
     occupancy,
@@ -45,19 +49,25 @@ export async function loader({ request }: LoaderFunctionArgs) {
     retention,
     seasonality,
   ] = await Promise.all([
-    getKpiScores(),
-    getEventAttendanceData(),
-    getEventRevenueData(),
-    getConversionFunnelData(),
-    getOccupancyData(),
-    getVeteranRookieData(),
-    getDemographicsData(demographicsMode),
-    getGrowthData(),
-    getRetentionData(),
-    getSeasonalityData(),
+    getEventAttendanceData(fullDatavizRange()),
+    getKpiScores(range),
+    getEventRevenueData(range),
+    getConversionFunnelData(range),
+    getOccupancyData(range),
+    getVeteranRookieData(range),
+    getDemographicsData(demographicsMode, range),
+    getGrowthData(range),
+    getRetentionData(range),
+    getSeasonalityData(range),
   ])
+  const eventAttendance = parties.filter(
+    (party) => party.date >= range.from && party.date <= range.to
+  )
 
   return {
+    range,
+    parties,
+    demographicsMode,
     kpiScores,
     eventAttendance,
     eventRevenue,
@@ -73,19 +83,21 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function NumerosPage() {
   const data = useLoaderData<typeof loader>()
-  const [demographicsMode, setDemographicsMode] = useState<FilterMode>("all")
-  const fetcher = useFetcher<typeof loader>()
+  const [, setSearchParams] = useSearchParams()
+  const { demographics, demographicsMode } = data
 
-  const demographics: DemographicsDataResult =
-    fetcher.data?.demographics ?? data.demographics
+  const updateSearch = (values: Record<string, string>) =>
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current)
+        for (const [key, value] of Object.entries(values)) next.set(key, value)
+        return next
+      },
+      { replace: true, preventScrollReset: true }
+    )
 
-  const handleModeChange = useCallback(
-    (mode: FilterMode) => {
-      setDemographicsMode(mode)
-      fetcher.load(`${paths.admin.ADMIN_DATAVIZ}?mode=${mode}`)
-    },
-    [fetcher],
-  )
+  const handleRangeChange = (range: DatavizRange) => updateSearch(range)
+  const handleModeChange = (mode: FilterMode) => updateSearch({ mode })
 
   const totalProfiles = data.kpiScores.total_profiles
   const filledProfilesAge = demographics.age.reduce(
@@ -98,6 +110,11 @@ export default function NumerosPage() {
       <header className="w-full px-4 pt-12 pb-4 md:px-6 md:pt-16">
         <div className="mx-auto max-w-3xl">
           <h1>{adminDatavizCopy.title}</h1>
+          <PartyRangeSelector
+            parties={data.parties}
+            range={data.range}
+            onRangeChange={handleRangeChange}
+          />
         </div>
       </header>
 
