@@ -9,20 +9,7 @@ vi.mock("./sanity-client.server", () => ({
 vi.mock("~/lib/logger/logger.server", () => ({ logger: { error: vi.fn() } }))
 
 const scale = {
-  themes: [
-    {
-      name: "Tema de exemplo",
-      statements: [{ key: "exemplo-01", text: "Sou de exemplo." }],
-    },
-  ],
-  venues: {
-    question: "A quais destes você já foi?",
-    options: [{ key: "sauna", label: "Sauna" }],
-  },
-  nonMonogamySince: {
-    question: "Desde quando você vive a não-monogamia?",
-    notLivingLabel: "Não vivo a não-monogamia hoje",
-  },
+  statements: [{ key: "exemplo-01", text: "Sou de exemplo." }],
 }
 
 afterEach(() => {

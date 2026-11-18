@@ -6,20 +6,7 @@ import { getLikertScale } from "./likert-scale-source.server"
 vi.mock("~/lib/logger/logger.server", () => ({ logger: { error: vi.fn() } }))
 
 const scale = {
-  themes: [
-    {
-      name: "Tema de exemplo",
-      statements: [{ key: "exemplo-01", text: "Sou de exemplo." }],
-    },
-  ],
-  venues: {
-    question: "A quais destes você já foi?",
-    options: [{ key: "sauna", label: "Sauna" }],
-  },
-  nonMonogamySince: {
-    question: "Desde quando você vive a não-monogamia?",
-    notLivingLabel: "Não vivo a não-monogamia hoje",
-  },
+  statements: [{ key: "exemplo-01", text: "Sou de exemplo." }],
 }
 
 function clientReturning(document: unknown) {
@@ -46,12 +33,12 @@ describe("getLikertScale", () => {
   })
 
   it("returns null and logs why when the content breaks the contract", async () => {
-    const broken = { ...scale, themes: [] }
+    const broken = { statements: [] }
 
     expect(await getLikertScale(clientReturning(broken))).toBeNull()
     expect(logger.error).toHaveBeenCalledWith(
       "The Likert scale failed validation",
-      { error: expect.stringContaining("themes") },
+      { error: expect.stringContaining("statements") },
     )
   })
 

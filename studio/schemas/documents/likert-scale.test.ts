@@ -11,36 +11,11 @@ const statement = (key: string, text: string) => ({
   text,
 })
 
-const theme = (key: string, name: string, statements: unknown[]) => ({
-  _type: "likertTheme",
-  _key: key,
-  name,
-  statements,
-})
-
-const option = (key: string, label: string) => ({
-  _type: "likertOption",
-  _key: key,
-  key,
-  label,
-})
-
 const valid = {
-  themes: [
-    theme("t1", "Como vive a não-monogamia", [
-      statement("s1", "Sou uma pessoa de exemplo."),
-      statement("s2", "Gosto de afirmações de teste."),
-    ]),
-    theme("t2", "O que vem buscar", [statement("s3", "Quero testar.")]),
+  statements: [
+    statement("s1", "Sou uma pessoa de exemplo."),
+    statement("s2", "Gosto de afirmações de teste."),
   ],
-  venues: {
-    question: "A quais destes você já foi?",
-    options: [option("sauna", "Sauna"), option("nenhum", "Nenhum destes")],
-  },
-  nonMonogamySince: {
-    question: "Desde quando você vive a não-monogamia?",
-    notLivingLabel: "Não vivo a não-monogamia hoje",
-  },
 }
 
 function validate(fields: Record<string, unknown>) {
@@ -48,82 +23,47 @@ function validate(fields: Record<string, unknown>) {
 }
 
 describe("likertScale", () => {
-  it("accepts a complete scale", async () => {
+  it("accepts a list of statements", async () => {
     expect(await validate(valid)).toEqual([])
   })
 
-  it("requires at least one theme", async () => {
-    expect(pathsOf(await validate({ ...valid, themes: [] }))).toContain(
-      "themes",
-    )
-  })
-
-  it("requires a theme name", async () => {
-    const themes = [theme("t1", "", [statement("s1", "Texto.")])]
-    expect(pathsOf(await validate({ ...valid, themes }))).toContain(
-      "themes.t1.name",
-    )
-  })
-
-  it("requires at least one statement in a theme", async () => {
-    const themes = [theme("t1", "Tema", [])]
-    expect(pathsOf(await validate({ ...valid, themes }))).toContain(
-      "themes.t1.statements",
-    )
+  it("requires at least one statement", async () => {
+    expect(pathsOf(await validate({ statements: [] }))).toContain("statements")
   })
 
   it("rejects a blank statement", async () => {
-    const themes = [theme("t1", "Tema", [statement("s1", "   ")])]
-    expect(pathsOf(await validate({ ...valid, themes }))).toContain(
-      "themes.t1.statements.s1.text",
-    )
+    expect(
+      pathsOf(await validate({ statements: [statement("s1", "   ")] })),
+    ).toContain("statements.s1.text")
   })
 
   it("rejects a statement key outside the allowed format", async () => {
-    const themes = [theme("t1", "Tema", [statement("Chave Ruim", "Texto.")])]
-    expect(pathsOf(await validate({ ...valid, themes }))).toContain(
-      "themes.t1.statements.Chave Ruim.key",
-    )
+    expect(
+      pathsOf(await validate({ statements: [statement("Chave Ruim", "Texto.")] })),
+    ).toContain("statements.Chave Ruim.key")
   })
 
-  it("rejects the same statement key in two themes", async () => {
-    const themes = [
-      theme("t1", "Tema 1", [statement("s1", "Um.")]),
-      theme("t2", "Tema 2", [{ ...statement("s2", "Dois."), key: "s1" }]),
+  it("rejects two statements with the same key", async () => {
+    const statements = [
+      statement("s1", "Um."),
+      { ...statement("s2", "Dois."), key: "s1" },
     ]
-    expect(pathsOf(await validate({ ...valid, themes }))).toContain("themes")
+    expect(pathsOf(await validate({ statements }))).toContain("statements")
   })
 
-  it("requires at least one venue option", async () => {
-    expect(
-      pathsOf(
-        await validate({ ...valid, venues: { ...valid.venues, options: [] } }),
-      ),
-    ).toContain("venues.options")
-  })
-
-  it("rejects two venue options with the same key", async () => {
-    const options = [option("sauna", "Sauna"), { ...option("x", "Outra"), key: "sauna" }]
-    expect(
-      pathsOf(await validate({ ...valid, venues: { ...valid.venues, options } })),
-    ).toContain("venues.options")
-  })
-
-  it("requires the questions' text", async () => {
-    const paths = pathsOf(
-      await validate({
-        ...valid,
-        venues: { ...valid.venues, question: "" },
-        nonMonogamySince: { question: "", notLivingLabel: "" },
-      }),
+  it("describes the page to whoever edits it", () => {
+    const field = likertScaleType.fields.find(
+      (candidate) => candidate.name === "statements",
     )
-    expect(paths).toEqual(
-      expect.arrayContaining([
-        "venues.question",
-        "nonMonogamySince.question",
-        "nonMonogamySince.notLivingLabel",
-      ]),
-    )
+    expect(field?.description).toContain("sem perda de dados")
+  })
+
+  it("keeps the statement key out of the editor's sight", () => {
+    const list = likertScaleType.fields.find(
+      (candidate) => candidate.name === "statements",
+    ) as { of: { fields: { name: string; hidden?: unknown }[] }[] }
+    const key = list.of[0].fields.find((field) => field.name === "key")
+    expect(key?.hidden).toBe(true)
   })
 
   it("titles the preview Escala de Likert", () => {
