@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react"
 import { MemoryRouter } from "react-router"
-import { describe, expect, it } from "vitest"
+import userEvent from "@testing-library/user-event"
+import { describe, expect, it, vi } from "vitest"
 import type { EventStatus } from "~types/database/entities.types"
 import { adminAddParticipantsCopy } from "~/copy/admin/add-participants"
 import { AddParticipantsSection } from "./add-participants-section"
@@ -40,6 +41,46 @@ describe("the add participants section on an event page", () => {
       expect(trigger()).not.toBeInTheDocument()
     },
   )
+
+  it("opens the modal afresh, without the last results", async () => {
+    const user = userEvent.setup()
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        Response.json({
+          ok: true,
+          results: [
+            {
+              id: "p1",
+              full_name: "Maria Silva",
+              social_name: null,
+              is_participant: false,
+            },
+          ],
+        }) as Response,
+      )
+      .mockResolvedValueOnce(
+        Response.json({
+          ok: true,
+          outcomes: [{ profileId: "p1", outcome: "added" }],
+        }) as Response,
+      )
+    renderSection("Registration Open")
+    const { modal } = adminAddParticipantsCopy
+
+    await user.click(trigger() as HTMLElement)
+    await user.type(screen.getByLabelText(modal.searchLabel), "maria")
+    await user.click(await screen.findByRole("button", { name: modal.select }))
+    await user.click(screen.getByRole("button", { name: modal.submit(1) }))
+    await screen.findByRole("region", { name: modal.resultsTitle })
+
+    await user.keyboard("{Escape}")
+    await user.click(trigger() as HTMLElement)
+
+    expect(
+      screen.queryByRole("region", { name: modal.resultsTitle }),
+    ).not.toBeInTheDocument()
+    vi.restoreAllMocks()
+  })
 
   it("offers nothing to someone without the permission", () => {
     renderSection("Registration Open", false)

@@ -171,6 +171,15 @@ describe("the add participants endpoint", () => {
     { intent: "add", eventId: EVENT_ID, people: [{ profileId: "perfil", spotType: "regular" }] },
     { intent: "add", eventId: EVENT_ID, people: [{ profileId: PROFILE_ID, spotType: "vip" }] },
     { intent: "add", eventId: EVENT_ID, people: [] },
+    {
+      intent: "add",
+      eventId: EVENT_ID,
+      people: [
+        { profileId: PROFILE_ID, spotType: "regular" },
+        { profileId: PROFILE_ID, spotType: "staff" },
+      ],
+    },
+    { intent: "search", eventId: EVENT_ID, term: "a".repeat(101) },
   ])("refuses a malformed body before anything reaches the database: %o", async (body) => {
     const response = await post(body)
 

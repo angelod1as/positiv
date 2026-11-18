@@ -173,6 +173,53 @@ describe("the add participants modal", () => {
     expect(onAdded).toHaveBeenCalled()
   })
 
+  const addOne = async (
+    user: ReturnType<typeof userEvent.setup>,
+    outcome = "added",
+  ) => {
+    fetchSpy.mockResolvedValue(found([person()]))
+    await search(user, "maria")
+    await user.click(await screen.findByRole("button", { name: modal.select }))
+    fetchSpy.mockResolvedValue(
+      Response.json({
+        ok: true,
+        outcomes: [{ profileId: "p1", outcome }],
+      }) as Response,
+    )
+    await user.click(screen.getByRole("button", { name: modal.submit(1) }))
+    await screen.findByRole("region", { name: modal.resultsTitle })
+  }
+
+  it("clears the search once people are added, so nobody looks selectable again", async () => {
+    const user = userEvent.setup()
+    renderModal()
+
+    await addOne(user)
+
+    expect(screen.getByLabelText(modal.searchLabel)).toHaveValue("")
+    expect(
+      screen.queryByRole("button", { name: modal.select }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("drops the previous results when the next addition starts", async () => {
+    const user = userEvent.setup()
+    renderModal()
+
+    await addOne(user, "reactivated")
+
+    fetchSpy.mockResolvedValue(found([person()]))
+    await search(user, "maria")
+    await user.click(await screen.findByRole("button", { name: modal.select }))
+    fetchSpy.mockRejectedValue(new Error("offline"))
+    await user.click(screen.getByRole("button", { name: modal.submit(1) }))
+
+    await screen.findByRole("alert")
+    expect(
+      screen.queryByRole("region", { name: modal.resultsTitle }),
+    ).not.toBeInTheDocument()
+  })
+
   it("lets the admin take someone back off the selection", async () => {
     const user = userEvent.setup()
     fetchSpy.mockResolvedValue(found([person()]))

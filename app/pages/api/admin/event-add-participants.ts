@@ -19,7 +19,7 @@ const bodySchema = zod.discriminatedUnion("intent", [
   zod.object({
     intent: zod.literal("search"),
     eventId: zod.string().uuid(),
-    term: zod.string(),
+    term: zod.string().max(100),
   }),
   zod.object({
     intent: zod.literal("add"),
@@ -34,7 +34,12 @@ const bodySchema = zod.discriminatedUnion("intent", [
       .min(1)
       // Each person costs a few queries inside one transaction; a cap keeps it
       // short. Far above any hand-picked selection.
-      .max(100),
+      .max(100)
+      .refine(
+        (people) =>
+          new Set(people.map((person) => person.profileId)).size ===
+          people.length,
+      ),
   }),
 ])
 

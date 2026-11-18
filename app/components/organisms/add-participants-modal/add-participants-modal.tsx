@@ -128,6 +128,7 @@ export const AddParticipantsModal: FC<AddParticipantsModalProps> = ({
   const submit = async () => {
     setIsBusy(true)
     setError(null)
+    setOutcomes([])
 
     try {
       const response = await post({
@@ -160,6 +161,10 @@ export const AddParticipantsModal: FC<AddParticipantsModalProps> = ({
         })),
       )
       setSelection([])
+      // The results were read before the addition; whoever was just added
+      // would still look selectable.
+      setTerm("")
+      setResults([])
       onAdded()
     } catch {
       setError(modal.failed)
@@ -168,8 +173,18 @@ export const AddParticipantsModal: FC<AddParticipantsModalProps> = ({
     }
   }
 
+  const changeOpen = (next: boolean) => {
+    if (!next) {
+      setTerm("")
+      setSelection([])
+      setOutcomes([])
+      setError(null)
+    }
+    onOpenChange(next)
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={changeOpen}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{modal.title}</DialogTitle>
