@@ -110,7 +110,6 @@ export type KpiScores = {
   avg_no_show_rate: number
 }
 
-/** The annual report's numbers for the parties in a range. */
 export type PartySummary = {
   parties: number
   people: number
@@ -125,7 +124,6 @@ export type PartySummary = {
   newcomers: number
   /** Newcomers who came back to a later party, in the range or after it. */
   newcomers_returned: number
-  /** People at two or more parties in the range. */
   repeat_people: number
   /** Age at the person's first party in the range, kept to 18-120. */
   age: { min: number; avg: number; max: number } | null

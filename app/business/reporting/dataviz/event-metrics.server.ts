@@ -117,7 +117,6 @@ export async function getEventRevenueData(
         "faturamento_bruto"
       ),
       sql<number>`count(*) filter (where epp.has_paid)::int`.as("num_pagantes"),
-      // The split goes by who took the money: an admin by hand, or Asaas.
       sql<number>`(
         select coalesce(sum(p.amount - coalesce(p.refund_amount, 0)), 0)
         from payments p
