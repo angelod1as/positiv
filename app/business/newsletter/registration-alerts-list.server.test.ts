@@ -166,6 +166,21 @@ describe("syncRegistrationAlertsListmonkList", () => {
     )
   })
 
+  it("puts back someone whose alerts were turned on at the moment they left, as the unsubscribe sync keeps them on", async () => {
+    mockExecute.mockResolvedValue([
+      profile("same@example.com", "2026-11-20T10:00:00.000Z"),
+    ])
+    const same = leftAlertsAt(9, "same@example.com", "2026-11-20T10:00:00.000Z")
+    listmonk({ everyone: [same], leftAlerts: [same] })
+
+    await syncRegistrationAlertsListmonkList()
+
+    expect(addSubscribersToListBulk).toHaveBeenCalledWith(
+      [9],
+      LISTMONK_REGISTRATION_ALERTS_LIST_ID,
+    )
+  })
+
   it("keeps out someone whose alerts on the site are older than leaving the list", async () => {
     mockExecute.mockResolvedValue([
       profile("stale@example.com", "2026-11-10T10:00:00.000Z"),

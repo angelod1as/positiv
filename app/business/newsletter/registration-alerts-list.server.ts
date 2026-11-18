@@ -104,7 +104,7 @@ export const syncRegistrationAlertsListmonkList = composable(async () => {
       eligibleIds.add(subscriber.id)
     } else if (
       profile.registration_alerts_at &&
-      new Date(profile.registration_alerts_at) > left
+      new Date(profile.registration_alerts_at) >= left
     ) {
       eligibleIds.add(subscriber.id)
       toResubscribe.push(subscriber.id)
