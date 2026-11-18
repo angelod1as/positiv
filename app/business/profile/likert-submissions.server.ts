@@ -1,10 +1,12 @@
 import { sql } from "kysely"
+import type { z } from "zod"
+import type { currentProfileSchema } from "~/business/auth/auth-schemas"
 import { can, PERMISSIONS } from "~/business/auth/permissions"
 import { db } from "~/lib/supabase/db.server"
 import type { LikertSubmissionInput } from "./likert-schema"
 import { likertSubmissionSchema } from "./likert-schema"
 
-type Viewer = { id: string; permissions?: readonly string[] | null }
+type Viewer = Pick<z.infer<typeof currentProfileSchema>, "id" | "permissions">
 
 export interface LikertSubmission {
   id: string
