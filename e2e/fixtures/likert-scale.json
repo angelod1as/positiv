@@ -1,0 +1,72 @@
+{
+  "nonMonogamySince": {
+    "notLivingLabel": "Não vivo a não-monogamia hoje",
+    "question": "Desde quando você vive a não-monogamia?"
+  },
+  "themes": [
+    {
+      "name": "Tema de exemplo 1",
+      "statements": [
+        {
+          "key": "exemplo-01",
+          "text": "[Exemplo] Afirmação 1."
+        },
+        {
+          "key": "exemplo-02",
+          "text": "[Exemplo] Afirmação 2."
+        },
+        {
+          "key": "exemplo-03",
+          "text": "[Exemplo] Afirmação 3."
+        }
+      ]
+    },
+    {
+      "name": "Tema de exemplo 2",
+      "statements": [
+        {
+          "key": "exemplo-04",
+          "text": "[Exemplo] Afirmação 4."
+        },
+        {
+          "key": "exemplo-05",
+          "text": "[Exemplo] Afirmação 5."
+        }
+      ]
+    },
+    {
+      "name": "Tema de exemplo 3",
+      "statements": [
+        {
+          "key": "exemplo-06",
+          "text": "[Exemplo] Afirmação 6."
+        },
+        {
+          "key": "exemplo-07",
+          "text": "[Exemplo] Afirmação 7."
+        }
+      ]
+    }
+  ],
+  "venues": {
+    "options": [
+      {
+        "key": "exemplo-lugar-1",
+        "label": "[Exemplo] Lugar 1"
+      },
+      {
+        "key": "exemplo-lugar-2",
+        "label": "[Exemplo] Lugar 2"
+      },
+      {
+        "key": "exemplo-lugar-3",
+        "label": "[Exemplo] Lugar 3"
+      },
+      {
+        "key": "nenhum",
+        "label": "Nenhum destes"
+      }
+    ],
+    "question": "A quais destes você já foi?"
+  }
+}

@@ -1,5 +1,6 @@
 import { evaluate, parse } from "groq-js"
 
+import { likertScaleQuery } from "../../app/business/cms/likert-scale-query"
 import { siteSnapshotQuery } from "../../app/business/cms/site-snapshot-query"
 import { seedDocuments } from "../seed/seed"
 
@@ -44,6 +45,15 @@ export async function generateSiteSnapshotFixture(): Promise<SiteSnapshotFixture
   })
 
   return (await value.get()) as SiteSnapshotFixture
+}
+
+// The Likert scale as the app reads it, resolved through likertScaleQuery.
+export async function generateLikertScaleFixture(): Promise<unknown> {
+  const value = await evaluate(parse(likertScaleQuery), {
+    dataset: fixtureDataset(),
+  })
+
+  return value.get()
 }
 
 function sortKeys(value: unknown): unknown {

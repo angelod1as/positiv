@@ -7,7 +7,11 @@ import {
   siteSettingsContent,
   testPageContent,
 } from "../../e2e/fixtures/test-page-content"
-import { generateSiteSnapshotFixture, serializeFixture } from "./generate"
+import {
+  generateLikertScaleFixture,
+  generateSiteSnapshotFixture,
+  serializeFixture,
+} from "./generate"
 
 function committed(name: string): string {
   return readFileSync(
@@ -34,6 +38,12 @@ describe("e2e fixtures generated from the seed", () => {
 
     expect(committed("payment-messages.json")).toBe(
       serializeFixture(paymentMessages),
+    )
+  })
+
+  it("keeps likert-scale.json current — run `pnpm --filter studio fixtures`", async () => {
+    expect(committed("likert-scale.json")).toBe(
+      serializeFixture(await generateLikertScaleFixture()),
     )
   })
 })

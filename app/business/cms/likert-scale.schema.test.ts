@@ -1,3 +1,4 @@
+import likertScaleFixture from "../../../e2e/fixtures/likert-scale.json"
 import { describe, expect, it } from "vitest"
 import { likertScaleSchema } from "./likert-scale.schema"
 
@@ -35,6 +36,12 @@ function withThemes(themes: unknown) {
 describe("likertScaleSchema", () => {
   it("accepts a complete scale and keeps its order", () => {
     expect(likertScaleSchema.parse(valid)).toEqual(valid)
+  })
+
+  it("accepts the e2e fixture generated from the seed", () => {
+    expect(likertScaleSchema.parse(likertScaleFixture)).toEqual(
+      likertScaleFixture,
+    )
   })
 
   it("rejects a scale with no themes", () => {
