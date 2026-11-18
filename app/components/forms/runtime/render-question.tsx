@@ -5,9 +5,9 @@ import { TextArea } from "~/components/ui/textarea"
 import { ChipSelect } from "~/components/forms/base/chip-select"
 import { Radio } from "~/components/forms/base/radio"
 import { Select } from "~/components/forms/base/select"
-import { formRuntimeCopy, likertCopy, monthYearCopy } from "~/copy/forms"
+import { formRuntimeCopy, likertCopy, yearCopy } from "~/copy/forms"
 import { LIKERT_CHOICES, type LikertAnswer } from "./likert"
-import type { MonthYearAnswer } from "./month-year"
+import type { YearAnswer } from "./year"
 import type { RenderQuestion } from "./presentations/presentation.types"
 
 const asText = (value: unknown) => (typeof value === "string" ? value : "")
@@ -26,8 +26,8 @@ const asLikert = (value: unknown): Partial<LikertAnswer> =>
     ? (value as Partial<LikertAnswer>)
     : {}
 
-const asMonthYear = (value: unknown): MonthYearAnswer =>
-  typeof value === "object" && value !== null ? (value as MonthYearAnswer) : {}
+const asYear = (value: unknown): Partial<{ none: true; year: number }> =>
+  typeof value === "object" && value !== null ? (value as YearAnswer) : {}
 
 const FIRST_YEAR = 1950
 
@@ -286,17 +286,10 @@ export const renderQuestion: RenderQuestion = ({
       )
     }
 
-    case "monthyear": {
-      const answer = asMonthYear(value)
-      const optedOut = "none" in answer
-      const parts = optedOut ? {} : answer
-      const monthId = `${question.id}-month`
+    case "year": {
+      const answer = asYear(value)
+      const optedOut = answer.none === true
       const yearId = `${question.id}-year`
-
-      const pick = (part: "month" | "year", picked: string) => {
-        const { [part]: _dropped, ...rest } = parts
-        onChange(picked === "" ? rest : { ...rest, [part]: Number(picked) })
-      }
 
       return (
         <div
@@ -304,44 +297,29 @@ export const renderQuestion: RenderQuestion = ({
           aria-labelledby={labelledBy}
           className="flex flex-col gap-3"
         >
-          <div className="flex gap-2">
-            <div className="flex flex-1 flex-col gap-1">
-              <Label htmlFor={monthId} className="mb-0 text-muted-foreground">
-                {monthYearCopy.month}
-              </Label>
-              <Select
-                id={monthId}
-                disabled={optedOut}
-                value={parts.month === undefined ? "" : String(parts.month)}
-                onChange={(event) => pick("month", event.target.value)}
-              >
-                <option value="">{formRuntimeCopy.selectPlaceholder}</option>
-                {monthYearCopy.months.map((month, index) => (
-                  <option key={month} value={index + 1}>
-                    {month}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            <div className="flex flex-1 flex-col gap-1">
-              <Label htmlFor={yearId} className="mb-0 text-muted-foreground">
-                {monthYearCopy.year}
-              </Label>
-              <Select
-                id={yearId}
-                disabled={optedOut}
-                value={parts.year === undefined ? "" : String(parts.year)}
-                onChange={(event) => pick("year", event.target.value)}
-              >
-                <option value="">{formRuntimeCopy.selectPlaceholder}</option>
-                {yearsBackFromNow().map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </Select>
-            </div>
+          <div className="flex flex-col gap-1">
+            <Label htmlFor={yearId} className="mb-0 text-muted-foreground">
+              {yearCopy.year}
+            </Label>
+            <Select
+              id={yearId}
+              disabled={optedOut}
+              value={answer.year === undefined ? "" : String(answer.year)}
+              onChange={(event) =>
+                onChange(
+                  event.target.value === ""
+                    ? undefined
+                    : { year: Number(event.target.value) },
+                )
+              }
+            >
+              <option value="">{formRuntimeCopy.selectPlaceholder}</option>
+              {yearsBackFromNow().map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </Select>
           </div>
 
           {input.optOut ? (
@@ -349,7 +327,7 @@ export const renderQuestion: RenderQuestion = ({
               <Checkbox
                 checked={optedOut}
                 onChange={(event) =>
-                  onChange(event.target.checked ? { none: true } : {})
+                  onChange(event.target.checked ? { none: true } : undefined)
                 }
               />
               <span>{input.optOut.label}</span>

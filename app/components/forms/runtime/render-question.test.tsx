@@ -393,23 +393,23 @@ describe("renderQuestion", () => {
     })
   })
 
-  describe("monthyear", () => {
+  describe("year", () => {
     const optOut = { label: "Não vivo a não-monogamia hoje" }
 
-    it("draws a month and a year as one labelled group", () => {
-      draw({ kind: "monthyear" })
+    it("draws the year as one labelled group", () => {
+      draw({ kind: "year" })
 
       const group = screen.getByRole("group", { name: "Pergunta" })
       expect(group).toContainElement(
-        screen.getByRole("combobox", { name: "Mês" }),
-      )
-      expect(group).toContainElement(
         screen.getByRole("combobox", { name: "Ano" }),
       )
+      expect(
+        screen.queryByRole("combobox", { name: "Mês" }),
+      ).not.toBeInTheDocument()
     })
 
     it("offers the years from this one back", () => {
-      draw({ kind: "monthyear" })
+      draw({ kind: "year" })
 
       const years = screen.getByRole("combobox", { name: "Ano" })
       const offered = Array.from(years.querySelectorAll("option"))
@@ -419,67 +419,65 @@ describe("renderQuestion", () => {
       expect(offered.at(-1)).toBe("1950")
     })
 
-    it("reports the month picked", async () => {
+    it("reports the year picked", async () => {
       const user = userEvent.setup()
-      const onChange = draw({ kind: "monthyear" })
-
-      await user.selectOptions(
-        screen.getByRole("combobox", { name: "Mês" }),
-        "Março",
-      )
-
-      expect(onChange).toHaveBeenCalledWith({ month: 3 })
-    })
-
-    it("keeps the month when the year is picked", async () => {
-      const user = userEvent.setup()
-      const onChange = draw({ kind: "monthyear" }, { month: 3 })
+      const onChange = draw({ kind: "year" })
 
       await user.selectOptions(
         screen.getByRole("combobox", { name: "Ano" }),
         "2019",
       )
 
-      expect(onChange).toHaveBeenCalledWith({ month: 3, year: 2019 })
+      expect(onChange).toHaveBeenCalledWith({ year: 2019 })
     })
 
-    it("shows the month and year it was given", () => {
-      draw({ kind: "monthyear" }, { month: 3, year: 2019 })
+    it("clears the answer when the year is unpicked", async () => {
+      const user = userEvent.setup()
+      const onChange = draw({ kind: "year" }, { year: 2019 })
 
-      expect(screen.getByRole("combobox", { name: "Mês" })).toHaveValue("3")
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "Ano" }),
+        "",
+      )
+
+      expect(onChange).toHaveBeenCalledWith(undefined)
+    })
+
+    it("shows the year it was given", () => {
+      draw({ kind: "year" }, { year: 2019 })
+
       expect(screen.getByRole("combobox", { name: "Ano" })).toHaveValue("2019")
     })
 
     it("draws no way to opt out unless the question offers one", () => {
-      draw({ kind: "monthyear" })
+      draw({ kind: "year" })
 
       expect(screen.queryByRole("checkbox")).not.toBeInTheDocument()
     })
 
     it("reports opting out", async () => {
       const user = userEvent.setup()
-      const onChange = draw({ kind: "monthyear", optOut }, { month: 3 })
+      const onChange = draw({ kind: "year", optOut }, { year: 2019 })
 
       await user.click(screen.getByRole("checkbox", { name: optOut.label }))
 
       expect(onChange).toHaveBeenCalledWith({ none: true })
     })
 
-    it("turns the month and year off while opted out", () => {
-      draw({ kind: "monthyear", optOut }, { none: true })
+    it("turns the year off while opted out", () => {
+      draw({ kind: "year", optOut }, { none: true })
 
       expect(screen.getByRole("checkbox", { name: optOut.label })).toBeChecked()
-      expect(screen.getByRole("combobox", { name: "Mês" })).toBeDisabled()
       expect(screen.getByRole("combobox", { name: "Ano" })).toBeDisabled()
     })
 
     it("clears the answer when opting back in", async () => {
       const user = userEvent.setup()
-      const onChange = draw({ kind: "monthyear", optOut }, { none: true })
+      const onChange = draw({ kind: "year", optOut }, { none: true })
 
       await user.click(screen.getByRole("checkbox", { name: optOut.label }))
 
-      expect(onChange).toHaveBeenCalledWith({})
+      expect(onChange).toHaveBeenCalledWith(undefined)
     })
   })
 })

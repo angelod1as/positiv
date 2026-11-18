@@ -5,7 +5,7 @@ import { zod } from "~/lib/helpers/zod"
 import type { Flow } from "../flow.types"
 import { FormRunner } from "../form-runner"
 import { likertSchema } from "../likert"
-import { monthYearSchema } from "../month-year"
+import { yearSchema } from "../year"
 import type { Question } from "../question.types"
 import { AllAtOnce } from "./all-at-once"
 import { OneAtATime } from "./one-at-a-time"
@@ -201,10 +201,10 @@ describe("OneAtATime with the Likert self-assessment", () => {
       id: "desde",
       prompt: "Desde quando você vive a não-monogamia?",
       input: {
-        kind: "monthyear",
+        kind: "year",
         optOut: { label: "Não vivo a não-monogamia hoje" },
       },
-      schema: monthYearSchema,
+      schema: yearSchema,
     },
   ]
 
@@ -279,10 +279,6 @@ describe("OneAtATime with the Likert self-assessment", () => {
     await user.click(screen.getByRole("button", { name: "Continuar" }))
 
     await user.selectOptions(
-      screen.getByRole("combobox", { name: "Mês" }),
-      "Março",
-    )
-    await user.selectOptions(
       screen.getByRole("combobox", { name: "Ano" }),
       "2019",
     )
@@ -290,29 +286,23 @@ describe("OneAtATime with the Likert self-assessment", () => {
 
     expect(onDone).toHaveBeenCalledWith({
       ciume: { choice: "disagree", comment: "Já senti mais" },
-      desde: { month: 3, year: 2019 },
+      desde: { year: 2019 },
     })
   })
 
-  it("holds the month and year until both are picked", async () => {
+  it("holds the question until a year is picked", async () => {
     const user = userEvent.setup()
     const onDone = run()
 
     await user.click(screen.getByRole("radio", { name: "Concordo" }))
     await user.click(screen.getByRole("button", { name: "Continuar" }))
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "Mês" }),
-      "Março",
-    )
     await user.click(screen.getByRole("button", { name: "Continuar" }))
 
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Informe o mês e o ano",
-    )
+    expect(screen.getByRole("alert")).toHaveTextContent("Informe o ano")
     expect(onDone).not.toHaveBeenCalled()
   })
 
-  it("hands on opting out of the month and year", async () => {
+  it("hands on opting out of the year", async () => {
     const user = userEvent.setup()
     const onDone = run()
 

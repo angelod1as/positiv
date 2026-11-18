@@ -63,10 +63,10 @@ export type InputSpec =
    */
   | { kind: "likert"; theme?: string }
   /**
-   * A month and a year, answered `MonthYearAnswer`. With `optOut` the person
-   * may tick a box saying the question does not apply, answered `{ none: true }`.
+   * A year, answered `YearAnswer`. With `optOut` the person may tick a box
+   * saying the question does not apply, answered `{ none: true }`.
    */
-  | { kind: "monthyear"; optOut?: { label: string } }
+  | { kind: "year"; optOut?: { label: string } }
 
 export type Question = {
   id: string

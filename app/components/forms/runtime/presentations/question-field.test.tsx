@@ -71,11 +71,11 @@ describe("QuestionField", () => {
     ).toBeInTheDocument()
   })
 
-  it("names a month and year with the question", () => {
+  it("names a year with the question", () => {
     field({
       id: "desde",
       prompt: "Desde quando você vive a não-monogamia?",
-      input: { kind: "monthyear" },
+      input: { kind: "year" },
       schema: zod.unknown(),
     })
 

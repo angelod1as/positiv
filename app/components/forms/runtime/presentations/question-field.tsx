@@ -6,7 +6,7 @@ import { ownsItsPrompt } from "./owns-its-prompt"
 import type { RenderQuestion } from "./presentation.types"
 
 /**
- * A radio, checkbox, chip, Likert or month/year question is a group rather
+ * A radio, checkbox, chip, Likert or year question is a group rather
  * than one labelable control, so htmlFor has nothing to point at and the
  * prompt reaches the group through aria-labelledby.
  */
@@ -15,7 +15,7 @@ const isChoice = (question: Question) =>
   question.input.kind === "checkbox" ||
   question.input.kind === "chips" ||
   question.input.kind === "likert" ||
-  question.input.kind === "monthyear"
+  question.input.kind === "year"
 
 type QuestionFieldProps = {
   question: Question

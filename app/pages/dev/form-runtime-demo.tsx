@@ -14,7 +14,7 @@ import type {
   Question,
 } from "~/components/forms/runtime/question.types"
 import { likertSchema } from "~/components/forms/runtime/likert"
-import { monthYearSchema } from "~/components/forms/runtime/month-year"
+import { yearSchema } from "~/components/forms/runtime/year"
 import { Button } from "~/components/atoms/button/button"
 import { zod } from "~/lib/helpers/zod"
 
@@ -140,10 +140,10 @@ const questions: Question[] = [
     id: "desde",
     prompt: "Desde quando você vive a não-monogamia?",
     input: {
-      kind: "monthyear",
+      kind: "year",
       optOut: { label: "Não vivo a não-monogamia hoje" },
     },
-    schema: monthYearSchema,
+    schema: yearSchema,
   },
   {
     id: "email",
