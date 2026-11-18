@@ -81,16 +81,18 @@ export const OneAtATime: Presentation = ({
 
       {questions.map((question) => (
         <div key={question.id} className="flex flex-col gap-4">
-          {question.input.kind === "likert" && question.input.theme ? (
-            <p className="-mb-3 text-sm font-medium text-muted-foreground uppercase">
-              {question.input.theme}
-            </p>
-          ) : null}
-
           {ownsItsPrompt(question) ? null : (
-            <h2 id={`${question.id}-prompt`} className="text-2xl font-bold">
-              {question.prompt}
-            </h2>
+            <div className="flex flex-col gap-1">
+              {question.input.kind === "likert" && question.input.theme ? (
+                <p className="text-sm font-medium text-muted-foreground uppercase">
+                  {question.input.theme}
+                </p>
+              ) : null}
+
+              <h2 id={`${question.id}-prompt`} className="text-2xl font-bold">
+                {question.prompt}
+              </h2>
+            </div>
           )}
 
           {question.help ? (

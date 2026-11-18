@@ -381,6 +381,21 @@ describe("renderQuestion", () => {
       })
     })
 
+    it("drops the comment once it is erased", () => {
+      const onChange = draw(
+        { kind: "likert" },
+        { choice: "disagree", comment: "Já mudei de ideia" },
+      )
+
+      fireEvent.change(
+        screen.getByRole("textbox", { name: "Comentário (opcional)" }),
+        { target: { value: "" } },
+      )
+
+      expect(onChange).toHaveBeenCalledTimes(1)
+      expect(onChange.mock.calls[0][0]).toStrictEqual({ choice: "disagree" })
+    })
+
     it("shows the answer it was given", () => {
       draw({ kind: "likert" }, { choice: "strongly_agree", comment: "Sim" })
 

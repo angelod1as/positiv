@@ -37,5 +37,6 @@ export const likertCopy = {
 export const yearCopy = {
   year: "Ano",
   required: "Informe o ano",
+  tooEarly: (first: number) => `Escolha um ano a partir de ${first}`,
   future: "O ano não pode estar no futuro",
 } as const

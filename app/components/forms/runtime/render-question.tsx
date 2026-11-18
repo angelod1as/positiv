@@ -7,7 +7,7 @@ import { Radio } from "~/components/forms/base/radio"
 import { Select } from "~/components/forms/base/select"
 import { formRuntimeCopy, likertCopy, yearCopy } from "~/copy/forms"
 import { LIKERT_CHOICES, type LikertAnswer } from "./likert"
-import type { YearAnswer } from "./year"
+import { FIRST_YEAR, type YearAnswer } from "./year"
 import type { RenderQuestion } from "./presentations/presentation.types"
 
 const asText = (value: unknown) => (typeof value === "string" ? value : "")
@@ -28,8 +28,6 @@ const asLikert = (value: unknown): Partial<LikertAnswer> =>
 
 const asYear = (value: unknown): Partial<{ none: true; year: number }> =>
   typeof value === "object" && value !== null ? (value as YearAnswer) : {}
-
-const FIRST_YEAR = 1950
 
 const yearsBackFromNow = () =>
   Array.from(
@@ -277,9 +275,11 @@ export const renderQuestion: RenderQuestion = ({
             <TextArea
               id={commentId}
               value={answer.comment ?? ""}
-              onChange={(event) =>
-                onChange({ ...answer, comment: event.target.value })
-              }
+              onChange={(event) => {
+                const { comment: _erased, ...rest } = answer
+                const comment = event.target.value
+                onChange(comment === "" ? rest : { ...rest, comment })
+              }}
             />
           </div>
         </div>
