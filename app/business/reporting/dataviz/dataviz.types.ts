@@ -23,6 +23,13 @@ export type EventRevenueDataPoint = {
   faturamento_bruto: number
   ticket_price: number
   num_pagantes: number
+  /** Net of refunds, in cents, taken by hand by an admin. */
+  faturamento_manual: number
+  /** Net of refunds, in cents, taken through Asaas. */
+  faturamento_asaas: number
+  /** Payments that went through and were not wholly refunded. */
+  pagamentos: number
+  pagamentos_cartao: number
 }
 
 export type ConversionFunnelDataPoint = {
@@ -101,4 +108,36 @@ export type KpiScores = {
   attended_3_plus: number
   attended_5_plus: number
   avg_no_show_rate: number
+}
+
+/** The annual report's numbers for the parties in a range. */
+export type PartySummary = {
+  parties: number
+  people: number
+  attendances: number
+  /** Staff are placed, not applying: left out of the demand numbers. */
+  applications: number
+  /** Share of the people who applied that got into a party, 1 decimal. */
+  acceptance_rate: number
+  avg_people_per_party: number
+  max_people_per_party: number
+  /** People whose first party ever falls in the range. */
+  newcomers: number
+  /** Newcomers who came back to a later party, in the range or after it. */
+  newcomers_returned: number
+  /** People at two or more parties in the range. */
+  repeat_people: number
+  /** Age at the person's first party in the range, kept to 18-120. */
+  age: { min: number; avg: number; max: number } | null
+  social_spots: number
+}
+
+export type TimingDataPoint = {
+  title: string
+  emoji: string
+  date: string
+  /** Median days between applying and the party. */
+  dias_inscricao: number | null
+  /** Median days between the first payment and the party. */
+  dias_pagamento: number | null
 }

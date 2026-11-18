@@ -177,6 +177,10 @@ describe('event charts', () => {
     faturamento_bruto: 1300000,
     ticket_price: 15000,
     num_pagantes: 80,
+    faturamento_manual: 1000050,
+    faturamento_asaas: 200000,
+    pagamentos: 80,
+    pagamentos_cartao: 4,
   }
 
   it('draws net and gross revenue in reais', () => {

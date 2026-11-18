@@ -49,6 +49,10 @@ const makeRevenue = (count: number): EventRevenueDataPoint[] =>
     faturamento_bruto: 5200 + i * 1000,
     ticket_price: 5000,
     num_pagantes: 100 + i * 10,
+    faturamento_manual: 5000 + i * 1000,
+    faturamento_asaas: 0,
+    pagamentos: 100 + i * 10,
+    pagamentos_cartao: 0,
   }))
 
 const makeFunnel = (count: number): ConversionFunnelDataPoint[] =>

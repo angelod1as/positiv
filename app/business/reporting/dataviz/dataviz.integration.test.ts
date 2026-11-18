@@ -723,6 +723,55 @@ describe("DataViz - Integration Tests", () => {
         expect(row).not.toHaveProperty("taxas")
       })
 
+      it("splits the revenue between manual payments and Asaas, and counts card payments", async () => {
+        const event = await createTestEvent(tracker, kysely, {
+          title: "Split Event",
+          event_status: "Completed" as EventStatus,
+          time_event_start: new Date("2025-08-15T19:00:00Z").toISOString(),
+        })
+        const pay = async (
+          name: string,
+          payment: { kind: "manual" | "online"; method: "pix" | "credit_card"; amount: number; status?: "paid" | "partially_refunded" | "expired"; refund_amount?: number; refunded_at?: string; paid_at?: string | null }
+        ) => {
+          const profile = await createTestProfile(tracker, kysely, {
+            user_id: null,
+            email: `${testPrefix}-split-${name}@test.com`,
+          })
+          const participant = await createTestEventParticipant(tracker, kysely, {
+            event_id: event.id,
+            profile_id: profile.id,
+          })
+          await createTestPayment(tracker, kysely, {
+            event_participant_id: participant.id,
+            base_amount: payment.amount,
+            ...payment,
+          })
+        }
+
+        await pay("manual", { kind: "manual", method: "pix", amount: 20000 })
+        await pay("asaas-pix", { kind: "online", method: "pix", amount: 20000 })
+        await pay("asaas-card", {
+          kind: "online",
+          method: "credit_card",
+          amount: 23000,
+          status: "partially_refunded",
+          refund_amount: 3000,
+          refunded_at: new Date().toISOString(),
+        })
+        await pay("expired", { kind: "online", method: "credit_card", amount: 23000, status: "expired", paid_at: null })
+
+        const result = await getEventRevenueData()
+        const row = result.find((e) => e.title === "Split Event")
+
+        expect(row).toMatchObject({
+          faturamento_total: 60000,
+          faturamento_manual: 20000,
+          faturamento_asaas: 40000,
+          pagamentos: 3,
+          pagamentos_cartao: 1,
+        })
+      })
+
       it("drops a refunded participant from the revenue and from the payer count", async () => {
         const event = await createTestEvent(tracker, kysely, {
           title: "Refunded Event",
