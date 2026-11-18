@@ -144,6 +144,20 @@ describe("the add participants endpoint", () => {
     })
   })
 
+  it("refuses more than 100 people in one request", async () => {
+    const response = await post({
+      intent: "add",
+      eventId: EVENT_ID,
+      people: Array.from({ length: 101 }, () => ({
+        profileId: PROFILE_ID,
+        spotType: "regular",
+      })),
+    })
+
+    expect(response.status).toBe(422)
+    expect(addParticipantsDirectly).not.toHaveBeenCalled()
+  })
+
   it("refuses a body it cannot read", async () => {
     const response = await call("not json")
 

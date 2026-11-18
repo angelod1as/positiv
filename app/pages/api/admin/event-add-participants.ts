@@ -31,7 +31,10 @@ const bodySchema = zod.discriminatedUnion("intent", [
           spotType: zod.enum(Constants.public.Enums.spot_type),
         }),
       )
-      .min(1),
+      .min(1)
+      // Each person costs a few queries inside one transaction; a cap keeps it
+      // short. Far above any hand-picked selection.
+      .max(100),
   }),
 ])
 
