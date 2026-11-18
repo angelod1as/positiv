@@ -128,11 +128,15 @@ export async function getLikertSubmission(
   }
 }
 
-export async function hasAnsweredLikert(profileId: string): Promise<boolean> {
+export async function hasAnsweredLikert(
+  viewer: Viewer | null | undefined,
+): Promise<boolean> {
+  if (!viewer) return false
+
   const row = await db
     .selectFrom("likert_submissions")
     .select("id")
-    .where("profile_id", "=", profileId)
+    .where("profile_id", "=", viewer.id)
     .limit(1)
     .executeTakeFirst()
 

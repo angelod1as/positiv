@@ -111,7 +111,7 @@ describe("Likert submissions", () => {
         saveLikertSubmission(viewerFor(person), submission({ answers: [] })),
       ).rejects.toThrow()
 
-      expect(await hasAnsweredLikert(person.id)).toBe(false)
+      expect(await hasAnsweredLikert(viewerFor(person))).toBe(false)
     })
 
     it("should store none of the submission when its answers cannot be written", async () => {
@@ -132,7 +132,7 @@ describe("Likert submissions", () => {
         ),
       ).rejects.toThrow()
 
-      expect(await hasAnsweredLikert(person.id)).toBe(false)
+      expect(await hasAnsweredLikert(viewerFor(person))).toBe(false)
     })
 
     it("should refuse to save with no one signed in", async () => {
@@ -282,11 +282,11 @@ describe("Likert submissions", () => {
     it("should say no before the first submission and yes after it", async () => {
       const person = await aProfile("first-time")
 
-      expect(await hasAnsweredLikert(person.id)).toBe(false)
+      expect(await hasAnsweredLikert(viewerFor(person))).toBe(false)
 
       await saveLikertSubmission(viewerFor(person), submission())
 
-      expect(await hasAnsweredLikert(person.id)).toBe(true)
+      expect(await hasAnsweredLikert(viewerFor(person))).toBe(true)
     })
 
     it("should not count someone else's submission", async () => {
@@ -294,7 +294,11 @@ describe("Likert submissions", () => {
       const other = await aProfile("answered")
       await saveLikertSubmission(viewerFor(other), submission())
 
-      expect(await hasAnsweredLikert(person.id)).toBe(false)
+      expect(await hasAnsweredLikert(viewerFor(person))).toBe(false)
+    })
+
+    it("should say no when no one is signed in", async () => {
+      expect(await hasAnsweredLikert(null)).toBe(false)
     })
   })
 

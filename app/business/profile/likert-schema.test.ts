@@ -123,6 +123,16 @@ describe("likertSubmissionSchema", () => {
     ).toBe(false)
   })
 
+  it("should keep the statement text exactly as the person saw it", () => {
+    const statementText = "  Ciúme é natural.\n"
+    const result = likertSubmissionSchema.parse({
+      ...valid,
+      answers: [{ ...valid.answers[0], statementText }],
+    })
+
+    expect(result.answers[0].statementText).toBe(statementText)
+  })
+
   it("should turn a blank comment into no comment", () => {
     const result = likertSubmissionSchema.parse({
       ...valid,

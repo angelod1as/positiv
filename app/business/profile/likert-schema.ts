@@ -3,7 +3,7 @@ import { zod } from "~/lib/helpers/zod"
 
 const likertAnswerSchema = zod.object({
   statementKey: zod.string().trim().min(1).max(200),
-  statementText: zod.string().trim().min(1).max(2000),
+  statementText: zod.string().min(1).max(2000),
   answer: zod.number().int().min(1).max(5),
   comment: zod
     .string()
