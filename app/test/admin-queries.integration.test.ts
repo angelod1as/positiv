@@ -144,7 +144,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
     }
   })
 
-  it("should return ALL registrations including admin-added participants", async () => {
+  it("should return ALL registrations including cancelled applications", async () => {
     // This test verifies that getParticipantFullEventHistory returns ALL registrations,
     // not just those where is_user_applied = true (fixing POS-238)
 
@@ -169,7 +169,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
     })
 
     const event2 = await createTestEvent(tracker, kysely, {
-      title: "Event Admin Added",
+      title: "Event Cancelled Application",
       emoji: "👤",
       location: "Location 2",
       event_status: "Registration Open",
@@ -205,14 +205,14 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       admin_general_notes: "Participated actively"
     })
 
-    // 2. Admin added participant (is_user_applied = false) - THIS SHOULD BE INCLUDED
+    // 2. Cancelled application (is_user_applied = false) - THIS SHOULD BE INCLUDED
     await createTestEventParticipant(tracker, kysely, {
       profile_id: profile.id,
       event_id: event2.id,
-      is_user_applied: false, // Admin added
+      is_user_applied: false, // Cancelled
       application_status: "finalised",
       attendance_status: "attended",
-      admin_general_notes: "Admin added this person directly"
+      admin_general_notes: "Cancelled before the event"
     })
 
     // 3. User applied but didn't attend - THIS SHOULD BE INCLUDED
@@ -239,16 +239,16 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       // Verify all events are included
       const eventTitles = result.data.map(e => e.event_title)
       expect(eventTitles).toContain("Event with User Application")
-      expect(eventTitles).toContain("Event Admin Added")
+      expect(eventTitles).toContain("Event Cancelled Application")
       expect(eventTitles).toContain("Event No Show")
 
       // Verify admin notes are preserved even for no-shows
       const noShowEvent = result.data.find(e => e.event_title === "Event No Show")
       expect(noShowEvent?.admin_general_notes).toBe("Was interviewed but didn't show up")
 
-      // Verify admin-added participant is included
-      const adminAddedEvent = result.data.find(e => e.event_title === "Event Admin Added")
-      expect(adminAddedEvent?.admin_general_notes).toBe("Admin added this person directly")
+      // Verify the cancelled application is included
+      const cancelledEvent = result.data.find(e => e.event_title === "Event Cancelled Application")
+      expect(cancelledEvent?.admin_general_notes).toBe("Cancelled before the event")
     }
   })
 

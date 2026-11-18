@@ -64,3 +64,6 @@ export const DATAVIZ_EVENT_CUTOFF_DATE = "2025-07-01"
 export const PAYMENT_RECORDS_START_DATE = "2025-05-20T00:00:00-03:00"
 
 export const MAX_REGISTRATION_LIMIT = 10_000
+
+// Written to event_participants.referred when an admin adds a person directly.
+export const MANUALLY_ADDED_REFERRED = "adicionade manualmente pela administração"
