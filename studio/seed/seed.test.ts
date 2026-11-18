@@ -3,7 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { CODE_OF_CONDUCT_PAGE_ID } from "./code-of-conduct-page"
 import { HOMEPAGE_PAGE_ID } from "../schemas/documents/page"
-import { PAYMENT_MESSAGES_ID, SITE_SETTINGS_ID } from "../singletons"
+import {
+  LIKERT_SCALE_ID,
+  PAYMENT_MESSAGES_ID,
+  SITE_SETTINGS_ID,
+} from "../singletons"
 import { validateDocumentOf } from "../test/validate"
 import {
   E2E_TEST_PAGE_ADDRESS,
@@ -223,6 +227,37 @@ describe("seedDocuments", () => {
     it("seeds a message using the link and the due date", () => {
       expect(paymentMessages?.whatsappMessage).toContain("{{link}}")
       expect(paymentMessages?.whatsappMessage).toContain("{{data}}")
+    })
+  })
+
+  describe("Likert scale", () => {
+    const likertScale = documents.find(
+      (document) => document._id === LIKERT_SCALE_ID,
+    ) as
+      | { _type: string; statements?: { key: string; text: string }[] }
+      | undefined
+
+    const statements = likertScale?.statements ?? []
+
+    it("seeds the singleton with a list of statements", () => {
+      expect(likertScale?._type).toBe("likertScale")
+      expect(statements.length).toBeGreaterThan(1)
+    })
+
+    // The real text is still being written: the seed holds placeholders, so
+    // nobody mistakes development content for the scale people will answer.
+    it("marks every statement as a placeholder", () => {
+      for (const statement of statements) {
+        expect(statement.text).toMatch(/^\[Exemplo\]/)
+      }
+    })
+
+    it("gives every statement a fixed key, so a rerun keeps answers attached", () => {
+      expect(statements.map((statement) => statement.key)).toEqual(
+        statements.map(
+          (_, index) => `exemplo-${String(index + 1).padStart(2, "0")}`,
+        ),
+      )
     })
   })
 })

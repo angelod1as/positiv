@@ -1,4 +1,5 @@
 import { BillIcon } from "@sanity/icons/Bill"
+import { ClipboardIcon } from "@sanity/icons/Clipboard"
 import { CogIcon } from "@sanity/icons/Cog"
 import { DocumentsIcon } from "@sanity/icons/Documents"
 import { EnvelopeIcon } from "@sanity/icons/Envelope"
@@ -8,6 +9,7 @@ import type { StructureResolver } from "sanity/structure"
 import { HOMEPAGE_PAGE_ID } from "./schemas/documents/page"
 import {
   EMAIL_TEMPLATES_ID,
+  LIKERT_SCALE_ID,
   PAYMENT_MESSAGES_ID,
   SITE_SETTINGS_ID,
 } from "./singletons"
@@ -57,6 +59,16 @@ export const structure: StructureResolver = (S) =>
             .schemaType("emailTemplates")
             .documentId(EMAIL_TEMPLATES_ID)
             .title("E-mails"),
+        ),
+      S.listItem()
+        .title("Escala de Likert")
+        .id(LIKERT_SCALE_ID)
+        .icon(ClipboardIcon)
+        .child(
+          S.document()
+            .schemaType("likertScale")
+            .documentId(LIKERT_SCALE_ID)
+            .title("Escala de Likert"),
         ),
       S.divider(),
       S.documentTypeListItem("person").title("Pessoas"),

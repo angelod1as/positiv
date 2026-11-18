@@ -1,0 +1,32 @@
+{
+  "statements": [
+    {
+      "key": "exemplo-01",
+      "text": "[Exemplo] Afirmação 1."
+    },
+    {
+      "key": "exemplo-02",
+      "text": "[Exemplo] Afirmação 2."
+    },
+    {
+      "key": "exemplo-03",
+      "text": "[Exemplo] Afirmação 3."
+    },
+    {
+      "key": "exemplo-04",
+      "text": "[Exemplo] Afirmação 4."
+    },
+    {
+      "key": "exemplo-05",
+      "text": "[Exemplo] Afirmação 5."
+    },
+    {
+      "key": "exemplo-06",
+      "text": "[Exemplo] Afirmação 6."
+    },
+    {
+      "key": "exemplo-07",
+      "text": "[Exemplo] Afirmação 7."
+    }
+  ]
+}

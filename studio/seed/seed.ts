@@ -6,6 +6,7 @@ import { codeOfConductToPage } from "./code-of-conduct-page"
 import { HOMEPAGE_PAGE_ID } from "../schemas/documents/page"
 import {
   EMAIL_TEMPLATES_ID,
+  LIKERT_SCALE_ID,
   PAYMENT_MESSAGES_ID,
   SITE_SETTINGS_ID,
 } from "../singletons"
@@ -125,6 +126,27 @@ function linkToUrl(key: string, label: string, url: string) {
 
 function seo(description: string) {
   return { _type: "seo", description, noIndex: false }
+}
+
+// Placeholder content: the real scale is still being written, and lands in
+// the Studio once it is final.
+const LIKERT_STATEMENT_COUNT = 7
+
+function likertScale() {
+  return {
+    _id: LIKERT_SCALE_ID,
+    _type: "likertScale",
+    statements: Array.from({ length: LIKERT_STATEMENT_COUNT }, (_, index) => {
+      const number = index + 1
+      const key = `exemplo-${String(number).padStart(2, "0")}`
+      return {
+        _type: "likertStatement",
+        _key: key,
+        key,
+        text: `[Exemplo] Afirmação ${number}.`,
+      }
+    }),
+  }
 }
 
 export function seedDocuments(photoAssetId: string): SeedDocument[] {
@@ -613,6 +635,7 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
       paymentLink: paymentLinkMailContent,
       paymentRefund: paymentRefundMailContent,
     },
+    likertScale(),
   ]
 }
 
