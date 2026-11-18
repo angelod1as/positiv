@@ -84,6 +84,45 @@ describe("likertSubmissionSchema", () => {
     },
   )
 
+  it.each([
+    ["a comment", { comment: "x".repeat(5001) }],
+    ["a statement text", { statementText: "x".repeat(2001) }],
+    ["a statement key", { statementKey: "x".repeat(201) }],
+  ])("should refuse %s that is too long", (_, override) => {
+    const result = likertSubmissionSchema.safeParse({
+      ...valid,
+      answers: [{ ...valid.answers[0], ...override }],
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  it("should refuse a place name that is too long", () => {
+    const result = likertSubmissionSchema.safeParse({
+      ...valid,
+      beenTo: ["x".repeat(201)],
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  it("should refuse more places or statements than any form shows", () => {
+    const tooManyPlaces = Array.from({ length: 51 }, (_, i) => `Lugar ${i}`)
+    const tooManyAnswers = Array.from({ length: 201 }, (_, i) => ({
+      ...valid.answers[0],
+      statementKey: `s${i}`,
+    }))
+
+    expect(
+      likertSubmissionSchema.safeParse({ ...valid, beenTo: tooManyPlaces })
+        .success,
+    ).toBe(false)
+    expect(
+      likertSubmissionSchema.safeParse({ ...valid, answers: tooManyAnswers })
+        .success,
+    ).toBe(false)
+  })
+
   it("should turn a blank comment into no comment", () => {
     const result = likertSubmissionSchema.parse({
       ...valid,

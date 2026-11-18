@@ -27,9 +27,11 @@ const mayRead = (
   viewer?.id === profileId || can(viewer, PERMISSIONS.PROFILES_MANAGE)
 
 export async function saveLikertSubmission(
-  profileId: string,
+  viewer: Viewer | null | undefined,
   input: LikertSubmissionInput,
 ): Promise<{ id: string }> {
+  if (!viewer) throw new Error("Only a signed-in person saves their answers")
+
   const { beenTo, nonMonogamySince, answers } =
     likertSubmissionSchema.parse(input)
 
@@ -37,7 +39,7 @@ export async function saveLikertSubmission(
     const saved = await trx
       .insertInto("likert_submissions")
       .values({
-        profile_id: profileId,
+        profile_id: viewer.id,
         been_to: beenTo,
         non_monogamy_since: nonMonogamySince && `${nonMonogamySince}-01`,
       })
