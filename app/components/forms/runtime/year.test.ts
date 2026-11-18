@@ -39,7 +39,7 @@ describe("yearSchema", () => {
   })
 
   it("refuses a year before the ones the select offers", () => {
-    expect(parse({ year: 1949 }).success).toBe(false)
+    expect(message({ year: 1949 })).toBe("Escolha um ano a partir de 1950")
   })
 
   it("refuses a year still to come", () => {
