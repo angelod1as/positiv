@@ -56,6 +56,17 @@ export type InputSpec =
    * leaves the label to the renderer.
    */
   | { kind: "boolean" }
+  /**
+   * A statement rated on the fixed five-point scale, answered `LikertAnswer`:
+   * the point picked and an optional comment. `theme` names the group the
+   * statement belongs to, drawn above it by the presentation.
+   */
+  | { kind: "likert"; theme?: string }
+  /**
+   * A year, answered `YearAnswer`. With `optOut` the person may tick a box
+   * saying the question does not apply, answered `{ none: true }`.
+   */
+  | { kind: "year"; optOut?: { label: string } }
 
 export type Question = {
   id: string

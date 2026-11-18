@@ -21,3 +21,21 @@ export const formRuntimeCopy = {
   progressLabel: "Progresso do formulário",
   progressOf: (index: number, total: number) => `${index}/${total}`,
 } as const
+
+export const likertCopy = {
+  choices: {
+    strongly_disagree: "Discordo totalmente",
+    disagree: "Discordo",
+    depends: "Depende",
+    agree: "Concordo",
+    strongly_agree: "Concordo totalmente",
+  },
+  commentLabel: "Comentário (opcional)",
+  choiceRequired: "Escolha uma opção",
+} as const
+
+export const yearCopy = {
+  year: "Ano",
+  required: "Informe o ano",
+  future: "O ano não pode estar no futuro",
+} as const

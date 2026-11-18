@@ -1,9 +1,11 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { zod } from "~/lib/helpers/zod"
 import type { Flow } from "../flow.types"
 import { FormRunner } from "../form-runner"
+import { likertSchema } from "../likert"
+import { yearSchema } from "../year"
 import type { Question } from "../question.types"
 import { AllAtOnce } from "./all-at-once"
 import { OneAtATime } from "./one-at-a-time"
@@ -184,5 +186,136 @@ describe("AllAtOnce", () => {
     await answerAndAdvance(user, "Angelo")
 
     expect(back()).not.toBeInTheDocument()
+  })
+})
+
+describe("OneAtATime with the Likert self-assessment", () => {
+  const selfAssessment: Question[] = [
+    {
+      id: "ciume",
+      prompt: "Sinto ciúme quando minha pessoa parceira sai com outra pessoa.",
+      input: { kind: "likert", theme: "Ciúme" },
+      schema: likertSchema,
+    },
+    {
+      id: "desde",
+      prompt: "Desde quando você vive a não-monogamia?",
+      input: {
+        kind: "year",
+        optOut: { label: "Não vivo a não-monogamia hoje" },
+      },
+      schema: yearSchema,
+    },
+  ]
+
+  const selfAssessmentFlow: Flow = {
+    start: "ciume",
+    steps: {
+      ciume: { kind: "question", id: "ciume" },
+      desde: { kind: "question", id: "desde" },
+    },
+    next: (current) => (current === "ciume" ? "desde" : "done"),
+  }
+
+  const run = (onDone = vi.fn()) => {
+    render(
+      <FormRunner
+        questions={selfAssessment}
+        flow={selfAssessmentFlow}
+        presentation={OneAtATime}
+        onDone={onDone}
+      />,
+    )
+    return onDone
+  }
+
+  it("names the theme above the statement", () => {
+    run()
+
+    const theme = screen.getByText("Ciúme")
+    const statement = screen.getByRole("heading", {
+      name: "Sinto ciúme quando minha pessoa parceira sai com outra pessoa.",
+    })
+
+    expect(
+      theme.compareDocumentPosition(statement) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+  })
+
+  it("draws no theme for a question without one", async () => {
+    const user = userEvent.setup()
+    run()
+
+    await user.click(screen.getByRole("radio", { name: "Concordo" }))
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+
+    expect(screen.queryByText("Ciúme")).not.toBeInTheDocument()
+  })
+
+  it("holds the statement until a point of the scale is picked", async () => {
+    const user = userEvent.setup()
+    const onDone = run()
+
+    await user.type(
+      screen.getByRole("textbox", { name: "Comentário (opcional)" }),
+      "Às vezes",
+    )
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Escolha uma opção")
+    expect(onDone).not.toHaveBeenCalled()
+  })
+
+  it("hands both answers on when the run is done", async () => {
+    const user = userEvent.setup()
+    const onDone = run()
+
+    await user.click(screen.getByRole("radio", { name: "Discordo" }))
+    await user.type(
+      screen.getByRole("textbox", { name: "Comentário (opcional)" }),
+      "Já senti mais",
+    )
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Ano" }),
+      "2019",
+    )
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+
+    expect(onDone).toHaveBeenCalledWith({
+      ciume: { choice: "disagree", comment: "Já senti mais" },
+      desde: { year: 2019 },
+    })
+  })
+
+  it("holds the question until a year is picked", async () => {
+    const user = userEvent.setup()
+    const onDone = run()
+
+    await user.click(screen.getByRole("radio", { name: "Concordo" }))
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Informe o ano")
+    expect(onDone).not.toHaveBeenCalled()
+  })
+
+  it("hands on opting out of the year", async () => {
+    const user = userEvent.setup()
+    const onDone = run()
+
+    await user.click(screen.getByRole("radio", { name: "Concordo" }))
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+    await user.click(
+      screen.getByRole("checkbox", { name: "Não vivo a não-monogamia hoje" }),
+    )
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+
+    expect(onDone).toHaveBeenCalledWith({
+      ciume: { choice: "agree" },
+      desde: { none: true },
+    })
   })
 })

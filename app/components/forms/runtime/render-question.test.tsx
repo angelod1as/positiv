@@ -323,4 +323,161 @@ describe("renderQuestion", () => {
 
     expect(screen.getByLabelText("Pergunta")).not.toHaveAttribute("placeholder")
   })
+
+  describe("likert", () => {
+    it("draws the five points of the scale as one labelled group", () => {
+      draw({ kind: "likert" })
+
+      const group = screen.getByRole("radiogroup", { name: "Pergunta" })
+      expect(group).toBeInTheDocument()
+      expect(
+        screen
+          .getAllByRole("radio")
+          .map((radio) => radio.closest("label")?.textContent),
+      ).toEqual([
+        "Discordo totalmente",
+        "Discordo",
+        "Depende",
+        "Concordo",
+        "Concordo totalmente",
+      ])
+    })
+
+    it("reports the choice picked", async () => {
+      const user = userEvent.setup()
+      const onChange = draw({ kind: "likert" })
+
+      await user.click(screen.getByRole("radio", { name: "Concordo" }))
+
+      expect(onChange).toHaveBeenCalledWith({ choice: "agree" })
+    })
+
+    it("keeps the comment already written when the choice changes", async () => {
+      const user = userEvent.setup()
+      const onChange = draw(
+        { kind: "likert" },
+        { choice: "agree", comment: "Às vezes" },
+      )
+
+      await user.click(screen.getByRole("radio", { name: "Depende" }))
+
+      expect(onChange).toHaveBeenCalledWith({
+        choice: "depends",
+        comment: "Às vezes",
+      })
+    })
+
+    it("keeps the choice when a comment is written", () => {
+      const onChange = draw({ kind: "likert" }, { choice: "disagree" })
+
+      fireEvent.change(
+        screen.getByRole("textbox", { name: "Comentário (opcional)" }),
+        { target: { value: "Já mudei de ideia" } },
+      )
+
+      expect(onChange).toHaveBeenCalledWith({
+        choice: "disagree",
+        comment: "Já mudei de ideia",
+      })
+    })
+
+    it("shows the answer it was given", () => {
+      draw({ kind: "likert" }, { choice: "strongly_agree", comment: "Sim" })
+
+      expect(
+        screen.getByRole("radio", { name: "Concordo totalmente" }),
+      ).toBeChecked()
+      expect(
+        screen.getByRole("textbox", { name: "Comentário (opcional)" }),
+      ).toHaveValue("Sim")
+    })
+  })
+
+  describe("year", () => {
+    const optOut = { label: "Não vivo a não-monogamia hoje" }
+
+    it("draws the year as one labelled group", () => {
+      draw({ kind: "year" })
+
+      const group = screen.getByRole("group", { name: "Pergunta" })
+      expect(group).toContainElement(
+        screen.getByRole("combobox", { name: "Ano" }),
+      )
+      expect(
+        screen.queryByRole("combobox", { name: "Mês" }),
+      ).not.toBeInTheDocument()
+    })
+
+    it("offers the years from this one back", () => {
+      draw({ kind: "year" })
+
+      const years = screen.getByRole("combobox", { name: "Ano" })
+      const offered = Array.from(years.querySelectorAll("option"))
+        .map((option) => option.value)
+        .filter(Boolean)
+      expect(offered[0]).toBe(String(new Date().getFullYear()))
+      expect(offered.at(-1)).toBe("1950")
+    })
+
+    it("reports the year picked", async () => {
+      const user = userEvent.setup()
+      const onChange = draw({ kind: "year" })
+
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "Ano" }),
+        "2019",
+      )
+
+      expect(onChange).toHaveBeenCalledWith({ year: 2019 })
+    })
+
+    it("clears the answer when the year is unpicked", async () => {
+      const user = userEvent.setup()
+      const onChange = draw({ kind: "year" }, { year: 2019 })
+
+      await user.selectOptions(
+        screen.getByRole("combobox", { name: "Ano" }),
+        "",
+      )
+
+      expect(onChange).toHaveBeenCalledWith(undefined)
+    })
+
+    it("shows the year it was given", () => {
+      draw({ kind: "year" }, { year: 2019 })
+
+      expect(screen.getByRole("combobox", { name: "Ano" })).toHaveValue("2019")
+    })
+
+    it("draws no way to opt out unless the question offers one", () => {
+      draw({ kind: "year" })
+
+      expect(screen.queryByRole("checkbox")).not.toBeInTheDocument()
+    })
+
+    it("reports opting out", async () => {
+      const user = userEvent.setup()
+      const onChange = draw({ kind: "year", optOut }, { year: 2019 })
+
+      await user.click(screen.getByRole("checkbox", { name: optOut.label }))
+
+      expect(onChange).toHaveBeenCalledWith({ none: true })
+    })
+
+    it("turns the year off while opted out", () => {
+      draw({ kind: "year", optOut }, { none: true })
+
+      expect(screen.getByRole("checkbox", { name: optOut.label })).toBeChecked()
+      expect(screen.getByRole("combobox", { name: "Ano" })).toBeDisabled()
+    })
+
+    it("clears the answer when opting back in", async () => {
+      const user = userEvent.setup()
+      const onChange = draw({ kind: "year", optOut }, { none: true })
+
+      await user.click(screen.getByRole("checkbox", { name: optOut.label }))
+
+      expect(onChange).toHaveBeenCalledWith(undefined)
+    })
+  })
 })
