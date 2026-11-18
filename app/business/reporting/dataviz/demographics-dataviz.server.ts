@@ -1,13 +1,15 @@
 import { sql } from "kysely"
 import { db } from "~/lib/supabase/db.server"
-import { DATAVIZ_EVENT_CUTOFF_DATE } from "~/lib/constants/constants"
+import { type DatavizRange, fullDatavizRange } from "./dataviz-range"
 import type {
   VeteranRookieDataPoint,
   DemographicsDataResult,
   DemographicDistribution,
 } from "./dataviz.types"
 
-export async function getVeteranRookieData(): Promise<
+export async function getVeteranRookieData(
+  range: DatavizRange = fullDatavizRange(),
+): Promise<
   VeteranRookieDataPoint[]
 > {
   const result = await db
@@ -19,7 +21,8 @@ export async function getVeteranRookieData(): Promise<
     )
     .leftJoin("profiles", "profiles.id", "event_participants.profile_id")
     .where("events.event_status", "=", "Completed")
-    .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+    .where("events.time_event_start", ">=", range.from)
+    .where("events.time_event_start", "<=", range.to)
     .where((eb) =>
       eb.or([
         eb("event_participants.attendance_status", "=", "attended"),
@@ -58,7 +61,8 @@ export async function getVeteranRookieData(): Promise<
 type DemographicsMode = "all" | "attended"
 
 export async function getDemographicsData(
-  mode: DemographicsMode
+  mode: DemographicsMode,
+  range: DatavizRange = fullDatavizRange(),
 ): Promise<DemographicsDataResult> {
   // Build the base query depending on mode:
   // - "attended": Show demographics of profiles who attended events >= cutoff date
@@ -72,7 +76,8 @@ export async function getDemographicsData(
       .innerJoin("events", "events.id", "event_participants.event_id")
       .where("event_participants.attendance_status", "=", "attended")
       .where("events.event_status", "=", "Completed")
-      .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+      .where("events.time_event_start", ">=", range.from)
+      .where("events.time_event_start", "<=", range.to)
       .select("event_participants.profile_id")
       .distinct()
       .execute()

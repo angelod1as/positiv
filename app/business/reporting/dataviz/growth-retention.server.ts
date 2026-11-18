@@ -1,16 +1,19 @@
 import { sql } from "kysely"
 import { db } from "~/lib/supabase/db.server"
-import { DATAVIZ_EVENT_CUTOFF_DATE } from "~/lib/constants/constants"
+import { type DatavizRange, fullDatavizRange } from "./dataviz-range"
 import type {
   GrowthDataPoint,
   RetentionDataPoint,
   SeasonalityDataPoint,
 } from "./dataviz.types"
 
-export async function getGrowthData(): Promise<GrowthDataPoint[]> {
+export async function getGrowthData(
+  range: DatavizRange = fullDatavizRange(),
+): Promise<GrowthDataPoint[]> {
   const result = await db
     .selectFrom("profiles")
-    .where("profiles.created_at", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+    .where("profiles.created_at", ">=", range.from)
+    .where("profiles.created_at", "<=", range.to)
     .select([
       sql<string>`to_char(date_trunc('month', created_at), 'YYYY-MM')`.as(
         "month"
@@ -32,7 +35,9 @@ export async function getGrowthData(): Promise<GrowthDataPoint[]> {
   })
 }
 
-export async function getRetentionData(): Promise<RetentionDataPoint[]> {
+export async function getRetentionData(
+  range: DatavizRange = fullDatavizRange(),
+): Promise<RetentionDataPoint[]> {
   // Subquery: count attended events per profile
   const result = await db
     .selectFrom(
@@ -41,7 +46,8 @@ export async function getRetentionData(): Promise<RetentionDataPoint[]> {
         .innerJoin("events", "events.id", "event_participants.event_id")
         .where("event_participants.attendance_status", "=", "attended")
         .where("events.event_status", "=", "Completed")
-        .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+        .where("events.time_event_start", ">=", range.from)
+        .where("events.time_event_start", "<=", range.to)
         .groupBy("event_participants.profile_id")
         .select([
           "event_participants.profile_id",
@@ -78,7 +84,9 @@ const MONTH_NAMES = [
   "December",
 ]
 
-export async function getSeasonalityData(): Promise<SeasonalityDataPoint[]> {
+export async function getSeasonalityData(
+  range: DatavizRange = fullDatavizRange(),
+): Promise<SeasonalityDataPoint[]> {
   const result = await db
     .selectFrom("events")
     .leftJoin(
@@ -87,7 +95,8 @@ export async function getSeasonalityData(): Promise<SeasonalityDataPoint[]> {
       "events.id"
     )
     .where("events.event_status", "=", "Completed")
-    .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+    .where("events.time_event_start", ">=", range.from)
+    .where("events.time_event_start", "<=", range.to)
     .groupBy(sql`extract(month from events.time_event_start)`)
     .orderBy(sql`extract(month from events.time_event_start)`, "asc")
     .select([

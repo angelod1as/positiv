@@ -1,6 +1,6 @@
 import { sql } from "kysely"
 import { db } from "~/lib/supabase/db.server"
-import { DATAVIZ_EVENT_CUTOFF_DATE } from "~/lib/constants/constants"
+import { type DatavizRange, fullDatavizRange } from "./dataviz-range"
 import type {
   EventAttendanceDataPoint,
   EventRevenueDataPoint,
@@ -8,7 +8,9 @@ import type {
   OccupancyDataPoint,
 } from "./dataviz.types"
 
-export async function getEventAttendanceData(): Promise<
+export async function getEventAttendanceData(
+  range: DatavizRange = fullDatavizRange(),
+): Promise<
   EventAttendanceDataPoint[]
 > {
   const result = await db
@@ -19,7 +21,8 @@ export async function getEventAttendanceData(): Promise<
       "events.id"
     )
     .where("events.event_status", "=", "Completed")
-    .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+    .where("events.time_event_start", ">=", range.from)
+    .where("events.time_event_start", "<=", range.to)
     .groupBy([
       "events.id",
       "events.title",
@@ -75,7 +78,9 @@ export async function getEventAttendanceData(): Promise<
   }))
 }
 
-export async function getEventRevenueData(): Promise<EventRevenueDataPoint[]> {
+export async function getEventRevenueData(
+  range: DatavizRange = fullDatavizRange(),
+): Promise<EventRevenueDataPoint[]> {
   const result = await db
     .selectFrom("events")
     .leftJoin(
@@ -89,7 +94,8 @@ export async function getEventRevenueData(): Promise<EventRevenueDataPoint[]> {
       "event_participants.id"
     )
     .where("events.event_status", "=", "Completed")
-    .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+    .where("events.time_event_start", ">=", range.from)
+    .where("events.time_event_start", "<=", range.to)
     .groupBy([
       "events.id",
       "events.title",
@@ -124,7 +130,9 @@ export async function getEventRevenueData(): Promise<EventRevenueDataPoint[]> {
   }))
 }
 
-export async function getConversionFunnelData(): Promise<
+export async function getConversionFunnelData(
+  range: DatavizRange = fullDatavizRange(),
+): Promise<
   ConversionFunnelDataPoint[]
 > {
   const result = await db
@@ -140,7 +148,8 @@ export async function getConversionFunnelData(): Promise<
       "event_participants.id"
     )
     .where("events.event_status", "=", "Completed")
-    .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+    .where("events.time_event_start", ">=", range.from)
+    .where("events.time_event_start", "<=", range.to)
     .groupBy([
       "events.id",
       "events.title",
@@ -183,7 +192,9 @@ export async function getConversionFunnelData(): Promise<
   })
 }
 
-export async function getOccupancyData(): Promise<OccupancyDataPoint[]> {
+export async function getOccupancyData(
+  range: DatavizRange = fullDatavizRange(),
+): Promise<OccupancyDataPoint[]> {
   const result = await db
     .selectFrom("events")
     .leftJoin(
@@ -192,7 +203,8 @@ export async function getOccupancyData(): Promise<OccupancyDataPoint[]> {
       "events.id"
     )
     .where("events.event_status", "=", "Completed")
-    .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+    .where("events.time_event_start", ">=", range.from)
+    .where("events.time_event_start", "<=", range.to)
     .groupBy([
       "events.id",
       "events.title",
