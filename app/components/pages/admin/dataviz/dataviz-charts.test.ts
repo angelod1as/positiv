@@ -43,7 +43,7 @@ describe('demographicChart', () => {
     expect(rowsOf(content)).toEqual([
       ['Mulher cis · 60', 60],
       ['Homem cis · 38', 38],
-      ['Outros · 2', 2],
+      ['Outras respostas · 2', 2],
     ])
   })
 

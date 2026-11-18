@@ -50,72 +50,51 @@ describe("DataViz - Integration Tests", () => {
 
   describe("Demographics DataViz", () => {
     describe("getVeteranRookieData", () => {
-      it("should calculate veterans and rookies for completed events only", async () => {
-        const eventDate = new Date("2025-12-01T19:00:00Z")
-        const completedEvent = await createTestEvent(tracker, kysely, {
-          title: "Veteran Rookie Event",
-          emoji: "🎖️",
-          event_status: "Completed" as EventStatus,
-          time_event_start: eventDate.toISOString(),
-        })
+      it("counts a newcomer at their first party and a veteran after it, looking back before the range", async () => {
+        const party = (title: string, date: string, status = "Completed") =>
+          createTestEvent(tracker, kysely, {
+            title,
+            event_status: status as EventStatus,
+            time_event_start: new Date(date).toISOString(),
+          })
+        const imported = await party("Imported Party", "2024-11-01T22:00:00Z")
+        const july = await party("July Party", "2025-07-19T22:00:00Z")
+        const draft = await party("Draft Party", "2025-11-01T22:00:00Z", "Draft")
+        const december = await party("December Party", "2025-12-01T22:00:00Z")
 
-        const draftEvent = await createTestEvent(tracker, kysely, {
-          title: "Draft Event",
-          event_status: "Draft" as EventStatus,
-          time_event_start: new Date("2025-07-01T19:00:00Z").toISOString(),
-        })
+        const person = (name: string) =>
+          createTestProfile(tracker, kysely, {
+            user_id: null,
+            email: `${testPrefix}-${name}@test.com`,
+          })
+        const attend = (eventId: string, profileId: string) =>
+          createTestEventParticipant(tracker, kysely, {
+            event_id: eventId,
+            profile_id: profileId,
+            attendance_status: "attended",
+          })
 
-        // Veteran: became veteran BEFORE the event date
-        const veteranProfile = await createTestProfile(tracker, kysely, {
-          user_id: null,
-          email: `${testPrefix}-veteran@test.com`,
-          became_veteran_date: new Date("2025-07-01T00:00:00Z").toISOString(),
-        })
+        const regular = await person("regular")
+        const importedRegular = await person("imported-regular")
+        const debut = await person("debut")
+        const draftOnly = await person("draft-only")
 
-        // Rookie: null became_veteran_date
-        const rookieProfile1 = await createTestProfile(tracker, kysely, {
-          user_id: null,
-          email: `${testPrefix}-rookie1@test.com`,
-          became_veteran_date: null,
-        })
-
-        // Rookie: became veteran AFTER the event date
-        const rookieProfile2 = await createTestProfile(tracker, kysely, {
-          user_id: null,
-          email: `${testPrefix}-rookie2@test.com`,
-          became_veteran_date: new Date("2026-01-01T00:00:00Z").toISOString(),
-        })
-
-        await createTestEventParticipant(tracker, kysely, {
-          event_id: completedEvent.id,
-          profile_id: veteranProfile.id,
-          attendance_status: "attended",
-        })
-        await createTestEventParticipant(tracker, kysely, {
-          event_id: completedEvent.id,
-          profile_id: rookieProfile1.id,
-          attendance_status: "attended",
-        })
-        await createTestEventParticipant(tracker, kysely, {
-          event_id: completedEvent.id,
-          profile_id: rookieProfile2.id,
-          attendance_status: "attended",
-        })
-
-        // Draft event participant (should not be counted)
-        await createTestEventParticipant(tracker, kysely, {
-          event_id: draftEvent.id,
-          profile_id: veteranProfile.id,
-          attendance_status: "attended",
-        })
+        await attend(july.id, regular.id)
+        await attend(december.id, regular.id)
+        await attend(imported.id, importedRegular.id)
+        await attend(december.id, importedRegular.id)
+        await attend(december.id, debut.id)
+        await attend(draft.id, draftOnly.id)
+        await attend(december.id, draftOnly.id)
 
         const result = await getVeteranRookieData()
 
-        expect(result.length).toBe(1)
-        expect(result[0].title).toBe("Veteran Rookie Event")
-        expect(result[0].emoji).toBe("🎖️")
-        expect(result[0].veterans).toBe(1)
-        expect(result[0].rookies).toBe(2)
+        expect(result.map((row) => row.title)).toEqual([
+          "July Party",
+          "December Party",
+        ])
+        expect(result[0]).toMatchObject({ veterans: 0, rookies: 1 })
+        expect(result[1]).toMatchObject({ veterans: 2, rookies: 2 })
       })
 
       it("should only count attended participants", async () => {
@@ -156,8 +135,8 @@ describe("DataViz - Integration Tests", () => {
 
         expect(eventResult).toBeDefined()
         if (eventResult) {
-          expect(eventResult.veterans).toBe(1)
-          expect(eventResult.rookies).toBe(0)
+          expect(eventResult.veterans).toBe(0)
+          expect(eventResult.rookies).toBe(1)
         }
       })
 
@@ -375,10 +354,49 @@ describe("DataViz - Integration Tests", () => {
           date_of_birth: age55.toISOString().split("T")[0],
         })
 
-        const result = await getDemographicsData("all")
+        const ageTotal = async () =>
+          (await getDemographicsData("all")).age.reduce((sum, row) => sum + row.count, 0)
+        const before = await ageTotal()
 
-        // Should have age groups
-        expect(result.age.length).toBeGreaterThan(0)
+        await createTestProfile(tracker, kysely, {
+          user_id: null,
+          email: `${testPrefix}-age130@test.com`,
+          date_of_birth: new Date(today.getFullYear() - 130, 0, 1).toISOString().split("T")[0],
+        })
+
+        expect(before).toBeGreaterThan(0)
+        expect(await ageTotal()).toBe(before)
+      })
+
+      it("counts an attendee's age at their first party in the range, kept to 18-120", async () => {
+        const party = await createTestEvent(tracker, kysely, {
+          title: "Age Party",
+          event_status: "Completed" as EventStatus,
+          time_event_start: new Date("2025-09-20T22:00:00Z").toISOString(),
+        })
+        const turnedTwentyFiveAfter = await createTestProfile(tracker, kysely, {
+          user_id: null,
+          email: `${testPrefix}-age-at-party@test.com`,
+          date_of_birth: "2000-12-01",
+        })
+        const impossibleAge = await createTestProfile(tracker, kysely, {
+          user_id: null,
+          email: `${testPrefix}-age-impossible@test.com`,
+          date_of_birth: "1890-01-01",
+        })
+        for (const profile of [turnedTwentyFiveAfter, impossibleAge]) {
+          await createTestEventParticipant(tracker, kysely, {
+            event_id: party.id,
+            profile_id: profile.id,
+            attendance_status: "attended",
+          })
+        }
+
+        const result = await getDemographicsData("attended")
+
+        expect(result.age).toEqual([
+          { category: "18-24", count: 1, percentage: 100 },
+        ])
       })
     })
   })

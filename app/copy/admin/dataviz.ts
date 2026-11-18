@@ -107,6 +107,7 @@ export const adminDatavizCopy = {
     share: "Percentual",
     people: (total: number) => `${total} pessoas`,
     answer: (category: string, count: number) => `${category} · ${count}`,
+    otherAnswers: "Outras respostas",
     newProfilesSummary: "Novos cadastros por mês.",
     migrationNote:
       "Em destaque, julho de 2025: Migração do sistema anterior.",

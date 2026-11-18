@@ -47,7 +47,7 @@ describe('buildEventLabel', () => {
 })
 
 describe('groupSmallCategories', () => {
-  it('groups categories below threshold into Outros', () => {
+  it('groups categories below threshold into Outras respostas', () => {
     const data = [
       { category: 'A', count: 90, percentage: 90 },
       { category: 'B', count: 5, percentage: 5 },
@@ -58,8 +58,8 @@ describe('groupSmallCategories', () => {
 
     const result = groupSmallCategories(data)
     expect(result).toHaveLength(4) // A, B, C, Outros
-    expect(result.find((r) => r.category === 'Outros')).toEqual({
-      category: 'Outros',
+    expect(result.find((r) => r.category === 'Outras respostas')).toEqual({
+      category: 'Outras respostas',
       count: 2,
       percentage: 2,
     })
@@ -75,7 +75,7 @@ describe('groupSmallCategories', () => {
 
     const result = groupSmallCategories(data, 5)
     expect(result).toHaveLength(3) // A, B, Outros
-    expect(result.find((r) => r.category === 'Outros')?.count).toBe(5)
+    expect(result.find((r) => r.category === 'Outras respostas')?.count).toBe(5)
   })
 
   it('returns data as-is when no categories are below threshold', () => {
@@ -86,14 +86,27 @@ describe('groupSmallCategories', () => {
 
     const result = groupSmallCategories(data)
     expect(result).toHaveLength(2)
-    expect(result.find((r) => r.category === 'Outros')).toBeUndefined()
+    expect(result.find((r) => r.category === 'Outras respostas')).toBeUndefined()
+  })
+
+  it('folds an answer only one person gave into Outras respostas, however large its share', () => {
+    const data = [
+      { category: 'A', count: 6, percentage: 75 },
+      { category: 'B', count: 1, percentage: 13 },
+      { category: 'C', count: 1, percentage: 13 },
+    ]
+
+    expect(groupSmallCategories(data)).toEqual([
+      { category: 'A', count: 6, percentage: 75 },
+      { category: 'Outras respostas', count: 2, percentage: 25 },
+    ])
   })
 
   it('handles empty data', () => {
     expect(groupSmallCategories([])).toEqual([])
   })
 
-  it('keeps at most eight categories, one per chart color, folding the smallest into Outros', () => {
+  it('keeps at most eight categories, one per chart color, folding the smallest into Outras respostas', () => {
     const data = [
       { category: 'A', count: 20, percentage: 20 },
       { category: 'B', count: 15, percentage: 15 },
@@ -108,11 +121,11 @@ describe('groupSmallCategories', () => {
     ]
 
     const result = groupSmallCategories(data)
-    expect(result.map((r) => r.category)).toEqual(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'Outros'])
-    expect(result.at(-1)).toEqual({ category: 'Outros', count: 15, percentage: 15 })
+    expect(result.map((r) => r.category)).toEqual(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'Outras respostas'])
+    expect(result.at(-1)).toEqual({ category: 'Outras respostas', count: 15, percentage: 15 })
   })
 
-  it('folds the overflow into the same Outros as the small categories', () => {
+  it('folds the overflow into the same Outras respostas as the small categories', () => {
     const data = [
       { category: 'A', count: 30, percentage: 30 },
       { category: 'B', count: 14, percentage: 14 },
@@ -128,12 +141,12 @@ describe('groupSmallCategories', () => {
 
     const result = groupSmallCategories(data)
     expect(result).toHaveLength(8)
-    expect(result.filter((r) => r.category === 'Outros')).toEqual([
-      { category: 'Outros', count: 10, percentage: 10 },
+    expect(result.filter((r) => r.category === 'Outras respostas')).toEqual([
+      { category: 'Outras respostas', count: 10, percentage: 10 },
     ])
   })
 
-  it('keeps eight categories without an Outros when nothing is small', () => {
+  it('keeps eight categories without Outras respostas when nothing is small', () => {
     const data = 'ABCDEFGH'.split('').map((category) => ({ category, count: 10, percentage: 12.5 }))
 
     expect(groupSmallCategories(data).map((r) => r.category)).toEqual('ABCDEFGH'.split(''))
