@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react"
-import { useFetcher } from "react-router"
+import { useFetcher, useRevalidator } from "react-router"
 import { redirectWithError } from "remix-toast"
 import { listInvitesForEvent } from "~/business/event/event-invites.server"
 import { getAdminContext } from "~/business/auth/admin-context.server"
+import { can, PERMISSIONS } from "~/business/auth/permissions"
 import { getProfilesWithExtraDataById, getRejectedEventParticipants } from "~/business/application/event-participants.server"
 import { getAdminEventById, getEventDemographicsById } from "~/business/event/event.server"
 import {
@@ -14,6 +15,7 @@ import { paymentProvider } from "~/business/payment/payment-provider.server"
 import { getPaymentsForEvent } from "~/business/payment/payment-totals.server"
 import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
 import { isOnlinePaymentsEnabled } from "~/business/payment/online-payments.server"
+import { AddParticipantsSection } from "~/components/organisms/add-participants-modal/add-participants-section"
 import { InviteParticipantSection } from "~/components/organisms/event-invite-modal/invite-participant-section"
 import { ManagePaymentModal } from "~/components/organisms/payment/manage-payment-modal"
 import { AdminViewEventParticipantsTable } from "~/components/organisms/tables/admin/participants-table/view-event-participants-table"
@@ -111,8 +113,10 @@ async function loadParticipants(eventId: string) {
 }
 
 /** LOADER */
-export async function loader({ params }: Route.LoaderArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
   assertUuidParams(params.id)
+
+  const { currentProfile } = await getAdminContext(request, params)
 
   const eventId = params.id
   if (!eventId) {
@@ -190,11 +194,16 @@ export async function loader({ params }: Route.LoaderArgs) {
     providerName: paymentProvider().name,
     invites,
     demographics: demographics?.success ? demographics.data : undefined,
+    canAddParticipantsDirectly: can(
+      currentProfile,
+      PERMISSIONS.PARTICIPANTS_ADD_DIRECTLY,
+    ),
   }
 }
 
 const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
   const fetcher = useFetcher<ComposableFetcherData>()
+  const revalidator = useRevalidator()
   const [isListStale, setIsListStale] = useState(false)
   const [managedParticipantId, setManagedParticipantId] = useState<
     string | null
@@ -221,6 +230,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
     providerName,
     demographics,
     invites,
+    canAddParticipantsDirectly,
   } = loaderData
 
   const { title, emoji, time_event_start } = event
@@ -292,6 +302,16 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
           ticketPrice={event.ticket_price}
         />
       )}
+
+      <AddParticipantsSection
+        eventId={event.id}
+        eventStatus={event.event_status}
+        canAdd={canAddParticipantsDirectly}
+        onAdded={() => {
+          setIsListStale(true)
+          void revalidator.revalidate()
+        }}
+      />
 
       <InviteParticipantSection
         eventId={event.id}

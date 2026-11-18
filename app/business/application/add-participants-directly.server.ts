@@ -1,10 +1,10 @@
 import type { Transaction } from "kysely"
 import { adminAddParticipantsCopy } from "~/copy/admin/add-participants"
 import { MANUALLY_ADDED_REFERRED } from "~/lib/constants/constants"
+import { checkEventStatus } from "~/lib/helpers/check-event-status"
 import { db } from "~/lib/supabase/db.server"
 import type { Database as Schema } from "~/types/database/database.types"
 import type { Database } from "~/types/database/kysely.types"
-import type { EventStatus } from "~types/database/entities.types"
 import { markInviteUsed } from "../event/event-invite.server"
 
 type SpotType = Schema["public"]["Enums"]["spot_type"]
@@ -16,13 +16,6 @@ export type DirectAdditionOutcome =
   | "reactivated"
   | "already-registered"
   | "ineligible"
-
-const ACCEPTING_STATUSES: readonly EventStatus[] = [
-  "Scheduled",
-  "Registration Open",
-  "Registration Closed",
-  "Completed",
-]
 
 export class EventNotAcceptingAdditionsError extends Error {
   constructor() {
@@ -50,7 +43,7 @@ export async function addParticipantsDirectly({
       .where("id", "=", eventId)
       .executeTakeFirst()
 
-    if (!event || !ACCEPTING_STATUSES.includes(event.event_status)) {
+    if (!event || !checkEventStatus(event.event_status).acceptsDirectAdditions) {
       throw new EventNotAcceptingAdditionsError()
     }
 

@@ -4,6 +4,8 @@ import { getProfilesWithExtraDataById, getRejectedEventParticipants } from "~/bu
 import { listInvitesForEvent } from "~/business/event/event-invites.server"
 import { getPaymentsForEvent } from "~/business/payment/payment-totals.server"
 import { isOnlinePaymentsEnabled } from "~/business/payment/online-payments.server"
+import { getAdminContext } from "~/business/auth/admin-context.server"
+import { PERMISSIONS } from "~/business/auth/permissions"
 import { loader } from "./view-event-page"
 
 const { logger } = vi.hoisted(() => ({
@@ -78,7 +80,27 @@ describe("view event page loader", () => {
     } as unknown as Awaited<ReturnType<typeof getProfilesWithExtraDataById>>)
     vi.mocked(getPaymentsForEvent).mockResolvedValue({})
     vi.mocked(listInvitesForEvent).mockResolvedValue([])
+    vi.mocked(getAdminContext).mockResolvedValue({
+      currentProfile: { permissions: [] },
+    } as unknown as Awaited<ReturnType<typeof getAdminContext>>)
   })
+
+  it.each([
+    { permissions: [PERMISSIONS.PARTICIPANTS_ADD_DIRECTLY], expected: true },
+    { permissions: [PERMISSIONS.ADMIN_PANEL], expected: false },
+  ])(
+    "tells the page whether the admin may add participants directly: $permissions",
+    async ({ permissions, expected }) => {
+      vi.mocked(getAdminContext).mockResolvedValue({
+        currentProfile: { permissions },
+      } as unknown as Awaited<ReturnType<typeof getAdminContext>>)
+      vi.mocked(getRejectedEventParticipants).mockResolvedValue([])
+
+      const data = await runLoader()
+
+      expect(data.canAddParticipantsDirectly).toBe(expected)
+    },
+  )
 
   it("logs a failed rejected-participants fetch and still renders the page", async () => {
     const error = new Error("connection lost")
