@@ -17,6 +17,7 @@ import {
   getEventAttendanceData,
   getEventRevenueData,
   getOccupancyData,
+  getTimingData,
 } from "~/business/reporting/dataviz/event-metrics.server"
 import {
   getGrowthData,
@@ -24,11 +25,13 @@ import {
   getSeasonalityData,
 } from "~/business/reporting/dataviz/growth-retention.server"
 import { getKpiScores } from "~/business/reporting/dataviz/kpi-scores.server"
+import { getPartySummary } from "~/business/reporting/dataviz/party-summary.server"
 import type { FilterMode } from "~/components/atoms/charts/demographic-filter-toggle"
-import { CommunitySection } from "~/components/pages/admin/dataviz/community-section"
-import { EventsSection } from "~/components/pages/admin/dataviz/events-section"
-import { KpiScores } from "~/components/pages/admin/dataviz/kpi-scores"
+import { MoneyChapter } from "~/components/pages/admin/dataviz/money-chapter"
+import { OverviewChapter } from "~/components/pages/admin/dataviz/overview-chapter"
+import { PartiesChapter } from "~/components/pages/admin/dataviz/parties-chapter"
 import { PartyRangeSelector } from "~/components/pages/admin/dataviz/party-range-selector"
+import { PeopleChapter } from "~/components/pages/admin/dataviz/people-chapter"
 import { adminDatavizCopy } from "~/copy/admin/dataviz"
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -48,6 +51,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     growth,
     retention,
     seasonality,
+    partySummary,
+    timing,
   ] = await Promise.all([
     getEventAttendanceData(fullDatavizRange()),
     getKpiScores(range),
@@ -59,6 +64,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     getGrowthData(range),
     getRetentionData(range),
     getSeasonalityData(range),
+    getPartySummary(range),
+    getTimingData(range),
   ])
   const eventAttendance = parties.filter(
     (party) => party.date >= range.from && party.date <= range.to
@@ -78,6 +85,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     growth,
     retention,
     seasonality,
+    partySummary,
+    timing,
   }
 }
 
@@ -99,12 +108,6 @@ export default function NumerosPage() {
   const handleRangeChange = (range: DatavizRange) => updateSearch(range)
   const handleModeChange = (mode: FilterMode) => updateSearch({ mode })
 
-  const totalProfiles = data.kpiScores.total_profiles
-  const filledProfilesAge = demographics.age.reduce(
-    (sum, item) => sum + item.count,
-    0,
-  )
-
   return (
     <div>
       <header className="w-full px-4 pt-12 pb-4 md:px-6 md:pt-16">
@@ -118,26 +121,30 @@ export default function NumerosPage() {
         </div>
       </header>
 
-      <KpiScores data={data.kpiScores} attendance={data.eventAttendance} />
+      <OverviewChapter summary={data.partySummary} kpis={data.kpiScores} />
 
-      <EventsSection
+      <PartiesChapter
+        summary={data.partySummary}
+        kpis={data.kpiScores}
         attendance={data.eventAttendance}
-        revenue={data.eventRevenue}
         funnel={data.conversionFunnel}
         occupancy={data.occupancy}
-        veteranRookie={data.veteranRookie}
+        timing={data.timing}
         seasonality={data.seasonality}
       />
 
-      <CommunitySection
+      <PeopleChapter
+        summary={data.partySummary}
+        kpis={data.kpiScores}
+        veteranRookie={data.veteranRookie}
+        retention={data.retention}
         demographics={demographics}
         growth={data.growth}
-        retention={data.retention}
         demographicsMode={demographicsMode}
         onModeChange={handleModeChange}
-        totalProfiles={totalProfiles}
-        filledProfilesAge={filledProfilesAge}
       />
+
+      <MoneyChapter summary={data.partySummary} revenue={data.eventRevenue} />
     </div>
   )
 }

@@ -11,6 +11,11 @@ vi.mock("~/business/reporting/dataviz/event-metrics.server", () => ({
   getEventRevenueData: vi.fn(),
   getConversionFunnelData: vi.fn(),
   getOccupancyData: vi.fn(),
+  getTimingData: vi.fn(),
+}))
+
+vi.mock("~/business/reporting/dataviz/party-summary.server", () => ({
+  getPartySummary: vi.fn(),
 }))
 
 vi.mock("~/business/reporting/dataviz/demographics-dataviz.server", () => ({
@@ -271,5 +276,23 @@ describe("Numeros Page - Loader", () => {
     expect(result.parties.map((p) => p.title)).toEqual(["Junho", "Setembro"])
     expect(result.eventAttendance.map((p) => p.title)).toEqual(["Setembro"])
     expect(result.range.from).toBe("2025-09-20T22:00:00.000Z")
+  })
+
+  it("reads the report's party numbers and the timing over the range", async () => {
+    const { getPartySummary } = await import(
+      "~/business/reporting/dataviz/party-summary.server"
+    )
+    const { getTimingData } = await import(
+      "~/business/reporting/dataviz/event-metrics.server"
+    )
+
+    const result = await loader(
+      makeRequest("http://localhost/admin/numeros?from=2025-09-20T22:00:00.000Z")
+    )
+
+    expect(getPartySummary).toHaveBeenCalledWith(result.range)
+    expect(getTimingData).toHaveBeenCalledWith(result.range)
+    expect(result).toHaveProperty("partySummary")
+    expect(result).toHaveProperty("timing")
   })
 })

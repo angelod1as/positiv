@@ -8,18 +8,18 @@ import type {
 } from '~/business/reporting/dataviz/dataviz.types'
 import {
   ageChart,
-  approvalChart,
   attendanceChart,
   conversionChart,
-  cumulativeGrowthChart,
   demographicChart,
   funnelChart,
+  newcomersChart,
   newProfilesChart,
   occupancyChart,
   retentionChart,
   revenueChart,
   seasonalityChart,
   ticketChart,
+  timingChart,
   veteranRookieChart,
 } from './dataviz-charts'
 
@@ -124,16 +124,6 @@ describe('growth charts', () => {
   it('leaves the migration out of the Resumo when the month is not drawn', () => {
     expect(newProfilesChart(growth.slice(0, 1)).summary).not.toContain('Migração')
   })
-
-  it('draws the running total as a line', () => {
-    const content = cumulativeGrowthChart(growth)
-
-    expect(content.chartType).toBe('line')
-    expect(rowsOf(content)).toEqual([
-      ['jun/25', 10],
-      ['jul/25', 510],
-    ])
-  })
 })
 
 describe('event charts', () => {
@@ -183,12 +173,23 @@ describe('event charts', () => {
     pagamentos_cartao: 4,
   }
 
-  it('draws net and gross revenue in reais', () => {
+  it('draws the net revenue taken by hand and through Asaas beside the gross, in reais', () => {
     const content = revenueChart([revenue])
 
     expect(content.unit).toBe('brl')
-    expect(content.series).toEqual(['Faturamento líquido', 'Faturamento bruto'])
-    expect(content.rows[0]?.values).toEqual([12000.5, 13000])
+    expect(content.series).toEqual(['Líquido manual', 'Líquido pelo Asaas', 'Faturamento bruto'])
+    expect(content.rows[0]?.values).toEqual([10000.5, 2000, 13000])
+  })
+
+  it('draws the median days before each party people applied and paid', () => {
+    const content = timingChart([
+      { ...event, dias_inscricao: 14, dias_pagamento: 9.5 },
+      { ...event, dias_inscricao: null, dias_pagamento: null },
+    ])
+
+    expect(content.chartType).toBe('line')
+    expect(content.series).toEqual(['Inscrição', 'Pagamento'])
+    expect(content.rows.map((row) => row.values)).toEqual([[14, 9.5]])
   })
 
   it('draws the ticket price beside the average paid per payer', () => {
@@ -284,29 +285,14 @@ describe('seasonalityChart', () => {
   })
 })
 
-describe('approvalChart', () => {
-  it('splits the profiles so the two shares add up to 100%', () => {
-    const content = approvalChart({
-      total_profiles: 8,
-      total_veterans: 0,
-      total_approved: 1,
-      total_events_completed: 0,
-      total_unique_attendees: 0,
-      avg_attendance_per_event: 0,
-      avg_occupancy_pct: 0,
-      total_revenue: 0,
-      avg_revenue_per_event: 0,
-      avg_ticket_price: 0,
-      total_flagged: 0,
-      attended_3_plus: 0,
-      attended_5_plus: 0,
-      avg_no_show_rate: 0,
-    })
+describe('newcomersChart', () => {
+  it('splits the people in the range into newcomers and veterans, the shares adding up to 100%', () => {
+    const content = newcomersChart({ people: 8, newcomers: 1 })
 
     expect(content.chartType).toBe('proportion')
     expect(rowsOf(content)).toEqual([
-      ['Aprovades · 13%', 1],
-      ['Não aprovades · 87%', 7],
+      ['Novates · 13%', 1],
+      ['Veteranes · 87%', 7],
     ])
   })
 })
