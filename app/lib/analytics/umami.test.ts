@@ -8,7 +8,7 @@ import {
   vi,
 } from "vitest"
 import type { AnonymousRegistry } from "./events"
-import { trackEvent } from "./umami"
+import { trackEvent, umamiDashboardUrl } from "./umami"
 
 describe("umami analytics", () => {
   const mockTrack = vi.fn()
@@ -80,5 +80,18 @@ describe("umami analytics", () => {
 
       expectTypeOf<WithEmail | WithUserId>().not.toBeNever()
     })
+  })
+})
+
+describe("umamiDashboardUrl", () => {
+  it("points at the website's dashboard on the Umami instance", () => {
+    expect(umamiDashboardUrl("https://umami.example.com/", "site-123")).toBe(
+      "https://umami.example.com/websites/site-123"
+    )
+  })
+
+  it("has no link when the instance or the website is not configured", () => {
+    expect(umamiDashboardUrl("", "site-123")).toBeNull()
+    expect(umamiDashboardUrl("https://umami.example.com", undefined)).toBeNull()
   })
 })

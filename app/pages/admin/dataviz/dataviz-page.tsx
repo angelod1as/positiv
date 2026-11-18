@@ -1,3 +1,4 @@
+import { ENV } from "varlock/env"
 import {
   type LoaderFunctionArgs,
   useLoaderData,
@@ -27,12 +28,12 @@ import {
 import { getKpiScores } from "~/business/reporting/dataviz/kpi-scores.server"
 import { getPartySummary } from "~/business/reporting/dataviz/party-summary.server"
 import type { FilterMode } from "~/components/atoms/charts/demographic-filter-toggle"
+import { DatavizHeader } from "~/components/pages/admin/dataviz/dataviz-header"
 import { MoneyChapter } from "~/components/pages/admin/dataviz/money-chapter"
 import { OverviewChapter } from "~/components/pages/admin/dataviz/overview-chapter"
 import { PartiesChapter } from "~/components/pages/admin/dataviz/parties-chapter"
-import { PartyRangeSelector } from "~/components/pages/admin/dataviz/party-range-selector"
 import { PeopleChapter } from "~/components/pages/admin/dataviz/people-chapter"
-import { adminDatavizCopy } from "~/copy/admin/dataviz"
+import { umamiDashboardUrl } from "~/lib/analytics/umami"
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url)
@@ -87,6 +88,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     seasonality,
     partySummary,
     timing,
+    umamiUrl: umamiDashboardUrl(ENV.VITE_UMAMI_URL, ENV.VITE_UMAMI_WEBSITE_ID),
   }
 }
 
@@ -110,16 +112,12 @@ export default function NumerosPage() {
 
   return (
     <div>
-      <header className="w-full px-4 pt-12 pb-4 md:px-6 md:pt-16">
-        <div className="mx-auto max-w-3xl">
-          <h1>{adminDatavizCopy.title}</h1>
-          <PartyRangeSelector
-            parties={data.parties}
-            range={data.range}
-            onRangeChange={handleRangeChange}
-          />
-        </div>
-      </header>
+      <DatavizHeader
+        parties={data.parties}
+        range={data.range}
+        onRangeChange={handleRangeChange}
+        umamiUrl={data.umamiUrl}
+      />
 
       <OverviewChapter summary={data.partySummary} kpis={data.kpiScores} />
 

@@ -1,5 +1,6 @@
 export const adminDatavizCopy = {
   title: "Números",
+  umamiLink: "Ver o comportamento no site, no Umami",
   noData: "Nenhum dado disponível",
   internal: (title: string) => `${title} · Interno`,
   chapters: {

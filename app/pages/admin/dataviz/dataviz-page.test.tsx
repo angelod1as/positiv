@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest"
 import { loader } from "./dataviz-page"
 
+const { ENV } = vi.hoisted(() => ({ ENV: {} as Record<string, unknown> }))
+vi.mock("varlock/env", () => ({ ENV }))
+
 // Mock the data layer functions
 vi.mock("~/business/reporting/dataviz/kpi-scores.server", () => ({
   getKpiScores: vi.fn(),
@@ -294,5 +297,14 @@ describe("Numeros Page - Loader", () => {
     expect(getTimingData).toHaveBeenCalledWith(result.range)
     expect(result).toHaveProperty("partySummary")
     expect(result).toHaveProperty("timing")
+  })
+
+  it("links out to the website's Umami dashboard for behaviour", async () => {
+    ENV.VITE_UMAMI_URL = "https://umami.example.com"
+    ENV.VITE_UMAMI_WEBSITE_ID = "site-123"
+
+    const result = await loader(makeRequest())
+
+    expect(result.umamiUrl).toBe("https://umami.example.com/websites/site-123")
   })
 })

@@ -16,7 +16,7 @@ import paths from "~/lib/paths"
 import type { Route } from "./+types/dashboard-page"
 
 const {
-  admin: { ADMIN_PARTICIPANTS, ADMIN_FEEDBACKS, ADMIN_SETTINGS },
+  admin: { ADMIN_PARTICIPANTS, ADMIN_FEEDBACKS, ADMIN_SETTINGS, ADMIN_DATAVIZ },
 } = paths
 
 export function meta({}: Route.MetaArgs) {
@@ -125,20 +125,17 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
 
       <Separator />
 
-      {/* Commented out for now, we need to see the charts in production */}
-      {/* <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h2>Números e métricas</h2>
+          <h2>{adminDashboardCopy.numbers.title}</h2>
           <div className="grid grid-cols-1">
             <Button asChild>
-              <Link to={ADMIN_DATAVIZ}>Ver números</Link>
+              <Link to={ADMIN_DATAVIZ}>{adminDashboardCopy.numbers.cta}</Link>
             </Button>
-            <p className="text-xs">
-              Veja todos os gráficos e métricas da comunidade
-            </p>
+            <p className="text-xs">{adminDashboardCopy.numbers.hint}</p>
           </div>
         </div>
-      </div> */}
+      </div>
     </>
   )
 }

@@ -20,3 +20,11 @@ export function trackEvent<Name extends AnalyticsEventName>(
     window.umami.track(event, data)
   }
 }
+
+export function umamiDashboardUrl(
+  instanceUrl: string | undefined,
+  websiteId: string | undefined
+): string | null {
+  if (!instanceUrl || !websiteId) return null
+  return `${instanceUrl.replace(/\/+$/, "")}/websites/${websiteId}`
+}
