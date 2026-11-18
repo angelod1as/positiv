@@ -72,7 +72,25 @@ describe("likertSubmissionSchema", () => {
     expect(result.success).toBe(false)
   })
 
-  it.each(["2019", "2019-13", "03/2019", "2019-3"])(
+  it("should refuse a comment Postgres could not store", () => {
+    const result = likertSubmissionSchema.safeParse({
+      ...valid,
+      answers: [{ ...valid.answers[0], comment: "nul \u0000 byte" }],
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  it("should refuse a place name Postgres could not store", () => {
+    const result = likertSubmissionSchema.safeParse({
+      ...valid,
+      beenTo: ["nul \u0000 byte"],
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  it.each(["2019", "2019-13", "03/2019", "2019-3", "0000-05", "1899-12"])(
     "should refuse %s as the month non-monogamy started",
     (nonMonogamySince) => {
       const result = likertSubmissionSchema.safeParse({
