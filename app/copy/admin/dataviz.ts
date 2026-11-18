@@ -186,7 +186,7 @@ export const adminDatavizCopy = {
   timingChart: {
     title: "Antecedência",
     description:
-      "Quantos dias antes de cada festa as pessoas se inscreveram e pagaram, pela mediana.",
+      "Quantos dias antes de cada festa as pessoas se inscreveram e pagaram, pela mediana. A inscrição conta todo mundo que se inscreveu; o pagamento, só quem pagou.",
     applied: "Inscrição",
     paid: "Pagamento",
   },

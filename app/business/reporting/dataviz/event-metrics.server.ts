@@ -279,7 +279,7 @@ export async function getOccupancyData(
 export async function getTimingData(
   range: DatavizRange = fullDatavizRange(),
 ): Promise<TimingDataPoint[]> {
-  const days = (moment: string) =>
+  const days = (moment: "event_participants.application_date" | "first_payments.first_paid_at") =>
     sql<string | null>`round((percentile_cont(0.5) within group (order by extract(epoch from (events.time_event_start - ${sql.raw(moment)})) / 86400))::numeric, 1)`
 
   const result = await db
