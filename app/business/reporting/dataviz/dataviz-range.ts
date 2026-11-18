@@ -16,7 +16,7 @@ export function datavizRange(
   const from = readDate(params.get("from"))
   const start = from && from > firstParty ? from : firstParty
   const to = readDate(params.get("to"))
-  const end = to && to >= start ? to : now
+  const end = to && to >= start ? to : now > start ? now : start
   return { from: start.toISOString(), to: end.toISOString() }
 }
 

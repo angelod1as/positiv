@@ -42,4 +42,11 @@ describe("datavizRange", () => {
       datavizRange(params("from=2026-01-01T00:00:00.000Z&to=2025-12-01"), now).to,
     ).toBe("2026-11-17T12:00:00.000Z")
   })
+
+  it("never ends before it starts when the start is still to come", () => {
+    expect(datavizRange(params("from=2027-02-01T00:00:00.000Z"), now)).toEqual({
+      from: "2027-02-01T00:00:00.000Z",
+      to: "2027-02-01T00:00:00.000Z",
+    })
+  })
 })
