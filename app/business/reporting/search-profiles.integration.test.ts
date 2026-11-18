@@ -162,4 +162,64 @@ describe("searching for someone to invite", () => {
 
     expect(results).toEqual([])
   })
+
+  describe("for adding a participant directly", () => {
+    it("leaves out a profile without its basic data", async () => {
+      await createTestProfile(tracker, kysely, {
+        user_id: null,
+        email: `incomplete-${marker}@test.com`,
+        full_name: `Incomplete ${marker}`,
+        basic_data_filled: false,
+      })
+
+      const results = await searchProfilesForInvite(eventId, `Incomplete ${marker}`, {
+        eligibleOnly: true,
+      })
+
+      expect(results).toEqual([])
+    })
+
+    it("leaves out a rejected profile", async () => {
+      await createTestProfile(tracker, kysely, {
+        user_id: null,
+        email: `rejected-${marker}@test.com`,
+        full_name: `Rejected ${marker}`,
+        approved_to_attend: "rejected",
+      })
+
+      const results = await searchProfilesForInvite(eventId, `Rejected ${marker}`, {
+        eligibleOnly: true,
+      })
+
+      expect(results).toEqual([])
+    })
+
+    it("still finds a profile still pending approval", async () => {
+      await createTestProfile(tracker, kysely, {
+        user_id: null,
+        email: `pending-${marker}@test.com`,
+        full_name: `Pending ${marker}`,
+        approved_to_attend: "pending",
+      })
+
+      const results = await searchProfilesForInvite(eventId, `Pending ${marker}`, {
+        eligibleOnly: true,
+      })
+
+      expect(results).toHaveLength(1)
+    })
+
+    it("leaves the invite search as it was", async () => {
+      await createTestProfile(tracker, kysely, {
+        user_id: null,
+        email: `incomplete-${marker}@test.com`,
+        full_name: `Incomplete ${marker}`,
+        basic_data_filled: false,
+      })
+
+      const results = await searchProfilesForInvite(eventId, `Incomplete ${marker}`)
+
+      expect(results).toHaveLength(1)
+    })
+  })
 })

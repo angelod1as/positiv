@@ -11,7 +11,11 @@ const RESULT_LIMIT = 5
  * `unaccent` is what lets "Goncalves" find "Gonçalves" -- the admin types what
  * they heard, not what the person registered.
  */
-export async function searchProfilesForInvite(eventId: string, term: string) {
+export async function searchProfilesForInvite(
+  eventId: string,
+  term: string,
+  { eligibleOnly = false }: { eligibleOnly?: boolean } = {},
+) {
   const trimmed = term.trim()
   if (!trimmed) return []
 
@@ -60,6 +64,13 @@ export async function searchProfilesForInvite(eventId: string, term: string) {
           ? [sql<boolean>`profiles.phone::text like ${`%${digits}%`}`]
           : []),
       ]),
+    )
+    // Adding someone directly skips the application, so only a profile that
+    // could have applied is offered: basic data filled, and not rejected.
+    .$if(eligibleOnly, (qb) =>
+      qb
+        .where("profiles.basic_data_filled", "=", true)
+        .where("profiles.approved_to_attend", "!=", "rejected"),
     )
     .orderBy("profiles.full_name", "asc")
     .limit(RESULT_LIMIT)
