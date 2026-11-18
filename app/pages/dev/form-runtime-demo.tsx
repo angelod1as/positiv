@@ -13,6 +13,8 @@ import type {
   Answers,
   Question,
 } from "~/components/forms/runtime/question.types"
+import { likertSchema } from "~/components/forms/runtime/likert"
+import { monthYearSchema } from "~/components/forms/runtime/month-year"
 import { Button } from "~/components/atoms/button/button"
 import { zod } from "~/lib/helpers/zod"
 
@@ -127,6 +129,21 @@ const questions: Question[] = [
     help: "Campo livre, opcional — dá para seguir sem escrever nada.",
     input: { kind: "textarea" },
     schema: zod.string().optional(),
+  },
+  {
+    id: "ciume",
+    prompt: "Sinto ciúme quando minha pessoa parceira sai com outra pessoa.",
+    input: { kind: "likert", theme: "Ciúme" },
+    schema: likertSchema,
+  },
+  {
+    id: "desde",
+    prompt: "Desde quando você vive a não-monogamia?",
+    input: {
+      kind: "monthyear",
+      optOut: { label: "Não vivo a não-monogamia hoje" },
+    },
+    schema: monthYearSchema,
   },
   {
     id: "email",
@@ -346,6 +363,8 @@ const steppedFlow: Flow = {
     identidade: { kind: "question", id: "identidade" },
     pronomes: { kind: "question", id: "pronomes" },
     notas: { kind: "question", id: "notas" },
+    ciume: { kind: "question", id: "ciume" },
+    desde: { kind: "question", id: "desde" },
     email: { kind: "question", id: "email" },
     salvar: commitStep,
   },
@@ -360,7 +379,9 @@ const steppedFlow: Flow = {
     if (current === "espacos") return "identidade"
     if (current === "identidade") return "pronomes"
     if (current === "pronomes") return "notas"
-    if (current === "notas") return "email"
+    if (current === "notas") return "ciume"
+    if (current === "ciume") return "desde"
+    if (current === "desde") return "email"
     if (current === "email") return "salvar"
     return "done"
   },
