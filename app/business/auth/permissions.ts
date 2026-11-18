@@ -6,6 +6,7 @@ export const PERMISSIONS = {
   ADMIN_PANEL: "admin.panel",
   EVENTS_MANAGE: "events.manage",
   PARTICIPANTS_MANAGE: "participants.manage",
+  PARTICIPANTS_ADD_DIRECTLY: "participants.add_directly",
   PROFILES_MANAGE: "profiles.manage",
   NEWSLETTER_MANAGE: "newsletter.manage",
   REPORTS_READ: "reports.read",
