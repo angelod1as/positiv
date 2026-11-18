@@ -70,6 +70,7 @@ export async function getPartySummary(range: DatavizRange): Promise<PartySummary
       FROM first_parties
       WHERE first_start >= ${range.from}
         AND first_start <= ${range.to}
+        AND profile_id IN (SELECT profile_id FROM attendances)
     ),
     ages AS (
       SELECT age

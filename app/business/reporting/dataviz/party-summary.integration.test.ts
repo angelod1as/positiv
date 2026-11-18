@@ -103,6 +103,24 @@ describe("getPartySummary", () => {
     })
   })
 
+  it("counts as newcomers only people at a finished party in the range", async () => {
+    const september = await party("September", "2025-09-20T22:00:00.000Z")
+    const tonight = await createTestEvent(tracker, kysely, {
+      title: "Tonight",
+      event_status: "Registration Closed" as EventStatus,
+      time_event_start: "2025-10-18T22:00:00.000Z",
+    })
+    await join(september.id, (await person("finished")).id)
+    await join(tonight.id, (await person("still-dancing")).id)
+
+    const summary = await getPartySummary(range)
+
+    expect({ people: summary.people, newcomers: summary.newcomers }).toEqual({
+      people: 1,
+      newcomers: 1,
+    })
+  })
+
   it("has no age when nobody in the range gave a date of birth", async () => {
     const september = await party("September", "2025-09-20T22:00:00.000Z")
     await join(september.id, (await person("no-birth")).id)
