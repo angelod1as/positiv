@@ -41,6 +41,9 @@ export async function addParticipantsDirectly({
       .selectFrom("events")
       .select("event_status")
       .where("id", "=", eventId)
+      // Held until commit, so an admin cancelling the event meanwhile waits
+      // for these additions or is seen by them.
+      .forUpdate()
       .executeTakeFirst()
 
     if (!event || !checkEventStatus(event.event_status).acceptsDirectAdditions) {
