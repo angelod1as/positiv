@@ -57,4 +57,32 @@ describe("QuestionField", () => {
       screen.getAllByText("Li tudo e estou de acordo!"),
     ).toHaveLength(1)
   })
+
+  it("names a Likert statement's scale with the statement", () => {
+    field({
+      id: "ciume",
+      prompt: "Sinto ciúme com facilidade.",
+      input: { kind: "likert" },
+      schema: zod.unknown(),
+    })
+
+    expect(
+      screen.getByRole("radiogroup", { name: "Sinto ciúme com facilidade." }),
+    ).toBeInTheDocument()
+  })
+
+  it("names a month and year with the question", () => {
+    field({
+      id: "desde",
+      prompt: "Desde quando você vive a não-monogamia?",
+      input: { kind: "monthyear" },
+      schema: zod.unknown(),
+    })
+
+    expect(
+      screen.getByRole("group", {
+        name: "Desde quando você vive a não-monogamia?",
+      }),
+    ).toBeInTheDocument()
+  })
 })
