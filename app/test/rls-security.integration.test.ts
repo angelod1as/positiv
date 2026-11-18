@@ -580,6 +580,30 @@ describe("RLS Security - Integration Tests", () => {
     })
   })
 
+  describe.each(["likert_submissions", "likert_answers"])(
+    "%s stays out of the API",
+    (table) => {
+      // Self-assessment answers are sensitive data (LGPD art. 5, II). Only the
+      // server reads them, through Kysely, which checks who may.
+      it("should grant anon, authenticated and service_role nothing on it", async () => {
+        const privileges = ["SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE"]
+        const relation = `public.${table}`
+        const { rows } = await sql<{ role: string; privilege: string; granted: boolean }>`
+          SELECT r.role, p.privilege,
+                 CASE WHEN p.privilege IN ('SELECT', 'INSERT', 'UPDATE')
+                   THEN has_any_column_privilege(r.role, ${relation}, p.privilege)
+                   ELSE has_table_privilege(r.role, ${relation}, p.privilege)
+                 END AS granted
+            FROM unnest(ARRAY['anon', 'authenticated', 'service_role']) AS r(role)
+           CROSS JOIN unnest(${sql.val(privileges)}::text[]) AS p(privilege)
+        `.execute(db)
+
+        expect(rows).toHaveLength(3 * privileges.length)
+        expect(rows.filter((row) => row.granted)).toEqual([])
+      })
+    },
+  )
+
   describe("Row level security coverage", () => {
     it("should have RLS enabled on every table in public", async () => {
       const { rows } = await sql<{ relname: string; relrowsecurity: boolean }>`

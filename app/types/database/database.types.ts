@@ -193,6 +193,46 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"likert_answers": {
+                  Row: {
+                    "answer": number,"comment": string | null,"id": string,"position": number,"statement_key": string,"statement_text": string,"submission_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "answer": number,"comment"?: string | null,"id"?: string,"position": number,"statement_key": string,"statement_text": string,"submission_id": string
+                  }
+                  Update: {
+                    "answer"?: number,"comment"?: string | null,"id"?: string,"position"?: number,"statement_key"?: string,"statement_text"?: string,"submission_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "likert_answers_submission_id_fkey"
+      columns: ["submission_id"]
+isOneToOne: false
+      referencedRelation: "likert_submissions"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"likert_submissions": {
+                  Row: {
+                    "been_to": (string)[],"id": string,"non_monogamy_since": string | null,"profile_id": string,"submitted_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "been_to": (string)[],"id"?: string,"non_monogamy_since"?: string | null,"profile_id": string,"submitted_at"?: string
+                  }
+                  Update: {
+                    "been_to"?: (string)[],"id"?: string,"non_monogamy_since"?: string | null,"profile_id"?: string,"submitted_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "likert_submissions_profile_id_fkey"
+      columns: ["profile_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"newsletter_subscriptions": {
                   Row: {
                     "consent_given": boolean,"created_at": string,"first_consent_given_at": string | null,"id": string,"last_consent_given_at": string | null,"last_sync_attempt_at": string | null,"listmonk_subscriber_id": number | null,"profile_id": string,"retry_count": number,"subscribed_at": string | null,"subscription_source": string | null,"sync_status": string | null,"unsubscribed_at": string | null,"updated_at": string
