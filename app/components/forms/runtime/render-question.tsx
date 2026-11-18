@@ -241,14 +241,25 @@ export const renderQuestion: RenderQuestion = ({
 
       return (
         <div className="flex flex-col gap-4">
+          {/* A horizontal scale: five equal columns, the line running from the
+              first point's centre to the last one's (10% to 90%) behind the
+              circles, each label under its point. */}
           <div
             role="radiogroup"
             aria-labelledby={labelledBy}
-            className="flex flex-col gap-0.5 pointer-coarse:gap-2"
+            className="relative grid grid-cols-5"
           >
+            <div
+              aria-hidden="true"
+              className="absolute top-3 right-[10%] left-[10%] h-px bg-muted-foreground/40"
+            />
             {LIKERT_CHOICES.map((choice) => (
-              <Label key={choice} className={choiceClassName}>
+              <Label
+                key={choice}
+                className="relative mb-0 flex cursor-pointer flex-col items-center gap-2 px-0.5 text-center text-[11px] leading-tight wrap-normal sm:text-sm"
+              >
                 <Radio
+                  className="mt-0 size-6 bg-background"
                   name={question.id}
                   value={choice}
                   checked={answer.choice === choice}
