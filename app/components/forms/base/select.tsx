@@ -9,7 +9,7 @@ export const Select = React.forwardRef<
     <select
       ref={ref}
       className={cn(
-        "block w-full rounded-md py-2 pr-10 pl-3 text-base text-gray-800 focus:outline-none sm:text-sm border border-muted-foreground",
+        "block w-full rounded-md py-2 pr-10 pl-3 text-base text-gray-800 focus:outline-none sm:text-sm border border-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       style={{
