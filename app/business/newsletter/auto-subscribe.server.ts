@@ -35,7 +35,7 @@ async function getNewsletterProfile(profileId: string) {
   return profile
 }
 
-function subscriberAttributes(
+export function subscriberAttributes(
   profile: Awaited<ReturnType<typeof getNewsletterProfile>>,
   computedName: string,
 ) {

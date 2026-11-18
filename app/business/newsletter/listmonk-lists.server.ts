@@ -236,3 +236,13 @@ export const getBlocklistedSubscribers = composable(
     )
   }
 )
+
+export const getAllSubscribers = composable(
+  async (): Promise<ListSubscriber[]> => {
+    if (ENV.E2E_MODE) {
+      return []
+    }
+
+    return await readSubscribers("subscribers.id > 0", "all subscribers")
+  }
+)

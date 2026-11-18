@@ -10,6 +10,7 @@ import {
 import {
   createList,
   deleteList,
+  getAllSubscribers,
   getBlocklistedSubscribers,
   getListById,
   getListSubscribers,
@@ -468,6 +469,62 @@ describe("getBlocklistedSubscribers", () => {
     fetchSpy.mockResolvedValueOnce(page([1, 2], 5))
 
     const result = await getBlocklistedSubscribers()
+
+    expect(result.success).toBe(false)
+  })
+})
+
+describe("getAllSubscribers", () => {
+  let fetchSpy: MockInstance
+
+  beforeEach(() => {
+    fetchSpy = vi.spyOn(global, "fetch")
+  })
+
+  afterEach(() => {
+    fetchSpy.mockRestore()
+    vi.clearAllMocks()
+  })
+
+  const subscriber = (id: number, status: string) => ({
+    id,
+    email: `s${id}@example.com`,
+    name: `s${id}`,
+    status,
+    updated_at: "2026-10-01T12:00:00Z",
+    lists: [],
+  })
+
+  it("should read every subscriber, whatever their lists or status", async () => {
+    fetchSpy.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        data: {
+          results: [subscriber(1, "enabled"), subscriber(2, "blocklisted")],
+          total: 2,
+          page: 1,
+          per_page: 100,
+        },
+      }),
+    } as Response)
+
+    const result = await getAllSubscribers()
+
+    const url = decodeURIComponent(String(fetchSpy.mock.calls[0][0]))
+    expect(url).not.toContain("list_id")
+    expect(url).not.toContain("status =")
+    expect(result.success && result.data.map((s) => s.id)).toEqual([1, 2])
+  })
+
+  it("should fail when the pages return fewer subscribers than Listmonk's total", async () => {
+    fetchSpy.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        data: { results: [subscriber(1, "enabled")], total: 5, page: 1, per_page: 100 },
+      }),
+    } as Response)
+
+    const result = await getAllSubscribers()
 
     expect(result.success).toBe(false)
   })
