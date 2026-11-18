@@ -174,4 +174,12 @@ describe("AdminDashboard Component", () => {
       screen.getByRole("link", { name: adminDashboardCopy.settings.cta }),
     ).toHaveAttribute("href", paths.admin.ADMIN_SETTINGS)
   })
+
+  it("should link to the numbers page", () => {
+    render(<AdminDashboard {...createMockComponentProps([])} />)
+
+    expect(
+      screen.getByRole("link", { name: adminDashboardCopy.numbers.cta }),
+    ).toHaveAttribute("href", paths.admin.ADMIN_DATAVIZ)
+  })
 })

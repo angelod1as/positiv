@@ -1,47 +1,63 @@
 export const adminDatavizCopy = {
   title: "Números",
+  umamiLink: "Ver o comportamento no site, no Umami",
   noData: "Nenhum dado disponível",
+  internal: (title: string) => `${title} · Interno`,
+  chapters: {
+    overview: {
+      title: "Visão geral",
+      parties: "Festas",
+      people: "Pessoas foram às festas",
+      applications: "Inscrições",
+      registerTitle: "Cadastro",
+      profiles: "Perfis cadastrados",
+      approved: "Perfis aprovados para participar",
+      flagged: "Perfis sinalizados · Amarelo + Vermelho",
+    },
+    parties: {
+      title: "Festas",
+      acceptance: "Das pessoas que se inscreveram entraram",
+      perParty: "Pessoas por festa",
+      fullest: "Na festa mais cheia",
+      operationTitle: "Operação",
+      noShow: "Não foram depois de confirmar",
+      occupancy: "Ocupação média das vagas",
+      notSelected: "Inscrições não selecionadas",
+    },
+    people: {
+      title: "Pessoas",
+      returned: "Das novates voltaram a outra festa",
+      repeat: "Foram a duas festas ou mais",
+      age: "Idade · menor, média e maior",
+      frequencyTitle: "Frequência",
+      newcomers: "Novates no intervalo",
+      threePlus: "Foram a três festas ou mais",
+      fivePlus: "Foram a cinco festas ou mais",
+    },
+    money: {
+      title: "Dinheiro",
+      socialTitle: "Vagas sociais",
+      social: "Vagas sociais usadas",
+      socialPerParty: "Vagas sociais por festa",
+      socialShare: "Das presenças foram vagas sociais",
+      revenueTitle: "Receita",
+      net: "Receita líquida",
+      gross: "Receita bruta",
+      perParty: "Receita líquida por festa",
+      refunds: "Reembolsos",
+      averageTicket: "Ticket médio",
+      cardShare: "Dos pagamentos foram no cartão",
+    },
+  },
   kpiScores: {
     withNote: (label: string, note: string) => `${label} · ${note}`,
     community: {
-      title: "Comunidade",
-      totalProfiles: "Total de perfis",
       veterans: "Veteranes",
       rookies: "Novates",
-      veteranShare: {
-        title: "Veteranes entre os perfis",
-        description: "Quantas pessoas cadastradas já são veteranes.",
-      },
-      approved: "Aprovades",
-      notApproved: "Não aprovades",
-      approval: {
-        title: "Aprovação",
-        description: "Quantas pessoas cadastradas estão aprovades para participar.",
-      },
       profiles: "Perfis",
-    },
-    engagement: {
-      title: "Engajamento",
-      uniqueAttendees: "Participantes únicos",
-      averageAttendance: "Média de presença",
-      averageAttendanceDescription: "Por evento",
-      attendedThreePlus: "Compareceram 3+ vezes",
-      attendedFivePlus: "Compareceram 5+ vezes",
-    },
-    revenue: {
-      title: "Receita",
-      total: "Receita total",
-      averagePerEvent: "Média por evento",
-    },
-    health: {
-      title: "Saúde",
-      noShowRate: "Taxa média de no-show",
-      flagged: "Perfis sinalizados",
-      flaggedDescription: "Amarelo + Vermelho",
     },
   },
   eventsSection: {
-    title: "Eventos",
     attendance: {
       title: "Presença por Evento",
       description:
@@ -77,7 +93,6 @@ export const adminDatavizCopy = {
     },
   },
   communitySection: {
-    title: "Comunidade",
     gender: {
       title: "Identidade de Gênero",
       description: "Distribuição de identidades de gênero na comunidade.",
@@ -107,12 +122,12 @@ export const adminDatavizCopy = {
     share: "Percentual",
     people: (total: number) => `${total} pessoas`,
     answer: (category: string, count: number) => `${category} · ${count}`,
+    otherAnswers: "Outras respostas",
     newProfilesSummary: "Novos cadastros por mês.",
     migrationNote:
       "Em destaque, julho de 2025: Migração do sistema anterior.",
-    cumulativeSummary: "Total acumulado de perfis cadastrados, mês a mês.",
     revenueSummary:
-      "Faturamento líquido, com reembolsos descontados, e bruto de cada evento.",
+      "Faturamento líquido de cada festa, com reembolsos descontados, separado entre pagamentos manuais e pelo Asaas, ao lado do bruto.",
     ticketSummary:
       "Preço do ingresso e quanto cada pagante pagou em média, por evento.",
   },
@@ -129,7 +144,6 @@ export const adminDatavizCopy = {
   },
   growthChart: {
     newProfiles: "Novos cadastros",
-    cumulative: "Total acumulado",
   },
   retentionChart: {
     people: "Pessoas",
@@ -149,7 +163,8 @@ export const adminDatavizCopy = {
     },
   },
   revenueChart: {
-    revenue: "Faturamento líquido",
+    manual: "Líquido manual",
+    asaas: "Líquido pelo Asaas",
     grossRevenue: "Faturamento bruto",
     ticketPrice: "Preço do ingresso",
     averageTicket: "Ticket médio",
@@ -167,6 +182,18 @@ export const adminDatavizCopy = {
   seasonalityChart: {
     applications: "Candidaturas",
     attended: "Compareceram",
+  },
+  timingChart: {
+    title: "Antecedência",
+    description:
+      "Quantos dias antes de cada festa as pessoas se inscreveram e pagaram, pela mediana. A inscrição conta todo mundo que se inscreveu; o pagamento, só quem pagou.",
+    applied: "Inscrição",
+    paid: "Pagamento",
+  },
+  newcomersChart: {
+    title: "Novates e veteranes no intervalo",
+    description:
+      "Quantas das pessoas que foram às festas do intervalo estavam na primeira festa delas.",
   },
   veteranRookieChart: {
     veterans: "Veteranes",

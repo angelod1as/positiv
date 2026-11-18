@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest"
 import { loader } from "./dataviz-page"
 
+const { ENV } = vi.hoisted(() => ({ ENV: {} as Record<string, unknown> }))
+vi.mock("varlock/env", () => ({ ENV }))
+
 // Mock the data layer functions
 vi.mock("~/business/reporting/dataviz/kpi-scores.server", () => ({
   getKpiScores: vi.fn(),
@@ -11,6 +14,11 @@ vi.mock("~/business/reporting/dataviz/event-metrics.server", () => ({
   getEventRevenueData: vi.fn(),
   getConversionFunnelData: vi.fn(),
   getOccupancyData: vi.fn(),
+  getTimingData: vi.fn(),
+}))
+
+vi.mock("~/business/reporting/dataviz/party-summary.server", () => ({
+  getPartySummary: vi.fn(),
 }))
 
 vi.mock("~/business/reporting/dataviz/demographics-dataviz.server", () => ({
@@ -92,7 +100,7 @@ describe("Numeros Page - Loader", () => {
     expect(getConversionFunnelData).toHaveBeenCalledTimes(1)
     expect(getOccupancyData).toHaveBeenCalledTimes(1)
     expect(getVeteranRookieData).toHaveBeenCalledTimes(1)
-    expect(getDemographicsData).toHaveBeenCalledWith("all")
+    expect(getDemographicsData).toHaveBeenCalledWith("all", expect.anything())
     expect(getGrowthData).toHaveBeenCalledTimes(1)
     expect(getRetentionData).toHaveBeenCalledTimes(1)
     expect(getSeasonalityData).toHaveBeenCalledTimes(1)
@@ -184,7 +192,7 @@ describe("Numeros Page - Loader", () => {
       makeRequest("http://localhost/admin/numeros?mode=attended")
     )
 
-    expect(getDemographicsData).toHaveBeenCalledWith("attended")
+    expect(getDemographicsData).toHaveBeenCalledWith("attended", expect.anything())
     expect(result.demographics).toEqual(mockAttendedDemographics)
   })
 
@@ -195,7 +203,7 @@ describe("Numeros Page - Loader", () => {
 
     await loader(makeRequest())
 
-    expect(getDemographicsData).toHaveBeenCalledWith("all")
+    expect(getDemographicsData).toHaveBeenCalledWith("all", expect.anything())
   })
 
   it("should default to 'all' mode when invalid mode param is provided", async () => {
@@ -205,6 +213,98 @@ describe("Numeros Page - Loader", () => {
 
     await loader(makeRequest("http://localhost/admin/numeros?mode=invalid"))
 
-    expect(getDemographicsData).toHaveBeenCalledWith("all")
+    expect(getDemographicsData).toHaveBeenCalledWith("all", expect.anything())
+  })
+
+  it("measures every query over the party range in the URL", async () => {
+    const { getKpiScores } = await import(
+      "~/business/reporting/dataviz/kpi-scores.server"
+    )
+    const { getEventRevenueData } = await import(
+      "~/business/reporting/dataviz/event-metrics.server"
+    )
+    const { getDemographicsData, getVeteranRookieData } = await import(
+      "~/business/reporting/dataviz/demographics-dataviz.server"
+    )
+    const { getRetentionData } = await import(
+      "~/business/reporting/dataviz/growth-retention.server"
+    )
+    const range = {
+      from: "2025-09-01T22:00:00.000Z",
+      to: "2026-03-01T22:00:00.000Z",
+    }
+
+    await loader(
+      makeRequest(
+        `http://localhost/admin/numeros?from=${range.from}&to=${range.to}&mode=attended`
+      )
+    )
+
+    expect(getKpiScores).toHaveBeenCalledWith(range)
+    expect(getEventRevenueData).toHaveBeenCalledWith(range)
+    expect(getVeteranRookieData).toHaveBeenCalledWith(range)
+    expect(getRetentionData).toHaveBeenCalledWith(range)
+    expect(getDemographicsData).toHaveBeenCalledWith("attended", range)
+  })
+
+  it("lists every party since 21/06/2025 for the selector, and only the range's for the charts", async () => {
+    const { getEventAttendanceData } = await import(
+      "~/business/reporting/dataviz/event-metrics.server"
+    )
+    const party = (title: string, date: string) => ({
+      title,
+      emoji: "🎉",
+      date,
+      inscritos: 1,
+      compareceram: 1,
+      nao_foram: 0,
+      withdrew: 0,
+      not_selected: 0,
+      skipped: 0,
+      rodizio: 0,
+      vagas_sociais: 0,
+      staff: 0,
+    })
+    vi.mocked(getEventAttendanceData).mockResolvedValue([
+      party("Junho", "2025-06-21T22:00:00.000Z"),
+      party("Setembro", "2025-09-20T22:00:00.000Z"),
+    ])
+
+    const result = await loader(
+      makeRequest(
+        "http://localhost/admin/numeros?from=2025-09-20T22:00:00.000Z"
+      )
+    )
+
+    expect(result.parties.map((p) => p.title)).toEqual(["Junho", "Setembro"])
+    expect(result.eventAttendance.map((p) => p.title)).toEqual(["Setembro"])
+    expect(result.range.from).toBe("2025-09-20T22:00:00.000Z")
+  })
+
+  it("reads the report's party numbers and the timing over the range", async () => {
+    const { getPartySummary } = await import(
+      "~/business/reporting/dataviz/party-summary.server"
+    )
+    const { getTimingData } = await import(
+      "~/business/reporting/dataviz/event-metrics.server"
+    )
+
+    const result = await loader(
+      makeRequest("http://localhost/admin/numeros?from=2025-09-20T22:00:00.000Z")
+    )
+
+    expect(getPartySummary).toHaveBeenCalledWith(result.range)
+    expect(getTimingData).toHaveBeenCalledWith(result.range)
+    expect(result).toHaveProperty("partySummary")
+    expect(result).toHaveProperty("timing")
+  })
+
+  it("links out to the website's Umami dashboard for behaviour", async () => {
+    ENV.VITE_UMAMI_URL = "https://umami.example.com"
+    ENV.VITE_UMAMI_WEBSITE_ID = "site-123"
+
+    const result = await loader(makeRequest())
+
+    expect(result.umamiUrl).toBe("https://umami.example.com/websites/site-123")
   })
 })

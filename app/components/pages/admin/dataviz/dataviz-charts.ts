@@ -6,10 +6,11 @@ import type {
   EventAttendanceDataPoint,
   EventRevenueDataPoint,
   GrowthDataPoint,
-  KpiScores,
   OccupancyDataPoint,
+  PartySummary,
   RetentionDataPoint,
   SeasonalityDataPoint,
+  TimingDataPoint,
   VeteranRookieDataPoint,
 } from '~/business/reporting/dataviz/dataviz.types'
 import type { ChartContent } from '~/components/pages/page/sections/chart-section'
@@ -149,20 +150,6 @@ export function newProfilesChart(data: GrowthDataPoint[]): ChartContent {
   )
 }
 
-export function cumulativeGrowthChart(data: GrowthDataPoint[]): ChartContent {
-  return chart(
-    'cumulative',
-    {
-      title: copy.growthChart.cumulative,
-      summary: copy.charts.cumulativeSummary,
-      chartType: 'line',
-      unit: 'none',
-      series: [copy.growthChart.cumulative],
-    },
-    data.map((item) => ({ label: formatMonth(item.month), values: [item.cumulative] })),
-  )
-}
-
 const attendanceSeries = [
   ['inscritos', copy.attendanceChart.series.applications],
   ['compareceram', copy.attendanceChart.series.attended],
@@ -199,11 +186,15 @@ export function revenueChart(data: EventRevenueDataPoint[]): ChartContent {
       summary: copy.charts.revenueSummary,
       chartType: 'bar',
       unit: 'brl',
-      series: [copy.revenueChart.revenue, copy.revenueChart.grossRevenue],
+      series: [copy.revenueChart.manual, copy.revenueChart.asaas, copy.revenueChart.grossRevenue],
     },
     data.map((item) => ({
       label: eventLabel(item),
-      values: [reais(item.faturamento_total), reais(item.faturamento_bruto)],
+      values: [
+        reais(item.faturamento_manual),
+        reais(item.faturamento_asaas),
+        reais(item.faturamento_bruto),
+      ],
     })),
   )
 }
@@ -276,7 +267,7 @@ export function conversionChart(data: ConversionFunnelDataPoint[]): ChartContent
 
 const profileSplit = (
   _key: string,
-  text: { title: string; description: string },
+  text: { readonly title: string; readonly description: string },
   part: [string, number],
   rest: string,
   total: number,
@@ -302,25 +293,33 @@ const profileSplit = (
   )
 }
 
-export function veteranShareChart(data: KpiScores): ChartContent {
+export function newcomersChart(data: Pick<PartySummary, 'people' | 'newcomers'>): ChartContent {
   const community = copy.kpiScores.community
   return profileSplit(
-    'veteran-share',
-    community.veteranShare,
-    [community.veterans, data.total_veterans],
-    community.rookies,
-    data.total_profiles,
+    'newcomers',
+    copy.newcomersChart,
+    [community.rookies, data.newcomers],
+    community.veterans,
+    data.people,
   )
 }
 
-export function approvalChart(data: KpiScores): ChartContent {
-  const community = copy.kpiScores.community
-  return profileSplit(
-    'approval',
-    community.approval,
-    [community.approved, data.total_approved],
-    community.notApproved,
-    data.total_profiles,
+export function timingChart(data: TimingDataPoint[]): ChartContent {
+  return chart(
+    'timing',
+    {
+      title: copy.timingChart.title,
+      summary: copy.timingChart.description,
+      chartType: 'line',
+      unit: 'none',
+      series: [copy.timingChart.applied, copy.timingChart.paid],
+    },
+    data
+      .filter((item) => item.dias_inscricao !== null || item.dias_pagamento !== null)
+      .map((item) => ({
+        label: eventLabel(item),
+        values: [item.dias_inscricao ?? 0, item.dias_pagamento ?? 0],
+      })),
   )
 }
 

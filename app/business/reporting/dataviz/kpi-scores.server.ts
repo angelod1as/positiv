@@ -1,9 +1,11 @@
 import { sql } from "kysely"
 import { db } from "~/lib/supabase/db.server"
-import { DATAVIZ_EVENT_CUTOFF_DATE } from "~/lib/constants/constants"
+import { type DatavizRange, fullDatavizRange } from "./dataviz-range"
 import type { KpiScores } from "./dataviz.types"
 
-export async function getKpiScores(): Promise<KpiScores> {
+export async function getKpiScores(
+  range: DatavizRange = fullDatavizRange(),
+): Promise<KpiScores> {
   // Profile counts
   const profileCounts = await db
     .selectFrom("profiles")
@@ -25,7 +27,8 @@ export async function getKpiScores(): Promise<KpiScores> {
   const eventCounts = await db
     .selectFrom("events")
     .where("event_status", "=", "Completed")
-    .where("time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+    .where("time_event_start", ">=", range.from)
+    .where("time_event_start", "<=", range.to)
     .select([
       sql<number>`count(*)::int`.as("total_events_completed"),
       sql<number>`coalesce(avg(ticket_price), 0)::int`.as("avg_ticket_price"),
@@ -37,7 +40,8 @@ export async function getKpiScores(): Promise<KpiScores> {
     .selectFrom("event_participants")
     .innerJoin("events", "events.id", "event_participants.event_id")
     .where("events.event_status", "=", "Completed")
-    .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+    .where("events.time_event_start", ">=", range.from)
+    .where("events.time_event_start", "<=", range.to)
     .where("event_participants.attendance_status", "=", "attended")
     .select([
       sql<number>`count(distinct event_participants.profile_id)::int`.as(
@@ -55,7 +59,8 @@ export async function getKpiScores(): Promise<KpiScores> {
       "events.id"
     )
     .where("events.event_status", "=", "Completed")
-    .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+    .where("events.time_event_start", ">=", range.from)
+    .where("events.time_event_start", "<=", range.to)
     .groupBy("events.id")
     .select([
       sql<number>`count(*) filter (where event_participants.attendance_status = 'attended')::int`.as(
@@ -82,7 +87,8 @@ export async function getKpiScores(): Promise<KpiScores> {
       "events.id"
     )
     .where("events.event_status", "=", "Completed")
-    .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+    .where("events.time_event_start", ">=", range.from)
+    .where("events.time_event_start", "<=", range.to)
     .where("events.total_spots", ">", 0)
     .groupBy(["events.id", "events.total_spots"])
     .select([
@@ -110,7 +116,8 @@ export async function getKpiScores(): Promise<KpiScores> {
       "event_participants.id",
     )
     .where("events.event_status", "=", "Completed")
-    .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+    .where("events.time_event_start", ">=", range.from)
+    .where("events.time_event_start", "<=", range.to)
     .select([
       sql<number>`coalesce(sum(epp.net), 0)::int`.as("total_revenue"),
     ])
@@ -129,7 +136,8 @@ export async function getKpiScores(): Promise<KpiScores> {
         .innerJoin("events", "events.id", "event_participants.event_id")
         .where("event_participants.attendance_status", "=", "attended")
         .where("events.event_status", "=", "Completed")
-        .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+        .where("events.time_event_start", ">=", range.from)
+        .where("events.time_event_start", "<=", range.to)
         .groupBy("event_participants.profile_id")
         .select([
           "event_participants.profile_id",
@@ -152,7 +160,8 @@ export async function getKpiScores(): Promise<KpiScores> {
       "events.id"
     )
     .where("events.event_status", "=", "Completed")
-    .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
+    .where("events.time_event_start", ">=", range.from)
+    .where("events.time_event_start", "<=", range.to)
     .select([
       sql<number>`coalesce(sum(case when event_participants.attendance_status = 'not-attended' then 1 else 0 end), 0)::int`.as(
         "total_no_shows"

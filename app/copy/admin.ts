@@ -42,6 +42,11 @@ export const adminDashboardCopy = {
     cta: "Abrir configurações",
     hint: "Pagamentos online e diagnóstico de email",
   },
+  numbers: {
+    title: "Números e métricas",
+    cta: "Ver números",
+    hint: "Festas, pessoas e dinheiro, sempre atualizados",
+  },
 } as const
 
 export const adminSettingsCopy = {

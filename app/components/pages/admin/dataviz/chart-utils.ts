@@ -1,5 +1,6 @@
 import { format, isValid, parseISO } from 'date-fns'
 import type { DemographicDistribution } from '~/business/reporting/dataviz/dataviz.types'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 
 export function formatChartDate(dateString: string): string {
   if (!dateString) return ''
@@ -37,7 +38,7 @@ export function groupSmallCategories(
   const smallCategories: DemographicDistribution[] = []
 
   for (const item of data) {
-    if (item.percentage < threshold) {
+    if (item.percentage < threshold || item.count === 1) {
       smallCategories.push(item)
     } else {
       mainCategories.push(item)
@@ -62,7 +63,7 @@ export function groupSmallCategories(
       total > 0 ? Math.round((outrosCount / total) * 100) : 0
 
     mainCategories.push({
-      category: 'Outros',
+      category: adminDatavizCopy.charts.otherAnswers,
       count: outrosCount,
       percentage: outrosPercentage,
     })
