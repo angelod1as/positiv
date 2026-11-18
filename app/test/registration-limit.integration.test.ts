@@ -255,10 +255,10 @@ describe("Registration Limit - Integration Tests", () => {
     expect(eventAfter.event_status).toBe("Registration Open")
   })
 
-  it("should not count admin-added participants toward limit", async () => {
+  it("should not count cancelled applications toward limit", async () => {
     const testId = Date.now() + 2
     const event = await createTestEvent(tracker, kysely, {
-      title: "Test Event - Admin Participants",
+      title: "Test Event - Cancelled Applications",
       event_status: "Registration Open",
     })
 
@@ -285,17 +285,17 @@ describe("Registration Limit - Integration Tests", () => {
         .execute()
     }
 
-    const adminProfiles = await Promise.all(
+    const cancelledProfiles = await Promise.all(
       Array.from({ length: 10 }, (_, i) =>
         createTestProfile(tracker, kysely, {
           user_id: null,
-          full_name: `Admin User ${i + 1}`,
-          email: `admin${testId}-${i + 1}@example.com`,
+          full_name: `Cancelled User ${i + 1}`,
+          email: `cancelled${testId}-${i + 1}@example.com`,
         }),
       ),
     )
 
-    for (const profile of adminProfiles) {
+    for (const profile of cancelledProfiles) {
       await kysely
         .insertInto("event_participants")
         .values({
