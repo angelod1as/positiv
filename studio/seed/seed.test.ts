@@ -3,7 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { CODE_OF_CONDUCT_PAGE_ID } from "./code-of-conduct-page"
 import { HOMEPAGE_PAGE_ID } from "../schemas/documents/page"
-import { PAYMENT_MESSAGES_ID, SITE_SETTINGS_ID } from "../singletons"
+import {
+  LIKERT_SCALE_ID,
+  PAYMENT_MESSAGES_ID,
+  SITE_SETTINGS_ID,
+} from "../singletons"
 import { validateDocumentOf } from "../test/validate"
 import {
   E2E_TEST_PAGE_ADDRESS,
@@ -223,6 +227,47 @@ describe("seedDocuments", () => {
     it("seeds a message using the link and the due date", () => {
       expect(paymentMessages?.whatsappMessage).toContain("{{link}}")
       expect(paymentMessages?.whatsappMessage).toContain("{{data}}")
+    })
+  })
+
+  describe("Likert scale", () => {
+    type Keyed = { key: string }
+    const likertScale = documents.find(
+      (document) => document._id === LIKERT_SCALE_ID,
+    ) as
+      | {
+          _type: string
+          themes?: { name: string; statements: (Keyed & { text: string })[] }[]
+          venues?: { options: Keyed[] }
+        }
+      | undefined
+
+    const statements = likertScale?.themes?.flatMap((theme) => theme.statements)
+
+    it("seeds the singleton", () => {
+      expect(likertScale?._type).toBe("likertScale")
+    })
+
+    it("seeds several themes, each with statements", () => {
+      expect(likertScale?.themes?.length).toBeGreaterThan(1)
+      for (const theme of likertScale?.themes ?? []) {
+        expect(theme.statements.length).toBeGreaterThan(0)
+      }
+    })
+
+    // The real text is still being written: the seed holds placeholders, so
+    // nobody mistakes development content for the scale people will answer.
+    it("marks every statement as a placeholder", () => {
+      for (const statement of statements ?? []) {
+        expect(statement.text).toMatch(/^\[Exemplo\]/)
+      }
+    })
+
+    it("gives every statement and option a fixed key, so a rerun keeps answers attached", () => {
+      expect(statements?.map((statement) => statement.key)).toEqual(
+        statements?.map((_, index) => `exemplo-${String(index + 1).padStart(2, "0")}`),
+      )
+      expect(likertScale?.venues?.options.length).toBeGreaterThan(1)
     })
   })
 })

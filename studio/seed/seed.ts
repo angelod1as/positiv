@@ -6,6 +6,7 @@ import { codeOfConductToPage } from "./code-of-conduct-page"
 import { HOMEPAGE_PAGE_ID } from "../schemas/documents/page"
 import {
   EMAIL_TEMPLATES_ID,
+  LIKERT_SCALE_ID,
   PAYMENT_MESSAGES_ID,
   SITE_SETTINGS_ID,
 } from "../singletons"
@@ -125,6 +126,59 @@ function linkToUrl(key: string, label: string, url: string) {
 
 function seo(description: string) {
   return { _type: "seo", description, noIndex: false }
+}
+
+// Placeholder content: the real scale is still being written, and lands in
+// the Studio once it is final.
+const LIKERT_THEMES = [
+  ["Tema de exemplo 1", 3],
+  ["Tema de exemplo 2", 2],
+  ["Tema de exemplo 3", 2],
+] as const
+
+const LIKERT_VENUES = [
+  ["exemplo-lugar-1", "[Exemplo] Lugar 1"],
+  ["exemplo-lugar-2", "[Exemplo] Lugar 2"],
+  ["exemplo-lugar-3", "[Exemplo] Lugar 3"],
+  ["nenhum", "Nenhum destes"],
+] as const
+
+function likertScale() {
+  let number = 0
+  const themes = LIKERT_THEMES.map(([name, count], themeIndex) => ({
+    _type: "likertTheme",
+    _key: `tema-${themeIndex + 1}`,
+    name,
+    statements: Array.from({ length: count }, () => {
+      number += 1
+      const key = `exemplo-${String(number).padStart(2, "0")}`
+      return {
+        _type: "likertStatement",
+        _key: key,
+        key,
+        text: `[Exemplo] Afirmação ${number}.`,
+      }
+    }),
+  }))
+
+  return {
+    _id: LIKERT_SCALE_ID,
+    _type: "likertScale",
+    themes,
+    venues: {
+      question: "A quais destes você já foi?",
+      options: LIKERT_VENUES.map(([key, label]) => ({
+        _type: "likertOption",
+        _key: key,
+        key,
+        label,
+      })),
+    },
+    nonMonogamySince: {
+      question: "Desde quando você vive a não-monogamia?",
+      notLivingLabel: "Não vivo a não-monogamia hoje",
+    },
+  }
 }
 
 export function seedDocuments(photoAssetId: string): SeedDocument[] {
@@ -613,6 +667,7 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
       paymentLink: paymentLinkMailContent,
       paymentRefund: paymentRefundMailContent,
     },
+    likertScale(),
   ]
 }
 
