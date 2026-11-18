@@ -21,6 +21,7 @@ export default [
   route("/api/retry-newsletter-syncs", "pages/api/retry-newsletter-syncs.ts"),
   route("/api/sync-listmonk-unsubscribes", "pages/api/sync-listmonk-unsubscribes.ts"),
   route("/api/sync-veterans-list", "pages/api/sync-veterans-list.ts"),
+  route("/api/sync-registration-alerts-list", "pages/api/sync-registration-alerts-list.ts"),
   route(
     "/api/process-pre-opening-reminders",
     "pages/api/process-pre-opening-reminders.ts",
