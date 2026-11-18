@@ -34,7 +34,7 @@ describe("api.sync-listmonk-unsubscribes", () => {
     ENV.INTERNAL_JOB_SECRET = SECRET
     syncListmonkUnsubscribes.mockResolvedValue({
       success: true,
-      data: { unsubscribed: 3 },
+      data: { unsubscribed: 3, alertsTurnedOff: 2 },
       errors: [],
     })
   })
@@ -87,7 +87,7 @@ describe("api.sync-listmonk-unsubscribes", () => {
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({
       success: true,
-      stats: { unsubscribed: 3 },
+      stats: { unsubscribed: 3, alertsTurnedOff: 2 },
     })
   })
 

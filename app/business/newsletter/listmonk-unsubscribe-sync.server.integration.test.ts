@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
 import { createTestProfile } from "~/test/db-test-utils"
-import { LISTMONK_REGISTERED_LIST_ID } from "~/lib/constants/constants"
+import {
+  LISTMONK_REGISTERED_LIST_ID,
+  LISTMONK_REGISTRATION_ALERTS_LIST_ID,
+} from "~/lib/constants/constants"
 import type { ListSubscriber } from "./listmonk-lists.server"
 
 const { getListSubscribers, getBlocklistedSubscribers } = vi.hoisted(() => ({
@@ -294,6 +297,110 @@ describe("syncListmonkUnsubscribes - Integration Tests", () => {
 
     expect(result.success).toBe(false)
     expect((await subscription(id)).consent_given).toBe(true)
+  })
+
+  describe("Registration alerts", () => {
+    const leftAlerts = (
+      id: number,
+      email: string,
+      at: string,
+    ): ListSubscriber => ({
+      id,
+      email,
+      name: email,
+      status: "enabled",
+      updated_at: "2026-11-30T10:00:00.000Z",
+      lists: [
+        {
+          id: LISTMONK_REGISTRATION_ALERTS_LIST_ID,
+          subscription_status: "unsubscribed",
+          subscription_updated_at: at,
+        },
+      ],
+    })
+
+    const onlyTheAlertsListHas = (subscribers: ListSubscriber[]) =>
+      getListSubscribers.mockImplementation(async (listId: number) => ({
+        success: true,
+        data: listId === LISTMONK_REGISTRATION_ALERTS_LIST_ID ? subscribers : [],
+        errors: [],
+      }))
+
+    const profileWithAlerts = (email: string) =>
+      createTestProfile(tracker, kysely, { user_id: null, email })
+
+    const consents = (profileId: string) =>
+      kysely
+        .selectFrom("email_consents")
+        .selectAll()
+        .where("profile_id", "=", profileId)
+        .executeTakeFirstOrThrow()
+
+    it("turns alerts off, dated, for someone who left the Registration alerts list", async () => {
+      const profile = await profileWithAlerts("web52-left@example.com")
+      onlyTheAlertsListHas([
+        leftAlerts(11, "WEB52-left@example.com", "2026-11-20T10:00:00.000Z"),
+      ])
+
+      const result = await syncListmonkUnsubscribes()
+
+      expect(getListSubscribers).toHaveBeenCalledWith(
+        LISTMONK_REGISTRATION_ALERTS_LIST_ID,
+        "unsubscribed",
+      )
+      expect(result.success && result.data.alertsTurnedOff).toBe(1)
+      const saved = await consents(profile.id)
+      expect(saved.registration_alerts).toBe(false)
+      expect(new Date(saved.registration_alerts_at as string).toISOString()).toBe(
+        "2026-11-20T10:00:00.000Z",
+      )
+    })
+
+    it("leaves the Newsletter on when someone leaves only the Registration alerts list", async () => {
+      const id = await consentedProfile(
+        "web52-newsletter@example.com",
+        "2026-09-01T10:00:00.000Z",
+      )
+      onlyTheAlertsListHas([
+        leftAlerts(12, "web52-newsletter@example.com", "2026-11-20T10:00:00.000Z"),
+      ])
+
+      await syncListmonkUnsubscribes()
+
+      const saved = await subscription(id)
+      expect(saved.consent_given).toBe(true)
+      expect((await consents(saved.profile_id)).registration_alerts).toBe(false)
+    })
+
+    it("turns alerts off for a blocklisted subscriber with no newsletter subscription", async () => {
+      const profile = await profileWithAlerts("web52-blocked@example.com")
+      getBlocklistedSubscribers.mockResolvedValue({
+        success: true,
+        data: [blocklisted(13, "web52-blocked@example.com", "2026-11-21T10:00:00.000Z")],
+        errors: [],
+      })
+
+      await syncListmonkUnsubscribes()
+
+      expect((await consents(profile.id)).registration_alerts).toBe(false)
+    })
+
+    it("keeps alerts turned on again on the site after leaving the list", async () => {
+      const profile = await profileWithAlerts("web52-back@example.com")
+      await kysely
+        .updateTable("email_consents")
+        .set({ registration_alerts_at: "2026-11-25T10:00:00.000Z" })
+        .where("profile_id", "=", profile.id)
+        .execute()
+      onlyTheAlertsListHas([
+        leftAlerts(14, "web52-back@example.com", "2026-11-20T10:00:00.000Z"),
+      ])
+
+      const result = await syncListmonkUnsubscribes()
+
+      expect(result.success && result.data.alertsTurnedOff).toBe(0)
+      expect((await consents(profile.id)).registration_alerts).toBe(true)
+    })
   })
 
   describe("reportConsentDrift", () => {

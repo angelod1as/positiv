@@ -10,6 +10,7 @@ import {
   processCampaignForEvent,
 } from "./campaign-automation.server"
 import * as campaignCreator from "./create-event-opening-campaign.server"
+import * as preOpeningCreator from "./create-pre-opening-reminder.server"
 
 // The code refuses to run without Listmonk credentials before it reaches the
 // fetch these tests stub, so pin fake ones: the suite must pass with no .env
@@ -98,6 +99,62 @@ describe("Campaign Automation - Integration Tests", () => {
       expect(tracking.campaign_is_created).toBe(true)
       expect(tracking.campaign_id).toBe(String(mockCampaignId))
       expect(tracking.campaign_creation_time).toBeDefined()
+    })
+
+    const eventWithTrackingRow = async (
+      campaignType: "opening" | "pre_opening",
+    ) => {
+      const event = await createTestEvent(tracker, db, {
+        title: "Test Event",
+        event_status: "Registration Open",
+      })
+
+      await db
+        .insertInto("event_newsletter_campaigns")
+        .values({
+          event_id: event.id,
+          campaign_type: campaignType,
+          campaign_is_created: false,
+          campaign_is_sent: false,
+          times_attempted: 0,
+        })
+        .execute()
+
+      return event
+    }
+
+    const created = {
+      success: true as const,
+      data: {
+        data: { id: 1, name: "Campaign", subject: "Subject", status: "draft" },
+      },
+      errors: [] as [],
+    }
+
+    it("sends the opening campaign to the Registration alerts list", async () => {
+      const event = await eventWithTrackingRow("opening")
+      const create = vi
+        .spyOn(campaignCreator, "createEventOpeningCampaign")
+        .mockResolvedValue(created)
+
+      await createCampaignForEvent(event.id, "opening")
+
+      expect(create).toHaveBeenCalledWith(
+        expect.objectContaining({ listIds: [143] }),
+      )
+    })
+
+    it("sends the pre-opening reminder to the Registration alerts list", async () => {
+      const event = await eventWithTrackingRow("pre_opening")
+      const create = vi
+        .spyOn(preOpeningCreator, "createPreOpeningReminder")
+        .mockResolvedValue(created)
+
+      await createCampaignForEvent(event.id, "pre_opening")
+
+      expect(create).toHaveBeenCalledWith(
+        expect.objectContaining({ listIds: [143] }),
+      )
     })
 
     it("should return error when event does not exist", async () => {
