@@ -135,6 +135,19 @@ describe("Likert submissions", () => {
       expect(await hasAnsweredLikert(viewerFor(person))).toBe(false)
     })
 
+    it("should save for the viewer even when the input names another profile", async () => {
+      const person = await aProfile("smuggler")
+      const target = await aProfile("target")
+      const smuggled = { ...submission(), profile_id: target.id, profileId: target.id }
+
+      const { id } = await saveLikertSubmission(viewerFor(person), smuggled)
+
+      expect(await getLikertSubmission(id, viewerFor(person))).toMatchObject({
+        profileId: person.id,
+      })
+      expect(await hasAnsweredLikert(viewerFor(target))).toBe(false)
+    })
+
     it("should refuse to save with no one signed in", async () => {
       await expect(saveLikertSubmission(null, submission())).rejects.toThrow()
     })
