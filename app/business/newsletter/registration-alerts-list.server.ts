@@ -118,12 +118,19 @@ export const syncRegistrationAlertsListmonkList = composable(async () => {
   }
 
   const toAdd = [...eligibleIds].filter((id) => !currentIds.has(id))
-  const toRemove = [
-    ...[...currentIds].filter((id) => !eligibleIds.has(id)),
-    // The unsubscribed membership is dropped first, so the add creates a
-    // confirmed one instead of depending on how Listmonk treats the old row.
-    ...toResubscribe,
-  ]
+  const toRemove = [...currentIds].filter((id) => !eligibleIds.has(id))
+
+  // The unsubscribed membership is dropped before the add, so the add creates
+  // a confirmed one instead of depending on how Listmonk treats the old row.
+  if (toResubscribe.length > 0) {
+    await unwrap(
+      removeSubscribersFromListBulk(
+        toResubscribe,
+        LISTMONK_REGISTRATION_ALERTS_LIST_ID,
+      ),
+      "drop the old memberships of the Registration alerts list",
+    )
+  }
 
   if (toAdd.length > 0) {
     await unwrap(
@@ -169,7 +176,7 @@ export const syncRegistrationAlertsListmonkList = composable(async () => {
 
   return {
     added: toAdd.length,
-    removed: toRemove.length - toResubscribe.length,
+    removed: toRemove.length,
     created,
     failed,
   }

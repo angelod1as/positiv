@@ -161,6 +161,9 @@ describe("syncRegistrationAlertsListmonkList", () => {
       LISTMONK_REGISTRATION_ALERTS_LIST_ID,
     )
     expect(result.success && result.data.added).toBe(1)
+    expect(removeSubscribersFromListBulk.mock.invocationCallOrder[0]).toBeLessThan(
+      addSubscribersToListBulk.mock.invocationCallOrder[0],
+    )
   })
 
   it("keeps out someone whose alerts on the site are older than leaving the list", async () => {
