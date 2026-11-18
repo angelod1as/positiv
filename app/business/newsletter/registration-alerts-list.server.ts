@@ -1,5 +1,6 @@
 import { composable } from "composable-functions"
 import { LISTMONK_REGISTRATION_ALERTS_LIST_ID } from "~/lib/constants/constants"
+import { logger } from "~/lib/logger/logger.server"
 import { db } from "~/lib/supabase/db.server"
 import { subscriberAttributes } from "./auto-subscribe.server"
 import {
@@ -22,6 +23,7 @@ export async function getRegistrationAlertsProfiles() {
       "p.full_name",
       "p.is_veteran",
       "p.approved_to_attend",
+      "ec.registration_alerts_at",
     ])
     .where("ec.registration_alerts", "=", true)
     .execute()
@@ -46,8 +48,9 @@ const normalize = (email: string) => email.trim().toLowerCase()
  * Brings the Registration alerts Listmonk list in line with the site, where
  * the consent lives. Whoever has alerts on joins the list, created in
  * Listmonk if they are not there yet; whoever has them off leaves it. Someone
- * who left the list in Listmonk or is blocklisted is never put back: the
- * unsubscribe sync carries that back to the site first.
+ * who left the list in Listmonk or is blocklisted is not put back: the
+ * unsubscribe sync carries that back to the site first. The exception is
+ * alerts turned on again on the site after leaving: the newer choice wins.
  */
 export const syncRegistrationAlertsListmonkList = composable(async () => {
   const profiles = await getRegistrationAlertsProfiles()
@@ -56,13 +59,20 @@ export const syncRegistrationAlertsListmonkList = composable(async () => {
     getAllSubscribers(),
     "read the Listmonk subscribers",
   )
-  const leftIds = new Set(
+  const leftAt = new Map(
     (
       await unwrap(
         getListSubscribers(LISTMONK_REGISTRATION_ALERTS_LIST_ID, "unsubscribed"),
         "read who left the Registration alerts list",
       )
-    ).map((subscriber) => subscriber.id),
+    ).map((subscriber) => [
+      subscriber.id,
+      new Date(
+        subscriber.lists.find(
+          (list) => list.id === LISTMONK_REGISTRATION_ALERTS_LIST_ID,
+        )?.subscription_updated_at ?? subscriber.updated_at,
+      ),
+    ]),
   )
   const currentIds = new Set(
     (
@@ -78,16 +88,26 @@ export const syncRegistrationAlertsListmonkList = composable(async () => {
   )
 
   const eligibleIds = new Set<number>()
+  const toResubscribe: number[] = []
   const toCreate: typeof profiles = []
   for (const profile of profiles) {
     const subscriber = byEmail.get(normalize(profile.email))
     if (!subscriber) {
       toCreate.push(profile)
+      continue
+    }
+    if (subscriber.status === "blocklisted") {
+      continue
+    }
+    const left = leftAt.get(subscriber.id)
+    if (!left) {
+      eligibleIds.add(subscriber.id)
     } else if (
-      subscriber.status !== "blocklisted" &&
-      !leftIds.has(subscriber.id)
+      profile.registration_alerts_at &&
+      new Date(profile.registration_alerts_at) > left
     ) {
       eligibleIds.add(subscriber.id)
+      toResubscribe.push(subscriber.id)
     }
   }
 
@@ -98,7 +118,12 @@ export const syncRegistrationAlertsListmonkList = composable(async () => {
   }
 
   const toAdd = [...eligibleIds].filter((id) => !currentIds.has(id))
-  const toRemove = [...currentIds].filter((id) => !eligibleIds.has(id))
+  const toRemove = [
+    ...[...currentIds].filter((id) => !eligibleIds.has(id)),
+    // The unsubscribed membership is dropped first, so the add creates a
+    // confirmed one instead of depending on how Listmonk treats the old row.
+    ...toResubscribe,
+  ]
 
   if (toAdd.length > 0) {
     await unwrap(
@@ -135,12 +160,16 @@ export const syncRegistrationAlertsListmonkList = composable(async () => {
       created++
     } else {
       failed++
+      logger.warn("Could not create a Registration alerts subscriber", {
+        profileId: profile.id,
+        errors: result.errors.map((error) => error.message),
+      })
     }
   }
 
   return {
     added: toAdd.length,
-    removed: toRemove.length,
+    removed: toRemove.length - toResubscribe.length,
     created,
     failed,
   }

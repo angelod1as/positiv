@@ -9,6 +9,7 @@ const {
   addSubscribersToListBulk,
   removeSubscribersFromListBulk,
   addSubscriber,
+  logger,
 } = vi.hoisted(() => ({
   mockExecute: vi.fn(),
   getAllSubscribers: vi.fn(),
@@ -16,7 +17,10 @@ const {
   addSubscribersToListBulk: vi.fn(),
   removeSubscribersFromListBulk: vi.fn(),
   addSubscriber: vi.fn(),
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
+
+vi.mock("~/lib/logger/logger.server", () => ({ logger }))
 
 vi.mock("~/lib/supabase/db.server", () => {
   const chain = {
@@ -44,8 +48,9 @@ import { syncRegistrationAlertsListmonkList } from "./registration-alerts-list.s
 
 const ok = <T>(data: T) => ({ success: true, data, errors: [] })
 
-const profile = (email: string) => ({
+const profile = (email: string, registrationAlertsAt: string | null = null) => ({
   id: `profile-${email}`,
+  registration_alerts_at: registrationAlertsAt,
   email,
   user_id: null,
   social_name: null,
@@ -58,14 +63,24 @@ const subscriber = (
   id: number,
   email: string,
   status: "enabled" | "blocklisted" = "enabled",
+  lists: ListSubscriber["lists"] = [],
 ): ListSubscriber => ({
   id,
   email,
   name: email,
   status,
   updated_at: "2026-11-01T10:00:00.000Z",
-  lists: [],
+  lists,
 })
+
+const leftAlertsAt = (id: number, email: string, at: string) =>
+  subscriber(id, email, "enabled", [
+    {
+      id: LISTMONK_REGISTRATION_ALERTS_LIST_ID,
+      subscription_status: "unsubscribed",
+      subscription_updated_at: at,
+    },
+  ])
 
 function listmonk({
   everyone = [] as ListSubscriber[],
@@ -128,6 +143,39 @@ describe("syncRegistrationAlertsListmonkList", () => {
     expect(result.success && result.data.added).toBe(0)
   })
 
+  it("puts back someone who turned alerts on again on the site after leaving the list", async () => {
+    mockExecute.mockResolvedValue([
+      profile("back@example.com", "2026-11-25T10:00:00.000Z"),
+    ])
+    const back = leftAlertsAt(6, "back@example.com", "2026-11-20T10:00:00.000Z")
+    listmonk({ everyone: [back], leftAlerts: [back] })
+
+    const result = await syncRegistrationAlertsListmonkList()
+
+    expect(removeSubscribersFromListBulk).toHaveBeenCalledWith(
+      [6],
+      LISTMONK_REGISTRATION_ALERTS_LIST_ID,
+    )
+    expect(addSubscribersToListBulk).toHaveBeenCalledWith(
+      [6],
+      LISTMONK_REGISTRATION_ALERTS_LIST_ID,
+    )
+    expect(result.success && result.data.added).toBe(1)
+  })
+
+  it("keeps out someone whose alerts on the site are older than leaving the list", async () => {
+    mockExecute.mockResolvedValue([
+      profile("stale@example.com", "2026-11-10T10:00:00.000Z"),
+    ])
+    const stale = leftAlertsAt(8, "stale@example.com", "2026-11-20T10:00:00.000Z")
+    listmonk({ everyone: [stale], leftAlerts: [stale] })
+
+    await syncRegistrationAlertsListmonkList()
+
+    expect(addSubscribersToListBulk).not.toHaveBeenCalled()
+    expect(removeSubscribersFromListBulk).not.toHaveBeenCalled()
+  })
+
   it("creates on the list whoever has alerts on and is not in Listmonk yet", async () => {
     const newcomer = profile("new@example.com")
     mockExecute.mockResolvedValue([newcomer])
@@ -162,6 +210,13 @@ describe("syncRegistrationAlertsListmonkList", () => {
       created: 1,
       failed: 1,
     })
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        profileId: "profile-fails@example.com",
+        errors: ["boom"],
+      }),
+    )
   })
 
   it("refuses to empty the list when no one has alerts on", async () => {
