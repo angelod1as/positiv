@@ -107,3 +107,32 @@ export const setRegistrationLimit = async ({
     .onConflict((oc) => oc.column("id").doUpdateSet(values))
     .execute()
 }
+
+export const isLikertEnabled = async () => {
+  const row = await db
+    .selectFrom("app_settings")
+    .select("likert_enabled")
+    .executeTakeFirst()
+
+  return row?.likert_enabled ?? false
+}
+
+export const setLikertEnabled = async ({
+  enabled,
+  profileId,
+}: {
+  enabled: boolean
+  profileId: string | undefined
+}) => {
+  const values = {
+    likert_enabled: enabled,
+    updated_at: new Date().toISOString(),
+    updated_by: profileId ?? null,
+  }
+
+  await db
+    .insertInto("app_settings")
+    .values({ id: true, ...values })
+    .onConflict((oc) => oc.column("id").doUpdateSet(values))
+    .execute()
+}
