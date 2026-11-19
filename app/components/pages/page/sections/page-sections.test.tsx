@@ -100,6 +100,29 @@ describe("PageSections", () => {
     ).toBeInTheDocument()
   })
 
+  it.each([
+    ["a Callout", sections.callout, "Inscrições abertas"],
+    ["a Lado-a-lado", sections.sideBySide, "Antes de ir"],
+  ])("renders %s", (_, section, heading) => {
+    const parsed = pageSectionDocumentSchema.parse(section)
+    if (parsed._type !== "callout" && parsed._type !== "sideBySide") {
+      throw new Error("Not a callout")
+    }
+
+    renderWithRouter(
+      <PageSections
+        page="/exemplo"
+        sections={[parsed]}
+        events={undefined}
+        isLoggedIn={false}
+      />,
+    )
+
+    expect(
+      screen.getByRole("heading", { level: 2, name: heading }),
+    ).toBeInTheDocument()
+  })
+
   it("renders a Chart Section", () => {
     const chartSection = pageSectionDocumentSchema.parse(sections.chartSection)
     if (chartSection._type !== "chartSection") throw new Error("Not a chart")
