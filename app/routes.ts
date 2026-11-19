@@ -146,9 +146,14 @@ export default [
         route("/mudar-senha", "pages/account/change-password-page.tsx"),
         route("/dados-basicos", "pages/account/basic-data/basic-data-page.tsx"),
         route("/tudo-pronto", "pages/account/account-ready-page.tsx"),
+        route("/escala", "pages/account/likert/likert-page.tsx"),
         route(
           "/escala/responder",
           "pages/account/likert/likert-answer-page.tsx",
+        ),
+        route(
+          "/escala/:submissionId",
+          "pages/account/likert/likert-submission-page.tsx",
         ),
       ]),
     ]),

@@ -59,6 +59,16 @@ export const likertPageCopy = {
   answerIntro:
     "Uma afirmação por vez: escolha o quanto você concorda com cada uma. O comentário é opcional. Se sair no meio, o que você já respondeu fica guardado neste navegador até você enviar.",
   sending: "Enviando...",
+  historyIntro:
+    "A equipe da Positiv lê suas respostas. Cada envio fica guardado com as afirmações como estavam quando você respondeu, e você pode responder de novo quando quiser.",
+  empty: "Você ainda não respondeu a escala.",
+  answer: "Responder",
+  answerAgain: "Responder de novo",
+  historyTitle: "Seus envios",
+  submittedOn: (date: string) => `Enviada em ${date}`,
+  submissionTitle: (date: string) => `Respostas de ${date}`,
+  commentLabel: "Seu comentário",
+  backToHistory: "Voltar para o histórico",
   unavailable:
     "A escala não está disponível agora. Tente de novo mais tarde.",
   scaleChanged:
