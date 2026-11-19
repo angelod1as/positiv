@@ -29,6 +29,9 @@ const CHANGE_PASSWORD = `${ACCOUNT}/mudar-senha`
 const BASIC_DATA = `${ACCOUNT}/dados-basicos`
 const AGREE_TO_TERMS = `${ACCOUNT}/termos-e-condicoes`
 const ACCOUNT_READY = `${ACCOUNT}/tudo-pronto`
+const LIKERT = `${ACCOUNT}/escala`
+const LIKERT_ANSWER = `${LIKERT}/responder`
+const LIKERT_SUBMISSION = (id: string) => `${LIKERT}/${id}`
 
 //// USER
 // EVENTS
@@ -46,6 +49,7 @@ const FORGOT_PASSWORD_COMMIT = "/api/auth/esqueci-senha"
 const BASIC_DATA_COMMIT = "/api/account/dados-basicos"
 const CHANGE_PASSWORD_COMMIT = "/api/account/mudar-senha"
 const TERMS_COMMIT = "/api/account/termos"
+const LIKERT_COMMIT = "/api/account/escala"
 
 //// ADMIN
 const ADMIN_DASHBOARD = "/admin"
@@ -145,6 +149,10 @@ const paths = {
       BASIC_DATA_COMMIT,
       TERMS_COMMIT,
       ACCOUNT_READY,
+      LIKERT,
+      LIKERT_ANSWER,
+      LIKERT_SUBMISSION,
+      LIKERT_COMMIT,
     },
     events: {
       EVENT_VIEW,
