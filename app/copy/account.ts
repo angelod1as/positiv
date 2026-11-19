@@ -44,6 +44,7 @@ export const accountCopy = {
   fillBasicData: "Preencher dados básicos",
   terms: "Termos e condições",
   codeOfConduct: "Código de Conduta",
+  likert: "Escala de Likert",
   logout: "Deslogar conta",
   deleteAccount: {
     trigger: "Apagar conta",
