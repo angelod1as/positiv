@@ -95,6 +95,18 @@ describe("pageDocumentSchema", () => {
       },
     )
 
+    it("accepts a Callout with only its text", () => {
+      accepts(
+        page({
+          sections: [{ ...sections.callout, emoji: null, title: null }],
+        }),
+      )
+    })
+
+    it("accepts a Lado-a-lado without a title", () => {
+      accepts(page({ sections: [{ ...sections.sideBySide, title: null }] }))
+    })
+
     it("accepts a Stats Section without a title", () => {
       accepts(page({ sections: [{ ...sections.statsSection, title: null }] }))
     })
@@ -280,6 +292,48 @@ describe("pageDocumentSchema", () => {
           {
             ...sections.statsSection,
             cards: [{ ...sections.statsSection.cards[2], beforeLabel: null }],
+          },
+        ],
+      ],
+      [
+        "a Callout without text",
+        [{ ...sections.callout, body: null }],
+      ],
+      [
+        "a Callout in a colour outside the brand colours",
+        [{ ...sections.callout, color: "orange" }],
+      ],
+      [
+        "a Callout with a heading in its text",
+        [
+          {
+            ...sections.callout,
+            body: [{ ...sections.callout.body[0], style: "h2" }],
+          },
+        ],
+      ],
+      [
+        "a Lado-a-lado with one item",
+        [{ ...sections.sideBySide, items: sections.sideBySide.items.slice(0, 1) }],
+      ],
+      [
+        "a Lado-a-lado with five items",
+        [
+          {
+            ...sections.sideBySide,
+            items: ["a", "b", "c", "d", "e"].map((_key) => ({
+              ...sections.callout,
+              _key,
+            })),
+          },
+        ],
+      ],
+      [
+        "a Lado-a-lado holding something other than a Callout",
+        [
+          {
+            ...sections.sideBySide,
+            items: [sections.callout, sections.statsSection],
           },
         ],
       ],

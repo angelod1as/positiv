@@ -2,6 +2,7 @@ import type { z } from "zod"
 import { zod } from "~/lib/helpers/zod"
 import { reservedAddresses } from "../../reserved-addresses"
 import {
+  calloutPortableTextSchema,
   foundersFields,
   longPortableTextSchema,
   pageImageSchema,
@@ -93,6 +94,23 @@ const chartRowSchema = zod.object({
   highlight: zod.boolean().nullish(),
 })
 
+export const calloutColorSchema = zod.enum([
+  "purple",
+  "blue",
+  "green",
+  "lightgreen",
+  "yellow",
+  "red",
+  "neutral",
+])
+
+const calloutSchema = section("callout", {
+  emoji: zod.string().nullish(),
+  title: zod.string().nullish(),
+  body: calloutPortableTextSchema,
+  color: calloutColorSchema,
+})
+
 const sharedSections = [
   section("nextEvents", sectionsFields.nextEvents.shape),
   section("about", sectionsFields.about.shape),
@@ -114,6 +132,11 @@ const sharedSections = [
     unit: statUnitSchema,
     series: zod.array(zod.string()).min(1),
     rows: zod.array(chartRowSchema).min(1),
+  }),
+  calloutSchema,
+  section("sideBySide", {
+    title: zod.string().nullish(),
+    items: zod.array(calloutSchema).min(2).max(4),
   }),
   section("systemComponent", {
     component: zod.enum(["analyticsOptOut"]),

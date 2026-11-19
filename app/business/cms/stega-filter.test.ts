@@ -20,7 +20,16 @@ function props(sourcePath: FilterProps["sourcePath"]): FilterProps {
 }
 
 describe("stegaFilter", () => {
-  it.each(["instagram", "alt", "videoTitle", "network", "address", "component"])(
+  it.each([
+    "instagram",
+    "alt",
+    "videoTitle",
+    "network",
+    "address",
+    "component",
+    "color",
+    "emoji",
+  ])(
     "skips the non-display field %s",
     (field) => {
       expect(stegaFilter(props([field]))).toBe(false)
