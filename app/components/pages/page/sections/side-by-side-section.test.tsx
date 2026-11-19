@@ -47,7 +47,7 @@ describe("SideBySideSection", () => {
 
     expect(
       screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent),
-    ).toEqual(["📣Bloco 1", "📣Bloco 2"])
+    ).toEqual(["Bloco 1", "Bloco 2"])
   })
 
   it.each([

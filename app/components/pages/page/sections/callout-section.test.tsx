@@ -27,7 +27,8 @@ describe("CalloutSection", () => {
       level: 2,
       name: "Inscrições abertas",
     })
-    expect(heading.textContent).toBe("📣Inscrições abertas")
+    expect(heading.textContent).toBe("Inscrições abertas")
+    expect(heading.previousElementSibling).toHaveTextContent("📣")
     expect(within(note).getByText("Garanta sua vaga até sexta.")).toBeVisible()
   })
 

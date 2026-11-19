@@ -45,10 +45,12 @@ export const Callout = ({ content, headingLevel = 2 }: CalloutProps) => {
     >
       {content.title ? (
         <>
-          <Heading className="flex gap-2 text-lg font-bold leading-snug">
+          <div className="flex gap-2 text-lg leading-snug">
             {content.emoji && <Emoji emoji={content.emoji} />}
-            {content.title}
-          </Heading>
+            <Heading className="text-lg font-bold leading-snug">
+              {content.title}
+            </Heading>
+          </div>
           {body}
         </>
       ) : content.emoji ? (
