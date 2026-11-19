@@ -236,6 +236,7 @@ describe("resolvePagesSnapshot", () => {
       "/sobre",
       "/sobre/equipe",
       "/codigo-de-conduta",
+      "/exemplo-callouts",
       "/pagina-de-teste",
     ])
   })

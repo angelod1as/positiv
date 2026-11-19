@@ -10,6 +10,8 @@ import {
 } from "../singletons"
 import { validateDocumentOf } from "../test/validate"
 import {
+  CALLOUTS_PAGE_ADDRESS,
+  CALLOUTS_PAGE_ID,
   E2E_TEST_PAGE_ADDRESS,
   E2E_TEST_PAGE_ID,
   E2E_TEST_SENTINEL,
@@ -102,6 +104,8 @@ describe("seedDocuments", () => {
       "chartSection",
       "chartSection",
       "chartSection",
+      "callout",
+      "sideBySide",
       "systemComponent",
     ])
   })
@@ -126,9 +130,43 @@ describe("seedDocuments", () => {
       "chartSection",
       "chartSection",
       "chartSection",
+      "callout",
+      "sideBySide",
       "systemComponent",
     ])
     expect(JSON.stringify(testPage)).toContain(E2E_TEST_SENTINEL)
+  })
+
+  it("seeds a Callout showcase: every colour, with and without title or emoji, and Lado-a-lado of 2, 3 and 4", () => {
+    const showcase = pages.find((page) => page._id === CALLOUTS_PAGE_ID)
+    type Callout = { title?: string; emoji?: string; color: string }
+    const sections = (showcase?.sections ?? []) as (Callout & {
+      _type: string
+      items?: Callout[]
+    })[]
+    const callouts = sections.flatMap<Callout>((section) =>
+      section._type === "sideBySide" ? (section.items ?? []) : [section],
+    )
+
+    expect(showcase?.address).toBe(CALLOUTS_PAGE_ADDRESS)
+    expect(new Set(callouts.map((callout) => callout.color))).toEqual(
+      new Set([
+        "purple",
+        "blue",
+        "green",
+        "lightgreen",
+        "yellow",
+        "red",
+        "neutral",
+      ]),
+    )
+    expect(callouts.some((callout) => !callout.title)).toBe(true)
+    expect(callouts.some((callout) => !callout.emoji)).toBe(true)
+    expect(
+      sections
+        .filter((section) => section._type === "sideBySide")
+        .map((section) => section.items?.length),
+    ).toEqual([2, 3, 4])
   })
 
   it("seeds one Chart Section of each chart type on the e2e test page", () => {
