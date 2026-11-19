@@ -56,6 +56,10 @@ export const accountCopy = {
 } as const
 
 export const likertPageCopy = {
+  title: "Escala de Likert",
+  answerIntro:
+    "Uma afirmação por vez: escolha o quanto você concorda com cada uma. O comentário é opcional. Se sair no meio, o que você já respondeu fica guardado neste navegador até você enviar.",
+  sending: "Enviando...",
   unavailable:
     "A escala não está disponível agora. Tente de novo mais tarde.",
   scaleChanged:

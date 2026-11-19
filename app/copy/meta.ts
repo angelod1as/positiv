@@ -34,6 +34,9 @@ export const metaCopy = {
   account: {
     title: "Minha Conta",
   },
+  likert: {
+    title: "Escala de Likert",
+  },
   basicData: {
     title: "Dados Básicos",
   },
