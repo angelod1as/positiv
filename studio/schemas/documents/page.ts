@@ -137,6 +137,8 @@ export const page = defineType({
         defineArrayMember({ type: "imageSection" }),
         defineArrayMember({ type: "statsSection" }),
         defineArrayMember({ type: "chartSection" }),
+        defineArrayMember({ type: "callout" }),
+        defineArrayMember({ type: "sideBySide" }),
         defineArrayMember({ type: "systemComponent" }),
       ],
       validation: (rule) =>
