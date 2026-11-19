@@ -54,6 +54,13 @@ export const accountCopy = {
   },
 } as const
 
+export const likertPageCopy = {
+  unavailable:
+    "A escala não está disponível agora. Tente de novo mais tarde.",
+  scaleChanged:
+    "A escala mudou enquanto você respondia. Recarregue a página para responder à versão atual.",
+} as const
+
 export const basicDataValidation = {
   minimumAge: "Você precisa ter pelo menos 18 anos",
   phoneNotANumber: "Você tem certeza que digitou um número?",
