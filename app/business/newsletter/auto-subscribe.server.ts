@@ -13,7 +13,7 @@ import {
 } from "./subscription-helpers.server"
 import type { SubscriptionSource } from "./types"
 
-async function getNewsletterProfile(profileId: string) {
+export async function getNewsletterProfile(profileId: string) {
   const profile = await db
     .selectFrom("profiles as p")
     .leftJoin("email_consents as ec", "ec.profile_id", "p.id")
