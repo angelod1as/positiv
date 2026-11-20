@@ -101,6 +101,18 @@ describe("LikertAnswerPage loader", () => {
     expect(result).toBeInstanceOf(Response)
     expect((result as Response).headers.get("Location")).toBe("/conta")
   })
+
+  it("sends someone signed out back to the account", async () => {
+    vi.mocked(canSeeLikert).mockResolvedValue(true)
+    vi.mocked(getUserContext).mockResolvedValue({
+      currentProfile: null,
+    } as unknown as Awaited<ReturnType<typeof getUserContext>>)
+
+    const result = await runLoader()
+
+    expect(result).toBeInstanceOf(Response)
+    expect((result as Response).headers.get("Location")).toBe("/conta")
+  })
 })
 
 describe("LikertAnswerPage", () => {
@@ -148,6 +160,40 @@ describe("LikertAnswerPage", () => {
     await answerScreen(user, "Depende")
 
     expect(await screen.findByText("A escala mudou.")).toBeVisible()
+    expect(navigate).not.toHaveBeenCalled()
+  })
+
+  it("sends someone whose session expired back to the sign-in", async () => {
+    const user = userEvent.setup()
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      redirected: true,
+      url: "http://localhost/entrar",
+      json: async () => ({}),
+    } as Response)
+    renderPage({ statements: statements.slice(0, 1), profileId: "profile-1" })
+
+    await answerScreen(user, "Depende")
+
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith("/entrar"))
+    expect(navigate).not.toHaveBeenCalledWith("/conta/escala")
+  })
+
+  it("keeps the run when the server answers with something else", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    const user = userEvent.setup()
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response("<html>erro</html>", {
+        status: 500,
+        headers: { "Content-Type": "text/html" },
+      }),
+    )
+    renderPage({ statements: statements.slice(0, 1), profileId: "profile-1" })
+
+    await answerScreen(user, "Depende")
+
+    expect(
+      await screen.findByText("Não foi possível salvar agora. Tente novamente."),
+    ).toBeVisible()
     expect(navigate).not.toHaveBeenCalled()
   })
 

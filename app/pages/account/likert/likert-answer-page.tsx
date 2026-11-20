@@ -6,6 +6,7 @@ import { canSeeLikert } from "~/business/profile/likert-answers.server"
 import { Copy } from "~/components/atoms/copy/copy"
 import { buildLikertFlow } from "~/components/forms/custom/likert/build-likert-flow"
 import { buildLikertQuestions } from "~/components/forms/custom/likert/build-likert-questions"
+import { commitJson } from "~/components/forms/runtime/commit-json"
 import { FormRunner } from "~/components/forms/runtime/form-runner"
 import { OneAtATime } from "~/components/forms/runtime/presentations/one-at-a-time"
 import type { Answers } from "~/components/forms/runtime/question.types"
@@ -28,13 +29,15 @@ export function meta({}: Route.MetaArgs) {
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { currentProfile } = await getUserContext(request, params)
-  if (!(await canSeeLikert(currentProfile))) return redirect(ACCOUNT)
+  if (!currentProfile || !(await canSeeLikert(currentProfile))) {
+    return redirect(ACCOUNT)
+  }
 
   const scale = await likertScaleCache.get()
 
   return {
     statements: scale?.statements ?? null,
-    profileId: currentProfile?.id ?? "",
+    profileId: currentProfile.id,
   }
 }
 
@@ -47,14 +50,11 @@ const LikertAnswerPage = ({ loaderData }: Route.ComponentProps) => {
     [statements],
   )
 
-  const commit = useCallback(async (answers: Answers): Promise<CommitResult> => {
-    const response = await fetch(LIKERT_COMMIT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(answers),
-    })
-    return (await response.json()) as CommitResult
-  }, [])
+  const commit = useCallback(
+    async (answers: Answers): Promise<CommitResult> =>
+      commitJson(LIKERT_COMMIT, answers, (pathname) => void navigate(pathname)),
+    [navigate],
+  )
 
   const flow = useMemo(
     () => buildLikertFlow(questions, commit),
