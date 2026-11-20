@@ -51,6 +51,15 @@ describe("buildLikertSubmission", () => {
     ])
   })
 
+  it("refuses a comment longer than 5000 characters", () => {
+    expect(
+      buildLikertSubmission(scale, {
+        ciume: { choice: "agree", comment: "a".repeat(5001) },
+        consentimento: { choice: "agree" },
+      }),
+    ).toBeNull()
+  })
+
   it("takes the statement's text from the scale, never from the answers", () => {
     const submission = buildLikertSubmission(scale, {
       ciume: { choice: "agree", statementText: "texto forjado" },

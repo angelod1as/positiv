@@ -32,6 +32,7 @@ export const likertCopy = {
   },
   commentLabel: "Comentário (opcional)",
   choiceRequired: "Escolha uma opção",
+  commentTooLong: "O comentário pode ter até 5000 caracteres",
 } as const
 
 export const yearCopy = {

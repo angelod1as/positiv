@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { likertSchema } from "./likert"
+import { buildLikertSubmission } from "~/business/profile/build-likert-submission"
+import { LIKERT_CHOICES, likertSchema } from "./likert"
 
 describe("likertSchema", () => {
   it("refuses a statement nobody answered", () => {
@@ -33,5 +34,29 @@ describe("likertSchema", () => {
     const result = likertSchema.safeParse({})
 
     expect(result.error?.issues[0].message).toBe("Escolha uma opção")
+  })
+
+  it("says the comment is too long past 5000 characters", () => {
+    const result = likertSchema.safeParse({
+      choice: "agree",
+      comment: "a".repeat(5001),
+    })
+
+    expect(result.error?.issues[0].message).toBe(
+      "O comentário pode ter até 5000 caracteres",
+    )
+  })
+
+  it("saves each choice as the point the server reads it as", () => {
+    const submission = buildLikertSubmission(
+      {
+        statements: LIKERT_CHOICES.map((choice) => ({ key: choice, text: choice })),
+      },
+      Object.fromEntries(LIKERT_CHOICES.map((choice) => [choice, { choice }])),
+    )
+
+    expect(submission?.answers.map(({ answer }) => answer)).toEqual([
+      1, 2, 3, 4, 5,
+    ])
   })
 })

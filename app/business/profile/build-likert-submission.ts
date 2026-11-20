@@ -12,7 +12,7 @@ const POINTS = {
 
 const answerSchema = zod.object({
   choice: zod.enum(Object.keys(POINTS) as [keyof typeof POINTS]),
-  comment: zod.string().optional(),
+  comment: zod.string().max(5000).optional(),
 })
 
 // The text saved is the scale's, never the browser's: the history has to show
