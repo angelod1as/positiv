@@ -1,14 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-const { ENV, syncRegistrationAlertsListmonkList, logger } = vi.hoisted(() => ({
+const { ENV, syncRegistrationAlertsListmonkList, syncEmailTokensToListmonk, logger } = vi.hoisted(() => ({
   ENV: {} as Record<string, unknown>,
   syncRegistrationAlertsListmonkList: vi.fn(),
+  syncEmailTokensToListmonk: vi.fn(),
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
 vi.mock("varlock/env", () => ({ ENV }))
 vi.mock("~/business/newsletter/registration-alerts-list.server", () => ({
   syncRegistrationAlertsListmonkList,
+}))
+vi.mock("~/business/newsletter/email-token-sync.server", () => ({
+  syncEmailTokensToListmonk,
 }))
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
 
@@ -33,6 +37,11 @@ describe("api.sync-registration-alerts-list", () => {
     syncRegistrationAlertsListmonkList.mockResolvedValue({
       success: true,
       data: { added: 2, removed: 1, created: 3, failed: 0 },
+      errors: [],
+    })
+    syncEmailTokensToListmonk.mockResolvedValue({
+      success: true,
+      data: { updated: 5, failed: 0 },
       errors: [],
     })
   })
@@ -86,7 +95,39 @@ describe("api.sync-registration-alerts-list", () => {
     expect(await response.json()).toEqual({
       success: true,
       stats: { added: 2, removed: 1, created: 3, failed: 0 },
+      tokens: { updated: 5, failed: 0 },
     })
+  })
+
+  it("gives the subscribers their email token after the list sync", async () => {
+    await call({
+      method: "POST",
+      headers: { Authorization: `Bearer ${SECRET}` },
+    })
+
+    expect(syncEmailTokensToListmonk).toHaveBeenCalledOnce()
+    expect(
+      syncRegistrationAlertsListmonkList.mock.invocationCallOrder[0],
+    ).toBeLessThan(syncEmailTokensToListmonk.mock.invocationCallOrder[0])
+  })
+
+  it("answers 500 when the token sync fails", async () => {
+    syncEmailTokensToListmonk.mockResolvedValue({
+      success: false,
+      errors: [new Error("tokens failed")],
+    })
+
+    const response = await call({
+      method: "POST",
+      headers: { Authorization: `Bearer ${SECRET}` },
+    })
+
+    expect(response.status).toBe(500)
+    expect(await response.json()).toEqual({
+      success: false,
+      error: "tokens failed",
+    })
+    expect(logger.error).toHaveBeenCalled()
   })
 
   it("answers 500 when the sync fails", async () => {

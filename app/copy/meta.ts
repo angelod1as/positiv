@@ -7,6 +7,9 @@ export const metaCopy = {
   feedback: {
     title: "Feedback",
   },
+  emails: {
+    title: "Seus e-mails",
+  },
   login: {
     title: "Entrar",
   },

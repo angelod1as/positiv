@@ -279,6 +279,36 @@ async function updateSubscriberAttributes(
   }
 }
 
+/**
+ * Merges attributes into a subscriber already read from Listmonk, by its id,
+ * in one call. The email, name and lists go back as they were read.
+ */
+export const setSubscriberAttribs = composable(
+  async (
+    subscriber: {
+      id: number
+      email: string
+      name: string
+      lists: Array<{ id: number }>
+      attribs?: Record<string, unknown>
+    },
+    attributes: Record<string, unknown>,
+  ): Promise<void> => {
+    if (ENV.E2E_MODE) {
+      return
+    }
+
+    await updateSubscriberAttributes(
+      subscriber.id,
+      subscriber.email,
+      subscriber.name,
+      attributes,
+      subscriber.lists.map((list) => list.id),
+      subscriber.attribs,
+    )
+  },
+)
+
 interface AddSubscriberResponse {
   data: {
     id: number
@@ -484,6 +514,152 @@ export const updateCampaignStatus = composable(
       logger.error(
         `Failed to update campaign status: ${response.status} ${response.statusText}`
       )
+    }
+  }
+)
+
+export interface ListmonkSubscriberDetails {
+  id: number
+  email: string
+  name: string
+  status: string
+  lists: Array<{ id: number; subscription_status: string }>
+  attribs: Record<string, unknown>
+}
+
+async function failed(response: Response, description: string): Promise<Error> {
+  const errorBody = await response.text().catch(() => "Unable to read error body")
+  return new Error(
+    `Failed to ${description}: ${response.status} ${response.statusText}. Response: ${errorBody}`
+  )
+}
+
+export const getSubscriberById = composable(
+  async (subscriberId: number): Promise<ListmonkSubscriberDetails | null> => {
+    if (ENV.E2E_MODE) {
+      return null
+    }
+
+    const { listmonkApiUrl, headers } = getListmonkConfig()
+
+    const response = await fetch(
+      `${listmonkApiUrl}/api/subscribers/${subscriberId}`,
+      { method: "GET", headers }
+    )
+
+    if (response.status === 404) {
+      return null
+    }
+
+    if (!response.ok) {
+      throw await failed(response, "get subscriber")
+    }
+
+    const { data } = (await response.json()) as {
+      data: ListmonkSubscriberDetails
+    }
+    return data
+  }
+)
+
+export const getSubscriberBounceCount = composable(
+  async (subscriberId: number): Promise<number> => {
+    if (ENV.E2E_MODE) {
+      return 0
+    }
+
+    const { listmonkApiUrl, headers } = getListmonkConfig()
+
+    const response = await fetch(
+      `${listmonkApiUrl}/api/subscribers/${subscriberId}/bounces`,
+      { method: "GET", headers }
+    )
+
+    if (!response.ok) {
+      throw await failed(response, "get subscriber bounces")
+    }
+
+    const { data } = (await response.json()) as { data: unknown[] | null }
+    return data?.length ?? 0
+  }
+)
+
+/**
+ * Lifts a block. The memberships stay as the block left them, unsubscribed;
+ * each list is turned back on with setListMembership.
+ */
+export const enableSubscriber = composable(
+  async (subscriber: {
+    id: number
+    email: string
+    name: string
+    lists: Array<{ id: number }>
+    attribs: Record<string, unknown>
+  }): Promise<void> => {
+    if (ENV.E2E_MODE) {
+      return
+    }
+
+    const { listmonkApiUrl, headers } = getListmonkConfig()
+
+    const response = await fetch(
+      `${listmonkApiUrl}/api/subscribers/${subscriber.id}`,
+      {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({
+          email: subscriber.email,
+          name: subscriber.name,
+          status: "enabled",
+          attribs: subscriber.attribs,
+          lists: subscriber.lists.map((list) => list.id),
+        }),
+      }
+    )
+
+    if (!response.ok) {
+      throw await failed(response, "enable subscriber")
+    }
+  }
+)
+
+/**
+ * Turning a list on drops the old membership before adding a confirmed one,
+ * so it does not depend on how Listmonk treats an unsubscribed row. Turning it
+ * off marks the membership unsubscribed, as Listmonk's own link does.
+ */
+export const setListMembership = composable(
+  async (
+    subscriberId: number,
+    listId: number,
+    subscribed: boolean
+  ): Promise<void> => {
+    if (ENV.E2E_MODE) {
+      return
+    }
+
+    const { listmonkApiUrl, headers } = getListmonkConfig()
+
+    const put = async (body: Record<string, unknown>) => {
+      const response = await fetch(`${listmonkApiUrl}/api/subscribers/lists`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({
+          ids: [subscriberId],
+          target_list_ids: [listId],
+          ...body,
+        }),
+      })
+      if (!response.ok) {
+        throw await failed(response, `update membership of list ${listId}`)
+      }
+    }
+
+    if (subscribed) {
+      await put({ action: "remove" })
+      await put({ action: "add", status: "confirmed" })
+    } else {
+      await put({ action: "unsubscribe" })
     }
   }
 )

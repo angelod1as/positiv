@@ -47,6 +47,7 @@ describe("umamiRecorderLoaderScript", () => {
     "/convite/abc123",
     "/auth/confirm?token_hash=abc123",
     "/newsletter/unsubscribe?email=x",
+    "/emails?t=abc123",
     "/Admin",
     "/DASHBOARD/1/dados",
     "/Auth/confirm?token_hash=abc123",

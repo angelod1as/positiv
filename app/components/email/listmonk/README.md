@@ -142,21 +142,25 @@ Available Listmonk variables:
 
 ### ⚠️ Important: Custom Unsubscribe URL
 
-**DO NOT use `{{ UnsubscribeURL }}`** - Listmonk's built-in unsubscribe doesn't sync with the Positiv database.
+**DO NOT use `{{ UnsubscribeURL }}`** - every unsubscribe link goes to the
+"Seus e-mails" page, where the person chooses each category on its own and
+the site, which holds the consent, updates Listmonk by subscriber id.
 
 **ALWAYS use this pattern instead:**
 
 ```html
-<a href="https://www.positivparty.com/newsletter/unsubscribe?id={{ .Subscriber.Attribs.profile_id }}">
+<a href="https://www.positivparty.com/emails?t={{ .Subscriber.Attribs.email_token }}&amp;utm_source=email&amp;utm_medium=newsletter&amp;utm_campaign=default">
   Cancelar inscrição
 </a>
 ```
 
-**Why:** We need to track unsubscribes in the Positiv database (`newsletter_subscriptions` table), not just Listmonk. The custom endpoint at `/newsletter/unsubscribe` handles both systems atomically:
+`email_token` is the profile's `email_consents.access_token`, pushed to every
+subscriber by the `sync-registration-alerts-list` job. It opens the page
+without a login. The old `/newsletter/unsubscribe?id=` link only redirects to
+`/emails` now, dropping the id.
 
-1. Updates Positiv database
-2. Calls Listmonk API to remove subscriber
-3. Syncs both systems correctly
+Gmail's one-click unsubscribe (the `List-Unsubscribe` header) stays
+Listmonk's own; the unsubscribe sync carries it back to the site.
 
 ### UTM Parameters on Site Links
 

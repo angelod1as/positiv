@@ -13,6 +13,8 @@ const CODE_OF_CONDUCT = `/codigo-de-conduta`
 const INVITE = (token: string) => `/convite/${token}`
 const FEEDBACK = `/feedback`
 const FEEDBACK_COMMIT = "/api/feedback"
+const EMAILS = "/emails"
+const EMAILS_COMMIT = "/api/emails"
 
 ////////
 // PRIVATE
@@ -89,6 +91,8 @@ const paths = {
     INVITE,
     FEEDBACK,
     FEEDBACK_COMMIT,
+    EMAILS,
+    EMAILS_COMMIT,
   },
   admin: {
     ADMIN_DASHBOARD,

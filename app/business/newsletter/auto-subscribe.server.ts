@@ -13,19 +13,21 @@ import {
 } from "./subscription-helpers.server"
 import type { SubscriptionSource } from "./types"
 
-async function getNewsletterProfile(profileId: string) {
+export async function getNewsletterProfile(profileId: string) {
   const profile = await db
-    .selectFrom("profiles")
+    .selectFrom("profiles as p")
+    .leftJoin("email_consents as ec", "ec.profile_id", "p.id")
     .select([
-      "id",
-      "email",
-      "user_id",
-      "social_name",
-      "full_name",
-      "is_veteran",
-      "approved_to_attend",
+      "p.id",
+      "p.email",
+      "p.user_id",
+      "p.social_name",
+      "p.full_name",
+      "p.is_veteran",
+      "p.approved_to_attend",
+      "ec.access_token as email_token",
     ])
-    .where("id", "=", profileId)
+    .where("p.id", "=", profileId)
     .executeTakeFirst()
 
   if (!profile) {
@@ -47,6 +49,7 @@ export function subscriberAttributes(
     name: computedName,
     is_veteran: profile.is_veteran,
     approved_to_attend: profile.approved_to_attend,
+    email_token: profile.email_token,
     synced_at: new Date().toISOString(),
   }
 }
