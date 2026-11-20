@@ -243,6 +243,8 @@ describe("page", () => {
         "imageSection",
         "statsSection",
         "chartSection",
+        "callout",
+        "sideBySide",
         "systemComponent",
       ])
     })

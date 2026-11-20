@@ -72,6 +72,15 @@ export const longPortableTextSchema = zod
   )
   .min(1)
 
+export const calloutPortableTextSchema = zod
+  .array(
+    blockSchema(
+      zod.literal("normal"),
+      zod.enum(["bullet", "number"]).optional(),
+    ),
+  )
+  .min(1)
+
 export const sanityImageSchema = zod.object({
   alt: zod.string(),
   asset: zod.object({
@@ -178,3 +187,4 @@ export type PageContent = z.infer<typeof pageContentSchema>
 export type PageImage = z.infer<typeof pageImageSchema>
 export type PortableText = z.infer<typeof portableTextSchema>
 export type LongPortableText = z.infer<typeof longPortableTextSchema>
+export type CalloutPortableText = z.infer<typeof calloutPortableTextSchema>

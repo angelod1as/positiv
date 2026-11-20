@@ -14,6 +14,8 @@ const NON_DISPLAY_FIELDS = new Set([
   "network", // siteSettings social: a zod.literal, and the icon key
   "address", // a Page's routing key, matched by addressSchema's regex
   "component", // systemComponent: a zod.enum naming the React component
+  "color", // callout: a zod.enum picking the colour classes
+  "emoji", // callout: one emoji, where hidden characters break the icon slot
 ])
 
 // Paths that only feed <head> through meta(), never a rendered node: the

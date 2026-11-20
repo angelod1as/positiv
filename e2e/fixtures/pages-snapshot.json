@@ -647,6 +647,102 @@
         "unit": "brl"
       },
       {
+        "_key": "callout",
+        "_type": "callout",
+        "body": [
+          {
+            "_key": "callout-link",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "callout-link-before",
+                "_type": "span",
+                "marks": [],
+                "text": "Garanta sua vaga até sexta. "
+              },
+              {
+                "_key": "callout-link-text",
+                "_type": "span",
+                "marks": [
+                  "callout-link-link"
+                ],
+                "text": "Veja os eventos"
+              },
+              {
+                "_key": "callout-link-after",
+                "_type": "span",
+                "marks": [],
+                "text": "."
+              }
+            ],
+            "markDefs": [
+              {
+                "_key": "callout-link-link",
+                "_type": "link",
+                "href": "/eventos"
+              }
+            ],
+            "style": "normal"
+          }
+        ],
+        "color": "purple",
+        "emoji": "📣",
+        "title": "Inscrições abertas"
+      },
+      {
+        "_key": "side-by-side",
+        "_type": "sideBySide",
+        "items": [
+          {
+            "_key": "ticket",
+            "_type": "callout",
+            "body": [
+              {
+                "_key": "p0",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "s0",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Um texto curto de exemplo, com o que importa saber."
+                  }
+                ],
+                "markDefs": [],
+                "style": "normal"
+              }
+            ],
+            "color": "blue",
+            "emoji": "🎟️",
+            "title": "Ingresso"
+          },
+          {
+            "_key": "early",
+            "_type": "callout",
+            "body": [
+              {
+                "_key": "p0",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "s0",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Um texto curto de exemplo, com o que importa saber."
+                  }
+                ],
+                "markDefs": [],
+                "style": "normal"
+              }
+            ],
+            "color": "green",
+            "emoji": "⏰",
+            "title": "Chegue cedo"
+          }
+        ],
+        "title": "Antes de ir"
+      },
+      {
         "_key": "system-component",
         "_type": "systemComponent",
         "component": "analyticsOptOut"
@@ -1299,6 +1395,356 @@
     "title": "Código de Conduta"
   },
   {
+    "_id": "seed-page-exemplo-callouts",
+    "_updatedAt": "2026-10-06T00:00:00Z",
+    "address": "/exemplo-callouts",
+    "header": [
+      {
+        "_type": "pageTitle",
+        "intro": "Todas as cores, com e sem título ou emoji, e Lado-a-lado com 2, 3 e 4 blocos.",
+        "title": "Callouts"
+      }
+    ],
+    "sections": [
+      {
+        "_key": "alone-purple",
+        "_type": "callout",
+        "body": [
+          {
+            "_key": "p0",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Ocupa uma linha, na largura do texto."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "list-a",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "list-a-span",
+                "_type": "span",
+                "marks": [],
+                "text": "Aceita listas"
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "list-b",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "list-b-span",
+                "_type": "span",
+                "marks": [],
+                "text": "Com negrito, itálico e links"
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "markDefs": [],
+            "style": "normal"
+          }
+        ],
+        "color": "purple",
+        "emoji": "💜",
+        "title": "Um callout sozinho"
+      },
+      {
+        "_key": "alone-neutral",
+        "_type": "callout",
+        "body": [
+          {
+            "_key": "p0",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Um texto curto de exemplo, com o que importa saber."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          }
+        ],
+        "color": "neutral",
+        "emoji": null,
+        "title": "Neutro, sem emoji"
+      },
+      {
+        "_key": "alone-text",
+        "_type": "callout",
+        "body": [
+          {
+            "_key": "p0",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Um texto curto de exemplo, com o que importa saber."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          }
+        ],
+        "color": "red",
+        "emoji": "⚠️",
+        "title": null
+      },
+      {
+        "_key": "two",
+        "_type": "sideBySide",
+        "items": [
+          {
+            "_key": "two-blue",
+            "_type": "callout",
+            "body": [
+              {
+                "_key": "p0",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "s0",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Um texto curto de exemplo, com o que importa saber."
+                  }
+                ],
+                "markDefs": [],
+                "style": "normal"
+              }
+            ],
+            "color": "blue",
+            "emoji": "🎟️",
+            "title": "Ingresso"
+          },
+          {
+            "_key": "two-green",
+            "_type": "callout",
+            "body": [
+              {
+                "_key": "p0",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "s0",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Um texto curto de exemplo, com o que importa saber."
+                  }
+                ],
+                "markDefs": [],
+                "style": "normal"
+              }
+            ],
+            "color": "green",
+            "emoji": "🌿",
+            "title": "Natureza"
+          }
+        ],
+        "title": "Dois lado a lado"
+      },
+      {
+        "_key": "three",
+        "_type": "sideBySide",
+        "items": [
+          {
+            "_key": "three-lightgreen",
+            "_type": "callout",
+            "body": [
+              {
+                "_key": "p0",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "s0",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Um texto curto de exemplo, com o que importa saber."
+                  }
+                ],
+                "markDefs": [],
+                "style": "normal"
+              }
+            ],
+            "color": "lightgreen",
+            "emoji": "💧",
+            "title": "Água"
+          },
+          {
+            "_key": "three-yellow",
+            "_type": "callout",
+            "body": [
+              {
+                "_key": "p0",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "s0",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Um texto curto de exemplo, com o que importa saber."
+                  }
+                ],
+                "markDefs": [],
+                "style": "normal"
+              }
+            ],
+            "color": "yellow",
+            "emoji": "☀️",
+            "title": "Sol"
+          },
+          {
+            "_key": "three-neutral",
+            "_type": "callout",
+            "body": [
+              {
+                "_key": "p0",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "s0",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Um texto curto de exemplo, com o que importa saber."
+                  }
+                ],
+                "markDefs": [],
+                "style": "normal"
+              }
+            ],
+            "color": "neutral",
+            "emoji": null,
+            "title": "Sem emoji"
+          }
+        ],
+        "title": "Três lado a lado"
+      },
+      {
+        "_key": "four",
+        "_type": "sideBySide",
+        "items": [
+          {
+            "_key": "four-purple",
+            "_type": "callout",
+            "body": [
+              {
+                "_key": "p0",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "s0",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Um texto curto de exemplo, com o que importa saber."
+                  }
+                ],
+                "markDefs": [],
+                "style": "normal"
+              }
+            ],
+            "color": "purple",
+            "emoji": "🎉",
+            "title": "Festa"
+          },
+          {
+            "_key": "four-blue",
+            "_type": "callout",
+            "body": [
+              {
+                "_key": "p0",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "s0",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Um texto curto de exemplo, com o que importa saber."
+                  }
+                ],
+                "markDefs": [],
+                "style": "normal"
+              }
+            ],
+            "color": "blue",
+            "emoji": "🧘",
+            "title": "Calma"
+          },
+          {
+            "_key": "four-red",
+            "_type": "callout",
+            "body": [
+              {
+                "_key": "p0",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "s0",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Um texto curto de exemplo, com o que importa saber."
+                  }
+                ],
+                "markDefs": [],
+                "style": "normal"
+              }
+            ],
+            "color": "red",
+            "emoji": "🚫",
+            "title": "Não é não"
+          },
+          {
+            "_key": "four-yellow",
+            "_type": "callout",
+            "body": [
+              {
+                "_key": "p0",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "s0",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Um texto curto de exemplo, com o que importa saber."
+                  }
+                ],
+                "markDefs": [],
+                "style": "normal"
+              }
+            ],
+            "color": "yellow",
+            "emoji": "🏳️‍🌈",
+            "title": null
+          }
+        ],
+        "title": null
+      }
+    ],
+    "seo": {
+      "description": "Página de exemplo dos callouts, só no ambiente de desenvolvimento.",
+      "image": null,
+      "noIndex": true,
+      "title": null
+    },
+    "title": "Exemplo de callouts"
+  },
+  {
     "_id": "page-e2e-test",
     "_updatedAt": "2026-10-06T00:00:00Z",
     "address": "/pagina-de-teste",
@@ -1815,6 +2261,102 @@
         "summary": "Mais da metade foi para o aluguel do espaço.",
         "title": "Para onde foi o dinheiro",
         "unit": "brl"
+      },
+      {
+        "_key": "callout",
+        "_type": "callout",
+        "body": [
+          {
+            "_key": "callout-link",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "callout-link-before",
+                "_type": "span",
+                "marks": [],
+                "text": "Garanta sua vaga até sexta. "
+              },
+              {
+                "_key": "callout-link-text",
+                "_type": "span",
+                "marks": [
+                  "callout-link-link"
+                ],
+                "text": "Veja os eventos"
+              },
+              {
+                "_key": "callout-link-after",
+                "_type": "span",
+                "marks": [],
+                "text": "."
+              }
+            ],
+            "markDefs": [
+              {
+                "_key": "callout-link-link",
+                "_type": "link",
+                "href": "/eventos"
+              }
+            ],
+            "style": "normal"
+          }
+        ],
+        "color": "purple",
+        "emoji": "📣",
+        "title": "Inscrições abertas"
+      },
+      {
+        "_key": "side-by-side",
+        "_type": "sideBySide",
+        "items": [
+          {
+            "_key": "ticket",
+            "_type": "callout",
+            "body": [
+              {
+                "_key": "p0",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "s0",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Um texto curto de exemplo, com o que importa saber."
+                  }
+                ],
+                "markDefs": [],
+                "style": "normal"
+              }
+            ],
+            "color": "blue",
+            "emoji": "🎟️",
+            "title": "Ingresso"
+          },
+          {
+            "_key": "early",
+            "_type": "callout",
+            "body": [
+              {
+                "_key": "p0",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "s0",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Um texto curto de exemplo, com o que importa saber."
+                  }
+                ],
+                "markDefs": [],
+                "style": "normal"
+              }
+            ],
+            "color": "green",
+            "emoji": "⏰",
+            "title": "Chegue cedo"
+          }
+        ],
+        "title": "Antes de ir"
       },
       {
         "_key": "system-component",

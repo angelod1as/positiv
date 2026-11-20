@@ -19,6 +19,9 @@ const fieldLabels = {
   series: "as séries",
   rows: "as linhas",
   component: "o componente",
+  emoji: "o emoji",
+  color: "a cor",
+  items: "os blocos",
   _type: "o tipo",
 } as const
 

@@ -144,6 +144,37 @@ export const sections = {
     _key: "system-component",
     component: "analyticsOptOut",
   },
+  callout: {
+    _type: "callout",
+    _key: "callout",
+    emoji: "📣",
+    title: "Inscrições abertas",
+    body: paragraph("Garanta sua vaga até sexta."),
+    color: "purple",
+  },
+  sideBySide: {
+    _type: "sideBySide",
+    _key: "side-by-side",
+    title: "Antes de ir",
+    items: [
+      {
+        _type: "callout",
+        _key: "a",
+        emoji: "🎟️",
+        title: "Ingresso",
+        body: paragraph("Leve o QR code."),
+        color: "blue",
+      },
+      {
+        _type: "callout",
+        _key: "b",
+        emoji: null,
+        title: null,
+        body: [{ ...paragraph("Chegue cedo.")[0], listItem: "bullet", level: 1 }],
+        color: "neutral",
+      },
+    ],
+  },
 }
 
 export const headers = {

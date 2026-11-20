@@ -100,6 +100,66 @@ describe("PageSections", () => {
     ).toBeInTheDocument()
   })
 
+  it.each([
+    ["a Callout", sections.callout, "Inscrições abertas"],
+    ["a Lado-a-lado", sections.sideBySide, "Antes de ir"],
+  ])("renders %s", (_, section, heading) => {
+    const parsed = pageSectionDocumentSchema.parse(section)
+    if (parsed._type !== "callout" && parsed._type !== "sideBySide") {
+      throw new Error("Not a callout")
+    }
+
+    renderWithRouter(
+      <PageSections
+        page="/exemplo"
+        sections={[parsed]}
+        events={undefined}
+        isLoggedIn={false}
+      />,
+    )
+
+    expect(
+      screen.getByRole("heading", { level: 2, name: heading }),
+    ).toBeInTheDocument()
+  })
+
+  it("tightens the gap only between Callouts that follow each other", () => {
+    const parse = (key: string) => {
+      const parsed = pageSectionDocumentSchema.parse({
+        ...sections.callout,
+        _key: key,
+      })
+      if (parsed._type !== "callout") throw new Error("Not a callout")
+      return parsed
+    }
+    const stats = pageSectionDocumentSchema.parse(sections.statsSection)
+    if (stats._type !== "statsSection") throw new Error("Not stats")
+    const sideBySide = pageSectionDocumentSchema.parse(sections.sideBySide)
+    if (sideBySide._type !== "sideBySide") throw new Error("Not sideBySide")
+
+    renderWithRouter(
+      <PageSections
+        page="/exemplo"
+        sections={[
+          parse("a"),
+          parse("b"),
+          stats,
+          parse("c"),
+          sideBySide,
+          parse("d"),
+        ]}
+        events={undefined}
+        isLoggedIn={false}
+      />,
+    )
+
+    expect(
+      screen
+        .getAllByRole("note")
+        .map((note) => note.closest("section")?.classList.contains("pt-0")),
+    ).toEqual([false, true, false, false, false, false])
+  })
+
   it("renders a Chart Section", () => {
     const chartSection = pageSectionDocumentSchema.parse(sections.chartSection)
     if (chartSection._type !== "chartSection") throw new Error("Not a chart")
