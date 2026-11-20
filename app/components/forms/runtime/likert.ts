@@ -16,7 +16,7 @@ export type LikertAnswer = { choice: LikertChoice; comment?: string }
 export const likertSchema = zod.object(
   {
     choice: zod.enum(LIKERT_CHOICES, { message: likertCopy.choiceRequired }),
-    comment: zod.string().optional(),
+    comment: zod.string().max(5000, likertCopy.commentTooLong).optional(),
   },
   { message: likertCopy.choiceRequired },
 )
