@@ -57,6 +57,7 @@ describe("email_consents - Integration Tests", () => {
         marketing_at: null,
       })
       expect(consent.access_token).toEqual(expect.any(String))
+      expect(consent.confirmed_at).toBeNull()
     })
   })
 
@@ -111,19 +112,19 @@ describe("email_consents - Integration Tests", () => {
       )
     })
 
-    it("should turn Registration alerts off with a no, as the migration does, and leave Marketing alone", async () => {
+    it("should leave Registration alerts and Marketing alone on a no: the categories are independent", async () => {
       const profile = await newProfile()
       await subscribeProfile(profile.id, "manual_button")
 
       await unsubscribeProfile(profile.id)
 
-      const consent = await consentOf(profile.id)
-      expect(consent).toMatchObject({
-        registration_alerts: false,
+      expect(await consentOf(profile.id)).toMatchObject({
+        newsletter: false,
+        registration_alerts: true,
+        registration_alerts_at: null,
         marketing: false,
         marketing_at: null,
       })
-      expect(consent.registration_alerts_at).toEqual(consent.newsletter_at)
     })
 
     it("should leave Registration alerts alone on a yes", async () => {
@@ -135,20 +136,6 @@ describe("email_consents - Integration Tests", () => {
         registration_alerts: true,
         registration_alerts_at: null,
       })
-    })
-
-    it("should keep the date alerts were turned off when another no follows", async () => {
-      const profile = await newProfile()
-      await subscribeProfile(profile.id, "manual_button")
-      await unsubscribeProfile(profile.id)
-      const off = await consentOf(profile.id)
-
-      await subscribeProfile(profile.id, "manual_button")
-      await unsubscribeProfile(profile.id)
-
-      expect((await consentOf(profile.id)).registration_alerts_at).toEqual(
-        off.registration_alerts_at,
-      )
     })
   })
 
