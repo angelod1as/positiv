@@ -15,7 +15,7 @@ const asScriptLiteral = (value: string) =>
 // The `i` flag matters: React Router matches paths regardless of case.
 export function umamiRecorderLoaderScript(url: string, websiteId: string) {
   return `(function () {
-  var privatePath = /^\\/(admin|dashboard|conta|pagamento|convite|auth|newsletter)(\\/|$)/i
+  var privatePath = /^\\/(admin|dashboard|conta|pagamento|convite|auth|newsletter|emails)(\\/|$)/i
   if (privatePath.test(window.location.pathname)) return
   try {
     if (window.localStorage.getItem("umami.disabled")) return

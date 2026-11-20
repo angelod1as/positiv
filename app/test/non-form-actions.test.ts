@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from "vitest"
 
 import { action as cpfAction } from "~/pages/api/payment/cpf"
 import { action as dashboardAction } from "~/pages/dashboard/dashboard-page"
-import { action as unsubscribeAction } from "~/pages/newsletter/unsubscribe"
 import { action as paymentAction } from "~/pages/payment/payment-page"
 
 vi.mock("~/lib/supabase/db.server", () => ({ db: {} }))
@@ -21,7 +20,6 @@ vi.mock("~/business/auth/auth.server", () => ({
 const ACTIONS = [
   { name: "api/payment/cpf", action: cpfAction, params: {} },
   { name: "dashboard", action: dashboardAction, params: {} },
-  { name: "newsletter/unsubscribe", action: unsubscribeAction, params: {} },
   {
     name: "payment",
     action: paymentAction,
