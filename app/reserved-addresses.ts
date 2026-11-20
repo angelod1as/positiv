@@ -9,6 +9,7 @@ export const reservedAddresses: readonly string[] = [
   "dashboard",
   "dev",
   "email",
+  "emails",
   "entrar",
   "feedback",
   "newsletter",
