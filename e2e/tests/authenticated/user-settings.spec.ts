@@ -63,6 +63,16 @@ test.describe('POS-192: User Settings and Profile Management', () => {
       page.getByRole('checkbox', {
         name: emailConsentCopy.labels.registrationAlerts,
       })
+    // The box itself is visually hidden behind its styled twin, so the label
+    // is what a person clicks.
+    const setAlerts = async (on: boolean) => {
+      if ((await alerts().isChecked()) !== on) {
+        await page
+          .getByText(emailConsentCopy.labels.registrationAlerts, { exact: true })
+          .click()
+      }
+      await expect(alerts()).toBeChecked({ checked: on })
+    }
     const save = async () => {
       await page.getByRole('button', { name: emailConsentCopy.save }).click()
       await expect(page.getByText(emailsPageCopy.successToast)).toBeVisible()
@@ -78,10 +88,10 @@ test.describe('POS-192: User Settings and Profile Management', () => {
     await expect(page.getByText(emailConsentCopy.alwaysSent)).toBeVisible()
 
     // Start from alerts on, whatever an earlier run left behind
-    await alerts().check()
+    await setAlerts(true)
     await expect(page.getByText(emailConsentCopy.alertsOffWarning)).toBeHidden()
 
-    await alerts().uncheck()
+    await setAlerts(false)
     await expect(page.getByText(emailConsentCopy.alertsOffWarning)).toBeVisible()
     await save()
 
@@ -89,7 +99,7 @@ test.describe('POS-192: User Settings and Profile Management', () => {
     await expect(alerts()).not.toBeChecked()
 
     // Leave the shared user as it found it
-    await alerts().check()
+    await setAlerts(true)
     await save()
   })
 
