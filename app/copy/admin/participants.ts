@@ -81,6 +81,16 @@ export const adminParticipantsCopy = {
     generalNotesPlaceholder: "Notas gerais sobre o perfil...",
     veteran: "Veterano",
   },
+  likert: {
+    title: "Escala de Likert",
+    neverAnswered: "Esta pessoa ainda não respondeu a escala.",
+    loadFailed:
+      "Não foi possível carregar as respostas da escala. Recarregue a página.",
+    submittedAt: (date: string) => `Enviada em ${date}`,
+    answers: "Respostas",
+    noComment: "Sem comentário",
+    submissions: "Envios",
+  },
   eventHistory: {
     title: "Histórico de candidaturas",
     payment: "Pagamento",

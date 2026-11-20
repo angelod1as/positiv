@@ -173,6 +173,58 @@ describe("ParticipantDetail", () => {
     })
   })
 
+  describe("Likert", () => {
+    const neverAnswered = { submissions: [], selected: null }
+
+    it("shows the scale on the profile page even without past events", () => {
+      const router = createTestRouter(
+        <ParticipantDetail
+          profile={mockProfile as never}
+          fullHistory={[]}
+          likert={neverAnswered}
+        />,
+      )
+      render(<RouterProvider router={router} />)
+
+      expect(
+        screen.getByRole("heading", { name: "Escala de Likert" }),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByText("Esta pessoa ainda não respondeu a escala."),
+      ).toBeInTheDocument()
+    })
+
+    it("shows the scale on the event participant page", () => {
+      const router = createTestRouter(
+        <ParticipantDetail
+          profile={mockProfile as never}
+          fullHistory={[]}
+          currentEvent={{
+            data: mockCurrentEventData as never,
+            eventId: "event-1",
+          }}
+          likert={neverAnswered}
+        />,
+      )
+      render(<RouterProvider router={router} />)
+
+      expect(
+        screen.getByRole("heading", { name: "Escala de Likert" }),
+      ).toBeInTheDocument()
+    })
+
+    it("leaves the scale out when the page loads none", () => {
+      const router = createTestRouter(
+        <ParticipantDetail profile={mockProfile as never} fullHistory={[]} />,
+      )
+      render(<RouterProvider router={router} />)
+
+      expect(
+        screen.queryByRole("heading", { name: "Escala de Likert" }),
+      ).not.toBeInTheDocument()
+    })
+  })
+
   describe("Payments", () => {
     const payments = {
       payments: [],
