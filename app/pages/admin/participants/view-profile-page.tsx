@@ -8,6 +8,7 @@ import {
   updateProfileApprovalStatus,
 } from "~/business/profile/profiles.server"
 import { setProfileCpfExempt } from "~/business/profile/cpf-exemption.server"
+import { getParticipantLikert } from "~/business/profile/participant-likert.server"
 import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
 import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { logger } from "~/lib/logger/logger.server"
@@ -21,10 +22,11 @@ const {
   admin: { ADMIN_PARTICIPANTS },
 } = paths
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
   assertUuidParams(params.profileId)
 
   const { profileId } = params
+  const { currentProfile } = await getAdminContext(request, params)
 
   if (!profileId) {
     return redirectWithError(
@@ -33,11 +35,16 @@ export async function loader({ params }: Route.LoaderArgs) {
     )
   }
 
-  const [profileResult, historyResult] = await Promise.all([
+  const [profileResult, historyResult, likert] = await Promise.all([
     getProfileById({ profileId }),
     getParticipantFullEventHistory({
       profileId,
       excludeEventId: undefined,
+    }),
+    getParticipantLikert({
+      profileId,
+      viewer: currentProfile,
+      submissionId: new URL(request.url).searchParams.get("envio"),
     }),
   ])
 
@@ -71,6 +78,7 @@ export async function loader({ params }: Route.LoaderArgs) {
   return {
     profile,
     fullHistory,
+    likert,
   }
 }
 
@@ -113,11 +121,17 @@ export async function action({ request, params }: Route.ActionArgs) {
 }
 
 const ViewProfilePage = ({ loaderData }: Route.ComponentProps) => {
-  const { profile, fullHistory } = loaderData
+  const { profile, fullHistory, likert } = loaderData
 
   if (!profile) return null
 
-  return <ParticipantDetail profile={profile} fullHistory={fullHistory} />
+  return (
+    <ParticipantDetail
+      profile={profile}
+      fullHistory={fullHistory}
+      likert={likert}
+    />
+  )
 }
 
 export default ViewProfilePage

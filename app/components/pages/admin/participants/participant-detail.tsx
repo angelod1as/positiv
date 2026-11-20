@@ -1,6 +1,7 @@
 import { useState } from "react"
 import type { ProfileWithExtraData } from "~/business/application/event-participants.server"
 import type { ParticipantPayments } from "~/business/payment/payment-totals.server"
+import type { ParticipantLikert } from "~/business/profile/participant-likert.server"
 import { ApprovalStatusDropdown } from "~/components/molecules/approval-status-dropdown/approval-status-dropdown"
 import { Button } from "~/components/atoms/button/button"
 import { Copy } from "~/components/atoms/copy/copy"
@@ -36,6 +37,7 @@ type ParticipantDetailProps = {
    */
   whatsappMessage?: string | null
   providerName?: string
+  likert?: ParticipantLikert | null
 }
 
 export const ParticipantDetail = ({
