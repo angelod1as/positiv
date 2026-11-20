@@ -1,12 +1,14 @@
 import { timingSafeEqual } from "node:crypto"
 import type { ActionFunctionArgs } from "react-router"
 import { ENV } from "varlock/env"
+import { syncEmailTokensToListmonk } from "~/business/newsletter/email-token-sync.server"
 import { syncRegistrationAlertsListmonkList } from "~/business/newsletter/registration-alerts-list.server"
 import { logger } from "~/lib/logger/logger.server"
 
 /**
  * Brings the Registration alerts Listmonk list in line with the profiles that
- * have Registration alerts on (WEB-52).
+ * have Registration alerts on (WEB-52), then gives every subscriber the token
+ * its email footer links to /emails with (WEB-53).
  *
  * Called every 30 minutes by the pg_cron job 'sync-registration-alerts-list'.
  * Authentication is the same bearer token every internal job uses.
@@ -49,5 +51,25 @@ export async function action({ request }: ActionFunctionArgs) {
     )
   }
 
-  return Response.json({ success: true, stats: result.data })
+  const tokens = await syncEmailTokensToListmonk()
+
+  if (!tokens.success) {
+    logger.error("The Listmonk email token sync failed", {
+      errors: tokens.errors.map((error) => error.message),
+    })
+
+    return Response.json(
+      {
+        success: false,
+        error: tokens.errors[0]?.message ?? "Unknown error",
+      },
+      { status: 500 },
+    )
+  }
+
+  return Response.json({
+    success: true,
+    stats: result.data,
+    tokens: tokens.data,
+  })
 }

@@ -143,6 +143,7 @@ export interface ListSubscriber {
     subscription_status: string
     subscription_updated_at: string
   }>
+  attribs?: Record<string, unknown>
 }
 
 interface ListSubscribersResponse {

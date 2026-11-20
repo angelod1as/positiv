@@ -57,6 +57,7 @@ const profile = (email: string, registrationAlertsAt: string | null = null) => (
   full_name: `Name ${email}`,
   is_veteran: false,
   approved_to_attend: false,
+  email_token: `token-${email}`,
 })
 
 const subscriber = (
@@ -206,7 +207,10 @@ describe("syncRegistrationAlertsListmonkList", () => {
         email: "new@example.com",
         name: "Name",
         lists: [LISTMONK_REGISTRATION_ALERTS_LIST_ID],
-        attributes: expect.objectContaining({ profile_id: newcomer.id }),
+        attributes: expect.objectContaining({
+          profile_id: newcomer.id,
+          email_token: "token-new@example.com",
+        }),
       }),
     )
     expect(result.success && result.data.created).toBe(1)

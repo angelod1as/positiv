@@ -62,6 +62,13 @@ describe("Newsletter Auto-Subscription - Integration Tests", () => {
         name: "Test User",
         is_veteran: true,
         approved_to_attend: "approved",
+        email_token: (
+          await kysely
+            .selectFrom("email_consents")
+            .select("access_token")
+            .where("profile_id", "=", profile.id)
+            .executeTakeFirstOrThrow()
+        ).access_token,
         synced_at: expect.any(String),
       })
 

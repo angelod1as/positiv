@@ -279,6 +279,36 @@ async function updateSubscriberAttributes(
   }
 }
 
+/**
+ * Merges attributes into a subscriber already read from Listmonk, by its id,
+ * in one call. The email, name and lists go back as they were read.
+ */
+export const setSubscriberAttribs = composable(
+  async (
+    subscriber: {
+      id: number
+      email: string
+      name: string
+      lists: Array<{ id: number }>
+      attribs?: Record<string, unknown>
+    },
+    attributes: Record<string, unknown>,
+  ): Promise<void> => {
+    if (ENV.E2E_MODE) {
+      return
+    }
+
+    await updateSubscriberAttributes(
+      subscriber.id,
+      subscriber.email,
+      subscriber.name,
+      attributes,
+      subscriber.lists.map((list) => list.id),
+      subscriber.attribs,
+    )
+  },
+)
+
 interface AddSubscriberResponse {
   data: {
     id: number

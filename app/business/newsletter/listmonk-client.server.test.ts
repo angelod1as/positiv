@@ -10,6 +10,7 @@ import {
   unsubscribeSubscriber,
   createCampaign,
   updateCampaignStatus,
+  setSubscriberAttribs,
 } from "./listmonk-client.server"
 
 vi.mock("varlock/env", () => ({
@@ -1317,5 +1318,61 @@ describe("test-run guard", () => {
       "https://newsletter.example.com/api/subscribers",
       expect.anything()
     )
+  })
+})
+
+describe("setSubscriberAttribs", () => {
+  let fetchSpy: MockInstance
+
+  beforeEach(() => {
+    fetchSpy = vi.spyOn(global, "fetch")
+  })
+
+  afterEach(() => {
+    fetchSpy.mockRestore()
+    vi.clearAllMocks()
+  })
+
+  it("puts the merged attributes by id in one call, keeping the email, name and lists", async () => {
+    fetchSpy.mockResolvedValue({ ok: true, json: async () => ({}) } as Response)
+
+    const result = await setSubscriberAttribs(
+      {
+        id: 7,
+        email: "a@example.com",
+        name: "A",
+        lists: [{ id: 4 }, { id: 143 }],
+        attribs: { profile_id: "p-1" },
+      },
+      { email_token: "tok" },
+    )
+
+    expect(result.success).toBe(true)
+    expect(fetchSpy).toHaveBeenCalledOnce()
+    const [url, init] = fetchSpy.mock.calls[0]
+    expect(url).toBe("https://listmonk.test/api/subscribers/7")
+    expect(init.method).toBe("PUT")
+    expect(JSON.parse(init.body as string)).toEqual({
+      email: "a@example.com",
+      name: "A",
+      attribs: { profile_id: "p-1", email_token: "tok" },
+      lists: [4, 143],
+    })
+  })
+
+  it("fails when Listmonk refuses", async () => {
+    fetchSpy.mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: "Server Error",
+      text: async () => "boom",
+    } as Response)
+
+    const result = await setSubscriberAttribs(
+      { id: 7, email: "a@example.com", name: "A", lists: [], attribs: {} },
+      { email_token: "tok" },
+    )
+
+    expect(result.success).toBe(false)
   })
 })
