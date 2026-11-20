@@ -271,7 +271,7 @@ border-radius: 10px;       /* Container border radius */
     <a href="https://www.positivparty.com" style="color: #bf03c3; text-decoration: none;">Positiv</a>
   </p>
   <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; color: #666; margin: 0;">
-    <a href="{{ UnsubscribeURL }}" style="color: #666; text-decoration: underline;">Descadastrar</a> ·
+    <a href="https://www.positivparty.com/emails?t={{ .Subscriber.Attribs.email_token }}&amp;utm_source=email&amp;utm_medium=newsletter&amp;utm_campaign=default" style="color: #666; text-decoration: underline;">Descadastrar</a> ·
     <a href="{{ MessageURL }}" style="color: #666; text-decoration: underline;">Preferências</a>
   </p>
 </div>
@@ -341,7 +341,7 @@ All Listmonk templates support markdown in the visual editor and content areas. 
 
 1. **Use `{{ template "content" . }}`** - Placeholder for visual editor content
 2. **Include `{{ TrackView }}`** - Tracking pixel (usually in footer)
-3. **Use `{{ UnsubscribeURL }}`** - Required unsubscribe link
+3. **Link unsubscribes to `/emails?t={{ .Subscriber.Attribs.email_token }}`** - Never `{{ UnsubscribeURL }}`; see `listmonk/README.md`
 4. **Use `{{ MessageURL }}`** - View in browser link
 5. **Test with Listmonk's visual editor** - Ensure blocks render correctly
 
