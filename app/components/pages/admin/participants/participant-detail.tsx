@@ -1,7 +1,7 @@
 import { useState } from "react"
 import type { ProfileWithExtraData } from "~/business/application/event-participants.server"
 import type { ParticipantPayments } from "~/business/payment/payment-totals.server"
-import type { ParticipantLikert } from "~/business/profile/participant-likert.server"
+import type { ParticipantLikert as ParticipantLikertData } from "~/business/profile/participant-likert.server"
 import { ApprovalStatusDropdown } from "~/components/molecules/approval-status-dropdown/approval-status-dropdown"
 import { Button } from "~/components/atoms/button/button"
 import { Copy } from "~/components/atoms/copy/copy"
@@ -19,6 +19,7 @@ import { AdminNotesBox } from "./admin-notes-box"
 import { BasicData } from "./basic-data"
 import { FinancialSummary } from "./financial-summary"
 import { ParticipantEventHistory } from "./participant-event-history"
+import { ParticipantLikert } from "./participant-likert"
 import { ParticipantVsEventData } from "./participant-vs-event-data"
 
 type ParticipantDetailProps = {
@@ -37,7 +38,7 @@ type ParticipantDetailProps = {
    */
   whatsappMessage?: string | null
   providerName?: string
-  likert?: ParticipantLikert | null
+  likert?: ParticipantLikertData | null
 }
 
 export const ParticipantDetail = ({
@@ -49,6 +50,7 @@ export const ParticipantDetail = ({
   appOrigin = "",
   whatsappMessage = null,
   providerName = "",
+  likert,
 }: ParticipantDetailProps) => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const name = profile.social_name || profile.full_name
@@ -130,6 +132,7 @@ export const ParticipantDetail = ({
           />
         </div>
       )}
+      {likert !== undefined && <ParticipantLikert likert={likert} />}
       {fullHistory.length > 0 && (
         <>
           <ParticipantEventHistory participantHistory={fullHistory} />
