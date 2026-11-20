@@ -40,6 +40,7 @@ export default [
   route("/api/account/dados-basicos", "pages/api/account/basic-data.ts"),
   route("/api/account/mudar-senha", "pages/api/account/change-password.ts"),
   route("/api/account/termos", "pages/api/account/terms.ts"),
+  route("/api/account/escala", "pages/api/account/likert.ts"),
   route("/api/feedback", "pages/api/feedback.ts"),
   route("/api/payment/cpf", "pages/api/payment/cpf.ts"),
   route("/api/admin/event", "pages/api/admin/event.ts"),
@@ -145,6 +146,15 @@ export default [
         route("/mudar-senha", "pages/account/change-password-page.tsx"),
         route("/dados-basicos", "pages/account/basic-data/basic-data-page.tsx"),
         route("/tudo-pronto", "pages/account/account-ready-page.tsx"),
+        route("/escala", "pages/account/likert/likert-page.tsx"),
+        route(
+          "/escala/responder",
+          "pages/account/likert/likert-answer-page.tsx",
+        ),
+        route(
+          "/escala/:submissionId",
+          "pages/account/likert/likert-submission-page.tsx",
+        ),
       ]),
     ]),
   ]),
