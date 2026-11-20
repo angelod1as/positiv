@@ -13,14 +13,17 @@ export const calloutColors = [
   { title: "Neutro", value: "neutral" },
 ]
 
-const pictographic = /\p{Extended_Pictographic}|\p{Regional_Indicator}|⃣/u
+// Drawn as an emoji, not as text: © and ™ are pictographic but print as
+// letters unless a variation selector (U+FE0F) asks for the emoji form.
+const emojiPresentation =
+  /\p{Emoji_Presentation}|\uFE0F|\p{Regional_Indicator}|\u20E3/u
 
 export function isSingleEmoji(value: string) {
   const graphemes = [
     ...new Intl.Segmenter("pt-BR", { granularity: "grapheme" }).segment(value),
   ]
 
-  return graphemes.length === 1 && pictographic.test(value)
+  return graphemes.length === 1 && emojiPresentation.test(value)
 }
 
 function plainTextOf(blocks: PortableTextBlock[] | undefined) {
