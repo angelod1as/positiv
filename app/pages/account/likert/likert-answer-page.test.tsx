@@ -163,6 +163,23 @@ describe("LikertAnswerPage", () => {
     expect(navigate).not.toHaveBeenCalled()
   })
 
+  it("starts over when the scale changed since the draft was kept", async () => {
+    const user = userEvent.setup()
+    const fetch = answers({ ok: true })
+    const { unmount } = renderPage()
+    await answerScreen(user, "Concordo")
+    unmount()
+
+    renderPage({ statements: statements.slice(1), profileId: "profile-1" })
+    await answerScreen(user, "Depende")
+
+    await waitFor(() => expect(fetch).toHaveBeenCalled())
+    const [, init] = fetch.mock.calls[0] as [string, RequestInit]
+    expect(JSON.parse(String(init.body))).toEqual({
+      consentimento: { choice: "depends" },
+    })
+  })
+
   it("sends someone whose session expired back to the sign-in", async () => {
     const user = userEvent.setup()
     vi.spyOn(globalThis, "fetch").mockResolvedValue({
