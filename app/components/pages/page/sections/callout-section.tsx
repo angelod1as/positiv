@@ -4,8 +4,7 @@ import { cn } from "~/lib/utils"
 
 type Content = Extract<PageSection, { _type: "callout" }>
 
-// Listed whole so Tailwind finds every class. The tint stays light, so the
-// text stays dark and readable on yellow and lightgreen too.
+// Listed whole so Tailwind finds every class.
 const COLORS: Record<Content["color"], string> = {
   purple: "border-purple bg-purple/10",
   blue: "border-blue bg-blue/10",
