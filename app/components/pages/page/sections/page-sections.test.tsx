@@ -134,11 +134,20 @@ describe("PageSections", () => {
     }
     const stats = pageSectionDocumentSchema.parse(sections.statsSection)
     if (stats._type !== "statsSection") throw new Error("Not stats")
+    const sideBySide = pageSectionDocumentSchema.parse(sections.sideBySide)
+    if (sideBySide._type !== "sideBySide") throw new Error("Not sideBySide")
 
     renderWithRouter(
       <PageSections
         page="/exemplo"
-        sections={[parse("a"), parse("b"), stats, parse("c")]}
+        sections={[
+          parse("a"),
+          parse("b"),
+          stats,
+          parse("c"),
+          sideBySide,
+          parse("d"),
+        ]}
         events={undefined}
         isLoggedIn={false}
       />,
@@ -148,7 +157,7 @@ describe("PageSections", () => {
       screen
         .getAllByRole("note")
         .map((note) => note.closest("section")?.classList.contains("pt-0")),
-    ).toEqual([false, true, false])
+    ).toEqual([false, true, false, false, false, false])
   })
 
   it("renders a Chart Section", () => {

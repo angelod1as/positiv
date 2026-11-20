@@ -1,6 +1,7 @@
 import type { z } from "zod"
 import { zod } from "~/lib/helpers/zod"
 import { reservedAddresses } from "../../reserved-addresses"
+import { calloutColors } from "./callout-colors"
 import {
   calloutPortableTextSchema,
   foundersFields,
@@ -94,15 +95,7 @@ const chartRowSchema = zod.object({
   highlight: zod.boolean().nullish(),
 })
 
-const calloutColorSchema = zod.enum([
-  "purple",
-  "blue",
-  "green",
-  "lightgreen",
-  "yellow",
-  "red",
-  "neutral",
-])
+const calloutColorSchema = zod.enum(calloutColors)
 
 const calloutSchema = section("callout", {
   emoji: zod.string().nullish(),

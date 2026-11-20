@@ -61,6 +61,17 @@ describe("callout", () => {
     expect(pathsOf(errors)).toContain("callout.emoji")
   })
 
+  it("points to the system emoji picker when the emoji is not one", async () => {
+    const errors = await validateValueOf("callout", withFields({ emoji: "a" }))
+
+    expect(errors).toContainEqual(
+      expect.objectContaining({
+        path: "callout.emoji",
+        message: expect.stringContaining("seletor de emoji"),
+      }),
+    )
+  })
+
   it("requires the text", async () => {
     const errors = await validateValueOf(
       "callout",

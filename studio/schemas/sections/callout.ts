@@ -1,17 +1,26 @@
 import { BulbOutlineIcon } from "@sanity/icons/BulbOutline"
 import { defineField, defineType, type PortableTextBlock } from "sanity"
 
+import {
+  type CalloutColor,
+  calloutColors,
+} from "../../../app/business/cms/callout-colors"
 import { calloutTextProblem } from "../objects/callout-text"
 
-export const calloutColors = [
-  { title: "Roxo", value: "purple" },
-  { title: "Azul", value: "blue" },
-  { title: "Verde", value: "green" },
-  { title: "Verde-claro", value: "lightgreen" },
-  { title: "Amarelo", value: "yellow" },
-  { title: "Vermelho", value: "red" },
-  { title: "Neutro", value: "neutral" },
-]
+const colorTitles: Record<CalloutColor, string> = {
+  purple: "Roxo",
+  blue: "Azul",
+  green: "Verde",
+  lightgreen: "Verde-claro",
+  yellow: "Amarelo",
+  red: "Vermelho",
+  neutral: "Neutro",
+}
+
+const colorOptions = calloutColors.map((value) => ({
+  title: colorTitles[value],
+  value,
+}))
 
 // Drawn as an emoji, not as text: © and ™ are pictographic but print as
 // letters unless a variation selector (U+FE0F) follows them, and a keycap
@@ -53,7 +62,7 @@ export const callout = defineType({
         rule.custom<string>((emoji) =>
           emoji === undefined || isSingleEmoji(emoji)
             ? true
-            : "Use um emoji só, sem texto",
+            : "Use um emoji só, sem texto, escolhido no seletor de emoji do sistema",
         ),
     }),
     defineField({
@@ -72,7 +81,7 @@ export const callout = defineType({
       name: "color",
       title: "Cor",
       type: "string",
-      options: { list: calloutColors, layout: "radio", direction: "horizontal" },
+      options: { list: colorOptions, layout: "radio", direction: "horizontal" },
       initialValue: "purple",
       validation: (rule) => rule.required(),
     }),
@@ -82,7 +91,7 @@ export const callout = defineType({
     prepare: ({ title, emoji, body, color }) => ({
       title: [emoji, title || plainTextOf(body)].filter(Boolean).join(" "),
       subtitle: `Callout, ${
-        calloutColors.find((option) => option.value === color)?.title ?? "sem cor"
+        colorTitles[color as CalloutColor] ?? "sem cor"
       }`,
     }),
   },
