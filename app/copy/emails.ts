@@ -21,3 +21,12 @@ export const emailConsentCopy = {
   save: "Salvar",
   saving: "Salvando...",
 } as const
+
+export const emailsPageCopy = {
+  title: "Seus e-mails",
+  description: (email: string) =>
+    `Escolha o que você quer receber em **${email}**.`,
+  successToast: "Suas escolhas foram salvas.",
+  bounced:
+    "Não conseguimos entregar e-mails para este endereço. Atualize seu e-mail para voltar a receber.",
+} as const
