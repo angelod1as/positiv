@@ -56,6 +56,10 @@ const LikertAnswerPage = ({ loaderData }: Route.ComponentProps) => {
     [navigate],
   )
 
+  // A draft kept against other statements would resend answers the scale no
+  // longer has, and be refused on every reload.
+  const draftScope = [profileId, ...questions.map(({ id }) => id)].join(":")
+
   const flow = useMemo(
     () => buildLikertFlow(questions, commit),
     [questions, commit],
@@ -69,14 +73,11 @@ const LikertAnswerPage = ({ loaderData }: Route.ComponentProps) => {
         <>
           <Copy>{copy.answerIntro}</Copy>
           <FormRunner
-            // Keyed by the person: the runtime seeds its answers once, at mount.
-            key={profileId}
+            key={draftScope}
             questions={questions}
             flow={flow}
             presentation={OneAtATime}
-            // The draft clears once the save lands, so answering again always
-            // starts blank.
-            persistence={{ formId: "likert", scopeId: profileId }}
+            persistence={{ formId: "likert", scopeId: draftScope }}
             pendingLabel={copy.sending}
             onDone={() => {
               void navigate(LIKERT)
