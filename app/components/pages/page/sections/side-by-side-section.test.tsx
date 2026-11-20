@@ -61,7 +61,28 @@ describe("SideBySideSection", () => {
 
     const list = screen.getByRole("list")
     expect(list).toHaveClass(columns)
-    expect(list).toHaveClass("grid-cols-1", "sm:grid-cols-2")
+    expect(list).toHaveClass("grid-cols-1", "sm:grid-cols-4")
     expect(screen.getAllByRole("listitem")).toHaveLength(count)
+  })
+
+  it("centres the leftover Callout when two per row leave one alone", () => {
+    renderWithRouter(
+      <SideBySideSection content={sideBySide({ items: items(3) })} />,
+    )
+
+    const [first, second, third] = screen.getAllByRole("listitem")
+    expect(third).toHaveClass("sm:max-lg:col-start-2")
+    expect(first).not.toHaveClass("sm:max-lg:col-start-2")
+    expect(second).not.toHaveClass("sm:max-lg:col-start-2")
+  })
+
+  it.each([2, 4])("centres nothing when %s Callouts fill their rows", (count) => {
+    renderWithRouter(
+      <SideBySideSection content={sideBySide({ items: items(count) })} />,
+    )
+
+    for (const item of screen.getAllByRole("listitem")) {
+      expect(item).not.toHaveClass("sm:max-lg:col-start-2")
+    }
   })
 })

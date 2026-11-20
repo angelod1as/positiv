@@ -86,6 +86,25 @@ describe("CalloutSection", () => {
     expect(screen.getByRole("note")).toHaveClass(border, tint)
   })
 
+  it("drops the bottom border every level-2 heading gets on the site", () => {
+    renderWithRouter(<CalloutSection content={callout()} />)
+
+    expect(screen.getByRole("heading", { level: 2 })).toHaveClass(
+      "border-0",
+      "pb-0",
+    )
+  })
+
+  it("keeps its top padding unless it follows another Callout", () => {
+    const { rerender } = renderWithRouter(
+      <CalloutSection content={callout()} />,
+    )
+    expect(screen.getByRole("note").closest("section")).not.toHaveClass("pt-0")
+
+    rerender(<CalloutSection content={callout()} followsCallout />)
+    expect(screen.getByRole("note").closest("section")).toHaveClass("pt-0")
+  })
+
   it("lets a heading level come from where the callout sits", () => {
     renderWithRouter(
       <CalloutSection content={callout()} headingLevel={3} />,

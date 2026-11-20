@@ -47,7 +47,7 @@ export const Callout = ({ content, headingLevel = 2 }: CalloutProps) => {
         <>
           <div className="flex gap-2 text-lg leading-snug">
             {content.emoji && <Emoji emoji={content.emoji} />}
-            <Heading className="text-lg font-bold leading-snug">
+            <Heading className="border-0 pb-0 text-lg font-bold leading-snug">
               {content.title}
             </Heading>
           </div>
@@ -65,8 +65,18 @@ export const Callout = ({ content, headingLevel = 2 }: CalloutProps) => {
   )
 }
 
-export const CalloutSection = ({ content, headingLevel }: CalloutProps) => (
-  <section className="w-full px-4 py-8 md:px-6">
+type CalloutSectionProps = CalloutProps & {
+  followsCallout?: boolean
+}
+
+export const CalloutSection = ({
+  content,
+  headingLevel,
+  followsCallout,
+}: CalloutSectionProps) => (
+  <section
+    className={cn("w-full px-4 py-8 md:px-6", followsCallout && "pt-0")}
+  >
     <div className="mx-auto max-w-3xl">
       <Callout content={content} headingLevel={headingLevel} />
     </div>

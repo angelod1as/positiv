@@ -49,13 +49,18 @@ export const PageSections = ({
     track("page_cta_clicked", { page, section, label: linkLabel(link) })
   }
 
-  return sections.map((section) => (
+  return sections.map((section, index) => (
     <div
       key={section._key}
       className="contents"
       onClick={trackCta(section._type)}
     >
-      {renderSection(section, events, isLoggedIn)}
+      {renderSection(
+        section,
+        events,
+        isLoggedIn,
+        sections[index - 1]?._type === "callout",
+      )}
     </div>
   ))
 }
@@ -64,6 +69,7 @@ const renderSection = (
   section: PageSection,
   events: PageSectionsProps["events"],
   isLoggedIn: boolean,
+  followsCallout: boolean,
 ) => {
   switch (section._type) {
     case "nextEvents":
@@ -97,7 +103,9 @@ const renderSection = (
     case "chartSection":
       return <ChartSection content={section} />
     case "callout":
-      return <CalloutSection content={section} />
+      return (
+        <CalloutSection content={section} followsCallout={followsCallout} />
+      )
     case "sideBySide":
       return <SideBySideSection content={section} />
     case "systemComponent":

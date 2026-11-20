@@ -123,6 +123,34 @@ describe("PageSections", () => {
     ).toBeInTheDocument()
   })
 
+  it("tightens the gap only between Callouts that follow each other", () => {
+    const parse = (key: string) => {
+      const parsed = pageSectionDocumentSchema.parse({
+        ...sections.callout,
+        _key: key,
+      })
+      if (parsed._type !== "callout") throw new Error("Not a callout")
+      return parsed
+    }
+    const stats = pageSectionDocumentSchema.parse(sections.statsSection)
+    if (stats._type !== "statsSection") throw new Error("Not stats")
+
+    renderWithRouter(
+      <PageSections
+        page="/exemplo"
+        sections={[parse("a"), parse("b"), stats, parse("c")]}
+        events={undefined}
+        isLoggedIn={false}
+      />,
+    )
+
+    expect(
+      screen
+        .getAllByRole("note")
+        .map((note) => note.closest("section")?.classList.contains("pt-0")),
+    ).toEqual([false, true, false])
+  })
+
   it("renders a Chart Section", () => {
     const chartSection = pageSectionDocumentSchema.parse(sections.chartSection)
     if (chartSection._type !== "chartSection") throw new Error("Not a chart")
