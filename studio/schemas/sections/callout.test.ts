@@ -53,6 +53,8 @@ describe("callout", () => {
     ["a digit", "1"],
     ["a copyright sign", "©"],
     ["a trade mark sign", "™"],
+    ["a letter asking for the emoji form", "a\uFE0F"],
+    ["a letter in a keycap", "a\u20E3"],
   ])("rejects %s as the emoji", async (_, emoji) => {
     const errors = await validateValueOf("callout", withFields({ emoji }))
 

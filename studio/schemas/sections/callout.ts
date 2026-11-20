@@ -14,9 +14,10 @@ export const calloutColors = [
 ]
 
 // Drawn as an emoji, not as text: © and ™ are pictographic but print as
-// letters unless a variation selector (U+FE0F) asks for the emoji form.
+// letters unless a variation selector (U+FE0F) follows them, and a keycap
+// holds only a digit, # or *.
 const emojiPresentation =
-  /\p{Emoji_Presentation}|\uFE0F|\p{Regional_Indicator}|\u20E3/u
+  /^(?:[0-9#*]\uFE0F?\u20E3|.*(?:\p{Emoji_Presentation}|\p{Extended_Pictographic}\uFE0F).*)$/u
 
 export function isSingleEmoji(value: string) {
   const graphemes = [

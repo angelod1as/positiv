@@ -94,7 +94,7 @@ const chartRowSchema = zod.object({
   highlight: zod.boolean().nullish(),
 })
 
-export const calloutColorSchema = zod.enum([
+const calloutColorSchema = zod.enum([
   "purple",
   "blue",
   "green",
