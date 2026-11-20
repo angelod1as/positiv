@@ -73,17 +73,17 @@ describe("CalloutSection", () => {
   })
 
   it.each([
-    ["purple", "border-purple"],
-    ["blue", "border-blue"],
-    ["green", "border-green"],
-    ["lightgreen", "border-lightgreen"],
-    ["yellow", "border-yellow"],
-    ["red", "border-red"],
-    ["neutral", "border-border"],
-  ])("draws the %s colour", (color, border) => {
+    ["purple", "border-purple", "bg-purple/10"],
+    ["blue", "border-blue", "bg-blue/10"],
+    ["green", "border-green", "bg-green/10"],
+    ["lightgreen", "border-lightgreen", "bg-lightgreen/10"],
+    ["yellow", "border-yellow", "bg-yellow/10"],
+    ["red", "border-red", "bg-red/10"],
+    ["neutral", "border-border", "bg-muted/40"],
+  ])("draws the %s colour", (color, border, tint) => {
     renderWithRouter(<CalloutSection content={callout({ color })} />)
 
-    expect(screen.getByRole("note")).toHaveClass(border)
+    expect(screen.getByRole("note")).toHaveClass(border, tint)
   })
 
   it("lets a heading level come from where the callout sits", () => {
