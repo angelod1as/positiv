@@ -1,6 +1,22 @@
+import { createSchema, isArraySchemaType, isObjectSchemaType } from "sanity"
 import { describe, expect, it } from "vitest"
 
 import { validateValueOf } from "../../test/validate"
+import { schemaTypes } from "../schema-types"
+
+function stylesOffered() {
+  const schema = createSchema({ name: "long-rich-text", types: schemaTypes })
+  const longRichText = schema.get("longRichText")
+  const block = longRichText && isArraySchemaType(longRichText)
+    ? longRichText.of[0]
+    : undefined
+  const style =
+    block && isObjectSchemaType(block)
+      ? block.fields.find((field) => field.name === "style")
+      : undefined
+
+  return style?.type.options?.list
+}
 
 function block(
   fields: object = {},
@@ -22,7 +38,29 @@ function linkTo(href: string) {
 }
 
 describe("longRichText", () => {
-  it.each(["normal", "h2", "h3", "blockquote"])(
+  it("offers three title levels, each followed by its subtitle", () => {
+    expect(stylesOffered()).toEqual([
+      { title: "Parágrafo", value: "normal" },
+      { title: "Título 1", value: "h2" },
+      { title: "Subtítulo 1", value: "subtitle1" },
+      { title: "Título 2", value: "h3" },
+      { title: "Subtítulo 2", value: "subtitle2" },
+      { title: "Título 3", value: "h4" },
+      { title: "Subtítulo 3", value: "subtitle3" },
+      { title: "Citação", value: "blockquote" },
+    ])
+  })
+
+  it.each([
+    "normal",
+    "h2",
+    "subtitle1",
+    "h3",
+    "subtitle2",
+    "h4",
+    "subtitle3",
+    "blockquote",
+  ])(
     "accepts the %s style",
     async (style) => {
       expect(await validateValueOf("longRichText", [block({ style })])).toEqual(
@@ -75,7 +113,7 @@ describe("longRichText", () => {
     )
   })
 
-  it.each(["h1", "h4"])("rejects the %s style", async (style) => {
+  it.each(["h1", "h5", "subtitle4"])("rejects the %s style", async (style) => {
     expect(
       await validateValueOf("longRichText", [block({ style })]),
     ).not.toEqual([])
