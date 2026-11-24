@@ -25,6 +25,7 @@ import { founders } from "./sections/founders"
 import { imageSection } from "./sections/image-section"
 import { nextEvents } from "./sections/next-events"
 import { richTextSection } from "./sections/rich-text-section"
+import { rulesSection } from "./sections/rules-section"
 import { sideBySide } from "./sections/side-by-side"
 import { statsSection } from "./sections/stats-section"
 import { systemComponent } from "./sections/system-component"
@@ -51,6 +52,7 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   callout,
   sideBySide,
   systemComponent,
+  rulesSection,
   homepageHero,
   pageHero,
   pageTitle,

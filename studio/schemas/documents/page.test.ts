@@ -246,6 +246,7 @@ describe("page", () => {
         "callout",
         "sideBySide",
         "systemComponent",
+        "rulesSection",
       ])
     })
 

@@ -178,4 +178,9 @@ export const sections = {
       },
     ],
   },
+  rulesSection: {
+    _type: "rulesSection",
+    _key: "rules",
+    part: "generalRules",
+  },
 }
