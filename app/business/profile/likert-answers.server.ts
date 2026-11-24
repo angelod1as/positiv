@@ -3,21 +3,24 @@ import type { CommitResult } from "~types/forms/commit.types"
 import type { currentProfileSchema } from "~/business/auth/auth-schemas"
 import { can, PERMISSIONS } from "~/business/auth/permissions"
 import { likertScaleCache } from "~/business/cms/likert-scale-cache.server"
-import { isLikertEnabled } from "~/business/settings/app-settings.server"
+import {
+  isLikertEnabled,
+  isLikertRequired,
+} from "~/business/settings/app-settings.server"
 import { likertPageCopy } from "~/copy/account"
 import { buildLikertSubmission } from "./build-likert-submission"
 import { saveLikertSubmission } from "./likert-submissions.server"
 
 type Viewer = Pick<z.infer<typeof currentProfileSchema>, "id" | "permissions">
 
-// While the switch is off the scale is still being written, so only the admin
-// team, who reads the answers, sees it.
+// Open, the scale reaches whoever has the link; required, it reaches everyone.
+// Until then only the admin team, who reads the answers, sees it.
 export async function canSeeLikert(
   viewer: Viewer | null | undefined,
 ): Promise<boolean> {
   if (!viewer) return false
   if (can(viewer, PERMISSIONS.ADMIN_PANEL)) return true
-  return isLikertEnabled()
+  return (await isLikertEnabled()) || isLikertRequired()
 }
 
 export async function submitLikertAnswers({

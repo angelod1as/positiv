@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { likertScaleCache } from "~/business/cms/likert-scale-cache.server"
-import { isLikertEnabled } from "~/business/settings/app-settings.server"
+import {
+  isLikertEnabled,
+  isLikertRequired,
+} from "~/business/settings/app-settings.server"
 import { PERMISSIONS } from "~/business/auth/permissions"
 import { likertPageCopy } from "~/copy/account"
 import { canSeeLikert, submitLikertAnswers } from "./likert-answers.server"
@@ -12,6 +15,7 @@ vi.mock("~/business/cms/likert-scale-cache.server", () => ({
 
 vi.mock("~/business/settings/app-settings.server", () => ({
   isLikertEnabled: vi.fn(),
+  isLikertRequired: vi.fn(),
 }))
 
 vi.mock("./likert-submissions.server", () => ({
@@ -28,9 +32,10 @@ const scale = {
 describe("canSeeLikert", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(isLikertRequired).mockResolvedValue(false)
   })
 
-  it("lets anyone signed in see the scale while it is switched on", async () => {
+  it("lets anyone signed in with the link see the scale while it is open", async () => {
     vi.mocked(isLikertEnabled).mockResolvedValue(true)
 
     expect(await canSeeLikert(person)).toBe(true)
@@ -48,6 +53,13 @@ describe("canSeeLikert", () => {
     expect(await canSeeLikert(admin)).toBe(true)
   })
 
+  it("lets anyone signed in see it once it is required, even while closed", async () => {
+    vi.mocked(isLikertEnabled).mockResolvedValue(false)
+    vi.mocked(isLikertRequired).mockResolvedValue(true)
+
+    expect(await canSeeLikert(person)).toBe(true)
+  })
+
   it("hides it from someone signed out", async () => {
     vi.mocked(isLikertEnabled).mockResolvedValue(true)
 
@@ -59,6 +71,7 @@ describe("submitLikertAnswers", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(isLikertEnabled).mockResolvedValue(true)
+    vi.mocked(isLikertRequired).mockResolvedValue(false)
     vi.mocked(likertScaleCache.get).mockResolvedValue(scale)
     vi.mocked(saveLikertSubmission).mockResolvedValue({ id: "submission-1" })
   })
