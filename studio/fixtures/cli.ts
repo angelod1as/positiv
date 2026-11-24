@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url"
 
 import {
   generateLikertScaleFixture,
+  generateRulesFixture,
   generateSiteSnapshotFixture,
   serializeFixture,
 } from "./generate"
@@ -22,7 +23,8 @@ write("pages-snapshot.json", pages)
 write("site-settings.json", siteSettings)
 write("payment-messages.json", paymentMessages)
 write("likert-scale.json", await generateLikertScaleFixture())
+write("rules.json", await generateRulesFixture())
 
 console.log(
-  "Wrote e2e/fixtures/pages-snapshot.json, site-settings.json, payment-messages.json and likert-scale.json from the seed.",
+  "Wrote e2e/fixtures/pages-snapshot.json, site-settings.json, payment-messages.json, likert-scale.json and rules.json from the seed.",
 )

@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 import { homepageCopy } from '../../../app/copy/homepage'
 import { errorsCopy } from '../../../app/copy/errors'
 import { analyticsOptOutCopy } from '../../../app/copy/privacy'
+import { rulesPartCopy } from '../../../app/copy/rules'
 import { testPageContent } from '../../fixtures/test-page-content'
 import { SitePage } from '../../pages/SitePage'
 
@@ -17,6 +18,7 @@ const {
   statsTitle: STATS_SECTION_TITLE,
   chartTitle: CHART_SECTION_TITLE,
   chartSummary: CHART_SECTION_SUMMARY,
+  ruleTitle: RULE_TITLE,
   seoDescription: SEO_DESCRIPTION,
 } = testPageContent
 // Computed by the app from the seeded comparison, 22% in 2025 to 31% in 2026.
@@ -58,6 +60,14 @@ test.describe('Pages from Sanity', () => {
     await expect(
       page.getByRole('button', { name: analyticsOptOutCopy.optOut }),
     ).toBeVisible()
+    await expect(
+      page.getByRole('heading', { level: 3, name: RULE_TITLE }),
+    ).toBeVisible()
+    // The test Page holds a Regras Privadas Section too: a visitor who is not
+    // signed in gets nothing of it.
+    await expect(
+      page.getByRole('heading', { name: rulesPartCopy.privateRules }),
+    ).toHaveCount(0)
   })
 
   test('the Next Events Section renders the events it loads from the backend', async ({

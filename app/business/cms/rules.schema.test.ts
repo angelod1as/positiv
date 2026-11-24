@@ -1,3 +1,4 @@
+import rulesFixture from "../../../e2e/fixtures/rules.json"
 import { describe, expect, it } from "vitest"
 import { rulesSchema } from "./rules.schema"
 
@@ -35,6 +36,10 @@ const valid = {
 describe("rulesSchema", () => {
   it("accepts the three parts, a rule with a highlight among them", () => {
     expect(rulesSchema.parse(valid)).toEqual(valid)
+  })
+
+  it("accepts the e2e fixture generated from the seed", () => {
+    expect(rulesSchema.parse(rulesFixture)).toEqual(rulesFixture)
   })
 
   it("accepts a highlight without a title", () => {

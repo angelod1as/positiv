@@ -746,6 +746,73 @@
         "_key": "system-component",
         "_type": "systemComponent",
         "component": "analyticsOptOut"
+      },
+      {
+        "_key": "rules",
+        "_type": "rulesSection",
+        "part": "generalRules",
+        "rules": [
+          {
+            "_key": "consentimento",
+            "body": [
+              {
+                "_key": "p0",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "s0",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Texto de exemplo do ambiente de desenvolvimento."
+                  }
+                ],
+                "markDefs": [],
+                "style": "normal"
+              }
+            ],
+            "highlight": {
+              "body": [
+                {
+                  "_key": "p0",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "s0",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Destaque de exemplo."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "title": "Um destaque de exemplo"
+            },
+            "title": "[Exemplo] Regra geral 1"
+          },
+          {
+            "_key": "privacidade",
+            "body": [
+              {
+                "_key": "p0",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "s0",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Texto de exemplo do ambiente de desenvolvimento."
+                  }
+                ],
+                "markDefs": [],
+                "style": "normal"
+              }
+            ],
+            "highlight": null,
+            "title": "[Exemplo] Regra geral 2"
+          }
+        ]
       }
     ],
     "seo": {
@@ -2362,6 +2429,79 @@
         "_key": "system-component",
         "_type": "systemComponent",
         "component": "analyticsOptOut"
+      },
+      {
+        "_key": "rules",
+        "_type": "rulesSection",
+        "part": "generalRules",
+        "rules": [
+          {
+            "_key": "consentimento",
+            "body": [
+              {
+                "_key": "p0",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "s0",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Texto de exemplo do ambiente de desenvolvimento."
+                  }
+                ],
+                "markDefs": [],
+                "style": "normal"
+              }
+            ],
+            "highlight": {
+              "body": [
+                {
+                  "_key": "p0",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "s0",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Destaque de exemplo."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "title": "Um destaque de exemplo"
+            },
+            "title": "[Exemplo] Regra geral 1"
+          },
+          {
+            "_key": "privacidade",
+            "body": [
+              {
+                "_key": "p0",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "s0",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Texto de exemplo do ambiente de desenvolvimento."
+                  }
+                ],
+                "markDefs": [],
+                "style": "normal"
+              }
+            ],
+            "highlight": null,
+            "title": "[Exemplo] Regra geral 2"
+          }
+        ]
+      },
+      {
+        "_key": "private-rules",
+        "_type": "rulesSection",
+        "part": "privateRules",
+        "rules": null
       }
     ],
     "seo": {

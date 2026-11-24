@@ -8,6 +8,7 @@ import {
   EMAIL_TEMPLATES_ID,
   LIKERT_SCALE_ID,
   PAYMENT_MESSAGES_ID,
+  RULES_ID,
   SITE_SETTINGS_ID,
 } from "../singletons"
 
@@ -152,6 +153,30 @@ function likertScale() {
   }
 }
 
+// Placeholder content: the real rules are written in the Studio.
+function rules() {
+  const rule = (key: string, title: string, highlight?: string) => ({
+    _type: "rule",
+    _key: key,
+    title: `[Exemplo] ${title}`,
+    body: paragraphs("Texto de exemplo do ambiente de desenvolvimento."),
+    ...(highlight && {
+      highlight: { title: highlight, body: paragraphs("Destaque de exemplo.") },
+    }),
+  })
+
+  return {
+    _id: RULES_ID,
+    _type: "rules",
+    generalRules: [
+      rule("consentimento", "Regra geral 1", "Um destaque de exemplo"),
+      rule("privacidade", "Regra geral 2"),
+    ],
+    agreements: [rule("pontualidade", "Acordo 1"), rule("comida", "Acordo 2")],
+    privateRules: [rule("privada", "Regra privada 1")],
+  }
+}
+
 export function seedDocuments(photoAssetId: string): SeedDocument[] {
   const people = [
     person("seed-person-ana", "Ana Exemplo", photoAssetId),
@@ -241,6 +266,12 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
     _type: "systemComponent",
     _key: "system-component",
     component: "analyticsOptOut",
+  }
+
+  const rulesSection = {
+    _type: "rulesSection",
+    _key: "rules",
+    part: "generalRules",
   }
 
   const callout = (
@@ -467,6 +498,7 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
         calloutSection,
         sideBySideSection,
         systemComponent,
+        rulesSection,
       ],
       seo: seo(
         "Eventos naturistas para pessoas queer: conteúdo de exemplo do ambiente de desenvolvimento.",
@@ -651,6 +683,8 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
         calloutSection,
         sideBySideSection,
         systemComponent,
+        rulesSection,
+        { ...rulesSection, _key: "private-rules", part: "privateRules" },
       ],
       seo: {
         _type: "seo",
@@ -740,6 +774,7 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
       paymentRefund: paymentRefundMailContent,
     },
     likertScale(),
+    rules(),
   ]
 }
 

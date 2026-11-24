@@ -9,6 +9,7 @@ import {
 } from "../../e2e/fixtures/test-page-content"
 import {
   generateLikertScaleFixture,
+  generateRulesFixture,
   generateSiteSnapshotFixture,
   serializeFixture,
 } from "./generate"
@@ -46,6 +47,12 @@ describe("e2e fixtures generated from the seed", () => {
       serializeFixture(await generateLikertScaleFixture()),
     )
   })
+
+  it("keeps rules.json current — run `pnpm --filter studio fixtures`", async () => {
+    expect(committed("rules.json")).toBe(
+      serializeFixture(await generateRulesFixture()),
+    )
+  })
 })
 
 // The e2e specs assert these seed-owned strings. Guarding them here fails fast
@@ -60,6 +67,12 @@ describe("the fixtures carry the content the e2e specs assert", () => {
       expect(pages).toContain(text)
     },
   )
+
+  // The test Page shows the Regras Privadas too; only the page loader may
+  // read them, for a signed-in visitor.
+  it("pages-snapshot.json holds none of the Regras Privadas", () => {
+    expect(pages).not.toContain("Regra privada")
+  })
 
   it.each(Object.values(siteSettingsContent))(
     "site-settings.json contains %s",

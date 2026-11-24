@@ -5,6 +5,7 @@ import { CODE_OF_CONDUCT_PAGE_ID } from "./code-of-conduct-page"
 import { HOMEPAGE_PAGE_ID } from "../schemas/documents/page"
 import {
   LIKERT_SCALE_ID,
+  RULES_ID,
   PAYMENT_MESSAGES_ID,
   SITE_SETTINGS_ID,
 } from "../singletons"
@@ -107,6 +108,7 @@ describe("seedDocuments", () => {
       "callout",
       "sideBySide",
       "systemComponent",
+      "rulesSection",
     ])
   })
 
@@ -133,6 +135,8 @@ describe("seedDocuments", () => {
       "callout",
       "sideBySide",
       "systemComponent",
+      "rulesSection",
+      "rulesSection",
     ])
     expect(JSON.stringify(testPage)).toContain(E2E_TEST_SENTINEL)
   })
@@ -265,6 +269,38 @@ describe("seedDocuments", () => {
     it("seeds a message using the link and the due date", () => {
       expect(paymentMessages?.whatsappMessage).toContain("{{link}}")
       expect(paymentMessages?.whatsappMessage).toContain("{{data}}")
+    })
+  })
+
+  describe("Rules", () => {
+    const rules = documents.find((document) => document._id === RULES_ID) as
+      | (Record<string, { title: string; highlight?: unknown }[]> & {
+          _type: string
+        })
+      | undefined
+
+    it("seeds the singleton with every part", () => {
+      expect(rules?._type).toBe("rules")
+      for (const part of ["generalRules", "agreements", "privateRules"]) {
+        expect(rules?.[part]?.length).toBeGreaterThan(0)
+      }
+    })
+
+    // Development content never passes for the rules people read.
+    it("marks every rule as a placeholder", () => {
+      for (const part of ["generalRules", "agreements", "privateRules"]) {
+        for (const rule of rules?.[part] ?? []) {
+          expect(rule.title).toMatch(/^\[Exemplo\]/)
+        }
+      }
+    })
+
+    it("seeds a rule with a highlight", () => {
+      expect(
+        Object.values(rules ?? {})
+          .flat()
+          .some((rule) => typeof rule === "object" && rule.highlight),
+      ).toBe(true)
     })
   })
 
