@@ -9,6 +9,7 @@ import { homepageCopy } from "~/copy/homepage"
 import { analyticsOptOutCopy } from "~/copy/privacy"
 import { paragraph, sections } from "~/test/page-documents"
 import { pageFixture } from "~/test/pages-snapshot-fixture"
+import { rulesFixture } from "~/test/rules-documents"
 import { renderWithRouter, screen, waitFor } from "~/test/test-utils"
 import type { Event } from "~types/database/entities.types"
 import { PageSections } from "./page-sections"
@@ -89,8 +90,6 @@ describe("PageSections", () => {
       rules: null,
     })
     if (rulesSection._type !== "rulesSection") throw new Error("Not rules")
-    const privateRules = pageSectionDocumentSchema.parse(sections.rulesSection)
-    if (privateRules._type !== "rulesSection") throw new Error("Not rules")
 
     renderWithRouter(
       <PageSections
@@ -98,7 +97,7 @@ describe("PageSections", () => {
         sections={[rulesSection]}
         events={undefined}
         isLoggedIn
-        privateRules={privateRules.rules ?? null}
+        privateRules={rulesFixture.privateRules}
       />,
     )
 

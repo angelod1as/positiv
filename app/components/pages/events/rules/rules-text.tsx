@@ -1,3 +1,4 @@
+import { ruleParts } from "~/business/cms/rule-parts"
 import type { Rules } from "~/business/cms/rules.schema"
 import { Copy } from "~/components/atoms/copy/copy"
 import { RulesPart } from "~/components/organisms/rules/rules-part"
@@ -13,11 +14,12 @@ export const RulesText = ({ rules }: RulesTextProps) => {
       <Copy>{rulesCopy.intro}</Copy>
 
       {rules ? (
-        <>
-          <RulesPart part="generalRules" rules={rules.generalRules} />
-          <RulesPart part="agreements" rules={rules.agreements} />
-          <RulesPart part="privateRules" rules={rules.privateRules} />
-        </>
+        ruleParts.map(
+          (part) =>
+            rules[part].length > 0 && (
+              <RulesPart key={part} part={part} rules={rules[part]} />
+            ),
+        )
       ) : (
         <Alert>
           <AlertDescription>{rulesCopy.unavailable}</AlertDescription>

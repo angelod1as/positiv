@@ -14,12 +14,14 @@ export const ruleSchema = zod.object({
     .nullish(),
 })
 
-export const ruleListSchema = zod.array(ruleSchema).min(1)
+export const ruleListSchema = zod.array(ruleSchema)
+
+const partSchema = ruleListSchema.nullish().transform((rules) => rules ?? [])
 
 export const rulesSchema = zod.object({
-  generalRules: ruleListSchema,
-  agreements: ruleListSchema,
-  privateRules: ruleListSchema,
+  generalRules: partSchema,
+  agreements: partSchema,
+  privateRules: partSchema,
 })
 
 export type Rule = z.output<typeof ruleSchema>

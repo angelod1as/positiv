@@ -49,14 +49,22 @@ describe("rulesSchema", () => {
     expect(rulesSchema.parse(rules)).toEqual(rules)
   })
 
+  // The Studio asks for at least one rule in each part; a part emptied while
+  // being rewritten must not take the other two down with it.
   it.each(["generalRules", "agreements", "privateRules"])(
-    "rejects an empty %s",
+    "accepts an empty %s",
     (part) => {
-      expect(rulesSchema.safeParse({ ...valid, [part]: [] }).success).toBe(
-        false,
-      )
+      expect(rulesSchema.safeParse({ ...valid, [part]: [] }).success).toBe(true)
     },
   )
+
+  // Sanity drops an array field emptied in the Studio, so it arrives as null.
+  it("reads a part Sanity dropped as no rules", () => {
+    expect(rulesSchema.parse({ ...valid, agreements: null })).toEqual({
+      ...valid,
+      agreements: [],
+    })
+  })
 
   it("rejects a rule without a title", () => {
     const rules = { ...valid, generalRules: [{ ...rule("g1"), title: null }] }

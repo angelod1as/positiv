@@ -31,6 +31,18 @@ describe("RulesText", () => {
     ])
   })
 
+  it("leaves out a part with no rules", () => {
+    renderWithRouter(
+      <RulesText rules={{ ...rulesFixture, privateRules: [] }} />,
+    )
+
+    expect(
+      screen
+        .getAllByRole("heading", { level: 2 })
+        .map((heading) => heading.textContent),
+    ).toEqual(["Regras Gerais", "Acordos"])
+  })
+
   it("keeps the introduction and says the rules are missing without them", () => {
     renderWithRouter(<RulesText rules={null} />)
 

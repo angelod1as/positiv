@@ -48,8 +48,10 @@ describe("getRules", () => {
   })
 
   it("returns null and logs why when the content breaks the contract", async () => {
+    const untitled = { ...rule("p1", "x"), title: null }
+
     expect(
-      await getRules(clientReturning({ ...rules, privateRules: [] })),
+      await getRules(clientReturning({ ...rules, privateRules: [untitled] })),
     ).toBeNull()
     expect(logger.error).toHaveBeenCalledWith("The Rules failed validation", {
       error: expect.stringContaining("privateRules"),

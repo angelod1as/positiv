@@ -68,6 +68,10 @@ describe("pageDocumentSchema", () => {
       )
     })
 
+    it("accepts a Regras Section whose part has no rules", () => {
+      accepts(page({ sections: [{ ...sections.rulesSection, rules: [] }] }))
+    })
+
     it("accepts a Regras Section before the Rules are first published", () => {
       accepts(page({ sections: [{ ...sections.rulesSection, rules: null }] }))
     })
