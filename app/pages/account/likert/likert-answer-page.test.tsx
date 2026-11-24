@@ -180,6 +180,28 @@ describe("LikertAnswerPage", () => {
     })
   })
 
+  it("starts over when a statement was reworded since the draft was kept", async () => {
+    const user = userEvent.setup()
+    const fetch = answers({ ok: true })
+    const { unmount } = renderPage()
+    await answerScreen(user, "Concordo")
+    unmount()
+
+    const reworded = [
+      { key: "ciume", text: "Sinto ciúme e falo sobre isso." },
+      statements[1],
+    ]
+    renderPage({ statements: reworded, profileId: "profile-1" })
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Sinto ciúme e falo sobre isso.",
+      }),
+    ).toBeVisible()
+    expect(screen.getByText("1/2")).toBeVisible()
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
   it("sends someone whose session expired back to the sign-in", async () => {
     const user = userEvent.setup()
     vi.spyOn(globalThis, "fetch").mockResolvedValue({

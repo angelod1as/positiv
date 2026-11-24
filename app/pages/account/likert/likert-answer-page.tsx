@@ -41,6 +41,14 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   }
 }
 
+function fingerprint(statements: { key: string; text: string }[]): string {
+  let hash = 5381
+  for (const char of JSON.stringify(statements)) {
+    hash = ((hash << 5) + hash + char.charCodeAt(0)) | 0
+  }
+  return (hash >>> 0).toString(36)
+}
+
 const LikertAnswerPage = ({ loaderData }: Route.ComponentProps) => {
   const { statements, profileId } = loaderData
   const navigate = useNavigate()
@@ -56,9 +64,12 @@ const LikertAnswerPage = ({ loaderData }: Route.ComponentProps) => {
     [navigate],
   )
 
-  // A draft kept against other statements would resend answers the scale no
-  // longer has, and be refused on every reload.
-  const draftScope = [profileId, ...questions.map(({ id }) => id)].join(":")
+  // A draft kept against other statements, or other wording, would save
+  // answers to questions the person was never asked.
+  const draftScope = useMemo(
+    () => `${profileId}:${fingerprint(statements ?? [])}`,
+    [profileId, statements],
+  )
 
   const flow = useMemo(
     () => buildLikertFlow(questions, commit),
