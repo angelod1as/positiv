@@ -136,3 +136,43 @@ describe("LongRichText", () => {
     )
   })
 })
+
+describe("LongRichText title levels", () => {
+  const levels = [
+    block("h2", "Título um", { style: "h2" }),
+    block("s1", "Subtítulo um", { style: "subtitle1" }),
+    block("h3", "Título dois", { style: "h3" }),
+    block("s2", "Subtítulo dois", { style: "subtitle2" }),
+    block("h4", "Título três", { style: "h4" }),
+    block("s3", "Subtítulo três", { style: "subtitle3" }),
+  ]
+
+  it("renders the three title levels as h2, h3 and h4, each smaller", () => {
+    renderWithRouter(<LongRichText value={levels} />)
+
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Título um" }),
+    ).toHaveClass("text-2xl", "mt-6", "first:mt-0")
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Título dois" }),
+    ).toHaveClass("text-xl", "mt-6", "first:mt-0")
+    expect(
+      screen.getByRole("heading", { level: 4, name: "Título três" }),
+    ).toHaveClass("text-lg", "mt-6", "first:mt-0")
+  })
+
+  it.each([
+    ["Subtítulo um", "text-lg"],
+    ["Subtítulo dois", "text-base"],
+    ["Subtítulo três", "text-base"],
+  ])(
+    "renders %s as a muted paragraph close under its title",
+    (text, size) => {
+      renderWithRouter(<LongRichText value={levels} />)
+
+      const subtitle = screen.getByText(text)
+      expect(subtitle.tagName).toBe("P")
+      expect(subtitle).toHaveClass("text-muted-foreground", "-mt-6", size)
+    },
+  )
+})
