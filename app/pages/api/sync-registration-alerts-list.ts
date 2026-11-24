@@ -8,7 +8,8 @@ import { logger } from "~/lib/logger/logger.server"
 /**
  * Brings the Registration alerts Listmonk list in line with the profiles that
  * have Registration alerts on (WEB-52), then gives every subscriber the token
- * its email footer links to /emails with (WEB-53).
+ * its email footer links to /emails with (WEB-53). The two are independent:
+ * one failing does not stop the other.
  *
  * Called every 30 minutes by the pg_cron job 'sync-registration-alerts-list'.
  * Authentication is the same bearer token every internal job uses.
@@ -36,6 +37,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   const result = await syncRegistrationAlertsListmonkList()
+  const tokens = await syncEmailTokensToListmonk()
 
   if (!result.success) {
     logger.error("The Registration alerts Listmonk list sync failed", {
@@ -50,8 +52,6 @@ export async function action({ request }: ActionFunctionArgs) {
       { status: 500 },
     )
   }
-
-  const tokens = await syncEmailTokensToListmonk()
 
   if (!tokens.success) {
     logger.error("The Listmonk email token sync failed", {

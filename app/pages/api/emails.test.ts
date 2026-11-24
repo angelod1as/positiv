@@ -122,6 +122,25 @@ describe("emails commit route", () => {
     expect(await response.json()).toEqual({ ok: false, errors: [] })
   })
 
+  it("refuses a body that is not sent as JSON", async () => {
+    const request = new Request("http://localhost/api/emails", {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ token: "tok", answers: preferences }),
+    })
+
+    const response = await action({
+      request,
+      url: new URL(request.url),
+      pattern: "/api/emails",
+      params: {},
+      context: {} as never,
+    })
+
+    expect(response.status).toBe(415)
+    expect(mockSave).not.toHaveBeenCalled()
+  })
+
   it("refuses a body it cannot read", async () => {
     const response = await run("{not json")
 

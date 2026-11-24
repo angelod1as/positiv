@@ -130,6 +130,21 @@ describe("api.sync-registration-alerts-list", () => {
     expect(logger.error).toHaveBeenCalled()
   })
 
+  it("still gives the subscribers their token when the list sync fails", async () => {
+    syncRegistrationAlertsListmonkList.mockResolvedValue({
+      success: false,
+      errors: [new Error("Listmonk is down")],
+    })
+
+    const response = await call({
+      method: "POST",
+      headers: { Authorization: `Bearer ${SECRET}` },
+    })
+
+    expect(syncEmailTokensToListmonk).toHaveBeenCalled()
+    expect(response.status).toBe(500)
+  })
+
   it("answers 500 when the sync fails", async () => {
     syncRegistrationAlertsListmonkList.mockResolvedValue({
       success: false,

@@ -14,6 +14,10 @@ import {
  * survives the trip.
  */
 export async function action({ request, params }: ActionFunctionArgs) {
+  if (!request.headers.get("Content-Type")?.startsWith("application/json")) {
+    return Response.json({ ok: false, errors: [] }, { status: 415 })
+  }
+
   let body: { token?: unknown; answers?: unknown }
   try {
     body = (await request.json()) as typeof body

@@ -63,6 +63,34 @@ describe("syncEmailTokensToListmonk", () => {
     expect(result.success && result.data).toEqual({ updated: 1, failed: 0 })
   })
 
+  // A PUT drops the memberships it does not list, and keeps an unsubscribed
+  // one as unsubscribed: every list goes back, left ones included.
+  it("hands every list back to Listmonk, the ones the person left included", async () => {
+    mockExecute.mockResolvedValue([
+      { id: "p-3", email: "three@example.com", email_token: "tok-3" },
+    ])
+    const listed = {
+      ...subscriber(3, "three@example.com", { profile_id: "p-3" }),
+      lists: [
+        { id: 4, subscription_status: "unsubscribed" },
+        { id: 143, subscription_status: "confirmed" },
+      ],
+    } as ListSubscriber
+    getAllSubscribers.mockResolvedValue(ok([listed]))
+
+    await syncEmailTokensToListmonk()
+
+    expect(setSubscriberAttribs).toHaveBeenCalledWith(
+      expect.objectContaining({
+        lists: [
+          expect.objectContaining({ id: 4 }),
+          expect.objectContaining({ id: 143 }),
+        ],
+      }),
+      { email_token: "tok-3" },
+    )
+  })
+
   it("matches by email, ignoring case, when the subscriber has no profile_id", async () => {
     mockExecute.mockResolvedValue([
       { id: "p-2", email: "Two@Example.com", email_token: "tok-2" },
