@@ -22,6 +22,9 @@ export const SEED_WHATSAPP_PAYMENT_MESSAGE = [
   "O link vale até {{data}}.",
 ].join("\n")
 
+export const CALLOUTS_PAGE_ID = "seed-page-exemplo-callouts"
+export const CALLOUTS_PAGE_ADDRESS = "/exemplo-callouts"
+
 export const E2E_TEST_PAGE_ID = "page-e2e-test"
 export const E2E_TEST_PAGE_ADDRESS = "/pagina-de-teste"
 export const E2E_TEST_SENTINEL =
@@ -240,6 +243,43 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
     component: "analyticsOptOut",
   }
 
+  const callout = (
+    _key: string,
+    color: string,
+    fields: { emoji?: string; title?: string; body?: object[] } = {},
+  ) => ({
+    _type: "callout",
+    _key,
+    color,
+    body: paragraphs("Um texto curto de exemplo, com o que importa saber."),
+    ...fields,
+  })
+
+  const calloutSection = callout("callout", "purple", {
+    emoji: "📣",
+    title: "Inscrições abertas",
+    body: [
+      linkedParagraph(
+        "callout-link",
+        "Garanta sua vaga até sexta. ",
+        "Veja os eventos",
+        "/eventos",
+        ".",
+      ),
+    ],
+  })
+
+  const sideBySide = (
+    _key: string,
+    title: string | undefined,
+    items: ReturnType<typeof callout>[],
+  ) => ({ _type: "sideBySide", _key, title, items })
+
+  const sideBySideSection = sideBySide("side-by-side", "Antes de ir", [
+    callout("ticket", "blue", { emoji: "🎟️", title: "Ingresso" }),
+    callout("early", "green", { emoji: "⏰", title: "Chegue cedo" }),
+  ])
+
   const chartSections = [
     {
       _type: "chartSection",
@@ -424,6 +464,8 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
         },
         statsSection,
         ...chartSections,
+        calloutSection,
+        sideBySideSection,
         systemComponent,
       ],
       seo: seo(
@@ -468,6 +510,66 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
       ),
     },
     codeOfConductToPage(),
+    {
+      _id: CALLOUTS_PAGE_ID,
+      _type: "page",
+      title: "Exemplo de callouts",
+      address: CALLOUTS_PAGE_ADDRESS,
+      header: [
+        {
+          _type: "pageTitle",
+          _key: "header",
+          title: "Callouts",
+          intro:
+            "Todas as cores, com e sem título ou emoji, e Lado-a-lado com 2, 3 e 4 blocos.",
+        },
+      ],
+      sections: [
+        callout("alone-purple", "purple", {
+          emoji: "💜",
+          title: "Um callout sozinho",
+          body: [
+            ...paragraphs("Ocupa uma linha, na largura do texto."),
+            block("list-a", "Aceita listas", {
+              listItem: "bullet",
+              level: 1,
+            }),
+            block("list-b", "Com negrito, itálico e links", {
+              listItem: "bullet",
+              level: 1,
+            }),
+          ],
+        }),
+        callout("alone-neutral", "neutral", {
+          title: "Neutro, sem emoji",
+        }),
+        callout("alone-text", "red", { emoji: "⚠️" }),
+        sideBySide("two", "Dois lado a lado", [
+          callout("two-blue", "blue", { emoji: "🎟️", title: "Ingresso" }),
+          callout("two-green", "green", { emoji: "🌿", title: "Natureza" }),
+        ]),
+        sideBySide("three", "Três lado a lado", [
+          callout("three-lightgreen", "lightgreen", {
+            emoji: "💧",
+            title: "Água",
+          }),
+          callout("three-yellow", "yellow", { emoji: "☀️", title: "Sol" }),
+          callout("three-neutral", "neutral", { title: "Sem emoji" }),
+        ]),
+        sideBySide("four", undefined, [
+          callout("four-purple", "purple", { emoji: "🎉", title: "Festa" }),
+          callout("four-blue", "blue", { emoji: "🧘", title: "Calma" }),
+          callout("four-red", "red", { emoji: "🚫", title: "Não é não" }),
+          callout("four-yellow", "yellow", { emoji: "🏳️‍🌈" }),
+        ]),
+      ],
+      seo: {
+        _type: "seo",
+        description:
+          "Página de exemplo dos callouts, só no ambiente de desenvolvimento.",
+        noIndex: true,
+      },
+    },
     {
       _id: E2E_TEST_PAGE_ID,
       _type: "page",
@@ -546,6 +648,8 @@ export function seedDocuments(photoAssetId: string): SeedDocument[] {
         },
         statsSection,
         ...chartSections,
+        calloutSection,
+        sideBySideSection,
         systemComponent,
       ],
       seo: {

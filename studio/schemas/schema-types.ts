@@ -6,6 +6,7 @@ import { page } from "./documents/page"
 import { paymentMessages } from "./documents/payment-messages"
 import { person } from "./documents/person"
 import { siteSettings } from "./documents/site-settings"
+import { calloutText } from "./objects/callout-text"
 import { longRichText } from "./objects/long-rich-text"
 import { richText } from "./objects/rich-text"
 import { seo } from "./objects/seo"
@@ -14,6 +15,7 @@ import { homepageHero } from "./page-header/homepage-hero"
 import { pageHero } from "./page-header/page-hero"
 import { pageTitle } from "./page-header/page-title"
 import { about } from "./sections/about"
+import { callout } from "./sections/callout"
 import { ctaBanner } from "./sections/cta-banner"
 import { feedback } from "./sections/feedback"
 import { chartSection } from "./sections/chart-section"
@@ -21,6 +23,7 @@ import { founders } from "./sections/founders"
 import { imageSection } from "./sections/image-section"
 import { nextEvents } from "./sections/next-events"
 import { richTextSection } from "./sections/rich-text-section"
+import { sideBySide } from "./sections/side-by-side"
 import { statsSection } from "./sections/stats-section"
 import { systemComponent } from "./sections/system-component"
 import { testimonials } from "./sections/testimonials"
@@ -28,6 +31,7 @@ import { testimonials } from "./sections/testimonials"
 export const schemaTypes: SchemaTypeDefinition[] = [
   richText,
   longRichText,
+  calloutText,
   seo,
   siteLink,
   person,
@@ -41,6 +45,8 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   imageSection,
   statsSection,
   chartSection,
+  callout,
+  sideBySide,
   systemComponent,
   homepageHero,
   pageHero,

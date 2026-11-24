@@ -14,7 +14,7 @@ type CompiledType = {
 
 type Case = { value: Record<string, unknown>; path: string[] }
 
-const richTextTypes = ["richText", "longRichText"]
+const richTextTypes = ["richText", "longRichText", "calloutText"]
 
 const image = [
   {
@@ -84,6 +84,8 @@ describe("every rich text field", () => {
         "richTextSection.body.i1",
         "page: header.pageHero.subtitle.i1",
         "page: sections.richTextSection.body.i1",
+        "callout.body.i1",
+        "sideBySide.items.callout.body.i1",
         "siteSettings: footer.text.i1",
         "siteSettings: notice.i1",
       ]),

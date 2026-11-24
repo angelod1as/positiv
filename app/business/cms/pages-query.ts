@@ -65,6 +65,11 @@ export const pagesQuery = `*[_type == "page"]{
       series,
       rows[]{ _key, label, values, highlight }
     },
+    _type == "callout" => { emoji, title, body, color },
+    _type == "sideBySide" => {
+      title,
+      items[]{ _type, _key, emoji, title, body, color }
+    },
     _type == "systemComponent" => { component }
   },
   seo{ title, description, image{ alt, hotspot, crop, asset }, noIndex }
