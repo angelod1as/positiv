@@ -41,7 +41,7 @@ export const FounderCard: FCC<FounderCardProps> = ({
         <p className="text-sm text-muted-foreground">{pronounsLabel}</p>
       </div>
 
-      <div className="text-muted-foreground text-center max-w-md flex flex-col gap-4">
+      <div className="text-muted-foreground text-center max-w-md flex flex-col gap-8">
         {children}
       </div>
       <div>

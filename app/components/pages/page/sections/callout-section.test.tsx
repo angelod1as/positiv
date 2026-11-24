@@ -115,3 +115,14 @@ describe("CalloutSection", () => {
     ).toBeInTheDocument()
   })
 })
+
+describe("Callout paragraph spacing", () => {
+  it("spaces paragraphs twice as far apart as before", () => {
+    renderWithRouter(<CalloutSection content={callout()} />)
+
+    expect(
+      screen.getByText("Garanta sua vaga até sexta.").closest("p")
+        ?.parentElement,
+    ).toHaveClass("gap-4")
+  })
+})

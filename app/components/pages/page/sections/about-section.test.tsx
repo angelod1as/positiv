@@ -48,3 +48,11 @@ describe("AboutSection", () => {
     expect(screen.getByText("mais texto").tagName).toBe("P")
   })
 })
+
+describe("AboutSection paragraph spacing", () => {
+  it("spaces a card's paragraphs twice as far apart as before", () => {
+    renderWithRouter(<AboutSection content={about} />)
+
+    expect(screen.getByText("mais texto").parentElement).toHaveClass("gap-8")
+  })
+})
