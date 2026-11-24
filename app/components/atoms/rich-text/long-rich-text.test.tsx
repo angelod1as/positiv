@@ -137,6 +137,8 @@ describe("LongRichText", () => {
   })
 })
 
+const PULL_UP_UNDER_TITLE = "[:is(h2,h3,h4)+&]:-mt-6"
+
 describe("LongRichText title levels", () => {
   const levels = [
     block("h2", "Título um", { style: "h2" }),
@@ -172,20 +174,24 @@ describe("LongRichText title levels", () => {
 
       const subtitle = screen.getByText(text)
       expect(subtitle.tagName).toBe("P")
-      expect(subtitle).toHaveClass("text-muted-foreground", "-mt-6", size)
+      expect(subtitle).toHaveClass("text-muted-foreground", size)
+      expect(subtitle).toHaveClass(PULL_UP_UNDER_TITLE)
+      expect(subtitle).not.toHaveClass("-mt-6")
     },
   )
 })
 
 describe("LongRichText leading subtitle", () => {
   it.each(["subtitle1", "subtitle2", "subtitle3"] as const)(
-    "keeps a %s that opens the text inside its container",
+    "pulls a %s up only when it follows a title",
     (style) => {
       renderWithRouter(
         <LongRichText value={[block("s", "Abre o texto", { style })]} />,
       )
 
-      expect(screen.getByText("Abre o texto")).toHaveClass("first:mt-0")
+      expect(screen.getByText("Abre o texto")).toHaveClass(
+        PULL_UP_UNDER_TITLE,
+      )
     },
   )
 })
