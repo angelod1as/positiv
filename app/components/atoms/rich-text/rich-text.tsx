@@ -40,19 +40,19 @@ const LONG_COMPONENTS: PortableTextComponents = {
       <h2 className="mt-6 text-2xl first:mt-0">{children}</h2>
     ),
     subtitle1: ({ children }) => (
-      <p className="-mt-6 text-lg text-muted-foreground">{children}</p>
+      <p className="-mt-6 text-lg text-muted-foreground first:mt-0">{children}</p>
     ),
     h3: ({ children }) => (
       <h3 className="mt-6 text-xl first:mt-0">{children}</h3>
     ),
     subtitle2: ({ children }) => (
-      <p className="-mt-6 text-base text-muted-foreground">{children}</p>
+      <p className="-mt-6 text-base text-muted-foreground first:mt-0">{children}</p>
     ),
     h4: ({ children }) => (
       <h4 className="mt-6 text-lg first:mt-0">{children}</h4>
     ),
     subtitle3: ({ children }) => (
-      <p className="-mt-6 text-base text-muted-foreground">{children}</p>
+      <p className="-mt-6 text-base text-muted-foreground first:mt-0">{children}</p>
     ),
     blockquote: ({ children }) => <blockquote>{children}</blockquote>,
   },

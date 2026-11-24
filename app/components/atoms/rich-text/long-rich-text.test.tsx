@@ -176,3 +176,16 @@ describe("LongRichText title levels", () => {
     },
   )
 })
+
+describe("LongRichText leading subtitle", () => {
+  it.each(["subtitle1", "subtitle2", "subtitle3"] as const)(
+    "keeps a %s that opens the text inside its container",
+    (style) => {
+      renderWithRouter(
+        <LongRichText value={[block("s", "Abre o texto", { style })]} />,
+      )
+
+      expect(screen.getByText("Abre o texto")).toHaveClass("first:mt-0")
+    },
+  )
+})
