@@ -129,11 +129,17 @@ The Page query joins Regras Gerais and Acordos into the snapshot. It never
 reads the Regras Privadas: the Page loader reads them per request, only for a
 signed-in visitor, so anyone else gets nothing of that Section.
 `app/business/cms/pages-query.test.ts` fails if the site query mentions them.
+For the same reason the Presentation preview shows the published Regras
+Privadas: an edit to them appears only once it is published.
 
 Step 1 of the event application shows all three parts, read through
 `rulesCache`. Neither place keeps a copy in code: with no published Rules,
 a Regras Section renders nothing and the application says the rules could
 not be loaded.
+
+The rules quiz is not in Sanity: its questions and answers are
+`rulesQuestionsCopy` in `app/copy/events.ts`. A change to a rule that a
+question asks about needs the question changed there too.
 
 ### Development mirrors production
 
