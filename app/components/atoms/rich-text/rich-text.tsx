@@ -48,6 +48,13 @@ const LONG_COMPONENTS: PortableTextComponents = {
   marks: MARKS,
 }
 
+const withoutBlankBlocks = <Block extends LongPortableText[number]>(
+  value: Block[],
+): Block[] =>
+  value.filter((block) =>
+    block.children.some((span) => span.text.trim() !== ""),
+  )
+
 type RichTextProps = {
   value: PortableText
   inline?: boolean
@@ -58,7 +65,7 @@ export const RichText = ({
   inline = false,
 }: RichTextProps): ReactNode => (
   <PortableTextRenderer
-    value={value}
+    value={withoutBlankBlocks(value)}
     components={inline ? INLINE_COMPONENTS : BLOCK_COMPONENTS}
   />
 )
@@ -68,5 +75,8 @@ type LongRichTextProps = {
 }
 
 export const LongRichText = ({ value }: LongRichTextProps): ReactNode => (
-  <PortableTextRenderer value={value} components={LONG_COMPONENTS} />
+  <PortableTextRenderer
+    value={withoutBlankBlocks(value)}
+    components={LONG_COMPONENTS}
+  />
 )

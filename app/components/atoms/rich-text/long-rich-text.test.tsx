@@ -19,6 +19,24 @@ const block = (
 })
 
 describe("LongRichText", () => {
+  it("renders nothing for empty or blank lines, whatever their number", () => {
+    const { container } = renderWithRouter(
+      <LongRichText
+        value={[
+          block("p1", "Primeiro"),
+          ...Array.from({ length: 10 }, (_, index) => block(`e${index}`, "")),
+          block("blank", " \t "),
+          block("h2", "", { style: "h2" }),
+          block("p2", "Segundo"),
+        ]}
+      />,
+    )
+
+    expect(container.querySelectorAll("p")).toHaveLength(2)
+    expect(container.querySelectorAll("h2")).toHaveLength(0)
+    expect(container).toHaveTextContent(/^PrimeiroSegundo$/)
+  })
+
   it("renders headings at the levels the Editor chose", () => {
     renderWithRouter(
       <LongRichText
