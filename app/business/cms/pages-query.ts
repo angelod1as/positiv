@@ -1,4 +1,4 @@
-const ruleProjection = `{ _key, title, body, highlight{ title, body } }`
+import { ruleProjection } from "./rules-query"
 
 export const pagesQuery = `*[_type == "page"]{
   _id,
