@@ -222,7 +222,10 @@ describe("ParticipantEventHistory", () => {
       },
     ]
     renderWithRouter(
-      <ParticipantEventHistory participantHistory={historyWithPayment} />,
+      <ParticipantEventHistory
+        participantHistory={historyWithPayment}
+        showPayments
+      />,
     )
 
     await waitFor(() => {
@@ -280,7 +283,10 @@ describe("ParticipantEventHistory", () => {
 
   it("should have the new column headers for spot type, payment, and rotation", async () => {
     renderWithRouter(
-      <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
+      <ParticipantEventHistory
+        participantHistory={mockParticipantHistory}
+        showPayments
+      />,
     )
 
     await waitFor(() => {
@@ -292,7 +298,10 @@ describe("ParticipantEventHistory", () => {
 
   it("should have the Diferença column header", async () => {
     renderWithRouter(
-      <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
+      <ParticipantEventHistory
+        participantHistory={mockParticipantHistory}
+        showPayments
+      />,
     )
 
     await waitFor(() => {
@@ -310,7 +319,10 @@ describe("ParticipantEventHistory", () => {
       },
     ]
     renderWithRouter(
-      <ParticipantEventHistory participantHistory={historyWithSurplus} />,
+      <ParticipantEventHistory
+        participantHistory={historyWithSurplus}
+        showPayments
+      />,
     )
 
     await waitFor(() => {
@@ -330,7 +342,10 @@ describe("ParticipantEventHistory", () => {
       },
     ]
     renderWithRouter(
-      <ParticipantEventHistory participantHistory={historyWithZero} />,
+      <ParticipantEventHistory
+        participantHistory={historyWithZero}
+        showPayments
+      />,
     )
 
     await waitFor(() => {
@@ -374,7 +389,10 @@ describe("ParticipantEventHistory", () => {
       },
     ]
     renderWithRouter(
-      <ParticipantEventHistory participantHistory={historyWithRefund} />,
+      <ParticipantEventHistory
+        participantHistory={historyWithRefund}
+        showPayments
+      />,
     )
 
     // The money went back, so the column reports nothing held — the same
@@ -396,7 +414,10 @@ describe("ParticipantEventHistory", () => {
       },
     ]
     renderWithRouter(
-      <ParticipantEventHistory participantHistory={historyWithNegativeSurplus} />,
+      <ParticipantEventHistory
+        participantHistory={historyWithNegativeSurplus}
+        showPayments
+      />,
     )
 
     await waitFor(() => {
@@ -416,7 +437,10 @@ describe("ParticipantEventHistory", () => {
       },
     ]
     renderWithRouter(
-      <ParticipantEventHistory participantHistory={historyWithZeroSurplus} />,
+      <ParticipantEventHistory
+        participantHistory={historyWithZeroSurplus}
+        showPayments
+      />,
     )
 
     await waitFor(() => {
@@ -455,7 +479,10 @@ describe("ParticipantEventHistory", () => {
         payment_status: "paid",
       },
     ]
-    renderWithRouter(<ParticipantEventHistory participantHistory={history} />)
+    renderWithRouter(<ParticipantEventHistory
+        participantHistory={history}
+        showPayments
+      />)
 
     // the row after the launch paints its amount, so the absence below is the
     // cutoff at work and not a grid that never rendered

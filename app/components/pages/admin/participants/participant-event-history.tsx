@@ -149,7 +149,7 @@ function SurplusRenderer(
 
 export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
   participantHistory,
-  showPayments = true,
+  showPayments = false,
 }) => {
   const columnDefs: ColDef<ParticipantEventHistoryData>[] = useMemo(
     () => [

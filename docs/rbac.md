@@ -89,7 +89,8 @@ Puts a person on an event without an application of their own.
 Sees and handles money: payments, amounts and totals, recording and
 cancelling payments, refunds, the WhatsApp payment message, the numbers
 page's money chapter and the settings page (online and card payments, the
-registration limit, the Listmonk check).
+registration limit, the Listmonk check). An event's ticket price is public, so
+it stays visible without it.
 
 - App, actions: `handlePaymentIntent`
   (`app/business/payment/payment-intents.server.ts`) refuses every payment

@@ -48,7 +48,7 @@ type ParticipantVsEventDataProps = {
 
 export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
   eventParticipant,
-  showPayment = true,
+  showPayment = false,
 }) => {
   const {
     id,

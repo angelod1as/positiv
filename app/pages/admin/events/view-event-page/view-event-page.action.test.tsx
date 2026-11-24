@@ -166,6 +166,25 @@ describe("AdminViewEventPage action", () => {
     })
   })
 
+  describe.each(INTENTS.filter(({ intent }) => intent.startsWith("payment-")))(
+    "$intent",
+    ({ intent, fields, mutation }) => {
+      it("should refuse someone in the admin area without payments.manage", async () => {
+        vi.mocked(getAdminContext).mockResolvedValue({
+          currentProfile: {
+            id: "interviewer-1",
+            permissions: [PERMISSIONS.ADMIN_PANEL],
+          },
+        } as unknown as Awaited<ReturnType<typeof getAdminContext>>)
+
+        const result = await runAction({ intent, ...fields })
+
+        expect(mutation).not.toHaveBeenCalled()
+        expect(result).toMatchObject({ success: false, intent })
+      })
+    },
+  )
+
   it("should record who registered a manual payment", async () => {
     await runAction({
       intent: "payment-manual",
