@@ -205,12 +205,9 @@ async function mirrorInListmonk(
     return { bounced: false }
   }
 
-  const wantsAny =
-    preferences.registrationAlerts ||
-    preferences.newsletter ||
-    preferences.marketing
+  const wantsAList = preferences.registrationAlerts || preferences.newsletter
 
-  if (wantsAny && subscriber.status === "blocklisted") {
+  if (wantsAList &&subscriber.status === "blocklisted") {
     if ((await unwrap(getSubscriberBounceCount(subscriber.id))) > 0) {
       return { bounced: true }
     }

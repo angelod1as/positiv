@@ -442,6 +442,22 @@ describe("email preferences - Integration Tests", () => {
       expect(enableSubscriber).not.toHaveBeenCalled()
     })
 
+    it("leaves a block alone when only Marketing, which has no list yet, is on", async () => {
+      const profile = await newProfile()
+      await withSubscription(profile.id, false, 77)
+      getSubscriberById.mockResolvedValue(
+        ok(listmonkSubscriber(77, { status: "blocklisted" })),
+      )
+
+      await saveEmailPreferences(
+        profile.id,
+        answers({ registrationAlerts: false, newsletter: false, marketing: true }),
+      )
+
+      expect(getSubscriberBounceCount).not.toHaveBeenCalled()
+      expect(enableSubscriber).not.toHaveBeenCalled()
+    })
+
     it("fails when Listmonk refuses, with the choices already saved on the site", async () => {
       const profile = await newProfile()
       await withSubscription(profile.id, true, 77)
