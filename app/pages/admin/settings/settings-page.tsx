@@ -8,8 +8,10 @@ import {
   getRegistrationLimit,
   isCardPaymentsEnabled,
   isLikertEnabled,
+  isLikertRequired,
   setCardPaymentsEnabled,
   setLikertEnabled,
+  setLikertRequired,
   setOnlinePaymentsEnabled,
   setRegistrationLimit,
 } from "~/business/settings/app-settings.server"
@@ -61,6 +63,14 @@ export async function action({ request, params }: Route.ActionArgs) {
     return { intent }
   }
 
+  if (intent === "set-likert-required") {
+    await setLikertRequired({
+      enabled: formData.get("enabled") === "true",
+      profileId: currentProfile?.id,
+    })
+    return { intent }
+  }
+
   if (intent === "set-registration-limit") {
     const limit = zod.coerce
       .number()
@@ -98,6 +108,7 @@ export async function loader() {
     cardPayments: await isCardPaymentsEnabled(),
     registrationLimit: await getRegistrationLimit(),
     likertEnabled: await isLikertEnabled(),
+    likertRequired: await isLikertRequired(),
   }
 }
 
@@ -117,7 +128,10 @@ const SettingsPage = ({ loaderData }: Route.ComponentProps) => {
 
       <Separator />
 
-      <LikertSection enabled={loaderData.likertEnabled} />
+      <LikertSection
+        enabled={loaderData.likertEnabled}
+        required={loaderData.likertRequired}
+      />
 
       <Separator />
 

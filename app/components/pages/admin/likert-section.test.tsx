@@ -10,30 +10,46 @@ vi.mock("react-router", async (importOriginal) => ({
   useFetcher: () => ({ submit, state: "idle" }),
 }))
 
-const likertSwitch = () =>
-  screen.getByRole("switch", { name: "Escala de Likert" })
+const accessSwitch = () =>
+  screen.getByRole("switch", { name: "Acessível por link" })
+const requiredSwitch = () => screen.getByRole("switch", { name: "Obrigatória" })
 
 describe("LikertSection", () => {
   beforeEach(() => {
     submit.mockClear()
   })
 
-  it("shows whether the scale is on", () => {
-    render(<LikertSection enabled />)
+  it("shows each switch as it is", () => {
+    render(<LikertSection enabled required={false} />)
 
-    expect(likertSwitch()).toBeChecked()
+    expect(accessSwitch()).toBeChecked()
+    expect(requiredSwitch()).not.toBeChecked()
   })
 
   it.each([
     [false, "true"],
     [true, "false"],
-  ])("when %s, flips the switch to %s", async (enabled, next) => {
-    render(<LikertSection enabled={enabled} />)
+  ])("when access is %s, flips it to %s", async (enabled, next) => {
+    render(<LikertSection enabled={enabled} required={false} />)
 
-    await userEvent.click(likertSwitch())
+    await userEvent.click(accessSwitch())
 
     expect(submit).toHaveBeenCalledWith(
       { intent: "set-likert", enabled: next },
+      { method: "POST" },
+    )
+  })
+
+  it.each([
+    [false, "true"],
+    [true, "false"],
+  ])("when required is %s, flips it to %s", async (required, next) => {
+    render(<LikertSection enabled={false} required={required} />)
+
+    await userEvent.click(requiredSwitch())
+
+    expect(submit).toHaveBeenCalledWith(
+      { intent: "set-likert-required", enabled: next },
       { method: "POST" },
     )
   })

@@ -79,8 +79,12 @@ export const registrationLimitSettingCopy = {
 
 export const likertSettingCopy = {
   title: "Escala de Likert",
-  label: "Escala de Likert",
-  help: "Ligada, as pessoas veem a escala em Minha conta. Desligada, só a equipe admin vê a escala.",
+  accessLabel: "Acessível por link",
+  accessHelp:
+    "Ligada, quem tiver o link (/conta/escala) consegue responder a escala. Nenhum link aparece no site. Desligada, só a equipe admin vê a escala.",
+  requiredLabel: "Obrigatória",
+  requiredHelp:
+    "Ligada, a escala aparece em Minha conta para todo mundo, mesmo com o acesso por link desligado.",
 } as const
 
 export const adminFeedbacksCopy = {

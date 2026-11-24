@@ -3,6 +3,7 @@ import {
   getRegistrationLimit,
   isCardPaymentsEnabled,
   isLikertEnabled,
+  isLikertRequired,
 } from "~/business/settings/app-settings.server"
 import { getOnlinePaymentsSetting } from "~/business/payment/online-payments.server"
 import { defaultOnlinePaymentsSetting } from "~/test/online-payments-setting"
@@ -12,6 +13,7 @@ vi.mock("~/business/settings/app-settings.server", () => ({
   getRegistrationLimit: vi.fn(),
   isCardPaymentsEnabled: vi.fn(),
   isLikertEnabled: vi.fn(),
+  isLikertRequired: vi.fn(),
 }))
 
 vi.mock("~/business/payment/online-payments.server", () => ({
@@ -19,7 +21,7 @@ vi.mock("~/business/payment/online-payments.server", () => ({
 }))
 
 describe("SettingsPage loader", () => {
-  it("hands the page the payments settings, the registration limit and the Likert switch", async () => {
+  it("hands the page the payments settings, the registration limit and the Likert switches", async () => {
     const onlinePayments = {
       ...defaultOnlinePaymentsSetting,
       switchedOn: true,
@@ -31,6 +33,7 @@ describe("SettingsPage loader", () => {
     vi.mocked(isCardPaymentsEnabled).mockResolvedValue(true)
     vi.mocked(getRegistrationLimit).mockResolvedValue(120)
     vi.mocked(isLikertEnabled).mockResolvedValue(true)
+    vi.mocked(isLikertRequired).mockResolvedValue(false)
 
     const result = await loader()
 
@@ -39,6 +42,7 @@ describe("SettingsPage loader", () => {
       cardPayments: true,
       registrationLimit: 120,
       likertEnabled: true,
+      likertRequired: false,
     })
   })
 })
