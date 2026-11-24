@@ -58,6 +58,20 @@ describe("pageDocumentSchema", () => {
       },
     )
 
+    it("accepts a Regras Privadas Section, whose rules the snapshot leaves out", () => {
+      accepts(
+        page({
+          sections: [
+            { ...sections.rulesSection, part: "privateRules", rules: null },
+          ],
+        }),
+      )
+    })
+
+    it("accepts a Regras Section before the Rules are first published", () => {
+      accepts(page({ sections: [{ ...sections.rulesSection, rules: null }] }))
+    })
+
     it("accepts every Section type on one Page, in any order", () => {
       accepts(page({ sections: Object.values(sections).reverse() }))
     })
@@ -239,6 +253,19 @@ describe("pageDocumentSchema", () => {
           {
             ...sections.chartSection,
             rows: [{ ...sections.chartSection.rows[0], values: ["6"] }],
+          },
+        ],
+      ],
+      [
+        "a Regras Section with a part the Rules do not have",
+        [{ ...sections.rulesSection, part: "somethingElse" }],
+      ],
+      [
+        "a Regras Section with a rule without a title",
+        [
+          {
+            ...sections.rulesSection,
+            rules: [{ ...sections.rulesSection.rules[0], title: null }],
           },
         ],
       ],
