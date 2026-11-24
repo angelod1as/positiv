@@ -18,6 +18,9 @@ export const canSeePayments = (viewer: Viewer): boolean =>
  * participant's payment go through here before they leave the server, so a
  * person without payments.manage never receives the amounts, not just never
  * sees them.
+ *
+ * Blanked rows read as "no payment": zero amounts and no status. Whatever
+ * renders them must also ask canSeePayments, or it will show a free spot.
  */
 export function paymentsVisibleTo<T extends PaymentFields>(
   viewer: Viewer,
