@@ -41,6 +41,12 @@ describe("singletonActions", () => {
     ).toEqual(["publish", "discardChanges", "restore"])
   })
 
+  it("keeps the Rules from being deleted, duplicated or unpublished", () => {
+    expect(
+      names(singletonActions(allActions, { schemaType: "rules" })),
+    ).toEqual(["publish", "discardChanges", "restore"])
+  })
+
   it("leaves every other document's actions alone", () => {
     expect(singletonActions(allActions, { schemaType: "person" })).toEqual(
       allActions,
@@ -63,6 +69,7 @@ describe("withoutSingletons", () => {
       { templateId: "siteSettings" },
       { templateId: "paymentMessages" },
       { templateId: "likertScale" },
+      { templateId: "rules" },
       { templateId: "page" },
     ]
 

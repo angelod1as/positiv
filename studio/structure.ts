@@ -1,4 +1,5 @@
 import { BillIcon } from "@sanity/icons/Bill"
+import { BookIcon } from "@sanity/icons/Book"
 import { ClipboardIcon } from "@sanity/icons/Clipboard"
 import { CogIcon } from "@sanity/icons/Cog"
 import { DocumentsIcon } from "@sanity/icons/Documents"
@@ -11,6 +12,7 @@ import {
   EMAIL_TEMPLATES_ID,
   LIKERT_SCALE_ID,
   PAYMENT_MESSAGES_ID,
+  RULES_ID,
   SITE_SETTINGS_ID,
 } from "./singletons"
 
@@ -69,6 +71,16 @@ export const structure: StructureResolver = (S) =>
             .schemaType("likertScale")
             .documentId(LIKERT_SCALE_ID)
             .title("Escala de Likert"),
+        ),
+      S.listItem()
+        .title("Regras")
+        .id(RULES_ID)
+        .icon(BookIcon)
+        .child(
+          S.document()
+            .schemaType("rules")
+            .documentId(RULES_ID)
+            .title("Regras"),
         ),
       S.divider(),
       S.documentTypeListItem("person").title("Pessoas"),

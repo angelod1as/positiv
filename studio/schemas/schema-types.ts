@@ -5,10 +5,12 @@ import { likertScale } from "./documents/likert-scale"
 import { page } from "./documents/page"
 import { paymentMessages } from "./documents/payment-messages"
 import { person } from "./documents/person"
+import { rules } from "./documents/rules"
 import { siteSettings } from "./documents/site-settings"
 import { calloutText } from "./objects/callout-text"
 import { longRichText } from "./objects/long-rich-text"
 import { richText } from "./objects/rich-text"
+import { rule } from "./objects/rule"
 import { seo } from "./objects/seo"
 import { siteLink } from "./objects/site-link"
 import { homepageHero } from "./page-header/homepage-hero"
@@ -34,6 +36,7 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   calloutText,
   seo,
   siteLink,
+  rule,
   person,
   about,
   nextEvents,
@@ -56,4 +59,5 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   paymentMessages,
   emailTemplates,
   likertScale,
+  rules,
 ]
