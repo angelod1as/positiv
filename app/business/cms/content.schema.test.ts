@@ -160,7 +160,16 @@ describe("the nextEvents section contract", () => {
 })
 
 describe("longPortableTextSchema", () => {
-  it.each(["normal", "h2", "h3", "blockquote"])(
+  it.each([
+    "normal",
+    "h2",
+    "subtitle1",
+    "h3",
+    "subtitle2",
+    "h4",
+    "subtitle3",
+    "blockquote",
+  ])(
     "accepts a %s block",
     (style) => {
       const value = [block([{ text: "Consentimento" }], { style })]
@@ -169,7 +178,7 @@ describe("longPortableTextSchema", () => {
     },
   )
 
-  it.each(["h1", "h4"])("rejects a %s block", (style) => {
+  it.each(["h1", "h5", "subtitle4"])("rejects a %s block", (style) => {
     const result = longPortableTextSchema.safeParse([
       block([{ text: "Consentimento" }], { style }),
     ])
