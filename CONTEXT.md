@@ -105,8 +105,8 @@ for a Permission, never for a Role.
 _Avoid_: Right, privilege, scope, capability
 
 **Admin**:
-The Role that holds every Permission: runs events, participants and the
-newsletter, enters the admin panel and receives admin notifications.
+The Role that holds every Permission: runs events, participants, payments and
+the newsletter, enters the admin panel and receives admin notifications.
 _Avoid_: Administrator, superuser, Editor (who changes Public Site content)
 
 **Staff**:
