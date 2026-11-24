@@ -59,4 +59,23 @@ describe("likertSchema", () => {
       1, 2, 3, 4, 5,
     ])
   })
+
+  it.each([
+    [5000, true],
+    [5001, false],
+  ])(
+    "draws the comment limit where the server does (%i characters)",
+    (length, accepted) => {
+      const comment = "a".repeat(length)
+      const submission = buildLikertSubmission(
+        { statements: [{ key: "ciume", text: "Sinto ciúme." }] },
+        { ciume: { choice: "agree", comment } },
+      )
+
+      expect(likertSchema.safeParse({ choice: "agree", comment }).success).toBe(
+        accepted,
+      )
+      expect(submission !== null).toBe(accepted)
+    },
+  )
 })
