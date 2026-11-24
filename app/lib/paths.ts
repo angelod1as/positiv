@@ -51,6 +51,12 @@ const ADMIN_DASHBOARD = "/admin"
 const ADMIN_PARTICIPANTS = `${ADMIN_DASHBOARD}/participantes`
 const ADMIN_VIEW_PARTICIPANT = (profileId: string) =>
   `${ADMIN_PARTICIPANTS}/${profileId}`
+const ADMIN_VIEW_LIKERT_SUBMISSION = (
+  profileId: string,
+  submissionId: string,
+  eventId?: string | null,
+) =>
+  `${ADMIN_VIEW_PARTICIPANT(profileId)}/escala/${submissionId}${eventId ? `?evento=${eventId}` : ""}`
 // FEEDBACKS
 const ADMIN_FEEDBACKS = `${ADMIN_DASHBOARD}/feedbacks`
 const ADMIN_FEEDBACK_STATUS_COMMIT = "/api/admin/feedback-status"
@@ -94,6 +100,7 @@ const paths = {
     ADMIN_DASHBOARD,
     ADMIN_PARTICIPANTS,
     ADMIN_VIEW_PARTICIPANT,
+    ADMIN_VIEW_LIKERT_SUBMISSION,
     ADMIN_FEEDBACKS,
     ADMIN_FEEDBACK_STATUS_COMMIT,
     ADMIN_DATAVIZ,

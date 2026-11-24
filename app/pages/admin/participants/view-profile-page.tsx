@@ -44,7 +44,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     getParticipantLikert({
       profileId,
       viewer: currentProfile,
-      submissionId: new URL(request.url).searchParams.get("envio"),
     }),
   ])
 

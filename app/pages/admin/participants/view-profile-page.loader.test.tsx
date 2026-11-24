@@ -37,10 +37,10 @@ const currentProfile = {
   permissions: ["admin.panel", "profiles.manage"],
 }
 
-const runLoader = (search = "") =>
+const runLoader = () =>
   loader({
     request: new Request(
-      `http://localhost/admin/participantes/7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f${search}`,
+      `http://localhost/admin/participantes/7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f`,
     ),
     params: { profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f" },
   } as Parameters<typeof loader>[0])
@@ -51,10 +51,7 @@ describe("view profile page loader", () => {
     vi.mocked(getAdminContext).mockResolvedValue({
       currentProfile,
     } as unknown as AdminContext)
-    vi.mocked(getParticipantLikert).mockResolvedValue({
-      submissions: [],
-      selected: null,
-    })
+    vi.mocked(getParticipantLikert).mockResolvedValue([])
     vi.mocked(getProfileById).mockResolvedValue({
       success: true,
       data: { id: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f" },
@@ -114,24 +111,20 @@ describe("view profile page loader", () => {
     )
   })
 
-  it("hands the page the Likert submission the admin asked to open", async () => {
-    const likert = {
-      submissions: [
-        {
-          id: "aaaaaaaa-1111-4111-8111-111111111111",
-          submittedAt: new Date("2026-11-10T12:00:00Z"),
-        },
-      ],
-      selected: null,
-    }
+  it("hands the page the person's Likert submissions", async () => {
+    const likert = [
+      {
+        id: "aaaaaaaa-1111-4111-8111-111111111111",
+        submittedAt: new Date("2026-11-10T12:00:00Z"),
+      },
+    ]
     vi.mocked(getParticipantLikert).mockResolvedValue(likert)
 
-    const data = await runLoader("?envio=aaaaaaaa-1111-4111-8111-111111111111")
+    const data = await runLoader()
 
     expect(getParticipantLikert).toHaveBeenCalledWith({
       profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",
       viewer: currentProfile,
-      submissionId: "aaaaaaaa-1111-4111-8111-111111111111",
     })
     expect(data).toMatchObject({ likert })
   })

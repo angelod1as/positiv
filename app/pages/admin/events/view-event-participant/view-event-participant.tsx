@@ -170,7 +170,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const likert = await getParticipantLikert({
     profileId: profile.id,
     viewer: currentProfile,
-    submissionId: new URL(request.url).searchParams.get("envio"),
   })
 
   const onlinePaymentsEnabled = await isOnlinePaymentsEnabled()

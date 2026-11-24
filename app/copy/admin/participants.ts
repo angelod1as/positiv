@@ -86,10 +86,20 @@ export const adminParticipantsCopy = {
     neverAnswered: "Esta pessoa ainda não respondeu a escala.",
     loadFailed:
       "Não foi possível carregar as respostas da escala. Recarregue a página.",
+    latest: "mais recente",
+    open: "Ver respostas",
+  },
+  likertSubmission: {
+    title: (name: string) => `Escala de Likert de ${name}`,
     submittedAt: (date: string) => `Enviada em ${date}`,
-    answers: "Respostas",
-    noComment: "Sem comentário",
-    submissions: "Envios",
+    back: "Voltar para a participante",
+    newer: "Envio mais novo",
+    older: "Envio anterior",
+    statement: "Afirmação",
+    answer: "Resposta",
+    comment: "Comentário",
+    noComment: "—",
+    notFound: "Envio da escala não encontrado.",
   },
   eventHistory: {
     title: "Histórico de candidaturas",

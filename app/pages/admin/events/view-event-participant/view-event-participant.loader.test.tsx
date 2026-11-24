@@ -63,9 +63,9 @@ const currentProfile = {
   permissions: ["admin.panel", "profiles.manage"],
 }
 
-const runLoader = (search = "") =>
+const runLoader = () =>
   loader({
-    request: new Request(`http://localhost/admin/eventos/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/participantes/7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f${search}`),
+    request: new Request(`http://localhost/admin/eventos/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/participantes/7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f`),
     params: { eventId: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c", profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f" },
   } as Parameters<typeof loader>[0])
 
@@ -75,10 +75,7 @@ describe("view event participant loader", () => {
     vi.mocked(getAdminContext).mockResolvedValue({
       currentProfile,
     } as unknown as AdminContext)
-    vi.mocked(getParticipantLikert).mockResolvedValue({
-      submissions: [],
-      selected: null,
-    })
+    vi.mocked(getParticipantLikert).mockResolvedValue([])
     vi.mocked(isOnlinePaymentsEnabled).mockResolvedValue(false)
     vi.mocked(getProfileById).mockResolvedValue({
       success: true,
@@ -240,7 +237,7 @@ describe("view event participant loader", () => {
     expect(whatsappMessage).toBeNull()
   })
 
-  it("hands the page the Likert submission the admin asked to open", async () => {
+  it("hands the page the person's Likert submissions", async () => {
     vi.mocked(getEventParticipantBasic).mockResolvedValue({
       success: true,
       data: { id: "participant-1", event_title: "Festa" },
@@ -251,23 +248,19 @@ describe("view event participant loader", () => {
       data: [],
       errors: [],
     } as unknown as Awaited<ReturnType<typeof getParticipantFullEventHistory>>)
-    const likert = {
-      submissions: [
-        {
-          id: "aaaaaaaa-1111-4111-8111-111111111111",
-          submittedAt: new Date("2026-11-10T12:00:00Z"),
-        },
-      ],
-      selected: null,
-    }
+    const likert = [
+      {
+        id: "aaaaaaaa-1111-4111-8111-111111111111",
+        submittedAt: new Date("2026-11-10T12:00:00Z"),
+      },
+    ]
     vi.mocked(getParticipantLikert).mockResolvedValue(likert)
 
-    const data = await runLoader("?envio=aaaaaaaa-1111-4111-8111-111111111111")
+    const data = await runLoader()
 
     expect(getParticipantLikert).toHaveBeenCalledWith({
       profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",
       viewer: currentProfile,
-      submissionId: "aaaaaaaa-1111-4111-8111-111111111111",
     })
     expect(data).toMatchObject({ likert })
   })

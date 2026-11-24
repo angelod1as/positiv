@@ -9,35 +9,52 @@ import {
 
 type Viewer = Pick<z.infer<typeof currentProfileSchema>, "id" | "permissions">
 
-export interface ParticipantLikert {
-  submissions: { id: string; submittedAt: Date }[]
-  selected: LikertSubmission | null
+export type LikertSubmissionSummary = { id: string; submittedAt: Date }
+
+export interface ParticipantLikertSubmission {
+  submission: LikertSubmission
+  newerId: string | null
+  olderId: string | null
 }
 
 export async function getParticipantLikert({
   profileId,
   viewer,
-  submissionId,
 }: {
   profileId: string
   viewer: Viewer | null | undefined
-  submissionId?: string | null
-}): Promise<ParticipantLikert | null> {
+}): Promise<LikertSubmissionSummary[] | null> {
   try {
     const submissions = await listLikertSubmissions(profileId, viewer)
-    if (submissions.length === 0) return { submissions, selected: null }
-
-    // Only an id from this person's own list is opened, so a malformed or
-    // foreign id in the URL never reaches the database.
-    const opened =
-      submissions.find(({ id }) => id === submissionId) ?? submissions[0]
-
-    return {
-      submissions,
-      selected: await getLikertSubmission(opened.id, viewer),
-    }
+    return submissions
   } catch (error) {
     logger.error("Failed to fetch Likert submissions", { profileId, error })
     return null
+  }
+}
+
+export async function getParticipantLikertSubmission({
+  profileId,
+  submissionId,
+  viewer,
+}: {
+  profileId: string
+  submissionId: string
+  viewer: Viewer | null | undefined
+}): Promise<ParticipantLikertSubmission | null> {
+  const submissions = await listLikertSubmissions(profileId, viewer)
+
+  // Only an id from this person's own list is opened, so the page of one
+  // person never shows another's answers.
+  const index = submissions.findIndex(({ id }) => id === submissionId)
+  if (index === -1) return null
+
+  const submission = await getLikertSubmission(submissionId, viewer)
+  if (!submission) return null
+
+  return {
+    submission,
+    newerId: submissions[index - 1]?.id ?? null,
+    olderId: submissions[index + 1]?.id ?? null,
   }
 }

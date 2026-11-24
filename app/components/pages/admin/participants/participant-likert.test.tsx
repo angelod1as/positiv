@@ -1,45 +1,36 @@
 import { createMemoryRouter, RouterProvider } from "react-router"
 import { describe, expect, it } from "vitest"
-import type { ParticipantLikert as ParticipantLikertData } from "~/business/profile/participant-likert.server"
+import type { LikertSubmissionSummary } from "~/business/profile/participant-likert.server"
 import { render, screen, within } from "~/test/test-utils"
 import { ParticipantLikert } from "./participant-likert"
 
+const profileId = "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f"
+const eventId = "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c"
 const latestId = "aaaaaaaa-1111-4111-8111-111111111111"
 const olderId = "bbbbbbbb-2222-4222-8222-222222222222"
 
-const latest = {
-  id: latestId,
-  profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",
-  submittedAt: new Date("2026-11-10T15:00:00Z"),
-  beenTo: [],
-  nonMonogamySince: null,
-  answers: [
-    {
-      statementKey: "ciume",
-      statementText: "Sinto ciúme e sei conversar sobre isso.",
-      answer: 4,
-      comment: "Depende do dia.",
-    },
-    {
-      statementKey: "consentimento",
-      statementText: "Peço consentimento antes de tocar alguém.",
-      answer: 5,
-      comment: null,
-    },
-  ],
-}
+const two: LikertSubmissionSummary[] = [
+  { id: latestId, submittedAt: new Date("2026-11-10T15:00:00Z") },
+  { id: olderId, submittedAt: new Date("2026-10-01T15:00:00Z") },
+]
 
-const withTwo: ParticipantLikertData = {
-  submissions: [
-    { id: latestId, submittedAt: new Date("2026-11-10T15:00:00Z") },
-    { id: olderId, submittedAt: new Date("2026-10-01T15:00:00Z") },
-  ],
-  selected: latest,
-}
-
-const renderLikert = (likert: ParticipantLikertData | null) => {
+const renderLikert = (
+  likert: LikertSubmissionSummary[] | null,
+  event: string | null = null,
+) => {
   const router = createMemoryRouter(
-    [{ path: "/", element: <ParticipantLikert likert={likert} /> }],
+    [
+      {
+        path: "/",
+        element: (
+          <ParticipantLikert
+            likert={likert}
+            profileId={profileId}
+            eventId={event}
+          />
+        ),
+      },
+    ],
     { initialEntries: ["/"] },
   )
   return render(<RouterProvider router={router} />)
@@ -47,7 +38,7 @@ const renderLikert = (likert: ParticipantLikertData | null) => {
 
 describe("ParticipantLikert", () => {
   it("says plainly when the person never answered the scale", () => {
-    renderLikert({ submissions: [], selected: null })
+    renderLikert([])
 
     expect(
       screen.getByText("Esta pessoa ainda não respondeu a escala."),
@@ -64,39 +55,39 @@ describe("ParticipantLikert", () => {
     ).toBeInTheDocument()
   })
 
-  it("shows every statement of the open submission with its answer and comment", () => {
-    renderLikert(withTwo)
+  it("lists every submission by date, the latest marked, each linking to its page", () => {
+    renderLikert(two)
 
-    expect(screen.getByText(/10 de novembro de 2026/)).toBeInTheDocument()
+    const items = screen.getAllByRole("listitem")
+    expect(items).toHaveLength(2)
 
-    const answers = within(
-      screen.getByRole("list", { name: "Respostas" }),
-    ).getAllByRole("listitem")
-    expect(answers).toHaveLength(2)
-
-    const first = within(answers[0])
+    expect(items[0]).toHaveTextContent("10/11/26")
+    expect(within(items[0]).getByText("mais recente")).toBeInTheDocument()
     expect(
-      first.getByText("Sinto ciúme e sei conversar sobre isso."),
-    ).toBeInTheDocument()
-    expect(first.getByText("Concordo")).toBeInTheDocument()
-    expect(first.getByText("Depende do dia.")).toBeInTheDocument()
+      within(items[0]).getByRole("link", { name: "Ver respostas" }),
+    ).toHaveAttribute(
+      "href",
+      `/admin/participantes/${profileId}/escala/${latestId}`,
+    )
 
-    const second = within(answers[1])
-    expect(second.getByText("Concordo totalmente")).toBeInTheDocument()
-    expect(second.getByText("Sem comentário")).toBeInTheDocument()
+    expect(items[1]).toHaveTextContent("01/10/26")
+    expect(within(items[1]).queryByText("mais recente")).not.toBeInTheDocument()
+    expect(
+      within(items[1]).getByRole("link", { name: "Ver respostas" }),
+    ).toHaveAttribute(
+      "href",
+      `/admin/participantes/${profileId}/escala/${olderId}`,
+    )
   })
 
-  it("lists every submission, links each one and marks the open one", () => {
-    renderLikert(withTwo)
+  it("carries the event along so the page can lead back to it", () => {
+    renderLikert(two, eventId)
 
-    const list = screen.getByRole("navigation", { name: "Envios" })
-    const links = within(list).getAllByRole("link")
-
-    expect(links).toHaveLength(2)
-    expect(links[0]).toHaveAttribute("href", `/?envio=${latestId}`)
-    expect(links[0]).toHaveAttribute("aria-current", "page")
-    expect(links[1]).toHaveAttribute("href", `/?envio=${olderId}`)
-    expect(links[1]).not.toHaveAttribute("aria-current")
-    expect(links[1]).toHaveTextContent("01/10/26")
+    expect(
+      screen.getAllByRole("link", { name: "Ver respostas" })[0],
+    ).toHaveAttribute(
+      "href",
+      `/admin/participantes/${profileId}/escala/${latestId}?evento=${eventId}`,
+    )
   })
 })

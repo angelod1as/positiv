@@ -174,7 +174,7 @@ describe("ParticipantDetail", () => {
   })
 
   describe("Likert", () => {
-    const neverAnswered = { submissions: [], selected: null }
+    const neverAnswered: never[] = []
 
     it("shows the scale on the profile page even without past events", () => {
       const router = createTestRouter(
