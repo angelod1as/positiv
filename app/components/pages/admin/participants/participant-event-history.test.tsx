@@ -168,6 +168,21 @@ describe("ParticipantEventHistory", () => {
     })
   })
 
+  it("leaves out the payment and surplus columns for a person who does not handle payments", async () => {
+    renderWithRouter(
+      <ParticipantEventHistory
+        participantHistory={mockParticipantHistory}
+        showPayments={false}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText("Status de Processo")).toBeInTheDocument()
+    })
+    expect(screen.queryByText(historyCopy.payment)).not.toBeInTheDocument()
+    expect(screen.queryByText(historyCopy.surplus)).not.toBeInTheDocument()
+  })
+
   it("should render event titles as clickable links", async () => {
     renderWithRouter(
       <ParticipantEventHistory participantHistory={mockParticipantHistory} />,

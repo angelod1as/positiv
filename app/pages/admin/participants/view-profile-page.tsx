@@ -9,6 +9,10 @@ import {
 } from "~/business/profile/profiles.server"
 import { setProfileCpfExempt } from "~/business/profile/cpf-exemption.server"
 import { getParticipantLikert } from "~/business/profile/participant-likert.server"
+import {
+  canSeePayments,
+  paymentsVisibleTo,
+} from "~/business/payment/payment-visibility"
 import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
 import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { logger } from "~/lib/logger/logger.server"
@@ -25,8 +29,9 @@ const {
 export async function loader({ request, params }: Route.LoaderArgs) {
   assertUuidParams(params.profileId)
 
-  const { profileId } = params
   const { currentProfile } = await getAdminContext(request, params)
+
+  const { profileId } = params
 
   if (!profileId) {
     return redirectWithError(
@@ -66,7 +71,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   let fullHistory: ParticipantEventHistoryData[] = []
   if (historyResult.success) {
-    fullHistory = historyResult.data
+    fullHistory = paymentsVisibleTo(currentProfile, historyResult.data)
   } else {
     logger.error("Failed to fetch participant history", {
       profileId,
@@ -78,6 +83,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     profile,
     fullHistory,
     likert,
+    canManagePayments: canSeePayments(currentProfile),
   }
 }
 
@@ -120,7 +126,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 }
 
 const ViewProfilePage = ({ loaderData }: Route.ComponentProps) => {
-  const { profile, fullHistory, likert } = loaderData
+  const { profile, fullHistory, likert, canManagePayments } = loaderData
 
   if (!profile) return null
 
@@ -129,6 +135,7 @@ const ViewProfilePage = ({ loaderData }: Route.ComponentProps) => {
       profile={profile}
       fullHistory={fullHistory}
       likert={likert}
+      showPayments={canManagePayments}
     />
   )
 }

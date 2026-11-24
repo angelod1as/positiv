@@ -40,6 +40,7 @@ const renderTable = (onParticipantSaved = vi.fn()) => {
     <AdminViewEventParticipantsTable
       participants={[participant]}
       eventId="event-1"
+      showPayments
       onParticipantSaved={onParticipantSaved}
     />,
   )

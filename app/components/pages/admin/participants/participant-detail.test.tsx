@@ -11,8 +11,11 @@ vi.mock("~/components/pages/admin/participants/basic-data", () => ({
 vi.mock(
   "~/components/pages/admin/participants/participant-vs-event-data",
   () => ({
-    ParticipantVsEventData: () => (
-      <div data-testid="participant-vs-event-data">
+    ParticipantVsEventData: ({ showPayment }: { showPayment?: boolean }) => (
+      <div
+        data-testid="participant-vs-event-data"
+        data-show-payment={String(showPayment)}
+      >
         Participant Vs Event Data Component
       </div>
     ),
@@ -22,8 +25,11 @@ vi.mock(
 vi.mock(
   "~/components/pages/admin/participants/participant-event-history",
   () => ({
-    ParticipantEventHistory: () => (
-      <div data-testid="participant-event-history">
+    ParticipantEventHistory: ({ showPayments }: { showPayments?: boolean }) => (
+      <div
+        data-testid="participant-event-history"
+        data-show-payments={String(showPayments)}
+      >
         Participant Event History Component
       </div>
     ),
@@ -248,6 +254,7 @@ describe("ParticipantDetail", () => {
             eventId: "event-1",
           }}
           payments={payments as never}
+          showPayments
         />,
       )
       render(<RouterProvider router={router} />)
@@ -277,6 +284,7 @@ describe("ParticipantDetail", () => {
             eventId: "event-1",
           }}
           payments={payments as never}
+          showPayments
         />,
       )
       render(<RouterProvider router={router} />)
@@ -285,6 +293,67 @@ describe("ParticipantDetail", () => {
       expect(
         screen.queryByText("Nenhum pagamento registrado."),
       ).not.toBeInTheDocument()
+    })
+
+    const paidHistory = [
+      {
+        ...mockFullHistory[0],
+        time_event_start: "2026-02-15T14:00:00",
+        payment_status: "paid",
+        paid_gross: 22000,
+        net: 22000,
+        refunded: 0,
+      },
+    ]
+
+    it("should show money to a person who handles payments", () => {
+      const router = createTestRouter(
+        <ParticipantDetail
+          profile={mockProfile as never}
+          fullHistory={paidHistory as never}
+          currentEvent={{
+            data: mockCurrentEventData as never,
+            eventId: "event-1",
+          }}
+          payments={payments as never}
+          showPayments
+        />,
+      )
+      render(<RouterProvider router={router} />)
+
+      expect(screen.getByText("Resumo Financeiro")).toBeInTheDocument()
+      expect(
+        screen.getByTestId("participant-event-history"),
+      ).toHaveAttribute("data-show-payments", "true")
+      expect(
+        screen.getByTestId("participant-vs-event-data"),
+      ).toHaveAttribute("data-show-payment", "true")
+    })
+
+    it("should show no money to a person who does not handle payments", () => {
+      const router = createTestRouter(
+        <ParticipantDetail
+          profile={mockProfile as never}
+          fullHistory={paidHistory as never}
+          currentEvent={{
+            data: mockCurrentEventData as never,
+            eventId: "event-1",
+          }}
+          payments={payments as never}
+        />,
+      )
+      render(<RouterProvider router={router} />)
+
+      expect(screen.queryByText("Resumo Financeiro")).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole("button", { name: "Gerenciar pagamento" }),
+      ).not.toBeInTheDocument()
+      expect(
+        screen.getByTestId("participant-event-history"),
+      ).toHaveAttribute("data-show-payments", "false")
+      expect(
+        screen.getByTestId("participant-vs-event-data"),
+      ).toHaveAttribute("data-show-payment", "false")
     })
 
     it("should not offer the payment modal outside an event", () => {

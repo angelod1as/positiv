@@ -39,6 +39,8 @@ type ParticipantDetailProps = {
   whatsappMessage?: string | null
   providerName?: string
   likert?: LikertSubmissionSummary[] | null
+  /** True only for a person with payments.manage. */
+  showPayments?: boolean
 }
 
 export const ParticipantDetail = ({
@@ -51,6 +53,7 @@ export const ParticipantDetail = ({
   whatsappMessage = null,
   providerName = "",
   likert,
+  showPayments = false,
 }: ParticipantDetailProps) => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const name = profile.social_name || profile.full_name
@@ -86,7 +89,7 @@ export const ParticipantDetail = ({
               value={profile.approved_to_attend ?? "pending"}
               profileId={profileId}
             />
-            {currentEvent && payments && (
+            {showPayments && currentEvent && payments && (
               <Button
                 variant="outline"
                 onClick={() => setIsPaymentModalOpen(true)}
@@ -102,7 +105,10 @@ export const ParticipantDetail = ({
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
           <Card className="lg:col-span-3 py-4">
             <CardContent>
-              <ParticipantVsEventData eventParticipant={currentEvent.data} />
+              <ParticipantVsEventData
+                eventParticipant={currentEvent.data}
+                showPayment={showPayments}
+              />
             </CardContent>
           </Card>
           <div className="lg:col-span-2 space-y-4">
@@ -141,12 +147,17 @@ export const ParticipantDetail = ({
       )}
       {fullHistory.length > 0 && (
         <>
-          <ParticipantEventHistory participantHistory={fullHistory} />
-          <FinancialSummary participantHistory={fullHistory} />
+          <ParticipantEventHistory
+            participantHistory={fullHistory}
+            showPayments={showPayments}
+          />
+          {showPayments && (
+            <FinancialSummary participantHistory={fullHistory} />
+          )}
         </>
       )}
 
-      {currentEvent && payments && isPaymentModalOpen && (
+      {showPayments && currentEvent && payments && isPaymentModalOpen && (
         <ManagePaymentModal
           open
           onOpenChange={setIsPaymentModalOpen}

@@ -80,6 +80,18 @@ const STORAGE_KEYS = {
 
 const tableCopy = adminTablesCopy.eventParticipants
 
+const PAYMENT_COLUMNS = new Set(["payment_status", "paid_gross", "manage_payment"])
+
+const withPaymentColumns = (
+  showPayments: boolean,
+  columns: ColDef<ProfileWithExtraData>[],
+) =>
+  showPayments
+    ? columns
+    : columns.filter(
+        (column) => !PAYMENT_COLUMNS.has(String(column.colId ?? column.field)),
+      )
+
 const EDITABLE_FIELDS = [
   "application_status",
   "attendance_status",
@@ -114,6 +126,8 @@ function getStoredFilter(key: string, defaultValue: string[] = []): string[] {
 type AdminViewEventParticipantsTableProps = {
   participants: ProfileWithExtraData[]
   eventId: string
+  /** False for a person without payments.manage: no payment columns at all. */
+  showPayments: boolean
   onParticipantSaved?: () => void
   /** Opens the manage-payment modal on the row's participant. */
   onManagePayment?: (eventParticipantId: string) => void
@@ -121,7 +135,13 @@ type AdminViewEventParticipantsTableProps = {
 
 export const AdminViewEventParticipantsTable: FC<
   AdminViewEventParticipantsTableProps
-> = ({ participants, eventId, onParticipantSaved, onManagePayment }) => {
+> = ({
+  participants,
+  eventId,
+  showPayments,
+  onParticipantSaved,
+  onManagePayment,
+}) => {
   const navigate = useNavigate()
 
   // What the toolbar's indicator used to read off the page's fetcher. Off the
@@ -292,7 +312,7 @@ export const AdminViewEventParticipantsTable: FC<
   )
 
   const columnDefs: ColDef<ProfileWithExtraData>[] = useMemo(
-    () => [
+    () => withPaymentColumns(showPayments, [
       {
         field: "social_name",
         headerName: tableCopy.columns.socialName,
@@ -619,8 +639,9 @@ export const AdminViewEventParticipantsTable: FC<
         filter: false,
         ...compactCell,
       },
-    ],
+    ]),
     [
+      showPayments,
       memoizedGenderOptions,
       memoizedOrientationOptions,
       applicationStatusFilter,

@@ -43,10 +43,12 @@ const eventParticipantFormSchema = z.object({
 
 type ParticipantVsEventDataProps = {
   eventParticipant: EventParticipantWithEvent
+  showPayment?: boolean
 }
 
 export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
   eventParticipant,
+  showPayment = true,
 }) => {
   const {
     id,
@@ -173,20 +175,22 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <span className="text-sm font-medium">
-                  {vsEventCopy.payment}
-                </span>
-                <p>
-                  {payment_status === null
-                    ? vsEventCopy.noPayment
-                    : `${paymentStatusPropMap(payment_status)}${
-                        isSettledPayment(payment_status)
-                          ? `${vsEventCopy.paymentSeparator}${formatCurrency(paid_gross - refunded)}`
-                          : ""
-                      }`}
-                </p>
-              </div>
+              {showPayment && (
+                <div className="space-y-2">
+                  <span className="text-sm font-medium">
+                    {vsEventCopy.payment}
+                  </span>
+                  <p>
+                    {payment_status === null
+                      ? vsEventCopy.noPayment
+                      : `${paymentStatusPropMap(payment_status)}${
+                          isSettledPayment(payment_status)
+                            ? `${vsEventCopy.paymentSeparator}${formatCurrency(paid_gross - refunded)}`
+                            : ""
+                        }`}
+                  </p>
+                </div>
+              )}
 
               <div className="flex flex-col justify-end gap-2">
                 <Label className="flex items-center gap-2 cursor-pointer">

@@ -3,7 +3,10 @@ import { MemoryRouter } from "react-router"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { ProfileWithExtraData } from "~/business/application/event-participants.server"
 import { render, screen, waitFor } from "~/test/test-utils"
+import { adminTablesCopy } from "~/copy/admin/tables"
 import { AdminViewEventParticipantsTable } from "./view-event-participants-table"
+
+const tableCopy = adminTablesCopy.eventParticipants
 
 vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router")
@@ -107,12 +110,14 @@ const mockParticipantsMultiple = [
 function renderWithRouter(
   participants: ProfileWithExtraData[] = mockParticipants,
   onManagePayment?: (eventParticipantId: string) => void,
+  showPayments = true,
 ) {
   return render(
     <MemoryRouter>
       <AdminViewEventParticipantsTable
         participants={participants}
         eventId="event-123"
+        showPayments={showPayments}
         onManagePayment={onManagePayment}
       />
     </MemoryRouter>,
@@ -365,6 +370,25 @@ describe("AdminViewEventParticipantsTable", () => {
       await userEvent.click(button)
 
       expect(onManagePayment).toHaveBeenCalledWith("ep-1")
+    })
+
+    it("leaves out the payment columns for a person who does not handle payments", async () => {
+      renderWithRouter(
+        [createMockParticipant({ payment_status: "paid", paid_gross: 22000 })],
+        vi.fn(),
+        false,
+      )
+
+      await screen.findByText(tableCopy.columns.socialName)
+      expect(
+        screen.queryByText(tableCopy.columns.paymentStatus),
+      ).not.toBeInTheDocument()
+      expect(
+        screen.queryByText(tableCopy.columns.paidGross),
+      ).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole("button", { name: "Gerenciar pagamento" }),
+      ).not.toBeInTheDocument()
     })
   })
 

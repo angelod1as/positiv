@@ -52,6 +52,7 @@ const spotTypeMap = new Map<string, string>(
 
 type ParticipantEventHistoryProps = {
   participantHistory: ParticipantEventHistoryData[]
+  showPayments?: boolean
 }
 
 function EventRenderer(params: ICellRendererParams<ParticipantEventHistoryData>) {
@@ -148,6 +149,7 @@ function SurplusRenderer(
 
 export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
   participantHistory,
+  showPayments = true,
 }) => {
   const columnDefs: ColDef<ParticipantEventHistoryData>[] = useMemo(
     () => [
@@ -168,21 +170,25 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
           field: "spot_type",
         },
       },
-      {
-        field: "paid_gross",
-        headerName: historyCopy.payment,
-        // The same arithmetic the grid, the modal and the summary below this
-        // one report: fees stay in, a refund comes out.
-        valueGetter: (params) =>
-          (params.data?.paid_gross ?? 0) - (params.data?.refunded ?? 0),
-        cellRenderer: PaymentRenderer,
-        sortable: true,
-      },
-      {
-        headerName: historyCopy.surplus,
-        cellRenderer: SurplusRenderer,
-        sortable: false,
-      },
+      ...(showPayments
+        ? [
+            {
+              field: "paid_gross",
+              headerName: historyCopy.payment,
+              // The same arithmetic the grid, the modal and the summary below
+              // this one report: fees stay in, a refund comes out.
+              valueGetter: (params) =>
+                (params.data?.paid_gross ?? 0) - (params.data?.refunded ?? 0),
+              cellRenderer: PaymentRenderer,
+              sortable: true,
+            } satisfies ColDef<ParticipantEventHistoryData>,
+            {
+              headerName: historyCopy.surplus,
+              cellRenderer: SurplusRenderer,
+              sortable: false,
+            } satisfies ColDef<ParticipantEventHistoryData>,
+          ]
+        : []),
       {
         field: "application_status",
         headerName: eventParticipantPropMap("application_status"),
@@ -236,7 +242,7 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
         },
       },
     ],
-    [],
+    [showPayments],
   )
 
   return (

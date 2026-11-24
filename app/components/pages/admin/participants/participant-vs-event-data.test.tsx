@@ -68,11 +68,19 @@ const mockEventParticipant: EventParticipantWithEvent = {
   was_selected_for_rotation: false,
 }
 
-const createTestRouter = (eventParticipant: EventParticipantWithEvent) => {
+const createTestRouter = (
+  eventParticipant: EventParticipantWithEvent,
+  showPayment = true,
+) => {
   return createMemoryRouter([
     {
       path: "/",
-      element: <ParticipantVsEventData eventParticipant={eventParticipant} />,
+      element: (
+        <ParticipantVsEventData
+          eventParticipant={eventParticipant}
+          showPayment={showPayment}
+        />
+      ),
     },
   ])
 }
@@ -172,6 +180,17 @@ describe("ParticipantVsEventData", () => {
 
       expect(screen.getByText("Aguardando pagamento")).toBeInTheDocument()
       expect(screen.queryByText(/R\$ 0,00/)).not.toBeInTheDocument()
+    })
+
+    it("leaves the payment out for a person who does not handle payments", () => {
+      const router = createTestRouter(
+        { ...mockEventParticipant, paid_gross: 22000, payment_status: "paid" },
+        false,
+      )
+      render(<RouterProvider router={router} />)
+
+      expect(screen.queryByText("Pagamento")).not.toBeInTheDocument()
+      expect(screen.queryByText(/Pago/)).not.toBeInTheDocument()
     })
 
     it("shows a dash when the ledger holds nothing for the participant", () => {
