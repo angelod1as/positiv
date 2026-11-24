@@ -92,8 +92,6 @@ async function recordOnSite(profileId: string, preferences: EmailPreferences) {
     .where("profile_id", "=", profileId)
     .executeTakeFirst()
 
-  // Until WEB-54, newsletter_subscriptions still carries the Newsletter
-  // answer for the code that reads it there.
   if (preferences.newsletter) {
     const subscribed = await subscribeProfile(profileId, "manual_button")
     if (!subscribed.success) {
@@ -112,7 +110,6 @@ async function recordOnSite(profileId: string, preferences: EmailPreferences) {
       .execute()
   }
 
-  // Seeing the choices and saving them is confirming them, changed or not.
   const now = new Date().toISOString()
   await db
     .insertInto("email_consents")

@@ -24,6 +24,17 @@ export function meta({}: Route.MetaArgs) {
 }
 
 /**
+ * The token in the URL opens the page without a login, so it must not leave in
+ * a Referer nor sit in a shared cache.
+ */
+export function headers({}: Route.HeadersArgs) {
+  return {
+    "Referrer-Policy": "no-referrer",
+    "Cache-Control": "private, no-store",
+  }
+}
+
+/**
  * Opens from the token in an email footer, with no login, or for the person
  * logged in. A token that opens nothing falls back to the login, so a link
  * from an old email still ends somewhere useful.

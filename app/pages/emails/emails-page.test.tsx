@@ -18,7 +18,7 @@ vi.mock("sonner", () => ({
 import { toast } from "sonner"
 import { getUserContext } from "~/business/auth/auth.server"
 import { findEmailPreferences } from "~/business/newsletter/email-preferences.server"
-import EmailsPage, { loader } from "./emails-page"
+import EmailsPage, { headers, loader } from "./emails-page"
 
 const mockGetUserContext = vi.mocked(getUserContext)
 const mockFind = vi.mocked(findEmailPreferences)
@@ -75,6 +75,15 @@ describe("emails page loader", () => {
     mockGetUserContext.mockRejectedValue(toLogin)
 
     await expect(load("http://localhost/emails?t=bad")).rejects.toBe(toLogin)
+  })
+})
+
+describe("emails page headers", () => {
+  it("keeps the token out of a Referer and out of shared caches", () => {
+    expect(headers({} as Parameters<typeof headers>[0])).toEqual({
+      "Referrer-Policy": "no-referrer",
+      "Cache-Control": "private, no-store",
+    })
   })
 })
 

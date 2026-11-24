@@ -77,6 +77,16 @@ describe("emails commit route", () => {
     expect(mockSave).toHaveBeenCalledWith("p-session", preferences)
   })
 
+  it("sends someone with no token and no login to the login, saving nothing", async () => {
+    mockGetUserContext.mockRejectedValue(
+      new Response(null, { status: 302, headers: { Location: "/entrar" } }),
+    )
+
+    await expect(run({ answers: preferences })).rejects.toBeInstanceOf(Response)
+    expect(mockFind).not.toHaveBeenCalled()
+    expect(mockSave).not.toHaveBeenCalled()
+  })
+
   it("refuses a token that opens nothing", async () => {
     mockFind.mockResolvedValue({ success: true, data: null, errors: [] } as never)
 
