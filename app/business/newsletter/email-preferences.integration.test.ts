@@ -394,6 +394,25 @@ describe("email preferences - Integration Tests", () => {
       expect(subscription.listmonk_subscriber_id).toBe(88)
     })
 
+    it("keeps the id it creates for someone with no Newsletter subscription", async () => {
+      const profile = await newProfile()
+      getSubscriberById.mockResolvedValue(ok(listmonkSubscriber(88)))
+
+      await saveEmailPreferences(profile.id, answers({ newsletter: false }))
+
+      const subscription = await kysely
+        .selectFrom("newsletter_subscriptions")
+        .select(["listmonk_subscriber_id", "consent_given", "sync_status"])
+        .where("profile_id", "=", profile.id)
+        .executeTakeFirstOrThrow()
+      expect(subscription).toEqual({
+        listmonk_subscriber_id: 88,
+        consent_given: false,
+        sync_status: "unsubscribed",
+      })
+      expect((await consentOf(profile.id)).newsletter).toBe(false)
+    })
+
     it("lifts a block when the person opts back in and nothing bounced", async () => {
       const profile = await newProfile()
       await withSubscription(profile.id, false, 77)

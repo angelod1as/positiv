@@ -185,9 +185,18 @@ async function findSubscriber(
   }
 
   await db
-    .updateTable("newsletter_subscriptions")
-    .set({ listmonk_subscriber_id: subscriberId })
-    .where("profile_id", "=", profileId)
+    .insertInto("newsletter_subscriptions")
+    .values({
+      profile_id: profileId,
+      consent_given: false,
+      sync_status: "unsubscribed",
+      listmonk_subscriber_id: subscriberId,
+    })
+    .onConflict((oc) =>
+      oc
+        .column("profile_id")
+        .doUpdateSet({ listmonk_subscriber_id: subscriberId }),
+    )
     .execute()
 
   return await unwrap(getSubscriberById(subscriberId))
