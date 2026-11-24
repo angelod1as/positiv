@@ -16,6 +16,10 @@ vi.mock("~/business/profile/is-veteran.server", () => ({
   isVeteran: vi.fn(),
 }))
 
+vi.mock("~/business/cms/rules-cache.server", () => ({
+  rulesCache: { get: vi.fn() },
+}))
+
 const { ENV } = vi.hoisted(() => ({
   ENV: { NODE_ENV: "development" } as Record<string, unknown>,
 }))
@@ -32,6 +36,9 @@ vi.mock("react-router", async (importOriginal) => {
 import { getUserContext } from "~/business/auth/auth.server"
 import { findVisibleEvent } from "~/business/event/find-visible-event.server"
 import { isVeteran } from "~/business/profile/is-veteran.server"
+import { rulesCache } from "~/business/cms/rules-cache.server"
+import type { Rules } from "~/business/cms/rules.schema"
+import { rulesFixture } from "~/test/rules-documents"
 import type { EventStatus } from "~types/database/entities.types"
 
 const mockGetUserContext = vi.mocked(getUserContext)
@@ -59,6 +66,7 @@ describe("event-rules-page loader", () => {
     vi.clearAllMocks()
     signedInAs("profile-1")
     mockIsVeteran.mockResolvedValue(false)
+    vi.mocked(rulesCache.get).mockResolvedValue(rulesFixture)
   })
 
   it("should redirect to dashboard if no id param", async () => {
@@ -116,7 +124,20 @@ describe("event-rules-page loader", () => {
       eventStatus: "Registration Open",
       isVeteran: true,
       profileId: "profile-1",
+      rules: rulesFixture,
     })
+  })
+
+  it("hands the page no Rules when Sanity cannot give them", async () => {
+    eventExists()
+    vi.mocked(rulesCache.get).mockRejectedValue(new Error("Sanity is down"))
+
+    const data = await loader({
+      request: new Request("http://localhost"),
+      params: { id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" },
+    } as Route.LoaderArgs)
+
+    expect(data).toEqual(expect.objectContaining({ rules: null }))
   })
 
   it("treats a request without a profile as someone who has never been", async () => {
@@ -133,6 +154,7 @@ describe("event-rules-page loader", () => {
       eventStatus: "Registration Open",
       isVeteran: false,
       profileId: "",
+      rules: rulesFixture,
     })
   })
 })
@@ -145,7 +167,7 @@ import { buildRulesQuestions } from "~/components/forms/custom/rules/build-rules
 import { getRulesFormQuestions } from "~/components/forms/custom/rules/rules-questions"
 import EventRulesPage from "./event-rules-page"
 import { render, screen, waitFor } from "~/test/test-utils"
-import { rulesQuizCopy, rulesStatusNoticeCopy } from "~/copy/events"
+import { rulesCopy, rulesQuizCopy, rulesStatusNoticeCopy } from "~/copy/events"
 
 const quiz = getRulesFormQuestions()
 
@@ -153,17 +175,19 @@ const renderPage = ({
   isVeteran = false,
   profileId = "profile-1",
   eventStatus = "Registration Open",
+  rules = rulesFixture,
 }: {
   isVeteran?: boolean
   profileId?: string
   eventStatus?: EventStatus
+  rules?: Rules | null
 } = {}) =>
   render(
     <MemoryRouter initialEntries={["/dashboard/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/regras"]}>
       <EventRulesPage
         {...({} as Route.ComponentProps)}
         params={{ id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" }}
-        loaderData={{ eventStatus, isVeteran, profileId }}
+        loaderData={{ eventStatus, isVeteran, profileId, rules }}
       />
     </MemoryRouter>,
   )
@@ -272,6 +296,33 @@ describe("event-rules-page quiz", () => {
     ).toBeInTheDocument()
   })
 
+  it("shows the three parts of the Rules from Sanity", async () => {
+    renderPage()
+
+    await shownQuestion()
+
+    for (const name of ["Regras Gerais", "Acordos", "Regras Privadas"]) {
+      expect(screen.getByRole("heading", { level: 2, name })).toBeInTheDocument()
+    }
+    expect(
+      screen.getByRole("heading", {
+        level: 3,
+        name: "🥡 A Positiv não é marmitaria 🥡",
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it("says the rules could not be loaded when Sanity gave none", async () => {
+    renderPage({ rules: null })
+
+    await shownQuestion()
+
+    expect(screen.getByText(rulesCopy.unavailable)).toBeInTheDocument()
+    expect(
+      screen.queryByRole("heading", { level: 2, name: "Regras Gerais" }),
+    ).not.toBeInTheDocument()
+  })
+
   it("refuses to move on from a wrong answer, and says why", async () => {
     const user = userEvent.setup()
     renderPage()
@@ -371,7 +422,7 @@ const renderPageAt = (entry: string) =>
       <EventRulesPage
         {...({} as Route.ComponentProps)}
         params={{ id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" }}
-        loaderData={{ eventStatus: "Registration Open", isVeteran: false, profileId: "profile-1" }}
+        loaderData={{ eventStatus: "Registration Open", isVeteran: false, profileId: "profile-1", rules: rulesFixture }}
       />
       <Location />
     </MemoryRouter>,
@@ -490,7 +541,7 @@ const renderPageWithPathname = () =>
       <EventRulesPage
         {...({} as Route.ComponentProps)}
         params={{ id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" }}
-        loaderData={{ eventStatus: "Registration Open", isVeteran: false, profileId: "profile-1" }}
+        loaderData={{ eventStatus: "Registration Open", isVeteran: false, profileId: "profile-1", rules: rulesFixture }}
       />
       <Pathname />
     </MemoryRouter>,
@@ -645,7 +696,7 @@ describe("event-rules-page for two people in one browser session", () => {
         <EventRulesPage
           {...({} as Route.ComponentProps)}
           params={{ id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" }}
-          loaderData={{ eventStatus: "Registration Open", isVeteran: true, profileId: "profile-2" }}
+          loaderData={{ eventStatus: "Registration Open", isVeteran: true, profileId: "profile-2", rules: rulesFixture }}
         />
       </MemoryRouter>,
     )
@@ -750,7 +801,7 @@ describe("what the quiz tells a veteran it is about to ask", () => {
         <EventRulesPage
           {...({} as Route.ComponentProps)}
           params={{ id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" }}
-          loaderData={{ eventStatus: "Registration Open", isVeteran: true, profileId: "profile-2" }}
+          loaderData={{ eventStatus: "Registration Open", isVeteran: true, profileId: "profile-2", rules: rulesFixture }}
         />
       </MemoryRouter>,
     )
@@ -884,7 +935,7 @@ describe("event-rules-page analytics", () => {
         <EventRulesPage
           {...({} as Route.ComponentProps)}
           params={{ id: OTHER_EVENT_ID }}
-          loaderData={{ eventStatus: "Registration Open", isVeteran: false, profileId: "profile-1" }}
+          loaderData={{ eventStatus: "Registration Open", isVeteran: false, profileId: "profile-1", rules: rulesFixture }}
         />
       </MemoryRouter>,
     )

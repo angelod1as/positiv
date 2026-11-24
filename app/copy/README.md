@@ -219,7 +219,7 @@ catch this one, so it is on you to keep them plain.
 
 ## Long prose pages
 
-Pages that are mostly text — the rules, the code of conduct, the terms — follow
+Pages that are mostly text — the terms, for one — follow
 the same pattern. They are an array of sections, each a heading plus a Markdown
 body. Give the array an explicit type, so a section missing its `body` is a
 compile error, then wrap it in a keyed object like every other copy module:
