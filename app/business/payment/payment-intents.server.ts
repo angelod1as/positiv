@@ -27,7 +27,6 @@ type Actor =
   | null
   | undefined
 
-
 type ComposableResult =
   | { success: true; data?: Record<string, unknown> }
   | { success: false; errors: { message: string }[] }
