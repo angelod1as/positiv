@@ -27,16 +27,6 @@ type Actor =
   | null
   | undefined
 
-const PAYMENT_INTENTS = new Set([
-  "payment-offer",
-  "payment-resend",
-  "payment-sync",
-  "payment-manual",
-  "payment-manual-edit",
-  "payment-manual-cancel",
-  "payment-manual-refund",
-  "payment-cancel",
-])
 
 type ComposableResult =
   | { success: true; data?: Record<string, unknown> }
@@ -66,6 +56,28 @@ const toIntentResult = (
       : undefined,
 })
 
+type Values = Record<string, FormDataEntryValue>
+
+/**
+ * Every payment intent and what answers it. The permission check reads this
+ * same map, so an intent cannot be added without it.
+ */
+const PAYMENT_HANDLERS: Record<
+  string,
+  (values: Values, createdBy: string | undefined) => Promise<ComposableResult>
+> = {
+  "payment-offer": (values, createdBy) =>
+    createPaymentOffer({ ...values, createdBy }),
+  "payment-resend": (values) => resendPaymentOffer(values),
+  "payment-sync": (values) => syncPaymentFromProvider(values),
+  "payment-manual": (values, createdBy) =>
+    registerManualPayment({ ...values, createdBy }),
+  "payment-manual-edit": (values) => editManualPayment(values),
+  "payment-manual-cancel": (values) => cancelManualPayment(values),
+  "payment-manual-refund": (values) => markManualRefunded(values),
+  "payment-cancel": (values) => cancelPayment(values),
+}
+
 /**
  * The payment intents the modal posts, answered the same way wherever it was
  * opened from. Both admin routes own a page the modal appears on, and their
@@ -80,7 +92,10 @@ export async function handlePaymentIntent(
   formData: FormData,
   actor: Actor,
 ): Promise<PaymentIntentResult | null> {
-  if (!PAYMENT_INTENTS.has(intent)) return null
+  const handler = Object.hasOwn(PAYMENT_HANDLERS, intent)
+    ? PAYMENT_HANDLERS[intent]
+    : undefined
+  if (!handler) return null
 
   if (!can(actor, PERMISSIONS.PAYMENTS_MANAGE)) {
     return {
@@ -90,46 +105,8 @@ export async function handlePaymentIntent(
     }
   }
 
-  const createdBy = actor?.id
-  const values = Object.fromEntries(formData)
-
-  if (intent === "payment-offer") {
-    return toIntentResult(
-      intent,
-      await createPaymentOffer({ ...values, createdBy }),
-    )
-  }
-
-  if (intent === "payment-resend") {
-    return toIntentResult(intent, await resendPaymentOffer(values))
-  }
-
-  if (intent === "payment-sync") {
-    return toIntentResult(intent, await syncPaymentFromProvider(values))
-  }
-
-  if (intent === "payment-manual") {
-    return toIntentResult(
-      intent,
-      await registerManualPayment({ ...values, createdBy }),
-    )
-  }
-
-  if (intent === "payment-manual-edit") {
-    return toIntentResult(intent, await editManualPayment(values))
-  }
-
-  if (intent === "payment-manual-cancel") {
-    return toIntentResult(intent, await cancelManualPayment(values))
-  }
-
-  if (intent === "payment-manual-refund") {
-    return toIntentResult(intent, await markManualRefunded(values))
-  }
-
-  if (intent === "payment-cancel") {
-    return toIntentResult(intent, await cancelPayment(values))
-  }
-
-  return null
+  return toIntentResult(
+    intent,
+    await handler(Object.fromEntries(formData), actor?.id),
+  )
 }

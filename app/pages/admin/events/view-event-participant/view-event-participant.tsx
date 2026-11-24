@@ -180,48 +180,43 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   // hand the participant different urls for one charge.
   const origin = appOrigin(null)
 
-  const base = {
+  const [
+    onlinePaymentsEnabled,
+    participantPayments,
+    cardPaymentsEnabled,
+    whatsappMessageTemplate,
+  ] = canManagePayments
+    ? await Promise.all([
+        isOnlinePaymentsEnabled(),
+        getPaymentsForParticipant(eventParticipant.id),
+        isCardPaymentsEnabled(),
+        loadWhatsappPaymentMessage(),
+      ])
+    : [false, undefined, false, null]
+
+  const whatsappMessage = participantPayments
+    ? buildWhatsappPaymentMessage({
+        template: whatsappMessageTemplate ?? "",
+        active: participantPayments.active,
+        participantName: profile.social_name || profile.full_name || "",
+        eventTitle: eventParticipant.event_title ?? "",
+        appOrigin: origin,
+        cardPaymentsEnabled,
+      })
+    : null
+
+  return {
     profile,
     eventParticipant,
     fullHistory,
     eventId,
+    participantPayments,
+    paymentsEnabled: onlinePaymentsEnabled,
     appOrigin: origin,
+    whatsappMessage,
     providerName: paymentProvider().name,
     likert,
     canManagePayments,
-  }
-
-  if (!canManagePayments) {
-    return {
-      ...base,
-      participantPayments: undefined,
-      paymentsEnabled: false,
-      whatsappMessage: null,
-    }
-  }
-
-  const onlinePaymentsEnabled = await isOnlinePaymentsEnabled()
-  const [participantPayments, cardPaymentsEnabled, whatsappMessageTemplate] =
-    await Promise.all([
-      getPaymentsForParticipant(eventParticipant.id),
-      isCardPaymentsEnabled(),
-      loadWhatsappPaymentMessage(),
-    ])
-
-  const whatsappMessage = buildWhatsappPaymentMessage({
-    template: whatsappMessageTemplate,
-    active: participantPayments.active,
-    participantName: profile.social_name || profile.full_name || "",
-    eventTitle: eventParticipant.event_title ?? "",
-    appOrigin: origin,
-    cardPaymentsEnabled,
-  })
-
-  return {
-    ...base,
-    participantPayments,
-    paymentsEnabled: onlinePaymentsEnabled,
-    whatsappMessage,
   }
 }
 
