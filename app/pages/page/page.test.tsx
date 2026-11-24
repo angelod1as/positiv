@@ -5,11 +5,17 @@ import { isDraftModeEnabled } from "~/business/cms/draft-mode.server"
 import { loadDraftSnapshotQuery } from "~/business/cms/live-loader.server"
 import type { Page } from "~/business/cms/page.schema"
 import type { PagesSnapshot } from "~/business/cms/resolve-snapshot"
+import { rulesCache } from "~/business/cms/rules-cache.server"
+import type { Rules } from "~/business/cms/rules.schema"
 import { siteSnapshotCache } from "~/business/cms/site-snapshot-cache.server"
 import { whatsAppButtonCopy } from "~/copy/layout"
 import { metaCopy } from "~/copy/meta"
 import { getNextEvents } from "~/business/event/get-next-events.server"
-import { headers as docHeaders, page as pageDocument } from "~/test/page-documents"
+import {
+  headers as docHeaders,
+  page as pageDocument,
+  sections as docSections,
+} from "~/test/page-documents"
 import { pagesSnapshotFixture } from "~/test/pages-snapshot-fixture"
 import { act, renderWithRouter, screen, waitFor } from "~/test/test-utils"
 import type { Route } from "./+types/page"
@@ -58,6 +64,10 @@ vi.mock("~/business/cms/live-loader.server", () => ({
 
 vi.mock("~/business/cms/site-snapshot-cache.server", () => ({
   siteSnapshotCache: { get: vi.fn() },
+}))
+
+vi.mock("~/business/cms/rules-cache.server", () => ({
+  rulesCache: { get: vi.fn() },
 }))
 
 vi.mock("~/business/event/get-next-events.server", () => ({
@@ -224,6 +234,65 @@ describe("Page loader", () => {
 
     expect(result.events).toBeUndefined()
     expect(getNextEvents).not.toHaveBeenCalled()
+  })
+
+  describe("Regras Privadas", () => {
+    const privateRules = docSections.rulesSection.rules as Rules["privateRules"]
+
+    const withRulesPage = (part: string) =>
+      withPages({
+        ...pageAt("/sobre"),
+        address: "/regras-e-acordos",
+        sections: [
+          { ...docSections.rulesSection, part, rules: null },
+        ] as Page["sections"],
+      })
+
+    beforeEach(() => {
+      vi.mocked(rulesCache.get).mockResolvedValue({
+        generalRules: privateRules,
+        agreements: privateRules,
+        privateRules,
+      })
+    })
+
+    it("reads them for a signed-in visitor on a Page with their Section", async () => {
+      withRulesPage("privateRules")
+      signedInAs("user-1")
+
+      const result = await loader(argsFor("/regras-e-acordos"))
+
+      expect(result.privateRules).toEqual(privateRules)
+    })
+
+    it("never reads them for a visitor who is not signed in", async () => {
+      withRulesPage("privateRules")
+
+      const result = await loader(argsFor("/regras-e-acordos"))
+
+      expect(result.privateRules).toBeNull()
+      expect(rulesCache.get).not.toHaveBeenCalled()
+    })
+
+    it("does not read them for a Page without their Section", async () => {
+      withRulesPage("generalRules")
+      signedInAs("user-1")
+
+      const result = await loader(argsFor("/regras-e-acordos"))
+
+      expect(result.privateRules).toBeNull()
+      expect(rulesCache.get).not.toHaveBeenCalled()
+    })
+
+    it("leaves them out when the Rules cannot be read", async () => {
+      withRulesPage("privateRules")
+      signedInAs("user-1")
+      vi.mocked(rulesCache.get).mockRejectedValue(new Error("Sanity is down"))
+
+      const result = await loader(argsFor("/regras-e-acordos"))
+
+      expect(result.privateRules).toBeNull()
+    })
   })
 
   it("streams no events when they cannot be loaded", async () => {

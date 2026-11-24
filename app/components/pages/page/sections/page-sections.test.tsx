@@ -82,6 +82,31 @@ describe("PageSections", () => {
     ).toBeInTheDocument()
   })
 
+  it("renders a Regras Privadas Section from the rules the loader read", () => {
+    const rulesSection = pageSectionDocumentSchema.parse({
+      ...sections.rulesSection,
+      part: "privateRules",
+      rules: null,
+    })
+    if (rulesSection._type !== "rulesSection") throw new Error("Not rules")
+    const privateRules = pageSectionDocumentSchema.parse(sections.rulesSection)
+    if (privateRules._type !== "rulesSection") throw new Error("Not rules")
+
+    renderWithRouter(
+      <PageSections
+        page="/regras-e-acordos"
+        sections={[rulesSection]}
+        events={undefined}
+        isLoggedIn
+        privateRules={privateRules.rules ?? null}
+      />,
+    )
+
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Regras Privadas" }),
+    ).toBeInTheDocument()
+  })
+
   it("renders a Stats Section", () => {
     const statsSection = pageSectionDocumentSchema.parse(sections.statsSection)
     if (statsSection._type !== "statsSection") throw new Error("Not stats")
