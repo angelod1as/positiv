@@ -1,3 +1,5 @@
+import { getAdminContext } from "~/business/auth/admin-context.server"
+import { canSeePayments } from "~/business/payment/payment-visibility"
 import { Link } from "react-router"
 import { getEventsForDashboard } from "~/business/event/event.server"
 import { getRecentProfiles } from "~/business/profile/profiles.server"
@@ -23,7 +25,8 @@ export function meta({}: Route.MetaArgs) {
   return createMetaArray(metaCopy.adminDashboard.title)
 }
 
-export async function loader() {
+export async function loader({ request, params }: Route.LoaderArgs) {
+  const { currentProfile } = await getAdminContext(request, params)
   const [events, recentProfiles, feedbacksResult, cardPaymentsEnabled] =
     await Promise.all([
       getEventsForDashboard(),
@@ -36,12 +39,18 @@ export async function loader() {
     recentProfiles,
     recentFeedbacks: feedbacksResult.success ? feedbacksResult.data : [],
     cardPaymentsEnabled,
+    canManagePayments: canSeePayments(currentProfile),
   }
 }
 
 const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
-  const { events, recentProfiles, recentFeedbacks, cardPaymentsEnabled } =
-    loaderData
+  const {
+    events,
+    recentProfiles,
+    recentFeedbacks,
+    cardPaymentsEnabled,
+    canManagePayments,
+  } = loaderData
 
   const activeEvents = events
     .filter(
@@ -111,19 +120,25 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
 
       <Separator />
 
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h2>{adminDashboardCopy.settings.title}</h2>
-          <div className="grid grid-cols-1">
-            <Button asChild>
-              <Link to={ADMIN_SETTINGS}>{adminDashboardCopy.settings.cta}</Link>
-            </Button>
-            <p className="text-xs">{adminDashboardCopy.settings.hint}</p>
+      {canManagePayments && (
+        <>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h2>{adminDashboardCopy.settings.title}</h2>
+              <div className="grid grid-cols-1">
+                <Button asChild>
+                  <Link to={ADMIN_SETTINGS}>
+                    {adminDashboardCopy.settings.cta}
+                  </Link>
+                </Button>
+                <p className="text-xs">{adminDashboardCopy.settings.hint}</p>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <Separator />
+          <Separator />
+        </>
+      )}
 
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">

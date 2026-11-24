@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { getAdminContext } from "~/business/auth/admin-context.server"
+import { PERMISSIONS } from "~/business/auth/permissions"
 import {
   cleanupListmonkTestCampaign,
   testListmonkConnection,
@@ -80,7 +81,10 @@ describe("SettingsPage action", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(getAdminContext).mockResolvedValue({
-      currentProfile: { id: "admin-1" },
+      currentProfile: {
+        id: "admin-1",
+        permissions: [PERMISSIONS.ADMIN_PANEL, PERMISSIONS.PAYMENTS_MANAGE],
+      },
     } as Awaited<ReturnType<typeof getAdminContext>>)
     vi.mocked(testListmonkConnection).mockResolvedValue({} as never)
     vi.mocked(cleanupListmonkTestCampaign).mockResolvedValue({} as never)
@@ -91,6 +95,18 @@ describe("SettingsPage action", () => {
       vi.mocked(getAdminContext).mockRejectedValue(
         new Response(null, { status: 302 }),
       )
+
+      await expect(runAction({ intent, ...fields })).rejects.toBeInstanceOf(
+        Response,
+      )
+
+      expect(mutation).not.toHaveBeenCalled()
+    })
+
+    it("should refuse to run without payments.manage", async () => {
+      vi.mocked(getAdminContext).mockResolvedValue({
+        currentProfile: { id: "staff-1", permissions: [PERMISSIONS.ADMIN_PANEL] },
+      } as Awaited<ReturnType<typeof getAdminContext>>)
 
       await expect(runAction({ intent, ...fields })).rejects.toBeInstanceOf(
         Response,
@@ -197,9 +213,9 @@ describe("SettingsPage action", () => {
 
 describe("SettingsPage action - non-form body", () => {
   it("answers a JSON body with 415", async () => {
-    vi.mocked(getAdminContext).mockResolvedValue(
-      {} as Awaited<ReturnType<typeof getAdminContext>>,
-    )
+    vi.mocked(getAdminContext).mockResolvedValue({
+      currentProfile: { permissions: [PERMISSIONS.PAYMENTS_MANAGE] },
+    } as Awaited<ReturnType<typeof getAdminContext>>)
 
     const thrown = await action({
       request: new Request("http://localhost/admin/configuracoes", {

@@ -8,6 +8,7 @@ vi.mock("~/business/auth/admin-context.server", () => ({
       id: "test-user-id",
       email: "admin@test.com",
     },
+    currentProfile: { permissions: ["admin.panel", "payments.manage"] },
     supabase: {} as SupabaseClient,
   }),
 }))
@@ -100,19 +101,42 @@ vi.mock("~/business/feedback/feedback.server", () => ({
 
 // Import after mocking
 import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
+import { getAdminContext } from "~/business/auth/admin-context.server"
 import { loader } from "./dashboard-page"
 
+const runLoader = () =>
+  loader({
+    request: new Request("http://localhost/admin"),
+    params: {},
+  } as Parameters<typeof loader>[0])
+
 describe("Dashboard Page Loader", () => {
+  it.each([
+    [["admin.panel", "payments.manage"], true],
+    [["admin.panel"], false],
+  ])(
+    "tells the page whether to offer the settings: %j",
+    async (permissions, expected) => {
+      vi.mocked(getAdminContext).mockResolvedValueOnce({
+        currentProfile: { permissions },
+      } as unknown as Awaited<ReturnType<typeof getAdminContext>>)
+
+      const result = await runLoader()
+
+      expect(result.canManagePayments).toBe(expected)
+    },
+  )
+
   it("passes the card-payments flag through to the page", async () => {
     vi.mocked(isCardPaymentsEnabled).mockResolvedValueOnce(true)
 
-    const result = await loader()
+    const result = await runLoader()
 
     expect(result.cardPaymentsEnabled).toBe(true)
   })
 
   it("should load events with only required fields", async () => {
-    const result = await loader()
+    const result = await runLoader()
 
     expect(result).toBeDefined()
     expect(result.events).toBeDefined()
@@ -129,7 +153,7 @@ describe("Dashboard Page Loader", () => {
   })
 
   it("should return events sorted by time_event_start in descending order", async () => {
-    const result = await loader()
+    const result = await runLoader()
 
     if (result.events && result.events.length > 1) {
       const firstEventTime = result.events[0].time_event_start
@@ -144,7 +168,7 @@ describe("Dashboard Page Loader", () => {
   })
 
   it("should load recent feedbacks", async () => {
-    const result = await loader()
+    const result = await runLoader()
 
     expect(result).toBeDefined()
     expect(result.recentFeedbacks).toBeDefined()

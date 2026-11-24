@@ -1,4 +1,6 @@
+import { redirectWithError } from "remix-toast"
 import { getAdminContext } from "~/business/auth/admin-context.server"
+import { canSeePayments } from "~/business/payment/payment-visibility"
 import {
   cleanupListmonkTestCampaign,
   testListmonkConnection,
@@ -28,13 +30,37 @@ import { zod } from "~/lib/helpers/zod"
 import { MAX_REGISTRATION_LIMIT } from "~/lib/constants/constants"
 import type { Route } from "./+types/settings-page"
 import { readFormData } from "~/lib/request/read-form-data.server"
+import { errorsCopy } from "~/copy/errors"
+import paths from "~/lib/paths"
+
+const {
+  admin: { ADMIN_DASHBOARD },
+} = paths
+
+// Settings are mostly how Positiv charges, so the whole page asks for the
+// payments permission on top of entering the admin area.
+const getSettingsContext = async (
+  request: Request,
+  params: Route.LoaderArgs["params"],
+) => {
+  const context = await getAdminContext(request, params)
+
+  if (!canSeePayments(context.currentProfile)) {
+    throw await redirectWithError(
+      ADMIN_DASHBOARD,
+      errorsCopy.auth.permissionRequired,
+    )
+  }
+
+  return context
+}
 
 export function meta({}: Route.MetaArgs) {
   return createMetaArray(metaCopy.adminSettings.title)
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
-  const { currentProfile } = await getAdminContext(request, params)
+  const { currentProfile } = await getSettingsContext(request, params)
 
   const formData = await readFormData(request)
   const intent = formData.get("intent")
@@ -102,7 +128,9 @@ export async function action({ request, params }: Route.ActionArgs) {
   return { intent }
 }
 
-export async function loader() {
+export async function loader({ request, params }: Route.LoaderArgs) {
+  await getSettingsContext(request, params)
+
   return {
     onlinePayments: await getOnlinePaymentsSetting(),
     cardPayments: await isCardPaymentsEnabled(),
