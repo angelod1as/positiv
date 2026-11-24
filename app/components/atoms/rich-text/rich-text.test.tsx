@@ -34,6 +34,24 @@ const linkValue = (href: string, text: string): PortableText => [
 ]
 
 describe("RichText", () => {
+  it("renders no paragraph for an empty or blank line", () => {
+    const { container } = renderWithRouter(
+      <RichText
+        value={[
+          block("b1", [{ text: "Primeiro" }]),
+          block("b2", [{ text: "" }]),
+          block("b3", [{ text: "   " }, { text: "\n" }]),
+          block("b4", [{ text: "Segundo" }]),
+        ]}
+      />,
+    )
+
+    const paragraphs = container.querySelectorAll("p")
+    expect(paragraphs).toHaveLength(2)
+    expect(paragraphs[0]).toHaveTextContent("Primeiro")
+    expect(paragraphs[1]).toHaveTextContent("Segundo")
+  })
+
   it("renders bold text as strong", () => {
     const { container } = renderWithRouter(
       <RichText

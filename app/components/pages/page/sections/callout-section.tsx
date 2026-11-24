@@ -29,7 +29,7 @@ const Emoji = ({ emoji }: { emoji: string }) => (
 export const Callout = ({ content, headingLevel = 2 }: CalloutProps) => {
   const Heading = headingLevel === 2 ? "h2" : "h3"
   const body = (
-    <div className="flex min-w-0 flex-col gap-2">
+    <div className="flex min-w-0 flex-col gap-4">
       <LongRichText value={content.body} />
     </div>
   )

@@ -47,3 +47,30 @@ describe("RichTextSection", () => {
     expect(screen.queryByRole("heading", { level: 2 })).toBeNull()
   })
 })
+
+describe("RichTextSection paragraph spacing", () => {
+  it("spaces paragraphs twice as far apart as the base gap", () => {
+    renderWithRouter(
+      <RichTextSection
+        content={{
+          ...content,
+          body: [
+            {
+              _type: "block",
+              _key: "p",
+              style: "normal",
+              markDefs: [],
+              children: [
+                { _type: "span", _key: "s", text: "Um parágrafo.", marks: [] },
+              ],
+            },
+          ],
+        }}
+      />,
+    )
+
+    expect(screen.getByText("Um parágrafo.").parentElement).toHaveClass(
+      "gap-8",
+    )
+  })
+})

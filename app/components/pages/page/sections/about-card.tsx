@@ -17,7 +17,7 @@ export const AboutCard: FCC<AboutCardProps> = ({ children, title, icon }) => {
         {styledIcon}
       </div>
       <h3 className="text-xl font-bold">{title}</h3>
-      <div className="text-background text-center flex flex-col gap-4">
+      <div className="text-background text-center flex flex-col gap-8">
         {children}
       </div>
     </div>

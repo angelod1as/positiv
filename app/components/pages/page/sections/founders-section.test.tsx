@@ -155,3 +155,11 @@ describe("FoundersSection", () => {
     ).not.toHaveAttribute("data-sanity")
   })
 })
+
+describe("FoundersSection paragraph spacing", () => {
+  it("spaces a bio's paragraphs twice as far apart as before", () => {
+    renderWithRouter(<FoundersSection content={founders} />)
+
+    expect(screen.getByText("Segundo.").parentElement).toHaveClass("gap-8")
+  })
+})

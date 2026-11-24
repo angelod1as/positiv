@@ -19,6 +19,24 @@ const block = (
 })
 
 describe("LongRichText", () => {
+  it("renders nothing for empty or blank lines, whatever their number", () => {
+    const { container } = renderWithRouter(
+      <LongRichText
+        value={[
+          block("p1", "Primeiro"),
+          ...Array.from({ length: 10 }, (_, index) => block(`e${index}`, "")),
+          block("blank", " \t "),
+          block("h2", "", { style: "h2" }),
+          block("p2", "Segundo"),
+        ]}
+      />,
+    )
+
+    expect(container.querySelectorAll("p")).toHaveLength(2)
+    expect(container.querySelectorAll("h2")).toHaveLength(0)
+    expect(container).toHaveTextContent(/^PrimeiroSegundo$/)
+  })
+
   it("renders headings at the levels the Editor chose", () => {
     renderWithRouter(
       <LongRichText
@@ -117,4 +135,63 @@ describe("LongRichText", () => {
       "/eventos",
     )
   })
+})
+
+const PULL_UP_UNDER_TITLE = "[:is(h2,h3,h4)+&]:-mt-6"
+
+describe("LongRichText title levels", () => {
+  const levels = [
+    block("h2", "Título um", { style: "h2" }),
+    block("s1", "Subtítulo um", { style: "subtitle1" }),
+    block("h3", "Título dois", { style: "h3" }),
+    block("s2", "Subtítulo dois", { style: "subtitle2" }),
+    block("h4", "Título três", { style: "h4" }),
+    block("s3", "Subtítulo três", { style: "subtitle3" }),
+  ]
+
+  it("renders the three title levels as h2, h3 and h4, each smaller", () => {
+    renderWithRouter(<LongRichText value={levels} />)
+
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Título um" }),
+    ).toHaveClass("text-2xl", "mt-6", "first:mt-0")
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Título dois" }),
+    ).toHaveClass("text-xl", "mt-6", "first:mt-0")
+    expect(
+      screen.getByRole("heading", { level: 4, name: "Título três" }),
+    ).toHaveClass("text-lg", "mt-6", "first:mt-0")
+  })
+
+  it.each([
+    ["Subtítulo um", "text-lg"],
+    ["Subtítulo dois", "text-base"],
+    ["Subtítulo três", "text-base"],
+  ])(
+    "renders %s as a muted paragraph close under its title",
+    (text, size) => {
+      renderWithRouter(<LongRichText value={levels} />)
+
+      const subtitle = screen.getByText(text)
+      expect(subtitle.tagName).toBe("P")
+      expect(subtitle).toHaveClass("text-muted-foreground", size)
+      expect(subtitle).toHaveClass(PULL_UP_UNDER_TITLE)
+      expect(subtitle).not.toHaveClass("-mt-6")
+    },
+  )
+})
+
+describe("LongRichText leading subtitle", () => {
+  it.each(["subtitle1", "subtitle2", "subtitle3"] as const)(
+    "pulls a %s up only when it follows a title",
+    (style) => {
+      renderWithRouter(
+        <LongRichText value={[block("s", "Abre o texto", { style })]} />,
+      )
+
+      expect(screen.getByText("Abre o texto")).toHaveClass(
+        PULL_UP_UNDER_TITLE,
+      )
+    },
+  )
 })

@@ -66,7 +66,16 @@ export const portableTextSchema = zod
 export const longPortableTextSchema = zod
   .array(
     blockSchema(
-      zod.enum(["normal", "h2", "h3", "blockquote"]),
+      zod.enum([
+        "normal",
+        "h2",
+        "subtitle1",
+        "h3",
+        "subtitle2",
+        "h4",
+        "subtitle3",
+        "blockquote",
+      ]),
       zod.enum(["bullet", "number"]).optional(),
     ),
   )

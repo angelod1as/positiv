@@ -36,8 +36,30 @@ const INLINE_COMPONENTS: PortableTextComponents = {
 const LONG_COMPONENTS: PortableTextComponents = {
   block: {
     normal: ({ children }) => <p>{children}</p>,
-    h2: ({ children }) => <h2 className="mt-6 first:mt-0">{children}</h2>,
-    h3: ({ children }) => <h3 className="mt-6 first:mt-0">{children}</h3>,
+    h2: ({ children }) => (
+      <h2 className="mt-6 text-2xl first:mt-0">{children}</h2>
+    ),
+    subtitle1: ({ children }) => (
+      <p className="text-lg text-muted-foreground [:is(h2,h3,h4)+&]:-mt-6">
+        {children}
+      </p>
+    ),
+    h3: ({ children }) => (
+      <h3 className="mt-6 text-xl first:mt-0">{children}</h3>
+    ),
+    subtitle2: ({ children }) => (
+      <p className="text-base text-muted-foreground [:is(h2,h3,h4)+&]:-mt-6">
+        {children}
+      </p>
+    ),
+    h4: ({ children }) => (
+      <h4 className="mt-6 text-lg first:mt-0">{children}</h4>
+    ),
+    subtitle3: ({ children }) => (
+      <p className="text-base text-muted-foreground [:is(h2,h3,h4)+&]:-mt-6">
+        {children}
+      </p>
+    ),
     blockquote: ({ children }) => <blockquote>{children}</blockquote>,
   },
   list: {
@@ -47,6 +69,13 @@ const LONG_COMPONENTS: PortableTextComponents = {
   listItem: ({ children }) => <li>{children}</li>,
   marks: MARKS,
 }
+
+const withoutBlankBlocks = <Block extends LongPortableText[number]>(
+  value: Block[],
+): Block[] =>
+  value.filter((block) =>
+    block.children.some((span) => span.text.trim() !== ""),
+  )
 
 type RichTextProps = {
   value: PortableText
@@ -58,7 +87,7 @@ export const RichText = ({
   inline = false,
 }: RichTextProps): ReactNode => (
   <PortableTextRenderer
-    value={value}
+    value={withoutBlankBlocks(value)}
     components={inline ? INLINE_COMPONENTS : BLOCK_COMPONENTS}
   />
 )
@@ -68,5 +97,8 @@ type LongRichTextProps = {
 }
 
 export const LongRichText = ({ value }: LongRichTextProps): ReactNode => (
-  <PortableTextRenderer value={value} components={LONG_COMPONENTS} />
+  <PortableTextRenderer
+    value={withoutBlankBlocks(value)}
+    components={LONG_COMPONENTS}
+  />
 )
