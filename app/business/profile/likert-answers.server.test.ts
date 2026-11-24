@@ -6,7 +6,11 @@ import {
 } from "~/business/settings/app-settings.server"
 import { PERMISSIONS } from "~/business/auth/permissions"
 import { likertPageCopy } from "~/copy/account"
-import { canSeeLikert, submitLikertAnswers } from "./likert-answers.server"
+import {
+  canSeeLikert,
+  showsLikertEntryPoints,
+  submitLikertAnswers,
+} from "./likert-answers.server"
 import { saveLikertSubmission } from "./likert-submissions.server"
 
 vi.mock("~/business/cms/likert-scale-cache.server", () => ({
@@ -64,6 +68,26 @@ describe("canSeeLikert", () => {
     vi.mocked(isLikertEnabled).mockResolvedValue(true)
 
     expect(await canSeeLikert(null)).toBe(false)
+  })
+})
+
+describe("showsLikertEntryPoints", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it("shows the links once the scale is required", async () => {
+    vi.mocked(isLikertEnabled).mockResolvedValue(false)
+    vi.mocked(isLikertRequired).mockResolvedValue(true)
+
+    expect(await showsLikertEntryPoints()).toBe(true)
+  })
+
+  it("keeps the links hidden while the scale is only open to the link", async () => {
+    vi.mocked(isLikertEnabled).mockResolvedValue(true)
+    vi.mocked(isLikertRequired).mockResolvedValue(false)
+
+    expect(await showsLikertEntryPoints()).toBe(false)
   })
 })
 

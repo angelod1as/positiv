@@ -5,7 +5,7 @@ import {
   getUserContext,
   logoutUser,
 } from "~/business/auth/auth.server"
-import { canSeeLikert } from "~/business/profile/likert-answers.server"
+import { showsLikertEntryPoints } from "~/business/profile/likert-answers.server"
 import { Button } from "~/components/atoms/button/button"
 import { Copy } from "~/components/atoms/copy/copy"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
@@ -32,7 +32,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const { currentProfile } = await getUserContext(request, params)
   return {
     basic_data_filled: currentProfile?.basic_data_filled,
-    likert: await canSeeLikert(currentProfile),
+    likert: await showsLikertEntryPoints(),
   }
 }
 

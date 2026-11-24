@@ -9,11 +9,11 @@ vi.mock("~/business/auth/auth.server", () => ({
 }))
 
 vi.mock("~/business/profile/likert-answers.server", () => ({
-  canSeeLikert: vi.fn(),
+  showsLikertEntryPoints: vi.fn(),
 }))
 
 import { getUserContext } from "~/business/auth/auth.server"
-import { canSeeLikert } from "~/business/profile/likert-answers.server"
+import { showsLikertEntryPoints } from "~/business/profile/likert-answers.server"
 import AccountPage, { loader } from "./account-page"
 
 type PageProps = Parameters<typeof AccountPage>[0]
@@ -47,17 +47,16 @@ describe("AccountPage loader", () => {
   })
 
   it.each([true, false])(
-    "says whether the person may see the Likert scale (%s)",
-    async (visible) => {
-      vi.mocked(canSeeLikert).mockResolvedValue(visible)
+    "says whether the Likert scale is linked from the account (%s)",
+    async (shown) => {
+      vi.mocked(showsLikertEntryPoints).mockResolvedValue(shown)
 
       const result = await loader({
         request: new Request("http://localhost/conta"),
         params: {},
       } as unknown as LoaderArgs)
 
-      expect(result).toEqual({ basic_data_filled: true, likert: visible })
-      expect(canSeeLikert).toHaveBeenCalledWith(currentProfile)
+      expect(result).toEqual({ basic_data_filled: true, likert: shown })
     },
   )
 })
@@ -72,7 +71,7 @@ describe("AccountPage", () => {
     )
   })
 
-  it("links to the Likert scale when the person may see it", () => {
+  it("links to the Likert scale once it is required", () => {
     renderPage({ basic_data_filled: true, likert: true })
 
     expect(

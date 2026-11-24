@@ -23,6 +23,10 @@ export async function canSeeLikert(
   return (await isLikertEnabled()) || isLikertRequired()
 }
 
+export async function showsLikertEntryPoints(): Promise<boolean> {
+  return isLikertRequired()
+}
+
 export async function submitLikertAnswers({
   answers,
   viewer,
