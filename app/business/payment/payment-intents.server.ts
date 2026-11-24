@@ -7,6 +7,8 @@ import { createPaymentOffer, resendPaymentOffer } from "./payment-offer.server"
 import { cancelPayment } from "./payment-cancel.server"
 import { syncPaymentFromProvider } from "./payment-sync.server"
 import { markManualRefunded } from "./payment-refund.server"
+import { can, PERMISSIONS } from "~/business/auth/permissions"
+import { errorsCopy } from "~/copy/errors"
 
 type PaymentIntentResult = {
   success: boolean
@@ -19,6 +21,22 @@ type PaymentIntentResult = {
    */
   emailSent?: boolean
 }
+
+type Actor =
+  | { id: string; permissions?: readonly string[] | null }
+  | null
+  | undefined
+
+const PAYMENT_INTENTS = new Set([
+  "payment-offer",
+  "payment-resend",
+  "payment-sync",
+  "payment-manual",
+  "payment-manual-edit",
+  "payment-manual-cancel",
+  "payment-manual-refund",
+  "payment-cancel",
+])
 
 type ComposableResult =
   | { success: true; data?: Record<string, unknown> }
@@ -54,13 +72,25 @@ const toIntentResult = (
  * copies of this would have to change together every time a guard does.
  *
  * Answers null for anything that is not a payment intent, so a route can carry
- * on to its own.
+ * on to its own. Entering the admin area is not enough to touch money: every
+ * intent asks for payments.manage here, whichever route posted it.
  */
 export async function handlePaymentIntent(
   intent: string,
   formData: FormData,
-  createdBy: string | undefined,
+  actor: Actor,
 ): Promise<PaymentIntentResult | null> {
+  if (!PAYMENT_INTENTS.has(intent)) return null
+
+  if (!can(actor, PERMISSIONS.PAYMENTS_MANAGE)) {
+    return {
+      success: false,
+      intent,
+      errors: [{ message: errorsCopy.auth.paymentsPermissionRequired }],
+    }
+  }
+
+  const createdBy = actor?.id
   const values = Object.fromEntries(formData)
 
   if (intent === "payment-offer") {

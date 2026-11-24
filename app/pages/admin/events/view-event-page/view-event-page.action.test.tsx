@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { PERMISSIONS } from "~/business/auth/permissions"
 import { getAdminContext } from "~/business/auth/admin-context.server"
 import {
   cancelManualPayment,
@@ -123,7 +124,10 @@ describe("AdminViewEventPage action", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(getAdminContext).mockResolvedValue({
-      currentProfile: { id: "admin-1" },
+      currentProfile: {
+        id: "admin-1",
+        permissions: [PERMISSIONS.ADMIN_PANEL, PERMISSIONS.PAYMENTS_MANAGE],
+      },
     } as Awaited<ReturnType<typeof getAdminContext>>)
     vi.mocked(registerManualPayment).mockResolvedValue({
       success: true,

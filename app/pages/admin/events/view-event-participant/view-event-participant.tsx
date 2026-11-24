@@ -91,7 +91,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   const paymentResult = await handlePaymentIntent(
     String(intent),
     formData,
-    context.currentProfile?.id,
+    context.currentProfile,
   )
   if (paymentResult) return paymentResult
 }

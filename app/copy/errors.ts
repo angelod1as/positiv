@@ -16,6 +16,7 @@ Avise-nos pelo [email](mailto:${email}) com as informações:
   auth: {
     loginRequired: "Você precisa estar logade para continuar",
     permissionRequired: "Você não tem permissão para acessar esta página",
+    paymentsPermissionRequired: "Você não tem permissão para mexer em pagamentos",
     invalidCredentials: "Credenciais inválidas",
     authenticationFailed: "Ocorreu um erro com sua autenticação",
     notAuthenticated: "Usuário não autenticado",
