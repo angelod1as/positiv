@@ -119,6 +119,8 @@ async function loadParticipants(eventId: string) {
   return result.data
 }
 
+const noPayments: Record<string, PaymentRow[]> = {}
+
 /** LOADER */
 export async function loader({ request, params }: Route.LoaderArgs) {
   assertUuidParams(params.id)
@@ -164,9 +166,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
         logger.error("Failed to fetch rejected participants", { error })
         return []
       }),
-      canManagePayments
-        ? getPaymentsForEvent(eventId)
-        : ({} as Record<string, PaymentRow[]>),
+      canManagePayments ? getPaymentsForEvent(eventId) : noPayments,
       isCardPaymentsEnabled(),
       listInvitesForEvent(eventId),
       loadWhatsappPaymentMessage(),
