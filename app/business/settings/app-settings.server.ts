@@ -136,3 +136,32 @@ export const setLikertEnabled = async ({
     .onConflict((oc) => oc.column("id").doUpdateSet(values))
     .execute()
 }
+
+export const isLikertRequired = async () => {
+  const row = await db
+    .selectFrom("app_settings")
+    .select("likert_required")
+    .executeTakeFirst()
+
+  return row?.likert_required ?? false
+}
+
+export const setLikertRequired = async ({
+  enabled,
+  profileId,
+}: {
+  enabled: boolean
+  profileId: string | undefined
+}) => {
+  const values = {
+    likert_required: enabled,
+    updated_at: new Date().toISOString(),
+    updated_by: profileId ?? null,
+  }
+
+  await db
+    .insertInto("app_settings")
+    .values({ id: true, ...values })
+    .onConflict((oc) => oc.column("id").doUpdateSet(values))
+    .execute()
+}

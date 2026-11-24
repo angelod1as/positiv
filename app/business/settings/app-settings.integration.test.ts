@@ -10,9 +10,11 @@ import {
   getRegistrationLimit,
   isCardPaymentsEnabled,
   isLikertEnabled,
+  isLikertRequired,
   isOnlinePaymentsSwitchedOn,
   setCardPaymentsEnabled,
   setLikertEnabled,
+  setLikertRequired,
   setOnlinePaymentsEnabled,
   setRegistrationLimit,
 } from "./app-settings.server"
@@ -345,5 +347,82 @@ describe("Likert scale switch", () => {
     await setLikertEnabled({ enabled: true, profileId: admin.id })
 
     expect(await isLikertEnabled()).toBe(true)
+  })
+})
+
+describe("Likert scale required switch", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+
+  const resetSettings = () =>
+    kysely
+      .insertInto("app_settings")
+      .values({
+        id: true,
+        likert_enabled: false,
+        likert_required: false,
+        updated_by: null,
+      })
+      .onConflict((oc) =>
+        oc.column("id").doUpdateSet({
+          likert_enabled: false,
+          likert_required: false,
+          updated_by: null,
+        }),
+      )
+      .execute()
+
+  const createAdmin = () =>
+    createTestProfile(tracker, kysely, { user_id: null, email: uniqueEmail() })
+
+  beforeEach(async () => {
+    tracker.clear()
+    await resetSettings()
+  })
+
+  afterEach(async () => {
+    await resetSettings()
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  it("starts off", async () => {
+    await kysely
+      .updateTable("app_settings")
+      .set({ likert_required: sql`DEFAULT` })
+      .execute()
+
+    expect(await isLikertRequired()).toBe(false)
+  })
+
+  it("is on once an admin switches it on, and off again", async () => {
+    const admin = await createAdmin()
+
+    await setLikertRequired({ enabled: true, profileId: admin.id })
+    expect(await isLikertRequired()).toBe(true)
+
+    await setLikertRequired({ enabled: false, profileId: admin.id })
+    expect(await isLikertRequired()).toBe(false)
+  })
+
+  it("moves independently of the access switch", async () => {
+    const admin = await createAdmin()
+
+    await setLikertEnabled({ enabled: true, profileId: admin.id })
+    expect(await isLikertRequired()).toBe(false)
+
+    await setLikertRequired({ enabled: true, profileId: admin.id })
+    await setLikertEnabled({ enabled: false, profileId: admin.id })
+    expect(await isLikertRequired()).toBe(true)
+    expect(await isLikertEnabled()).toBe(false)
+  })
+
+  it("reads a missing row as switched off, and switching brings it back", async () => {
+    const admin = await createAdmin()
+    await kysely.deleteFrom("app_settings").execute()
+
+    expect(await isLikertRequired()).toBe(false)
+
+    await setLikertRequired({ enabled: true, profileId: admin.id })
+
+    expect(await isLikertRequired()).toBe(true)
   })
 })
