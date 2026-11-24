@@ -207,7 +207,7 @@ async function mirrorInListmonk(
 
   const wantsAList = preferences.registrationAlerts || preferences.newsletter
 
-  if (wantsAList &&subscriber.status === "blocklisted") {
+  if (wantsAList && subscriber.status === "blocklisted") {
     if ((await unwrap(getSubscriberBounceCount(subscriber.id))) > 0) {
       return { bounced: true }
     }
