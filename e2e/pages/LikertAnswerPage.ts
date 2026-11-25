@@ -16,7 +16,7 @@ export class LikertAnswerPage extends BasePage {
   }
 
   statement(): Locator {
-    return this.page.getByRole('heading', { level: 2 })
+    return this.page.locator('form').getByRole('heading', { level: 2 })
   }
 
   async statementText(): Promise<string> {

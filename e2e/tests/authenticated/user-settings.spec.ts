@@ -3,7 +3,7 @@ import { emailConsentCopy, emailsPageCopy } from '../../../app/copy/emails'
 import { agreeToTermsCopy } from '../../../app/copy/dashboard'
 import { headerCopy } from '../../../app/copy/layout'
 import { LikertAnswerPage } from '../../pages/LikertAnswerPage'
-import { setLikertSettings } from '../../utils/likert-helpers'
+import { readLikertStatements, setLikertSettings } from '../../utils/likert-helpers'
 
 test.describe('POS-192: User Settings and Profile Management', () => {
   test('Can navigate to account settings', async ({ page }) => {
@@ -183,6 +183,7 @@ test.describe('POS-192: User Settings and Profile Management', () => {
     test.setTimeout(120_000)
     const likertLink = () => page.getByRole('link', { name: 'Escala de Likert' })
     const submissions = () => page.getByRole('link', { name: /^Enviada em / })
+    const total = readLikertStatements().length
 
     try {
       // Without "Obrigatória" the account page shows no way in
@@ -203,7 +204,7 @@ test.describe('POS-192: User Settings and Profile Management', () => {
       const likert = new LikertAnswerPage(page)
       await expect(likert.statement()).toBeVisible()
       await likert.waitForHydration()
-      await likert.expectPosition(1, 7)
+      await likert.expectPosition(1, total)
 
       // The shortcut dialog opens and closes, and the numbers pick nothing while it is open
       await likert.keyboardHelpLink().click()
@@ -219,19 +220,19 @@ test.describe('POS-192: User Settings and Profile Management', () => {
       await likert.expectPicked(4)
       await page.keyboard.press('Enter')
       answered.push(await likert.expectMovedFrom(answered[0]))
-      await likert.expectPosition(2, 7)
+      await likert.expectPosition(2, total)
 
       await page.keyboard.press('2')
       await likert.expectPicked(2)
       await page.keyboard.press(' ')
       answered.push(await likert.expectMovedFrom(answered[1]))
-      await likert.expectPosition(3, 7)
+      await likert.expectPosition(3, total)
 
       await page.keyboard.press('5')
       await likert.expectPicked(5)
       await page.keyboard.press('ArrowRight')
       const fourth = await likert.expectMovedFrom(answered[2])
-      await likert.expectPosition(4, 7)
+      await likert.expectPosition(4, total)
 
       // The left arrow goes back to the answer as it was left
       await page.keyboard.press('ArrowLeft')
@@ -253,20 +254,20 @@ test.describe('POS-192: User Settings and Profile Management', () => {
       await likert.expectPicked(3)
       await page.keyboard.press('ControlOrMeta+Enter')
       const fifth = await likert.expectMovedFrom(fourth)
-      await likert.expectPosition(5, 7)
+      await likert.expectPosition(5, total)
 
       // Leaving halfway and coming back lands on the first unanswered statement,
       // and the left arrow walks back through the answers in the order given
       await page.goto('/conta')
       await likert.navigate()
-      await likert.expectPosition(5, 7)
+      await likert.expectPosition(5, total)
       await expect(likert.statement()).toHaveText(fifth)
       expect(answered).not.toContain(fifth)
 
       for (const [index, text] of [...answered].reverse().entries()) {
         await page.keyboard.press('ArrowLeft')
         await expect(likert.statement()).toHaveText(text)
-        await likert.expectPosition(4 - index, 7)
+        await likert.expectPosition(4 - index, total)
       }
       await likert.expectPicked(4)
       for (const text of answered.slice(1)) {
@@ -289,7 +290,7 @@ test.describe('POS-192: User Settings and Profile Management', () => {
       await page.keyboard.press('1')
       await page.keyboard.press('Enter')
       await likert.expectMovedFrom(sixth)
-      await likert.expectPosition(7, 7)
+      await likert.expectPosition(total, total)
       await page.keyboard.press('5')
       await page.keyboard.press('Enter')
 
@@ -305,7 +306,7 @@ test.describe('POS-192: User Settings and Profile Management', () => {
 
       // The draft went with the submission: answering again starts over
       await likert.navigate()
-      await likert.expectPosition(1, 7)
+      await likert.expectPosition(1, total)
       await likert.expectPicked(null)
 
       // Turning "Obrigatória" off takes the way in away again
