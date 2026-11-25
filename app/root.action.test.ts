@@ -13,19 +13,10 @@ vi.mock("./business/auth/auth.server", () => ({
 
 vi.mock("remix-toast", () => ({
   getToast: vi.fn(),
-  redirectWithError: vi.fn(),
-  redirectWithSuccess: vi.fn(),
 }))
 
 vi.mock("./lib/request/cookies.server", () => ({
   newsCookie: { parse: vi.fn(), serialize: vi.fn() },
-}))
-vi.mock("./business/newsletter/newsletter-preference-cookie.server", () => ({
-  newsletterPreferenceCookie: { parse: vi.fn(), serialize: vi.fn() },
-}))
-
-vi.mock("./business/newsletter/auto-subscribe.server", () => ({
-  subscribeProfileToNewsletter: vi.fn(),
 }))
 
 function postForm(fields: Record<string, string>) {
@@ -88,55 +79,4 @@ describe("root action", () => {
       expect(response.headers.get("Location")).toBe("/")
     },
   )
-
-  it("sends a newsletter-subscribe without a session back home instead of off-site", async () => {
-    const { getContext } = await import("./business/auth/auth.server")
-    const { redirectWithError } = await import("remix-toast")
-    vi.mocked(getContext).mockResolvedValue({
-      currentProfile: null,
-    } as never)
-    vi.mocked(redirectWithError).mockResolvedValue(new Response(null))
-
-    await action({
-      request: postForm({
-        intent: "newsletter-subscribe",
-        thisUrl: "https://evil.example",
-      }),
-      params: {},
-    } as never)
-
-    expect(redirectWithError).toHaveBeenCalledWith("/", expect.anything())
-  })
-
-  it("sends a newsletter-subscribe back to a same-site page", async () => {
-    const { getContext } = await import("./business/auth/auth.server")
-    const { redirectWithSuccess } = await import("remix-toast")
-    const { subscribeProfileToNewsletter } =
-      await import("./business/newsletter/auto-subscribe.server")
-    const { newsletterPreferenceCookie } =
-      await import("./business/newsletter/newsletter-preference-cookie.server")
-    vi.mocked(getContext).mockResolvedValue({
-      currentProfile: { id: "profile-1" },
-    } as never)
-    vi.mocked(subscribeProfileToNewsletter).mockResolvedValue({
-      success: true,
-      data: { syncStatus: "synced" },
-    } as never)
-    vi.mocked(newsletterPreferenceCookie.serialize).mockResolvedValue("pref=1")
-    vi.mocked(redirectWithSuccess).mockResolvedValue(new Response(null))
-
-    await action({
-      request: postForm({
-        intent: "newsletter-subscribe",
-        thisUrl: "/eventos",
-      }),
-      params: {},
-    } as never)
-
-    expect(redirectWithSuccess).toHaveBeenCalledWith(
-      "/eventos",
-      expect.anything(),
-      expect.anything(),
-    )
-  })
 })

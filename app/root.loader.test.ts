@@ -27,20 +27,9 @@ vi.mock("remix-toast", () => ({
 vi.mock("./lib/request/cookies.server", () => ({
   newsCookie: { parse: vi.fn(), serialize: vi.fn() },
 }))
-vi.mock("./business/newsletter/newsletter-preference-cookie.server", () => ({
-  newsletterPreferenceCookie: { parse: vi.fn(), serialize: vi.fn() },
-}))
 
 vi.mock("./components/organisms/news-dialog/news-utils", () => ({
   NEWS_VERSION: "1",
-}))
-
-vi.mock("./business/newsletter/subscription-helpers.server", () => ({
-  getSubscriptionStatus: vi.fn(),
-}))
-
-vi.mock("./business/newsletter/auto-subscribe.server", () => ({
-  subscribeProfileToNewsletter: vi.fn(),
 }))
 
 vi.mock("composable-functions", () => ({
@@ -153,13 +142,6 @@ describe("root loader", () => {
       newsVersion: "1",
     })
 
-    const { newsletterPreferenceCookie } = await import(
-      "./business/newsletter/newsletter-preference-cookie.server"
-    )
-    vi.mocked(newsletterPreferenceCookie.parse).mockResolvedValue({
-      checked: true,
-      shouldShow: false,
-    })
 
     const request = new Request("http://localhost:5173/")
     await loader({ request, params: {} } as never)
@@ -364,16 +346,9 @@ describe("root loader", () => {
       mockGetToast.mockResolvedValue({ toast: null, headers: new Headers() })
 
       const { newsCookie } = await import("./lib/request/cookies.server")
-      const { newsletterPreferenceCookie } = await import(
-        "./business/newsletter/newsletter-preference-cookie.server"
-      )
       vi.mocked(newsCookie.parse).mockResolvedValue({
         showNews: "false",
         newsVersion: "1",
-      })
-      vi.mocked(newsletterPreferenceCookie.parse).mockResolvedValue({
-        checked: true,
-        shouldShow: false,
       })
 
       const request = new Request("http://localhost:5173/")
@@ -493,13 +468,6 @@ describe("root loader", () => {
         host: "localhost",
       })
       mockGetToast.mockResolvedValue({ toast: null, headers: new Headers() })
-      const { newsletterPreferenceCookie } = await import(
-        "./business/newsletter/newsletter-preference-cookie.server"
-      )
-      vi.mocked(newsletterPreferenceCookie.parse).mockResolvedValue({
-        checked: true,
-        shouldShow: false,
-      })
 
       const request = new Request("http://localhost:5173/dashboard")
       const result = (await loader({ request, params: {} } as never)) as {
