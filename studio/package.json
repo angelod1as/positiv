@@ -16,23 +16,23 @@
     "refresh-dev": "sanity exec refresh-dev/cli.ts --with-user-token --"
   },
   "dependencies": {
-    "@sanity/icons": "^5.2.3",
-    "@sanity/vision": "^6.20.0",
+    "@sanity/icons": "^5.4.0",
+    "@sanity/vision": "^6.24.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "sanity": "6.20.0",
+    "sanity": "6.24.0",
     "styled-components": "^6.6.0"
   },
   "devDependencies": {
-    "@sanity/client": "^8.11.0",
+    "@sanity/client": "^8.17.0",
     "@sanity/eslint-config-studio": "^7",
-    "@sanity/export": "^7.0.4",
-    "@sanity/import": "^7.0.4",
-    "@sanity/schema": "6.20.0",
-    "@sanity/validation": "6.20.0",
+    "@sanity/export": "^7.1.1",
+    "@sanity/import": "^7.1.1",
+    "@sanity/schema": "6.24.0",
+    "@sanity/validation": "6.24.0",
     "@types/react": "^19.3.0",
     "eslint": "^10.8.1",
-    "groq-js": "^2.0.1",
+    "groq-js": "^2.0.3",
     "tsx": "^4.23.15",
     "typescript": "^5.9",
     "vitest": "^4.1.12"
