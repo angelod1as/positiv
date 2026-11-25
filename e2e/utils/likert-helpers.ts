@@ -8,7 +8,7 @@ export type LikertStatement = { key: string; text: string }
 // reason the mock reads it: Playwright loads specs as native ESM.
 export function readLikertStatements(): LikertStatement[] {
   const fixture = JSON.parse(
-    readFileSync(join(process.cwd(), 'e2e', 'fixtures', 'likert-scale.json'), 'utf8'),
+    readFileSync(join(import.meta.dirname, '..', 'fixtures', 'likert-scale.json'), 'utf8'),
   ) as { statements: LikertStatement[] }
   return fixture.statements
 }
