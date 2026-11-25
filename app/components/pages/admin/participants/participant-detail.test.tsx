@@ -1,6 +1,7 @@
 import userEvent from "@testing-library/user-event"
 import { createMemoryRouter, RouterProvider } from "react-router"
 import { describe, expect, it, vi } from "vitest"
+import { paymentsCopy } from "~/copy/payments"
 import { render, screen, within } from "~/test/test-utils"
 import { ParticipantDetail } from "./participant-detail"
 
@@ -262,7 +263,7 @@ describe("ParticipantDetail", () => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
 
       await userEvent.click(
-        screen.getByRole("button", { name: "Gerenciar pagamento" }),
+        screen.getByRole("button", { name: paymentsCopy.manage.trigger }),
       )
 
       expect(
@@ -346,7 +347,7 @@ describe("ParticipantDetail", () => {
 
       expect(screen.queryByText("Resumo Financeiro")).not.toBeInTheDocument()
       expect(
-        screen.queryByRole("button", { name: "Gerenciar pagamento" }),
+        screen.queryByRole("button", { name: paymentsCopy.manage.trigger }),
       ).not.toBeInTheDocument()
       expect(
         screen.getByTestId("participant-event-history"),
@@ -363,7 +364,7 @@ describe("ParticipantDetail", () => {
       render(<RouterProvider router={router} />)
 
       expect(
-        screen.queryByRole("button", { name: "Gerenciar pagamento" }),
+        screen.queryByRole("button", { name: paymentsCopy.manage.trigger }),
       ).not.toBeInTheDocument()
     })
   })

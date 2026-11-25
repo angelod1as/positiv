@@ -365,7 +365,7 @@ describe("AdminViewEventParticipantsTable", () => {
       )
 
       const button = await screen.findByRole("button", {
-        name: "Gerenciar pagamento",
+        name: tableCopy.columns.managePayment,
       })
       await userEvent.click(button)
 
@@ -387,7 +387,7 @@ describe("AdminViewEventParticipantsTable", () => {
         screen.queryByText(tableCopy.columns.paidGross),
       ).not.toBeInTheDocument()
       expect(
-        screen.queryByRole("button", { name: "Gerenciar pagamento" }),
+        screen.queryByRole("button", { name: tableCopy.columns.managePayment }),
       ).not.toBeInTheDocument()
     })
   })
