@@ -21,7 +21,7 @@ const { dryRun, document } = await run(
           id: LIKERT_SCALE_ID,
         }),
     write: async (scale) => {
-      await client(dataset).createOrReplace(scale)
+      await client(dataset).create(scale)
     },
   }),
 )
