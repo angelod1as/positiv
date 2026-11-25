@@ -7,7 +7,7 @@ type ProfileUpdateGuardProps = {
   currentProfile: ProfileWithRoles | null
   currentPath: string
   needsProfileUpdate: boolean
-  needsEmailConfirmation?: boolean
+  needsEmailConfirmation: boolean
   cpfExemptionLink?: string | null
 }
 
@@ -15,7 +15,7 @@ export const ProfileUpdateGuard = ({
   currentProfile,
   currentPath,
   needsProfileUpdate,
-  needsEmailConfirmation = false,
+  needsEmailConfirmation,
   cpfExemptionLink = null,
 }: ProfileUpdateGuardProps) => {
   if (!currentProfile) {

@@ -500,13 +500,17 @@ describe("root loader", () => {
       expect(await load({ id: "profile-1" })).toBe(false)
     })
 
-    it("asks nothing when the check itself fails", async () => {
+    it("asks nothing when the check itself fails, and says so in the log", async () => {
       needsEmailConfirmation.mockResolvedValue({
         success: false,
         errors: [new Error("db down")],
       })
 
       expect(await load({ id: "profile-1" })).toBe(false)
+      expect(logger.error).toHaveBeenCalledWith(
+        "Could not tell whether the email choices are confirmed",
+        { errors: ["db down"] },
+      )
     })
 
     it("asks nothing of a visitor with no profile", async () => {

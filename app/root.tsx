@@ -203,6 +203,11 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     const emailCheck = currentProfile
       ? await needsEmailConfirmation(currentProfile.id)
       : null
+    if (emailCheck && !emailCheck.success) {
+      logger.error("Could not tell whether the email choices are confirmed", {
+        errors: emailCheck.errors.map((error) => error.message),
+      })
+    }
 
     return data(
       {
@@ -403,7 +408,6 @@ export default function App({ loaderData }: Route.ComponentProps) {
       })
     }
   }, [toast])
-
 
   // Live Site Settings swap in place; the shell stays put so loading the live
   // chunk never remounts it. undefined means no live value has arrived yet.

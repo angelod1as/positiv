@@ -23,6 +23,7 @@ describe("ProfileUpdateGuard", () => {
         currentProfile={null}
         currentPath="/dashboard"
         needsProfileUpdate={true}
+        needsEmailConfirmation={false}
       />,
       { wrapper },
     )
@@ -36,6 +37,7 @@ describe("ProfileUpdateGuard", () => {
         currentProfile={mockProfile}
         currentPath="/conta/dados-basicos"
         needsProfileUpdate={true}
+        needsEmailConfirmation={false}
       />,
       { wrapper },
     )
@@ -49,6 +51,7 @@ describe("ProfileUpdateGuard", () => {
         currentProfile={mockProfile}
         currentPath="/dashboard"
         needsProfileUpdate={false}
+        needsEmailConfirmation={false}
       />,
       { wrapper },
     )
@@ -62,6 +65,7 @@ describe("ProfileUpdateGuard", () => {
         currentProfile={mockProfile}
         currentPath="/dashboard"
         needsProfileUpdate={true}
+        needsEmailConfirmation={false}
       />,
       { wrapper },
     )
@@ -75,6 +79,7 @@ describe("ProfileUpdateGuard", () => {
         currentProfile={mockProfile}
         currentPath="/dashboard"
         needsProfileUpdate={true}
+        needsEmailConfirmation={false}
       />,
       { wrapper },
     )
@@ -90,6 +95,7 @@ describe("ProfileUpdateGuard", () => {
         currentProfile={mockProfile}
         currentPath="/"
         needsProfileUpdate={true}
+        needsEmailConfirmation={false}
       />,
       { wrapper },
     )
@@ -103,6 +109,7 @@ describe("ProfileUpdateGuard", () => {
         currentProfile={mockProfile}
         currentPath="/entrar"
         needsProfileUpdate={true}
+        needsEmailConfirmation={false}
       />,
       { wrapper },
     )
