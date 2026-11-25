@@ -479,10 +479,9 @@ describe("ParticipantEventHistory", () => {
         payment_status: "paid",
       },
     ]
-    renderWithRouter(<ParticipantEventHistory
-        participantHistory={history}
-        showPayments
-      />)
+    renderWithRouter(
+      <ParticipantEventHistory participantHistory={history} showPayments />,
+    )
 
     // the row after the launch paints its amount, so the absence below is the
     // cutoff at work and not a grid that never rendered
