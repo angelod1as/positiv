@@ -210,6 +210,7 @@ test.describe('POS-192: User Settings and Profile Management', () => {
       await likert.keyboardHelpLink().click()
       await expect(likert.keyboardHelp()).toBeVisible()
       await page.keyboard.press('2')
+      await likert.expectPicked(null)
       await page.keyboard.press('Escape')
       await expect(likert.keyboardHelp()).toBeHidden()
       await likert.expectPicked(null)

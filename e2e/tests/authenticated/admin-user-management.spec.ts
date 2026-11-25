@@ -833,15 +833,27 @@ test.describe("Admin User Management", () => {
     await expect(page).toHaveURL(
       new RegExp(`/admin/participantes/${profileId}/escala/[\\w-]+$`),
     )
-    const rows = page.getByRole("row")
+    const cell = (name: string) =>
+      page.getByRole("cell", { name, exact: true })
+    const row = (text: string) =>
+      page.getByRole("row").filter({ has: cell(text) })
     for (const { text } of statements) {
-      await expect(rows.filter({ hasText: text })).toHaveCount(1)
+      await expect(cell(text)).toHaveCount(1)
     }
-    const first = rows.filter({ hasText: statements[0].text })
-    await expect(first).toContainText("Concordo totalmente")
-    await expect(first).toContainText(comment)
-    await expect(rows.filter({ hasText: statements[1].text })).toContainText(
-      "Discordo",
-    )
+    await expect(
+      row(statements[0].text).getByRole("cell", {
+        name: "Concordo totalmente",
+        exact: true,
+      }),
+    ).toBeVisible()
+    await expect(
+      row(statements[0].text).getByRole("cell", { name: comment, exact: true }),
+    ).toBeVisible()
+    await expect(
+      row(statements[1].text).getByRole("cell", {
+        name: "Discordo",
+        exact: true,
+      }),
+    ).toBeVisible()
   })
 })

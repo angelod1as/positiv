@@ -34,8 +34,7 @@ export class AdminSettingsPage extends BasePage {
   async setLikertSwitch(name: "access" | "required", on: boolean): Promise<void> {
     const toggle = name === "access" ? this.likertAccessSwitch() : this.likertRequiredSwitch()
     await toggle.click()
-    if (on) await expect(toggle).toBeChecked()
-    else await expect(toggle).not.toBeChecked()
+    await expect(toggle).toBeChecked({ checked: on })
     // The switch is disabled while its save is in flight.
     await expect(toggle).toBeEnabled()
   }
