@@ -3,8 +3,10 @@ import { Fragment, useCallback, useMemo, useRef } from "react"
 import { useNavigate } from "react-router"
 import { toast } from "sonner"
 import { getUserContext } from "~/business/auth/auth.server"
-import { getSubscriptionStatus } from "~/business/newsletter/subscription-helpers.server"
+import { findEmailPreferences } from "~/business/newsletter/email-preferences.server"
+import type { EmailPreferences } from "~/business/newsletter/email-preferences-schema"
 import { Copy } from "~/components/atoms/copy/copy"
+import { renderEmailConsentQuestion } from "~/components/forms/custom/email-consent/render-email-consent-question"
 import { buildTermsQuestions } from "~/components/forms/custom/terms/build-terms-questions"
 import { commitJson } from "~/components/forms/runtime/commit-json"
 import { FormRunner } from "~/components/forms/runtime/form-runner"
@@ -14,6 +16,7 @@ import type { CommitResult } from "~types/forms/commit.types"
 import { buildSingleScreenFlow } from "~/components/forms/runtime/single-screen-flow"
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
 import { agreeToTermsCopy } from "~/copy/dashboard"
+import { emailConsentCopy } from "~/copy/emails"
 import { metaCopy } from "~/copy/meta"
 import { trackEvent } from "~/lib/analytics/umami"
 import { createMetaArray } from "~/lib/helpers/meta"
@@ -27,13 +30,29 @@ const {
 } = paths
 
 // Built once: a presentation that changes identity remounts the run, and with
-// it every box already ticked. The two e-mail choices share a row, the way they
-// always have.
+// it every box already ticked.
 const TermsScreen = gridPresentation([
   { kind: "question", id: "agree", span: 12 },
-  { kind: "question", id: "commonEmails", span: 6 },
-  { kind: "question", id: "mktEmails", span: 6 },
+  {
+    kind: "note",
+    id: "alwaysSent",
+    render: (
+      <div className="text-muted-foreground">
+        <Copy>{emailConsentCopy.alwaysSent}</Copy>
+      </div>
+    ),
+    span: 12,
+  },
+  { kind: "question", id: "registrationAlerts", span: 12 },
+  { kind: "question", id: "newsletter", span: 12 },
+  { kind: "question", id: "marketing", span: 12 },
 ])
+
+const ALL_TICKED: EmailPreferences = {
+  registrationAlerts: true,
+  newsletter: true,
+  marketing: true,
+}
 
 export function meta({}: Route.MetaArgs) {
   return createMetaArray(metaCopy.agreeToTerms.title)
@@ -42,33 +61,25 @@ export function meta({}: Route.MetaArgs) {
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { currentProfile } = await getUserContext(request, params)
 
-  // Get newsletter subscription status from the new table
-  let mktEmails: boolean | undefined = undefined
-  if (currentProfile) {
-    const result = await getSubscriptionStatus(currentProfile.id)
-    if (result.success && result.data) {
-      mktEmails = result.data.consent_given
-    }
-  }
+  // Someone signing up has nothing on record and sees every category ticked.
+  const found = currentProfile
+    ? await findEmailPreferences({ profileId: currentProfile.id })
+    : null
+  const preferences: EmailPreferences =
+    found?.success && found.data ? found.data.preferences : ALL_TICKED
 
-  return { mktEmails }
+  return { preferences }
 }
 
 const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
-  const { mktEmails } = loaderData
+  const { preferences } = loaderData
   const navigate = useNavigate()
 
   const questions = useMemo(() => buildTermsQuestions(), [])
 
-  // The newsletter opens where the person left it; someone arriving for the
-  // first time is offered it ticked.
   const initialAnswers = useMemo(
-    () => ({
-      agree: false,
-      commonEmails: true,
-      mktEmails: mktEmails === undefined ? true : mktEmails,
-    }),
-    [mktEmails],
+    () => ({ agree: false, ...preferences }),
+    [preferences],
   )
 
   // Whether the newsletter part of the save failed. Held in a ref rather than
@@ -121,6 +132,7 @@ const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
         questions={questions}
         flow={flow}
         presentation={TermsScreen}
+        renderQuestion={renderEmailConsentQuestion}
         initialAnswers={initialAnswers}
         continueLabel={agreeToTermsCopy.buttonLabel}
         pendingLabel={agreeToTermsCopy.pendingButtonLabel}

@@ -27,20 +27,15 @@ vi.mock("remix-toast", () => ({
 vi.mock("./lib/request/cookies.server", () => ({
   newsCookie: { parse: vi.fn(), serialize: vi.fn() },
 }))
-vi.mock("./business/newsletter/newsletter-preference-cookie.server", () => ({
-  newsletterPreferenceCookie: { parse: vi.fn(), serialize: vi.fn() },
-}))
 
 vi.mock("./components/organisms/news-dialog/news-utils", () => ({
   NEWS_VERSION: "1",
 }))
 
-vi.mock("./business/newsletter/subscription-helpers.server", () => ({
-  getSubscriptionStatus: vi.fn(),
-}))
+const needsEmailConfirmation = vi.hoisted(() => vi.fn())
 
-vi.mock("./business/newsletter/auto-subscribe.server", () => ({
-  subscribeProfileToNewsletter: vi.fn(),
+vi.mock("./business/newsletter/email-preferences.server", () => ({
+  needsEmailConfirmation,
 }))
 
 vi.mock("composable-functions", () => ({
@@ -75,6 +70,12 @@ describe("root loader", () => {
       paymentMessages: null,
     })
     isDraftModeEnabled.mockResolvedValue(false)
+    needsEmailConfirmation.mockReset()
+    needsEmailConfirmation.mockResolvedValue({
+      success: true,
+      data: false,
+      errors: [],
+    })
     loadDraftSnapshotQuery.mockResolvedValue({
       initial: { data: { pages: [], siteSettings: null } },
       query: "the-snapshot-query",
@@ -153,13 +154,6 @@ describe("root loader", () => {
       newsVersion: "1",
     })
 
-    const { newsletterPreferenceCookie } = await import(
-      "./business/newsletter/newsletter-preference-cookie.server"
-    )
-    vi.mocked(newsletterPreferenceCookie.parse).mockResolvedValue({
-      checked: true,
-      shouldShow: false,
-    })
 
     const request = new Request("http://localhost:5173/")
     await loader({ request, params: {} } as never)
@@ -364,16 +358,9 @@ describe("root loader", () => {
       mockGetToast.mockResolvedValue({ toast: null, headers: new Headers() })
 
       const { newsCookie } = await import("./lib/request/cookies.server")
-      const { newsletterPreferenceCookie } = await import(
-        "./business/newsletter/newsletter-preference-cookie.server"
-      )
       vi.mocked(newsCookie.parse).mockResolvedValue({
         showNews: "false",
         newsVersion: "1",
-      })
-      vi.mocked(newsletterPreferenceCookie.parse).mockResolvedValue({
-        checked: true,
-        shouldShow: false,
       })
 
       const request = new Request("http://localhost:5173/")
@@ -479,6 +466,59 @@ describe("root loader", () => {
     })
   })
 
+  describe("needsEmailConfirmation", () => {
+    const load = async (profile: Record<string, unknown> | null) => {
+      mockGetContext.mockResolvedValue({
+        currentProfile: profile,
+        currentUser: profile ? { id: "user-1", email: "test@test.com" } : null,
+        isProdInDev: false,
+        supabaseHeaders: new Headers(),
+        supabase: {},
+        host: "localhost",
+      })
+      mockGetToast.mockResolvedValue({ toast: null, headers: new Headers() })
+
+      const request = new Request("http://localhost:5173/")
+      const result = (await loader({ request, params: {} } as never)) as {
+        data: { needsEmailConfirmation: boolean }
+      }
+      return result.data.needsEmailConfirmation
+    }
+
+    it("asks a logged-in person who never confirmed their email choices", async () => {
+      needsEmailConfirmation.mockResolvedValue({
+        success: true,
+        data: true,
+        errors: [],
+      })
+
+      expect(await load({ id: "profile-1" })).toBe(true)
+      expect(needsEmailConfirmation).toHaveBeenCalledWith("profile-1")
+    })
+
+    it("leaves alone someone who already confirmed", async () => {
+      expect(await load({ id: "profile-1" })).toBe(false)
+    })
+
+    it("asks nothing when the check itself fails, and says so in the log", async () => {
+      needsEmailConfirmation.mockResolvedValue({
+        success: false,
+        errors: [new Error("db down")],
+      })
+
+      expect(await load({ id: "profile-1" })).toBe(false)
+      expect(logger.error).toHaveBeenCalledWith(
+        "Could not tell whether the email choices are confirmed",
+        { errors: ["db down"] },
+      )
+    })
+
+    it("asks nothing of a visitor with no profile", async () => {
+      expect(await load(null)).toBe(false)
+      expect(needsEmailConfirmation).not.toHaveBeenCalled()
+    })
+  })
+
   describe("Site Settings", () => {
     const siteSettings = siteSettingsSchema.parse(siteSettingsDocument())
     const profile = { id: "profile-1", race_color: ["Branca"] }
@@ -493,13 +533,6 @@ describe("root loader", () => {
         host: "localhost",
       })
       mockGetToast.mockResolvedValue({ toast: null, headers: new Headers() })
-      const { newsletterPreferenceCookie } = await import(
-        "./business/newsletter/newsletter-preference-cookie.server"
-      )
-      vi.mocked(newsletterPreferenceCookie.parse).mockResolvedValue({
-        checked: true,
-        shouldShow: false,
-      })
 
       const request = new Request("http://localhost:5173/dashboard")
       const result = (await loader({ request, params: {} } as never)) as {

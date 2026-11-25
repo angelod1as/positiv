@@ -12,7 +12,6 @@ vi.mock("./listmonk-client.server", async (importOriginal) => ({
     .mockResolvedValue({ success: true, data: undefined, errors: [] }),
 }))
 
-import { recordNewsletterRefusal } from "./email-consents.server"
 import {
   subscribeProfile,
   unsubscribeProfile,
@@ -136,49 +135,6 @@ describe("email_consents - Integration Tests", () => {
         registration_alerts: true,
         registration_alerts_at: null,
       })
-    })
-  })
-
-  describe("recordNewsletterRefusal", () => {
-    it("should create the row when the profile has none", async () => {
-      const profile = await newProfile()
-      await kysely
-        .deleteFrom("email_consents")
-        .where("profile_id", "=", profile.id)
-        .execute()
-
-      const result = await recordNewsletterRefusal(profile.id)
-
-      expect(result.success).toBe(true)
-      const consent = await consentOf(profile.id)
-      expect(consent.newsletter).toBe(false)
-      expect(consent.newsletter_at).toEqual(expect.any(Date))
-    })
-
-    it("should leave Registration alerts and Marketing alone", async () => {
-      const profile = await newProfile()
-
-      await recordNewsletterRefusal(profile.id)
-
-      expect(await consentOf(profile.id)).toMatchObject({
-        newsletter: false,
-        registration_alerts: true,
-        registration_alerts_at: null,
-        marketing: false,
-        marketing_at: null,
-      })
-    })
-
-    it("should keep the date of the first refusal when it is repeated", async () => {
-      const profile = await newProfile()
-      await recordNewsletterRefusal(profile.id)
-      const refused = await consentOf(profile.id)
-
-      await recordNewsletterRefusal(profile.id)
-
-      expect((await consentOf(profile.id)).newsletter_at).toEqual(
-        refused.newsletter_at,
-      )
     })
   })
 })

@@ -68,8 +68,6 @@ Lembrando que calculamos a data a partir do pedido de reembolso — não esqueç
 
 export const agreeToTermsValidation = {
   agree: "Você só pode continuar se estiver de acordo.",
-  commonEmails:
-    "Nosso sistema só funciona se você aceitar receber e-mails gerais.",
 } as const
 
 export const agreeToTermsCopy = {
@@ -83,23 +81,13 @@ export const agreeToTermsCopy = {
     "Leia também nossa [Política de Privacidade](/privacidade): ela explica quais dados coletamos e por quê.",
   labels: {
     agree: "Li tudo e estou de acordo!",
-    commonEmails: "Aceito receber e-mails gerais do sistema",
-    mktEmails: "Aceito receber e-mails sobre a Positiv",
-  } as const satisfies Partial<
-    Record<keyof z.infer<typeof agreeToTermsSchema>, string>
-  >,
-  descriptions: {
-    commonEmails:
-      "Vamos enviar mensagens sobre o processo de candidatura e, se você quiser, lembrete de datas importantes de eventos futuros (mas só se você clicar no botãozinho).",
-    mktEmails:
-      "Vamos enviar mensagens sobre outros eventos e parcerias, e também atualizações da Positiv que podem ir além das festas tradicionais .",
   } as const satisfies Partial<
     Record<keyof z.infer<typeof agreeToTermsSchema>, string>
   >,
   buttonLabel: "Continuar",
   pendingButtonLabel: "Salvando...",
   newsletterWarning:
-    "Suas escolhas foram salvas, mas sua assinatura da newsletter não foi concluída. Por favor, entre em contato: partypositiv@gmail.com",
+    "Suas escolhas foram salvas, mas não conseguimos atualizar suas listas de e-mail. Por favor, entre em contato: partypositiv@gmail.com",
   successToast: "Escolhas salvas com sucesso",
   validation: agreeToTermsValidation,
 } as const

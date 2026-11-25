@@ -75,25 +75,6 @@ setup('authenticate as user', async ({ page }) => {
   // schedule, and this setup gates every authenticated test in the suite.
   await page.waitForLoadState('domcontentloaded')
 
-  // Navigate to homepage to check if newsletter modal appears
-  await page.goto('/')
-  await page.waitForLoadState('domcontentloaded')
-
-  // If newsletter modal appears, dismiss it to ensure clean state for other tests
-  const newsletterHeading = page.getByRole('heading', { name: /assine nossa newsletter/i })
-  // The modal arrives with the page's own scripts, so this waits for it rather
-  // than asking whether it happens to be there already.
-  const isModalVisible = await newsletterHeading
-    .waitFor({ state: 'visible', timeout: 5000 })
-    .then(() => true)
-    .catch(() => false)
-
-  if (isModalVisible) {
-    console.info('Newsletter modal detected, dismissing for clean state')
-    await page.getByRole('button', { name: /talvez mais tarde/i }).click()
-    await page.waitForLoadState('domcontentloaded')
-  }
-
   await page.context().storageState({ path: userFile })
 
   console.info('✅ User authentication state saved')

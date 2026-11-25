@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { emailConsentCopy, emailsPageCopy } from '../../../app/copy/emails'
+import { agreeToTermsCopy } from '../../../app/copy/dashboard'
 import { headerCopy } from '../../../app/copy/layout'
 
 test.describe('POS-192: User Settings and Profile Management', () => {
@@ -137,81 +138,40 @@ test.describe('POS-192: User Settings and Profile Management', () => {
     await expect(page.locator('text=/não combinam/i')).toBeVisible()
   })
 
-  test('Marketing email preference can be toggled and persists', async ({ page }) => {
-    // Go to terms page
-    await page.goto('/conta/termos-e-condicoes')
-    await expect(page).toHaveURL('/conta/termos-e-condicoes')
-
-    // Dismiss newsletter modal if it appears (sessionStorage not persisted in storageState)
-    const newsletterHeading = page.getByRole('heading', { name: /assine nossa newsletter/i })
-    const isModalVisible = await newsletterHeading.isVisible().catch(() => false)
-    if (isModalVisible) {
-      await page.getByRole('button', { name: /talvez mais tarde/i }).click()
-      await page.waitForLoadState('networkidle')
+  test('Email choices on the terms page persist', async ({ page }) => {
+    const newsletter = () =>
+      page.getByRole('checkbox', { name: emailConsentCopy.labels.newsletter })
+    // The box itself is visually hidden behind its styled twin, so the label
+    // is what a person clicks.
+    const tick = (label: string) =>
+      page.getByText(label, { exact: true }).click()
+    const saveTerms = async () => {
+      if (!(await page.getByLabel(agreeToTermsCopy.labels.agree).isChecked())) {
+        await tick(agreeToTermsCopy.labels.agree)
+      }
+      await page
+        .getByRole('button', { name: agreeToTermsCopy.buttonLabel })
+        .click()
+      await page.waitForURL('**/conta/dados-basicos', { timeout: 10000 })
     }
 
-    // Ensure required checkboxes are checked first
-    const agreeCheckbox = page.getByLabel('Li tudo e estou de acordo!')
-    const systemEmailsCheckbox = page.getByLabel('Aceito receber e-mails gerais do sistema')
-    
-    // Check them if not already checked
-    if (!(await agreeCheckbox.isChecked())) {
-      await page.getByText('Li tudo e estou de acordo!').click()
-    }
-    if (!(await systemEmailsCheckbox.isChecked())) {
-      await page.getByText('Aceito receber e-mails gerais do sistema').click()
-    }
-    
-    // Find the marketing email checkbox
-    const marketingCheckbox = page.getByLabel('Aceito receber e-mails sobre a Positiv')
-    await expect(marketingCheckbox).toBeVisible()
-    
-    // Get initial state
-    const initialState = await marketingCheckbox.isChecked()
-    
-    // Toggle it by clicking the label text (avoids label overlay issues)
-    await page.getByText('Aceito receber e-mails sobre a Positiv').click()
-    
-    // Verify it toggled
-    const afterToggle = await marketingCheckbox.isChecked()
-    expect(afterToggle).toBe(!initialState)
-    
-    // Save the form
-    await page.getByRole('button', { name: 'Continuar' }).click()
-    
-    // Wait for navigation - the page redirects to dados-basicos after save
-    await page.waitForURL('**/conta/dados-basicos', { timeout: 10000 })
-    
-    // Navigate back to terms page to verify persistence
     await page.goto('/conta/termos-e-condicoes')
-    await page.waitForLoadState('networkidle')
-    
-    // Verify the new state persisted
-    const newState = await marketingCheckbox.isChecked()
-    expect(newState).toBe(!initialState)
-    
-    // Toggle it back to original state by clicking the label text
-    await page.getByText('Aceito receber e-mails sobre a Positiv').click()
-    
-    // Verify it toggled back
-    const afterSecondToggle = await marketingCheckbox.isChecked()
-    expect(afterSecondToggle).toBe(initialState)
-    
-    // Ensure the agree checkbox is still checked before saving again
-    if (!(await agreeCheckbox.isChecked())) {
-      await page.getByText('Li tudo e estou de acordo!').click()
-    }
-    
-    // Save again
-    await page.getByRole('button', { name: 'Continuar' }).click()
-    
-    // Wait for navigation - the page redirects to dados-basicos after save
-    await page.waitForURL('**/conta/dados-basicos', { timeout: 10000 })
-    
-    // Navigate back to terms page for final verification
+    await expect(page.getByText(emailConsentCopy.alwaysSent)).toBeVisible()
+
+    const initialState = await newsletter().isChecked()
+
+    await tick(emailConsentCopy.labels.newsletter)
+    await expect(newsletter()).toBeChecked({ checked: !initialState })
+    await saveTerms()
+
     await page.goto('/conta/termos-e-condicoes')
-    await page.waitForLoadState('networkidle')
-    const finalState = await marketingCheckbox.isChecked()
-    expect(finalState).toBe(initialState)
+    await expect(newsletter()).toBeChecked({ checked: !initialState })
+
+    // Leave the shared user as it found it
+    await tick(emailConsentCopy.labels.newsletter)
+    await saveTerms()
+
+    await page.goto('/conta/termos-e-condicoes')
+    await expect(newsletter()).toBeChecked({ checked: initialState })
   })
 })

@@ -37,6 +37,11 @@ import { profileUpdateCopy } from "~/copy/account"
  *    - Verify form validation schema includes the field
  *    - Ensure form action saves the field to database
  *
+ * The same guard also hosts the email confirmation modal (WEB-54): a
+ * logged-in person whose email choices were never confirmed is sent to
+ * `/emails`, which is exempt so they can get there. The profile update comes
+ * first when both are due.
+ *
  * NOTES:
  * - A field can be required for being well-formed rather than for being
  *   present: `cpf` is checked with `isValidCpf`, so a filled-in but impossible
@@ -44,7 +49,7 @@ import { profileUpdateCopy } from "~/copy/account"
  * - The guard only shows for logged-in users
  * - Modal appears on all pages EXCEPT those in `exemptPaths`
  * - Modal is non-dismissable (no ESC, no click-outside, no X button)
- * - Once user fills required fields, modal never appears again
+ * - Once user fills required fields, the profile modal never appears again
  * - `targetPath` should point to the form page where user can fill the required fields
  */
 
@@ -63,6 +68,7 @@ export const PROFILE_REQUIREMENTS = {
     "/conta/mudar-senha",
     "/conta/termos-e-condicoes",
     "/conta/dados-basicos",
+    "/emails",
   ] as string[],
 }
 

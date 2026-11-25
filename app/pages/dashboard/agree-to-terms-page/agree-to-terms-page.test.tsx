@@ -15,6 +15,7 @@ vi.mock("react-router", async (importOriginal) => {
 })
 
 import { toast } from "sonner"
+import type { EmailPreferences } from "~/business/newsletter/email-preferences-schema"
 import type { Route } from "./+types/agree-to-terms-page"
 import AgreeToTermsPage from "./agree-to-terms-page"
 
@@ -25,21 +26,31 @@ const EXPECTED_HEADINGS = [
   "Política de reembolso",
 ]
 
+const ALL_TICKED: EmailPreferences = {
+  registrationAlerts: true,
+  newsletter: true,
+  marketing: true,
+}
+
 const createProps = (
-  mktEmails: boolean | undefined = undefined,
+  preferences: EmailPreferences = ALL_TICKED,
 ): Route.ComponentProps =>
   ({
-    loaderData: { mktEmails },
+    loaderData: { preferences },
     params: {},
     matches: [] as unknown as Route.ComponentProps["matches"],
   }) as Route.ComponentProps
 
-const renderPage = (mktEmails?: boolean) =>
+const renderPage = (preferences?: EmailPreferences) =>
   render(
     <MemoryRouter initialEntries={["/conta/termos-e-condicoes"]}>
-      <AgreeToTermsPage {...createProps(mktEmails)} />
+      <AgreeToTermsPage {...createProps(preferences)} />
     </MemoryRouter>,
   )
+
+const ALERTS = "Quero ser avisade quando abrirem as inscrições das festas."
+const NEWSLETTER = "Quero receber a newsletter da Positiv."
+const MARKETING = "Aceito receber divulgações e parcerias."
 
 const box = (name: string) => screen.getByRole("checkbox", { name })
 
@@ -94,30 +105,38 @@ describe("AgreeToTermsPage", () => {
     ).toHaveAttribute("href", "/privacidade")
   })
 
-  it("opens with the system e-mails ticked and the terms not", () => {
+  it("opens with the three email categories ticked and the terms not", () => {
     renderPage()
 
     expect(box("Li tudo e estou de acordo!")).not.toBeChecked()
-    expect(box("Aceito receber e-mails gerais do sistema")).toBeChecked()
+    expect(box(ALERTS)).toBeChecked()
+    expect(box(NEWSLETTER)).toBeChecked()
+    expect(box(MARKETING)).toBeChecked()
   })
 
-  it("opens with the newsletter as the person last left it", () => {
-    renderPage(false)
+  it("opens with the email categories as the person last left them", () => {
+    renderPage({ registrationAlerts: true, newsletter: false, marketing: false })
 
-    expect(box("Aceito receber e-mails sobre a Positiv")).not.toBeChecked()
+    expect(box(ALERTS)).toBeChecked()
+    expect(box(NEWSLETTER)).not.toBeChecked()
+    expect(box(MARKETING)).not.toBeChecked()
   })
 
-  it("opens with the newsletter ticked when nobody has said otherwise", () => {
-    renderPage(undefined)
-
-    expect(box("Aceito receber e-mails sobre a Positiv")).toBeChecked()
-  })
-
-  it("explains what the two e-mail choices mean", () => {
+  it("says which emails are always sent", () => {
     renderPage()
 
-    expect(screen.getByText(/processo de candidatura/)).toBeVisible()
-    expect(screen.getByText(/outros eventos e parcerias/)).toBeVisible()
+    expect(screen.getByText(/Sempre vamos te mandar e-mails/)).toBeVisible()
+  })
+
+  it("warns, right below the box, what unticking the alerts costs", async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(box(ALERTS))
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Sem isso, você não vai mais ser lembrade das festas.",
+    )
   })
 
   it("refuses to continue until the terms are agreed to", async () => {
@@ -129,23 +148,6 @@ describe("AgreeToTermsPage", () => {
 
     expect(
       await screen.findByText("Você só pode continuar se estiver de acordo."),
-    ).toBeVisible()
-    expect(fetch).not.toHaveBeenCalled()
-  })
-
-  it("refuses to continue without the e-mails the system has to send", async () => {
-    const user = userEvent.setup()
-    const fetch = answers({ ok: true, newsletterFailed: false })
-    renderPage()
-
-    await user.click(box("Li tudo e estou de acordo!"))
-    await user.click(box("Aceito receber e-mails gerais do sistema"))
-    await submit(user)
-
-    expect(
-      await screen.findByText(
-        "Nosso sistema só funciona se você aceitar receber e-mails gerais.",
-      ),
     ).toBeVisible()
     expect(fetch).not.toHaveBeenCalled()
   })
@@ -168,10 +170,10 @@ describe("AgreeToTermsPage", () => {
   it("sends the choices to the terms route", async () => {
     const user = userEvent.setup()
     const fetch = answers({ ok: true, newsletterFailed: false })
-    renderPage(true)
+    renderPage()
 
     await user.click(box("Li tudo e estou de acordo!"))
-    await user.click(box("Aceito receber e-mails sobre a Positiv"))
+    await user.click(box(NEWSLETTER))
     await submit(user)
 
     await waitFor(() => expect(fetch).toHaveBeenCalled())
@@ -179,8 +181,9 @@ describe("AgreeToTermsPage", () => {
     expect(url).toBe("/api/account/termos")
     expect(JSON.parse(String(init.body))).toEqual({
       agree: true,
-      commonEmails: true,
-      mktEmails: false,
+      registrationAlerts: true,
+      newsletter: false,
+      marketing: true,
     })
   })
 
@@ -199,7 +202,7 @@ describe("AgreeToTermsPage", () => {
     expect(toast.warning).not.toHaveBeenCalled()
   })
 
-  it("warns that the newsletter did not go through, and moves on anyway", async () => {
+  it("warns that the email lists did not go through, and moves on anyway", async () => {
     const user = userEvent.setup()
     answers({ ok: true, newsletterFailed: true })
     renderPage()

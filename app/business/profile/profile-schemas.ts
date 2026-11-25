@@ -13,6 +13,7 @@ import {
   profileFlagStatusEnum,
 } from "~types/database/entities.types"
 import { parseBoolean } from "../application/application-schemas"
+import { emailPreferencesSchema } from "../newsletter/email-preferences-schema"
 
 /* DASHBOARD */
 
@@ -20,11 +21,7 @@ export const agreeToTermsSchema = zod.object({
   agree: zod.boolean().refine((val) => val, {
     message: agreeToTermsValidation.agree,
   }),
-  commonEmails: zod.boolean().refine((val) => val, {
-    message: agreeToTermsValidation.commonEmails,
-  }),
-  mktEmails: zod.boolean().optional(),
-})
+}).extend(emailPreferencesSchema.shape)
 
 /* BASIC DATA */
 /**

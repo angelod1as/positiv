@@ -15,6 +15,13 @@ vi.mock("sonner", () => ({
   toast: { success: vi.fn() },
 }))
 
+const revalidate = vi.hoisted(() => vi.fn())
+
+vi.mock("react-router", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("react-router")>()),
+  useRevalidator: () => ({ revalidate, state: "idle" }),
+}))
+
 import { toast } from "sonner"
 import { getUserContext } from "~/business/auth/auth.server"
 import { findEmailPreferences } from "~/business/newsletter/email-preferences.server"
@@ -152,5 +159,18 @@ describe("EmailsPage", () => {
     expect(
       await screen.findByText(/Não conseguimos entregar e-mails/),
     ).toBeInTheDocument()
+  })
+
+  it("reloads the page data once saved, so the confirmation modal goes away", async () => {
+    revalidate.mockClear()
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      Response.json({ ok: true, bounced: false }),
+    )
+    const user = userEvent.setup()
+    renderPage(null)
+
+    await user.click(screen.getByRole("button", { name: "Salvar" }))
+
+    await waitFor(() => expect(revalidate).toHaveBeenCalled())
   })
 })

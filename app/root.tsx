@@ -11,7 +11,7 @@ import {
   ScrollRestoration,
   useLocation,
 } from "react-router"
-import { getToast, redirectWithError, redirectWithSuccess } from "remix-toast"
+import { getToast } from "remix-toast"
 import { toast as notify, Toaster } from "sonner"
 import { ENV } from "varlock/env"
 import {
@@ -33,11 +33,11 @@ import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import { TooltipProvider } from "~/components/ui/tooltip"
 import { errorsCopy } from "~/copy/errors"
 import { metaCopy } from "~/copy/meta"
-import { newsletterSubscribeCopy } from "~/copy/newsletter"
 import { POSITIV_EMAIL } from "~/lib/constants/constants"
 import type { Route } from "./+types/root"
 import "./app.css"
 import { getContext } from "./business/auth/auth.server"
+import { needsEmailConfirmation } from "./business/newsletter/email-preferences.server"
 import { isDraftModeEnabled } from "./business/cms/draft-mode.server"
 import {
   type DraftSnapshotQuery,
@@ -49,14 +49,10 @@ import {
   loadSiteSettings,
 } from "./business/cms/site-settings.server"
 import { siteSettingsFromDraft } from "./business/cms/site-settings-from-draft.server"
-import { subscribeProfileToNewsletter } from "./business/newsletter/auto-subscribe.server"
-import { getSubscriptionStatus } from "./business/newsletter/subscription-helpers.server"
 import { newsCookie } from "./lib/request/cookies.server"
-import { newsletterPreferenceCookie } from "./business/newsletter/newsletter-preference-cookie.server"
 import { Footer } from "./components/organisms/footer/footer"
 import { Header } from "./components/organisms/header/header"
 import { NEWS_VERSION } from "./components/organisms/news-dialog/news-utils"
-import { NewsletterSubscriptionModal } from "./components/organisms/newsletter-subscription-modal"
 import { ProfileUpdateGuard } from "./components/organisms/profile-update-guard/profile-update-guard"
 import type { ProfileWithRoles } from "~types/database/entities.types"
 
@@ -204,31 +200,13 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         ? cpfExemptionLinks({ profileId: currentProfile.id }).request
         : null
 
-    let shouldShowNewsletterModal = false
-    if (currentProfile) {
-      const newsletterCookie =
-        (await newsletterPreferenceCookie.parse(cookieHeader)) || {}
-
-      if (newsletterCookie.checked === true) {
-        shouldShowNewsletterModal = newsletterCookie.shouldShow === true
-      } else {
-        const subscriptionResult = await getSubscriptionStatus(
-          currentProfile.id,
-        )
-        const subscription = subscriptionResult.success
-          ? subscriptionResult.data
-          : null
-        const isNotSubscribed = !subscription || !subscription.consent_given
-        shouldShowNewsletterModal = isNotSubscribed
-
-        headers.append(
-          "Set-Cookie",
-          await newsletterPreferenceCookie.serialize({
-            checked: true,
-            shouldShow: isNotSubscribed,
-          }),
-        )
-      }
+    const emailCheck = currentProfile
+      ? await needsEmailConfirmation(currentProfile.id)
+      : null
+    if (emailCheck && !emailCheck.success) {
+      logger.error("Could not tell whether the email choices are confirmed", {
+        errors: emailCheck.errors.map((error) => error.message),
+      })
     }
 
     return data(
@@ -239,8 +217,8 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         isProdInDev,
         isThereAnyNews: shouldShowNews,
         needsProfileUpdate,
+        needsEmailConfirmation: emailCheck?.success === true && emailCheck.data,
         cpfExemptionLink,
-        shouldShowNewsletterModal,
         draftMode,
         liveSnapshot,
         ...(await siteSettings),
@@ -259,8 +237,8 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       isProdInDev: null,
       isThereAnyNews: null,
       needsProfileUpdate: false,
+      needsEmailConfirmation: false,
       cpfExemptionLink: null,
-      shouldShowNewsletterModal: false,
       draftMode,
       liveSnapshot: liveSnapshotFrom(draft),
       ...(await siteSettingsFor(draft)),
@@ -268,54 +246,11 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   }
 }
 
-export async function action({ params, request }: Route.ActionArgs) {
+export async function action({ request }: Route.ActionArgs) {
   const cookieHeader = request.headers.get("Cookie")
   const cookie = (await newsCookie.parse(cookieHeader)) || {}
   const formData = inputFromFormData(await readFormData(request.clone()))
   const { intent, thisUrl, newsVersion: submittedNewsVersion } = formData
-
-  if (intent === "newsletter-subscribe") {
-    const { currentProfile } = await getContext(request, params)
-
-    if (!currentProfile) {
-      return redirectWithError(
-        safeRedirect(thisUrl as string, "/"),
-        newsletterSubscribeCopy.loginRequired,
-      )
-    }
-
-    const result = await subscribeProfileToNewsletter(
-      currentProfile.id,
-      "manual_button",
-    )
-
-    if (!result.success) {
-      return redirectWithError(
-        safeRedirect(thisUrl as string, "/"),
-        newsletterSubscribeCopy.failed,
-      )
-    }
-
-    const headers = new Headers()
-    headers.append(
-      "Set-Cookie",
-      await newsletterPreferenceCookie.serialize({
-        checked: true,
-        shouldShow: false,
-      }),
-    )
-
-    const successMessage =
-      result.data?.syncStatus === "failed"
-        ? newsletterSubscribeCopy.successWithSyncFailure
-        : newsletterSubscribeCopy.success
-
-    return redirectWithSuccess(
-      safeRedirect(thisUrl as string, "/"),
-      successMessage,
-      { headers },
-    )
-  }
 
   if (
     cookie.showNews === "false" &&
@@ -392,9 +327,9 @@ type AppShellProps = {
   isProdInDev: boolean | null | undefined
   isThereAnyNews: boolean
   needsProfileUpdate: boolean
+  needsEmailConfirmation: boolean
   cpfExemptionLink: string | null
   currentPath: string
-  showNewsletterModal: boolean
   siteSettings: SiteSettings | null
   editorialSystemUnavailable: boolean
 }
@@ -407,9 +342,9 @@ function AppShell({
   isProdInDev,
   isThereAnyNews,
   needsProfileUpdate,
+  needsEmailConfirmation,
   cpfExemptionLink,
   currentPath,
-  showNewsletterModal,
   siteSettings,
   editorialSystemUnavailable,
 }: AppShellProps) {
@@ -428,9 +363,9 @@ function AppShell({
         currentProfile={profile}
         currentPath={currentPath}
         needsProfileUpdate={needsProfileUpdate}
+        needsEmailConfirmation={needsEmailConfirmation}
         cpfExemptionLink={cpfExemptionLink}
       />
-      <NewsletterSubscriptionModal open={showNewsletterModal} />
       <div className="flex flex-col grow mt-[var(--site-header-height,4rem)]">
         <Outlet />
       </div>
@@ -451,8 +386,8 @@ export default function App({ loaderData }: Route.ComponentProps) {
     isProdInDev,
     isThereAnyNews = false,
     needsProfileUpdate = false,
+    needsEmailConfirmation = false,
     cpfExemptionLink = null,
-    shouldShowNewsletterModal = false,
     siteSettings,
     editorialSystemUnavailable = false,
     draftMode = false,
@@ -473,17 +408,6 @@ export default function App({ loaderData }: Route.ComponentProps) {
       })
     }
   }, [toast])
-
-  const authFlowPaths = [
-    "/entrar",
-    "/registrar",
-    "/conta/dados-basicos",
-    "/conta/termos-e-condicoes",
-  ]
-  const isAuthFlow = authFlowPaths.some((path) =>
-    location.pathname.startsWith(path),
-  )
-  const showNewsletterModal = shouldShowNewsletterModal && !isAuthFlow
 
   // Live Site Settings swap in place; the shell stays put so loading the live
   // chunk never remounts it. undefined means no live value has arrived yet.
@@ -506,9 +430,9 @@ export default function App({ loaderData }: Route.ComponentProps) {
         isProdInDev={isProdInDev}
         isThereAnyNews={isThereAnyNews ?? false}
         needsProfileUpdate={needsProfileUpdate}
+        needsEmailConfirmation={needsEmailConfirmation}
         cpfExemptionLink={cpfExemptionLink}
         currentPath={location.pathname}
-        showNewsletterModal={showNewsletterModal}
         siteSettings={activeSiteSettings}
         editorialSystemUnavailable={editorialSystemUnavailable}
       />

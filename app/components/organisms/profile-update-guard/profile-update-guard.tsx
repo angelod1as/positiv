@@ -1,4 +1,5 @@
 import type { ProfileWithRoles } from "~types/database/entities.types"
+import { EmailConfirmationModal } from "./email-confirmation-modal"
 import { isExemptPath } from "./profile-update-config"
 import { ProfileUpdateModal } from "./profile-update-modal"
 
@@ -6,6 +7,7 @@ type ProfileUpdateGuardProps = {
   currentProfile: ProfileWithRoles | null
   currentPath: string
   needsProfileUpdate: boolean
+  needsEmailConfirmation: boolean
   cpfExemptionLink?: string | null
 }
 
@@ -13,6 +15,7 @@ export const ProfileUpdateGuard = ({
   currentProfile,
   currentPath,
   needsProfileUpdate,
+  needsEmailConfirmation,
   cpfExemptionLink = null,
 }: ProfileUpdateGuardProps) => {
   if (!currentProfile) {
@@ -23,9 +26,13 @@ export const ProfileUpdateGuard = ({
     return null
   }
 
-  if (!needsProfileUpdate) {
-    return null
+  if (needsProfileUpdate) {
+    return <ProfileUpdateModal cpfExemptionLink={cpfExemptionLink} />
   }
 
-  return <ProfileUpdateModal cpfExemptionLink={cpfExemptionLink} />
+  if (needsEmailConfirmation) {
+    return <EmailConfirmationModal />
+  }
+
+  return null
 }

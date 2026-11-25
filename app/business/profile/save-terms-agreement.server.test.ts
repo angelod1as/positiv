@@ -21,7 +21,12 @@ const context = {
   currentProfile: null,
 }
 
-const answers = { agree: true, commonEmails: true, mktEmails: true }
+const answers = {
+  agree: true,
+  registrationAlerts: true,
+  newsletter: true,
+  marketing: true,
+}
 
 const succeeded = (data: Record<string, unknown> = {}) =>
   mockAgreeToTerms.mockResolvedValue({
@@ -53,7 +58,12 @@ describe("saveTermsAgreement", () => {
 
   it("blames the box nobody ticked", async () => {
     const result = await saveTermsAgreement({
-      answers: { agree: false, commonEmails: true },
+      answers: {
+        agree: false,
+        registrationAlerts: true,
+        newsletter: true,
+        marketing: true,
+      },
       context,
     })
 

@@ -15,7 +15,12 @@ import { saveTermsAgreement } from "~/business/profile/save-terms-agreement.serv
 const mockGetUserContext = vi.mocked(getUserContext)
 const mockSaveTermsAgreement = vi.mocked(saveTermsAgreement)
 
-const answers = { agree: true, commonEmails: true, mktEmails: false }
+const answers = {
+  agree: true,
+  registrationAlerts: true,
+  newsletter: false,
+  marketing: false,
+}
 
 const post = (body: unknown) =>
   new Request("http://localhost/api/account/termos", {
