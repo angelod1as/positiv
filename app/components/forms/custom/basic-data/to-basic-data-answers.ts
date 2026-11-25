@@ -79,7 +79,10 @@ export function toBasicDataAnswers(profile: ProfileLike | null): Answers {
   // answers it.
   if (profile.non_monogamy_not_living) {
     answers.non_monogamy_since = { none: true }
-  } else if (profile.non_monogamy_since) {
+  } else if (
+    profile.non_monogamy_since !== null &&
+    profile.non_monogamy_since !== undefined
+  ) {
     answers.non_monogamy_since = { year: profile.non_monogamy_since }
   }
 

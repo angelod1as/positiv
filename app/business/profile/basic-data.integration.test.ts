@@ -160,6 +160,22 @@ describe("saveBasicData - Integration Tests", () => {
     expect(saved.basic_data_filled).toBe(true)
   })
 
+  it.each([
+    ["a year together with the opt-out", { non_monogamy_since: 2015, non_monogamy_not_living: true }],
+    ["a year before 1950", { non_monogamy_since: 1949 }],
+  ])("refuses %s in the database itself", async (_, written) => {
+    const email = `test-objective-check-${Date.now()}@example.com`
+    const profile = await createTestProfile(tracker, kysely, { email })
+
+    await expect(
+      kysely
+        .updateTable("profiles")
+        .set(written)
+        .where("id", "=", profile.id)
+        .execute(),
+    ).rejects.toThrow(/profiles_non_monogamy_answer_check/)
+  })
+
   it("replaces the year with the opt-out when the person stops living non-monogamy", async () => {
     const email = "test-save-basic-data-not-living@example.com"
     const userId = await createTestAuthUser(email, "test1234", tracker)
