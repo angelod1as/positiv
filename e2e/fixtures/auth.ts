@@ -162,6 +162,16 @@ export async function completeOnboarding(
     await expect(pill).toHaveAttribute("aria-pressed", "true")
   }
 
+  // The two objective questions close the form, and both are required.
+  // The input is visually hidden behind the styled box; the label is what a
+  // person clicks.
+  const [place] = TEST_USER_PROFILE_DATA.places_attended
+  await page.getByText(place, { exact: true }).click()
+  await expect(page.getByRole("checkbox", { name: place })).toBeChecked()
+  await page
+    .getByRole("combobox", { name: "Ano" })
+    .selectOption(String(TEST_USER_PROFILE_DATA.non_monogamy_since))
+
   const saveBasicData = page.getByRole("button", { name: "Continuar" })
   await expect(saveBasicData).toBeVisible()
 

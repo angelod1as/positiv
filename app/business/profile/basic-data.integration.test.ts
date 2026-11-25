@@ -6,6 +6,7 @@ import { basicDataValidation } from "~/copy/account"
 import * as listmonkClient from "../newsletter/listmonk-client.server"
 import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
 import { saveBasicData } from "./basic-data.server"
+import { getObjectiveAnswers } from "./profiles.server"
 import { sessionClientThatThrows } from "~/test/session-client-that-throws"
 
 vi.mock("~/lib/logger/logger.server", () => ({
@@ -27,6 +28,8 @@ const answersFor = (email: string) => ({
   orientation: ["Bi"],
   pronouns: ["Ela/dela"],
   race_color: ["Preta"],
+  places_attended: ["Sauna"],
+  non_monogamy_since: { year: 2015 },
   email,
 })
 
@@ -151,7 +154,53 @@ describe("saveBasicData - Integration Tests", () => {
     expect(Number(saved.phone)).toBe(11999999999)
     expect(saved.gender).toEqual(["Travesti"])
     expect(saved.race_color).toEqual(["Preta"])
+    expect(saved.places_attended).toEqual(["Sauna"])
+    expect(saved.non_monogamy_since).toBe(2015)
+    expect(saved.non_monogamy_not_living).toBe(false)
     expect(saved.basic_data_filled).toBe(true)
+  })
+
+  it.each([
+    ["a year together with the opt-out", { non_monogamy_since: 2015, non_monogamy_not_living: true }],
+    ["a year before 1950", { non_monogamy_since: 1949 }],
+  ])("refuses %s in the database itself", async (_, written) => {
+    const email = `test-objective-check-${Date.now()}@example.com`
+    const profile = await createTestProfile(tracker, kysely, { email })
+
+    await expect(
+      kysely
+        .updateTable("profiles")
+        .set(written)
+        .where("id", "=", profile.id)
+        .execute(),
+    ).rejects.toThrow(/profiles_non_monogamy_answer_check/)
+  })
+
+  it("replaces the year with the opt-out when the person stops living non-monogamy", async () => {
+    const email = "test-save-basic-data-not-living@example.com"
+    const userId = await createTestAuthUser(email, "test1234", tracker)
+    const profile = await createTestProfile(tracker, kysely, {
+      email,
+      user_id: userId,
+    })
+    const save = (non_monogamy_since: unknown) =>
+      saveBasicData({
+        answers: { ...answersFor(email), non_monogamy_since },
+        context: contextFor(email, userId) as never,
+      })
+    expect(await save({ year: 2015 })).toEqual({ ok: true })
+    expect(await getObjectiveAnswers({ profileId: profile.id })).toEqual({
+      places_attended: ["Sauna"],
+      non_monogamy_since: 2015,
+      non_monogamy_not_living: false,
+    })
+
+    expect(await save({ none: true })).toEqual({ ok: true })
+    expect(await getObjectiveAnswers({ profileId: profile.id })).toEqual({
+      places_attended: ["Sauna"],
+      non_monogamy_since: null,
+      non_monogamy_not_living: true,
+    })
   })
 
   it("writes a phone flagged international, and unflags it once it is Brazilian again", async () => {

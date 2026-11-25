@@ -383,8 +383,18 @@ describe("RLS Security - Integration Tests", () => {
     // The organisation's notes about a person live next to that person's own
     // data. Row-level policies hand a participant their own rows; only the
     // column grants keep these columns out of what PostgREST returns them.
+    // The objective questions (WEB-70) are the person's own answers, but only
+    // admins see them, and the person reads theirs through the server.
     const adminOnly = {
-      profiles: ["flag", "flag_notes", "general_notes", "approved_to_attend"],
+      profiles: [
+        "flag",
+        "flag_notes",
+        "general_notes",
+        "approved_to_attend",
+        "places_attended",
+        "non_monogamy_since",
+        "non_monogamy_not_living",
+      ],
       event_participants: ["admin_general_notes"],
     } as const
     const tables = Object.keys(adminOnly)

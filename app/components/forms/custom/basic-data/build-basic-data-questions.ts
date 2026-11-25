@@ -1,4 +1,9 @@
-import { basicDataFieldsSchema, ExtraBasicDataSchema } from "~/business/profile/profile-schemas"
+import {
+  basicDataFieldsSchema,
+  ExtraBasicDataSchema,
+  ObjectiveQuestionsSchema,
+} from "~/business/profile/profile-schemas"
+import { yearSchema } from "~/components/forms/runtime/year"
 import type {
   Answers,
   Option,
@@ -9,6 +14,7 @@ import {
   basicDataValidation,
   cpfExemptionCopy,
   genderPronounsOrientationCopy,
+  objectiveQuestionsCopy,
 } from "~/copy/account"
 import { isValidPhone } from "~/lib/helpers/phone"
 import { normalizeName } from "~/lib/helpers/strings"
@@ -16,6 +22,8 @@ import { zod } from "~/lib/helpers/zod"
 import {
   GENDERS,
   ORIENTATIONS,
+  PLACES_ATTENDED,
+  PLACES_ATTENDED_NONE,
   PRONOUNS,
   RACE_COLOR,
 } from "~/lib/constants/constants"
@@ -184,6 +192,26 @@ export function buildBasicDataQuestions({
         allowOther: true,
       },
       schema: extra.race_color,
+    },
+    {
+      id: "places_attended",
+      prompt: objectiveQuestionsCopy.labels.places_attended,
+      help: objectiveQuestionsCopy.descriptions.places_attended,
+      input: {
+        kind: "checkbox",
+        options: toOptions(PLACES_ATTENDED),
+        exclusive: PLACES_ATTENDED_NONE,
+      },
+      schema: ObjectiveQuestionsSchema.shape.places_attended,
+    },
+    {
+      id: "non_monogamy_since",
+      prompt: objectiveQuestionsCopy.labels.non_monogamy_since,
+      input: {
+        kind: "year",
+        optOut: { label: objectiveQuestionsCopy.notLiving },
+      },
+      schema: yearSchema,
     },
   ]
 }

@@ -47,6 +47,19 @@ export const RACE_COLOR = [
   "Preta",
 ] as const
 
+export const PLACES_ATTENDED_NONE = "Nenhum destes"
+
+export const PLACES_ATTENDED = [
+  "Suruba entre amigues",
+  "Festa de sexo organizada",
+  "Casa de swing",
+  "Sauna",
+  "Evento ou praia naturista",
+  "Evento de BDSM ou fetiche",
+  "Roda de conversa sobre não-monogamia",
+  PLACES_ATTENDED_NONE,
+] as const
+
 export const LISTMONK_REGISTERED_LIST_ID = 4
 export const LISTMONK_TEST_LIST_ID = 5
 export const LISTMONK_DEVELOPERS_LIST_ID = 16

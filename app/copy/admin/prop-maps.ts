@@ -28,6 +28,9 @@ export const adminPropMapsCopy = {
     general_notes: "Observações gerais",
     race_color: "Raça ou cor",
     provider_customer_id: "Id do cliente no provedor de pagamento",
+    places_attended: "A quais destes já foi?",
+    non_monogamy_since: "Vive a não-monogamia desde",
+    non_monogamy_not_living: "Não vive a não-monogamia hoje?",
   },
   eventFields: {
     created_at: "Criado em",

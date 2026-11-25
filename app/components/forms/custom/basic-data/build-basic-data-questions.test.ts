@@ -28,7 +28,40 @@ describe("buildBasicDataQuestions", () => {
       "orientation",
       "pronouns",
       "race_color",
+      "places_attended",
+      "non_monogamy_since",
     ])
+  })
+
+  it("asks where the person has been with boxes, none of these ruling the others out", () => {
+    expect(find("places_attended").prompt).toBe("A quais destes você já foi?")
+    expect(find("places_attended").input).toMatchObject({
+      kind: "checkbox",
+      exclusive: "Nenhum destes",
+    })
+  })
+
+  it("refuses the places question left unanswered", () => {
+    expect(validateQuestion(find("places_attended"), [], {})).toEqual({
+      ok: false,
+      message: "Marque pelo menos uma opção",
+    })
+  })
+
+  it("asks since when as a year, with a way to say it does not apply", () => {
+    expect(find("non_monogamy_since").prompt).toBe(
+      "Desde quando você vive a não-monogamia?",
+    )
+    expect(find("non_monogamy_since").input).toEqual({
+      kind: "year",
+      optOut: { label: "Não vivo a não-monogamia hoje" },
+    })
+    expect(
+      validateQuestion(find("non_monogamy_since"), { none: true }, {}),
+    ).toEqual({ ok: true })
+    expect(validateQuestion(find("non_monogamy_since"), undefined, {})).toEqual(
+      { ok: false, message: "Informe o ano" },
+    )
   })
 
   it("names each question after the column it fills", () => {

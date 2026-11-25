@@ -78,6 +78,8 @@ const answers = {
   orientation: ["Bi"],
   pronouns: ["Ela/dela"],
   race_color: ["Preta"],
+  places_attended: ["Sauna", "Casa de swing"],
+  non_monogamy_since: { year: 2015 },
 }
 
 const context = (): z.infer<typeof userContextSchema> => ({
@@ -118,6 +120,70 @@ describe("saveBasicData", () => {
         basic_data_filled: true,
       }),
     )
+  })
+
+  describe("the objective questions", () => {
+    it("saves the places and the year", async () => {
+      await saveBasicData({ answers, context: context() })
+
+      expect(written("values")).toEqual(
+        expect.objectContaining({
+          places_attended: ["Sauna", "Casa de swing"],
+          non_monogamy_since: 2015,
+          non_monogamy_not_living: false,
+        }),
+      )
+    })
+
+    it("saves someone who does not live non-monogamy today with no year", async () => {
+      await saveBasicData({
+        answers: { ...answers, non_monogamy_since: { none: true } },
+        context: context(),
+      })
+
+      expect(written("values")).toEqual(
+        expect.objectContaining({
+          non_monogamy_since: null,
+          non_monogamy_not_living: true,
+        }),
+      )
+    })
+
+    it("saves none of these on its own", async () => {
+      const result = await saveBasicData({
+        answers: { ...answers, places_attended: ["Nenhum destes"] },
+        context: context(),
+      })
+
+      expect(result).toEqual({ ok: true })
+      expect(written("values")).toEqual(
+        expect.objectContaining({ places_attended: ["Nenhum destes"] }),
+      )
+    })
+
+    it.each([
+      ["no place picked", { places_attended: [] }, "places_attended"],
+      ["a place not on the list", { places_attended: ["Cinema"] }, "places_attended"],
+      [
+        "none of these next to a place",
+        { places_attended: ["Nenhum destes", "Sauna"] },
+        "places_attended",
+      ],
+      ["no year", { non_monogamy_since: undefined }, "non_monogamy_since"],
+      ["a year in the future", { non_monogamy_since: { year: 3000 } }, "non_monogamy_since"],
+      ["a year before 1950", { non_monogamy_since: { year: 1900 } }, "non_monogamy_since"],
+    ])("refuses %s", async (_, change, questionId) => {
+      const result = await saveBasicData({
+        answers: { ...answers, ...change },
+        context: context(),
+      })
+
+      expect(result.ok).toBe(false)
+      expect(result.ok === false && result.errors).toEqual(
+        expect.arrayContaining([expect.objectContaining({ questionId })]),
+      )
+      expect(called("values")).toHaveLength(0)
+    })
   })
 
   it("does not write the confirmation of the phone to the profile", async () => {

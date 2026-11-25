@@ -29,6 +29,9 @@ const filledProfile = {
   orientation: ["Bi"],
   pronouns: ["Ela/dela"],
   race_color: ["Preta"],
+  places_attended: ["Sauna"],
+  non_monogamy_since: 2015,
+  non_monogamy_not_living: false,
 }
 
 type LoaderData = {
@@ -87,6 +90,16 @@ describe("BasicDataPage", () => {
 
       expect(screen.getByLabelText("Nome completo")).toHaveValue("Maria Silva")
       expect(screen.getByLabelText("CPF")).toHaveValue("52998224725")
+    })
+
+    it("shows the objective questions as the person answered them", () => {
+      draw({ profile: filledProfile, orphanedProfile: null })
+
+      expect(screen.getByRole("checkbox", { name: "Sauna" })).toBeChecked()
+      expect(
+        screen.getByRole("checkbox", { name: "Casa de swing" }),
+      ).not.toBeChecked()
+      expect(screen.getByRole("combobox", { name: "Ano" })).toHaveValue("2015")
     })
 
     it("prefers a profile left behind under the same e-mail", () => {

@@ -192,13 +192,18 @@ export const renderQuestion: RenderQuestion = ({
               <Label key={option.value} className={choiceClassName}>
                 <Checkbox
                   checked={checked}
-                  onChange={() =>
-                    onChange(
-                      checked
-                        ? selected.filter((item) => item !== option.value)
-                        : [...selected, option.value],
-                    )
-                  }
+                  onChange={() => {
+                    if (checked) {
+                      onChange(selected.filter((item) => item !== option.value))
+                    } else if (option.value === input.exclusive) {
+                      onChange([option.value])
+                    } else {
+                      onChange([
+                        ...selected.filter((item) => item !== input.exclusive),
+                        option.value,
+                      ])
+                    }
+                  }}
                 />
                 <span>{option.label}</span>
               </Label>

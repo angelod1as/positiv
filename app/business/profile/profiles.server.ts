@@ -227,6 +227,18 @@ export const findOrphanedProfile = async (email: string) =>
     .where("user_id", "is", null)
     .executeTakeFirst()
 
+/**
+ * The objective questions (WEB-70) are read through Kysely rather than the
+ * session's profile: get_profile_with_roles does not return them, and only the
+ * person themself and the admins may see them.
+ */
+export const getObjectiveAnswers = async ({ profileId }: { profileId: string }) =>
+  db
+    .selectFrom("profiles")
+    .select(["places_attended", "non_monogamy_since", "non_monogamy_not_living"])
+    .where("id", "=", profileId)
+    .executeTakeFirst()
+
 export const findProfileIdForAdminLookup = composable(
   async ({ query }: { query: string }): Promise<string | null> => {
     const text = query.trim()

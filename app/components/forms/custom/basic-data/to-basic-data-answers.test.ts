@@ -33,6 +33,42 @@ describe("toBasicDataAnswers", () => {
     })
   })
 
+  it("fills the objective questions the profile already answered", () => {
+    expect(
+      toBasicDataAnswers({
+        ...profile,
+        places_attended: ["Sauna"],
+        non_monogamy_since: 2015,
+        non_monogamy_not_living: false,
+      }),
+    ).toMatchObject({
+      places_attended: ["Sauna"],
+      non_monogamy_since: { year: 2015 },
+    })
+  })
+
+  it("fills the opt-out for someone who does not live non-monogamy today", () => {
+    expect(
+      toBasicDataAnswers({
+        ...profile,
+        non_monogamy_since: null,
+        non_monogamy_not_living: true,
+      }).non_monogamy_since,
+    ).toEqual({ none: true })
+  })
+
+  it("leaves the objective questions out for a profile that never answered them", () => {
+    const answers = toBasicDataAnswers({
+      ...profile,
+      places_attended: null,
+      non_monogamy_since: null,
+      non_monogamy_not_living: false,
+    })
+
+    expect(answers).not.toHaveProperty("places_attended")
+    expect(answers).not.toHaveProperty("non_monogamy_since")
+  })
+
   it("writes the phone as text, because that is what the field reads", () => {
     expect(toBasicDataAnswers(profile).phone).toBe("11999999999")
   })

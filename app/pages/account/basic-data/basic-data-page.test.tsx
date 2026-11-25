@@ -8,11 +8,15 @@ vi.mock("~/business/auth/auth.server", () => ({
   getUserContext: vi.fn(),
 }))
 
-const { findOrphanedProfile } = vi.hoisted(() => ({
+const { findOrphanedProfile, getObjectiveAnswers } = vi.hoisted(() => ({
   findOrphanedProfile: vi.fn(),
+  getObjectiveAnswers: vi.fn(),
 }))
 
-vi.mock("~/business/profile/profiles.server", () => ({ findOrphanedProfile }))
+vi.mock("~/business/profile/profiles.server", () => ({
+  findOrphanedProfile,
+  getObjectiveAnswers,
+}))
 
 const { logger } = vi.hoisted(() => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
@@ -123,6 +127,46 @@ describe("basic-data-page loader", () => {
         ),
       ).toContain("ID: profile-123")
       expect(logger.error).not.toHaveBeenCalled()
+    })
+
+    it("hands the person their own answers to the objective questions", async () => {
+      findOrphanedProfile.mockResolvedValue(undefined)
+      getObjectiveAnswers.mockResolvedValueOnce({
+        places_attended: ["Sauna"],
+        non_monogamy_since: 2015,
+        non_monogamy_not_living: false,
+      })
+
+      vi.mocked(authServer.getUserContext).mockResolvedValue({
+        currentProfile: {
+          id: "profile-123",
+          basic_data_filled: true,
+          created_at: "2024-01-01T00:00:00Z",
+        },
+        currentUser: { id: "user-123", email: "test@example.com" },
+        supabase: {} as never,
+        supabaseHeaders: new Headers(),
+        host: null,
+        isProdInDev: false,
+      })
+
+      const result = await loader({
+        request: mockRequest,
+        url: new URL(mockRequest.url),
+        pattern: "/conta/dados-basicos",
+        params: mockParams,
+        context: {},
+      })
+
+      expect(getObjectiveAnswers).toHaveBeenCalledWith({
+        profileId: "profile-123",
+      })
+      expect((result as { profile: unknown }).profile).toMatchObject({
+        id: "profile-123",
+        places_attended: ["Sauna"],
+        non_monogamy_since: 2015,
+        non_monogamy_not_living: false,
+      })
     })
 
     it("should handle errors when checking for orphaned profiles", async () => {

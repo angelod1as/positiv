@@ -3,7 +3,10 @@ import { can, PERMISSIONS } from "~/business/auth/permissions"
 import { useNavigate } from "react-router"
 import { toast } from "sonner"
 import { getUserContext } from "~/business/auth/auth.server"
-import { findOrphanedProfile } from "~/business/profile/profiles.server"
+import {
+  findOrphanedProfile,
+  getObjectiveAnswers,
+} from "~/business/profile/profiles.server"
 import { buildBasicDataLayout } from "~/components/forms/custom/basic-data/build-basic-data-layout"
 import { buildBasicDataQuestions } from "~/components/forms/custom/basic-data/build-basic-data-questions"
 import { toBasicDataAnswers } from "~/components/forms/custom/basic-data/to-basic-data-answers"
@@ -36,10 +39,12 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
-  const { currentProfile: profile, currentUser } = await getUserContext(
-    request,
-    params,
-  )
+  const { currentProfile, currentUser } = await getUserContext(request, params)
+
+  const profile = currentProfile && {
+    ...currentProfile,
+    ...(await getObjectiveAnswers({ profileId: currentProfile.id })),
+  }
 
   // Check for orphaned profile with user's email
   let orphanedProfile = null

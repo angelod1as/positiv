@@ -162,6 +162,29 @@ describe("renderQuestion", () => {
     expect(onChange).toHaveBeenCalledWith(["talvez"])
   })
 
+  it("clears every other choice when the exclusive one is ticked", async () => {
+    const user = userEvent.setup()
+    const onChange = draw({ kind: "checkbox", options, exclusive: "nao" }, [
+      "sim",
+      "talvez",
+    ])
+
+    await user.click(screen.getByRole("checkbox", { name: "Não" }))
+
+    expect(onChange).toHaveBeenCalledWith(["nao"])
+  })
+
+  it("clears the exclusive choice when another one is ticked", async () => {
+    const user = userEvent.setup()
+    const onChange = draw({ kind: "checkbox", options, exclusive: "nao" }, [
+      "nao",
+    ])
+
+    await user.click(screen.getByRole("checkbox", { name: "Sim" }))
+
+    expect(onChange).toHaveBeenCalledWith(["sim"])
+  })
+
   it("labels a choice group with the prompt", () => {
     draw({ kind: "radio", options })
 

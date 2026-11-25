@@ -12,6 +12,7 @@ import {
   basicDataSchema,
   cpfExemptBasicDataSchema,
   ExtraBasicDataSchema,
+  ObjectiveQuestionsSchema,
 } from "./profile-schemas"
 import { userContextSchema } from "../auth/auth-schemas"
 import { refreshNewsletterSubscriber } from "../newsletter/auto-subscribe.server"
@@ -45,8 +46,9 @@ export async function saveBasicData({
     answers,
   )
   const extra = ExtraBasicDataSchema.safeParse(answers)
+  const objective = ObjectiveQuestionsSchema.safeParse(answers)
 
-  if (!basic.success || !extra.success) {
+  if (!basic.success || !extra.success || !objective.success) {
     // Someone who asked for the exemption is told it has not been granted yet,
     // rather than that their CPF is missing -- they know it is.
     const waiting = answers.cpf_exempt_requested === true
@@ -63,6 +65,7 @@ export async function saveBasicData({
             ]
           : basicErrors),
         ...(extra.success ? [] : toCommitErrors(extra.error)),
+        ...(objective.success ? [] : toCommitErrors(objective.error)),
       ],
     }
   }
@@ -75,6 +78,8 @@ export async function saveBasicData({
   const written = {
     ...values,
     ...extra.data,
+    places_attended: objective.data.places_attended,
+    ...objective.data.non_monogamy_since,
     date_of_birth: dateToString(values.date_of_birth),
     ...(cpfExempt && { cpf: null }),
     user_id: currentUser.id,

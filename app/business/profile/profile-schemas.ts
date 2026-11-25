@@ -1,8 +1,13 @@
 import { isValidCpf, normalizeCpf } from "~/lib/helpers/cpf"
 import { adminParticipantsCopy } from "~/copy/admin/participants"
-import { basicDataValidation } from "~/copy/account"
+import { basicDataValidation, objectiveQuestionsCopy } from "~/copy/account"
+import { yearCopy } from "~/copy/forms"
 import { agreeToTermsValidation } from "~/copy/dashboard"
-import { PHONE_REGEXP } from "~/lib/constants/constants"
+import {
+  PHONE_REGEXP,
+  PLACES_ATTENDED,
+  PLACES_ATTENDED_NONE,
+} from "~/lib/constants/constants"
 import { isBrazilianMobile, isValidPhone } from "~/lib/helpers/phone"
 import { normalizeName } from "~/lib/helpers/strings"
 import { validationMessages } from "~/lib/helpers/validation-messages"
@@ -168,6 +173,47 @@ export const ExtraBasicDataSchema = zod.object({
     .refine((value) => value.some((item) => item), {
       message: validationMessages.minOptions(1),
     }),
+})
+
+export const FIRST_NON_MONOGAMY_YEAR = 1950
+
+/**
+ * The two objective questions of the registration (WEB-70). The year arrives
+ * the way the form answers it -- `{ year }`, or `{ none: true }` for someone
+ * who does not live non-monogamy today -- and leaves as the two columns that
+ * store it.
+ */
+export const ObjectiveQuestionsSchema = zod.object({
+  places_attended: zod
+    .array(zod.enum(PLACES_ATTENDED))
+    .min(1, { message: objectiveQuestionsCopy.validation.placesRequired })
+    .refine(
+      (places) => !places.includes(PLACES_ATTENDED_NONE) || places.length === 1,
+      { message: objectiveQuestionsCopy.validation.noneAlone },
+    ),
+  non_monogamy_since: zod
+    .union(
+      [
+        zod.object({ none: zod.literal(true) }),
+        zod.object({
+          year: zod
+            .number()
+            .int()
+            .min(FIRST_NON_MONOGAMY_YEAR, {
+              message: yearCopy.tooEarly(FIRST_NON_MONOGAMY_YEAR),
+            })
+            .refine((year) => year <= new Date().getFullYear(), {
+              message: yearCopy.future,
+            }),
+        }),
+      ],
+      { error: yearCopy.required },
+    )
+    .transform((answer) =>
+      "none" in answer
+        ? { non_monogamy_since: null, non_monogamy_not_living: true }
+        : { non_monogamy_since: answer.year, non_monogamy_not_living: false },
+    ),
 })
 
 export const updateProfileApprovalStatusSchema = zod.object({
