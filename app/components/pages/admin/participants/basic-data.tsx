@@ -43,7 +43,15 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
     flag,
     flag_notes,
     race_color,
+    places_attended,
+    non_monogamy_since,
+    non_monogamy_not_living,
   } = profile
+
+  const { notAnswered, notLivingNonMonogamy } = adminParticipantsCopy.basicData
+  const sinceWhen = non_monogamy_not_living
+    ? notLivingNonMonogamy
+    : (non_monogamy_since ?? notAnswered)
 
   return (
     <>
@@ -99,6 +107,19 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
           <DataPair
             top
             pair={[profilePropMap("how_came_to_us"), how_came_to_us]}
+          />
+        </div>
+        <div>
+          <DataPair
+            top
+            pair={[
+              profilePropMap("places_attended"),
+              places_attended?.length ? places_attended : notAnswered,
+            ]}
+          />
+          <DataPair
+            top
+            pair={[profilePropMap("non_monogamy_since"), sinceWhen]}
           />
         </div>
       </div>

@@ -44,6 +44,8 @@ export const adminParticipantsCopy = {
   basicData: {
     title: "Dados básicos",
     rotationWarning: "Essa pessoa **participou do rodízio** no último evento",
+    notAnswered: "Ainda não respondeu",
+    notLivingNonMonogamy: "Não vive a não-monogamia hoje",
   },
   vsEvent: {
     title: "Neste evento",

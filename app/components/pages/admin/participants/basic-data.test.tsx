@@ -54,6 +54,57 @@ describe('BasicData', () => {
     became_veteran_date: "2025-07-19 16:00:00+00",
   } as ProfileWithExtraData
 
+  describe('the objective questions', () => {
+    it('shows the places and the year the person answered', () => {
+      renderWithRouter(
+        <BasicData
+          profile={{
+            ...mockProfile,
+            places_attended: ['Sauna', 'Casa de swing'],
+            non_monogamy_since: 2015,
+            non_monogamy_not_living: false,
+          }}
+        />,
+      )
+
+      expect(screen.getByText('Sauna, Casa de swing')).toBeInTheDocument()
+      expect(screen.getByText('2015')).toBeInTheDocument()
+    })
+
+    it('says the person does not live non-monogamy today', () => {
+      renderWithRouter(
+        <BasicData
+          profile={{
+            ...mockProfile,
+            places_attended: ['Nenhum destes'],
+            non_monogamy_since: null,
+            non_monogamy_not_living: true,
+          }}
+        />,
+      )
+
+      expect(screen.getByText('Nenhum destes')).toBeInTheDocument()
+      expect(
+        screen.getByText('Não vive a não-monogamia hoje'),
+      ).toBeInTheDocument()
+    })
+
+    it('says when the person has not answered yet', () => {
+      renderWithRouter(
+        <BasicData
+          profile={{
+            ...mockProfile,
+            places_attended: null,
+            non_monogamy_since: null,
+            non_monogamy_not_living: false,
+          }}
+        />,
+      )
+
+      expect(screen.getAllByText('Ainda não respondeu')).toHaveLength(2)
+    })
+  })
+
   it('should render the AddToGoogleContactsButton', () => {
     renderWithRouter(<BasicData profile={mockProfile} />)
 
