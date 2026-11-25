@@ -1,5 +1,5 @@
 import { RULES_ID } from "../../singletons"
-import { markdownToLongPortableText, type Span } from "../../seed/markdown"
+import type { Span } from "../../seed/markdown"
 
 export type SourceBlock = {
   _type: "block"
@@ -17,12 +17,6 @@ type Rule = {
   title: string
   body: SourceBlock[]
   highlight?: { title?: string; body: SourceBlock[] }
-}
-
-export type MarkdownSection = {
-  heading: string
-  body: string
-  alert?: { title: string; body: string }
 }
 
 const opensWithEmoji = /^\p{Extended_Pictographic}/u
@@ -103,28 +97,6 @@ export function splitIntoRules(blocks: SourceBlock[], prefix: string): Rule[] {
   }
 
   return rules
-}
-
-// The application rules used #### for a subtitle; the rule text stops at h3.
-const fromMarkdown = (markdown: string) =>
-  markdownToLongPortableText(markdown.replace(/^#### /gm, "### "))
-
-export function markdownSectionsToRules(
-  sections: readonly MarkdownSection[],
-  prefix: string,
-): Rule[] {
-  return sections.map((section, index) => ({
-    _type: "rule",
-    _key: `${prefix}-${index + 1}`,
-    title: section.heading,
-    body: fromMarkdown(section.body),
-    ...(section.alert && {
-      highlight: {
-        title: section.alert.title,
-        body: fromMarkdown(section.alert.body),
-      },
-    }),
-  }))
 }
 
 // Written as a draft: the Rules go live when someone publishes them in the

@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
 
-import { applicationRules } from "./application-rules"
 import { run, type Store } from "./run"
 
 const paragraph = (text: string) => ({
@@ -72,9 +71,7 @@ describe("run", () => {
     expect(document.agreements.map((rule) => rule.title)).toEqual([
       "⏰ Pontualidade 🕐",
     ])
-    expect(document.privateRules.map((rule) => rule.title)).toEqual(
-      applicationRules.map((section) => section.heading),
-    )
+    expect(document.privateRules).toEqual([])
     expect(store.write).not.toHaveBeenCalled()
   })
 

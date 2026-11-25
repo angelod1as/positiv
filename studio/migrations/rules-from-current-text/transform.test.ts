@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest"
 
 import { validateDocumentOf } from "../../test/validate"
 import {
-  markdownSectionsToRules,
   rulesDocument,
   splitIntoRules,
   type SourceBlock,
@@ -137,39 +136,6 @@ describe("splitIntoRules", () => {
   })
 })
 
-describe("markdownSectionsToRules", () => {
-  it("turns each section into a rule, its alert into the highlight", () => {
-    const [rule] = markdownSectionsToRules(
-      [
-        {
-          heading: "👍 Apenas SIM é SIM 👍",
-          body: "Essa é nossa **regra de ouro**.\n\n- Ficou na dúvida? É **não**;",
-          alert: { title: "👀 Olhar tira pedaço 👀", body: "Respeite." },
-        },
-      ],
-      "privada",
-    )
-
-    expect(rule.title).toBe("👍 Apenas SIM é SIM 👍")
-    expect(textOf(rule.body)).toEqual([
-      "Essa é nossa regra de ouro.",
-      "Ficou na dúvida? É não;",
-    ])
-    expect(rule.highlight?.title).toBe("👀 Olhar tira pedaço 👀")
-    expect(textOf(rule.highlight?.body ?? [])).toEqual(["Respeite."])
-  })
-
-  it("reads a #### heading as a subtitle, the smallest the text allows", () => {
-    const [rule] = markdownSectionsToRules(
-      [{ heading: "🚨 Regra 🚨", body: "#### Claro, há exceções:" }],
-      "privada",
-    )
-
-    expect(rule.body[0]).toMatchObject({ style: "h3" })
-    expect(textOf(rule.body)).toEqual(["Claro, há exceções:"])
-  })
-})
-
 describe("rulesDocument", () => {
   it("builds a draft of the Rules the Studio accepts", async () => {
     const general = splitIntoRules(
@@ -179,10 +145,7 @@ describe("rulesDocument", () => {
     const document = rulesDocument({
       generalRules: general,
       agreements: general,
-      privateRules: markdownSectionsToRules(
-        [{ heading: "🥡 Marmitaria 🥡", body: "Respeito." }],
-        "privada",
-      ),
+      privateRules: [],
     })
 
     expect(document._id).toBe("drafts.rules")
