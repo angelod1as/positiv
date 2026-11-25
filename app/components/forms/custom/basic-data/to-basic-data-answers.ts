@@ -15,6 +15,9 @@ type ProfileLike = {
   orientation?: string[] | null
   pronouns?: string[] | null
   race_color?: string[] | null
+  places_attended?: string[] | null
+  non_monogamy_since?: number | null
+  non_monogamy_not_living?: boolean | null
 }
 
 const TEXT_FIELDS = [
@@ -27,7 +30,13 @@ const TEXT_FIELDS = [
   "rg_issuer",
 ] as const
 
-const LIST_FIELDS = ["gender", "orientation", "pronouns", "race_color"] as const
+const LIST_FIELDS = [
+  "gender",
+  "orientation",
+  "pronouns",
+  "race_color",
+  "places_attended",
+] as const
 
 /**
  * What a profile already knows, in the shape the run reads.
@@ -65,6 +74,14 @@ export function toBasicDataAnswers(profile: ProfileLike | null): Answers {
   }
 
   if (profile.phone_is_international) answers.phone_is_international = true
+
+  // One answer stored in two columns, handed back the way the year field
+  // answers it.
+  if (profile.non_monogamy_not_living) {
+    answers.non_monogamy_since = { none: true }
+  } else if (profile.non_monogamy_since) {
+    answers.non_monogamy_since = { year: profile.non_monogamy_since }
+  }
 
   return answers
 }

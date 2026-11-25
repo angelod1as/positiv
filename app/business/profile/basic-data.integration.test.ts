@@ -6,6 +6,7 @@ import { basicDataValidation } from "~/copy/account"
 import * as listmonkClient from "../newsletter/listmonk-client.server"
 import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
 import { saveBasicData } from "./basic-data.server"
+import { getObjectiveAnswers } from "./profiles.server"
 import { sessionClientThatThrows } from "~/test/session-client-that-throws"
 
 vi.mock("~/lib/logger/logger.server", () => ({
@@ -171,17 +172,16 @@ describe("saveBasicData - Integration Tests", () => {
         answers: { ...answersFor(email), non_monogamy_since },
         context: contextFor(email, userId) as never,
       })
-    const answerOf = () =>
-      kysely
-        .selectFrom("profiles")
-        .select(["non_monogamy_since", "non_monogamy_not_living"])
-        .where("id", "=", profile.id)
-        .executeTakeFirstOrThrow()
-
     expect(await save({ year: 2015 })).toEqual({ ok: true })
-    expect(await save({ none: true })).toEqual({ ok: true })
+    expect(await getObjectiveAnswers({ profileId: profile.id })).toEqual({
+      places_attended: ["Sauna"],
+      non_monogamy_since: 2015,
+      non_monogamy_not_living: false,
+    })
 
-    expect(await answerOf()).toEqual({
+    expect(await save({ none: true })).toEqual({ ok: true })
+    expect(await getObjectiveAnswers({ profileId: profile.id })).toEqual({
+      places_attended: ["Sauna"],
       non_monogamy_since: null,
       non_monogamy_not_living: true,
     })

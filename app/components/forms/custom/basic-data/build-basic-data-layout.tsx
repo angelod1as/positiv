@@ -67,5 +67,7 @@ export function buildBasicDataLayout({
         </p>
       ),
     },
+    { kind: "question", id: "places_attended", span: 6 },
+    { kind: "question", id: "non_monogamy_since", span: 6 },
   ]
 }

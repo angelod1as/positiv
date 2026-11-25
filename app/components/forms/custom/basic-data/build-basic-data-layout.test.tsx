@@ -47,12 +47,15 @@ describe("buildBasicDataLayout", () => {
     ).toBeInTheDocument()
   })
 
-  it("closes with what cor ou raça is and is not used for", () => {
+  it("says what cor ou raça is and is not used for right after asking it", () => {
     const layout = buildBasicDataLayout()
-    const last = layout[layout.length - 1]
-    if (last.kind !== "note") throw new Error("expected a note")
+    const race = layout.findIndex(
+      (slot) => slot.kind === "question" && slot.id === "race_color",
+    )
+    const next = layout[race + 1]
+    if (next.kind !== "note") throw new Error("expected a note")
 
-    render(<>{last.render}</>)
+    render(<>{next.render}</>)
     expect(
       screen.getByText(/não utilizamos a informação de cor ou raça/i),
     ).toBeInTheDocument()
