@@ -1,8 +1,6 @@
 import { parseArgs } from "node:util"
 
-import { applicationRules } from "./application-rules"
 import {
-  markdownSectionsToRules,
   rulesDocument,
   type SourceBlock,
   splitIntoRules,
@@ -59,7 +57,7 @@ export async function run(
   const document = rulesDocument({
     generalRules: splitIntoRules(sectionTitled(sections, "Regras gerais"), "geral"),
     agreements: splitIntoRules(sectionTitled(sections, "Acordos"), "acordo"),
-    privateRules: markdownSectionsToRules(applicationRules, "privada"),
+    privateRules: [],
   })
 
   const dryRun = !values["no-dry-run"]

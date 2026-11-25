@@ -27,10 +27,17 @@ describe("rules", () => {
     expect(await validate({})).toEqual([])
   })
 
-  it.each(["generalRules", "agreements", "privateRules"])(
+  it.each(["generalRules", "agreements"])(
     "requires at least one rule in %s",
     async (part) => {
       expect(pathsOf(await validate({ [part]: [] }))).toContain(part)
+    },
+  )
+
+  it.each([[[]], [undefined]])(
+    "publishes without Regras Privadas while they are being written (%j)",
+    async (privateRules) => {
+      expect(await validate({ privateRules })).toEqual([])
     },
   )
 
