@@ -41,6 +41,7 @@ const mount = () =>
 
 beforeEach(() => {
   sessionStorage.clear()
+  localStorage.clear()
 })
 
 describe("useFormRuntime persistence", () => {
@@ -235,5 +236,67 @@ describe("useFormRuntime persistence", () => {
 
     getItem.mockRestore()
     setItem.mockRestore()
+  })
+
+  it("keeps the run past the tab when asked to", async () => {
+    const local = { ...persistence, storage: "local" as const }
+    const { result, unmount } = renderHook(() =>
+      useFormRuntime({ questions, flow, persistence: local }),
+    )
+    await waitFor(() => expect(result.current.isRestored).toBe(true))
+
+    await act(async () => {
+      result.current.answer("a", "resposta a")
+      await result.current.advance()
+    })
+    unmount()
+
+    expect(sessionStorage.getItem(key)).toBeNull()
+
+    const { result: again } = renderHook(() =>
+      useFormRuntime({ questions, flow, persistence: local }),
+    )
+    await waitFor(() => expect(again.current.isRestored).toBe(true))
+    expect(again.current.currentStepId).toBe("b")
+    expect(again.current.answers).toEqual({ a: "resposta a" })
+  })
+
+  it("resumes at the first unanswered step when asked to", async () => {
+    writeRuntimeState(key, {
+      answers: { a: "resposta a", b: "resposta b" },
+      currentStepId: "a",
+      firstTryCorrect: {},
+    })
+
+    const { result } = renderHook(() =>
+      useFormRuntime({
+        questions,
+        flow,
+        persistence: { ...persistence, resume: "first-unanswered" },
+      }),
+    )
+
+    await waitFor(() => expect(result.current.isRestored).toBe(true))
+    expect(result.current.currentStepId).toBe("c")
+    expect(result.current.canGoBack).toBe(true)
+  })
+
+  it("resumes at the last step when every one is answered", async () => {
+    writeRuntimeState(key, {
+      answers: { a: "resposta a", b: "resposta b", c: "resposta c" },
+      currentStepId: "a",
+      firstTryCorrect: {},
+    })
+
+    const { result } = renderHook(() =>
+      useFormRuntime({
+        questions,
+        flow,
+        persistence: { ...persistence, resume: "first-unanswered" },
+      }),
+    )
+
+    await waitFor(() => expect(result.current.isRestored).toBe(true))
+    expect(result.current.currentStepId).toBe("c")
   })
 })

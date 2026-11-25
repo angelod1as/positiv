@@ -3,6 +3,15 @@ import type { Answers } from "./question.types"
 
 const VERSION = 1
 
+/**
+ * Where a run is kept. "session" dies with the tab; "local" outlives it, for a
+ * form long enough that someone closes the browser and comes back days later.
+ */
+export type RuntimeStorage = "session" | "local"
+
+const storageFor = (where: RuntimeStorage): Storage =>
+  where === "local" ? localStorage : sessionStorage
+
 export type PersistedRuntimeState = {
   answers: Answers
   currentStepId: StepId
@@ -18,11 +27,11 @@ type Parsed =
   | { kind: "unusable" }
   | { kind: "record"; record: Record<string, unknown> }
 
-function parse(key: string): Parsed {
+function parse(key: string, where: RuntimeStorage): Parsed {
   if (typeof window === "undefined") return { kind: "absent" }
 
   try {
-    const raw = sessionStorage.getItem(key)
+    const raw = storageFor(where).getItem(key)
     if (!raw) return { kind: "absent" }
 
     const parsed: unknown = JSON.parse(raw)
@@ -53,8 +62,11 @@ function holdsState(record: Record<string, unknown>): boolean {
  * carrying anything over from a payload just declared untrustworthy is the hole
  * the version exists to close.
  */
-export function readKeepOnDone(key: string): boolean {
-  const parsed = parse(key)
+export function readKeepOnDone(
+  key: string,
+  where: RuntimeStorage = "session",
+): boolean {
+  const parsed = parse(key, where)
 
   return (
     parsed.kind === "record" &&
@@ -63,8 +75,11 @@ export function readKeepOnDone(key: string): boolean {
   )
 }
 
-export function readRuntimeState(key: string): PersistedRuntimeState | null {
-  const parsed = parse(key)
+export function readRuntimeState(
+  key: string,
+  where: RuntimeStorage = "session",
+): PersistedRuntimeState | null {
+  const parsed = parse(key, where)
   if (parsed.kind === "absent") return null
 
   if (parsed.kind === "record") {
@@ -80,7 +95,7 @@ export function readRuntimeState(key: string): PersistedRuntimeState | null {
   }
 
   // Unusable, so it goes — unless it is a flag pasted in ahead of the flow.
-  if (!readKeepOnDone(key)) clearRuntimeState(key)
+  if (!readKeepOnDone(key, where)) clearRuntimeState(key, where)
 
   return null
 }
@@ -88,26 +103,30 @@ export function readRuntimeState(key: string): PersistedRuntimeState | null {
 export function writeRuntimeState(
   key: string,
   state: PersistedRuntimeState,
+  where: RuntimeStorage = "session",
 ): void {
   if (typeof window === "undefined") return
 
   // Read before writing: the flag can be pasted in at any point, and every
   // answer rewrites this record.
   const record: Record<string, unknown> = { v: VERSION, ...state }
-  if (readKeepOnDone(key)) record.keepOnDone = true
+  if (readKeepOnDone(key, where)) record.keepOnDone = true
 
   try {
-    sessionStorage.setItem(key, JSON.stringify(record))
+    storageFor(where).setItem(key, JSON.stringify(record))
   } catch {
     // Storage unavailable: the runtime keeps going from memory.
   }
 }
 
-export function clearRuntimeState(key: string): void {
+export function clearRuntimeState(
+  key: string,
+  where: RuntimeStorage = "session",
+): void {
   if (typeof window === "undefined") return
 
   try {
-    sessionStorage.removeItem(key)
+    storageFor(where).removeItem(key)
   } catch {
     // Storage unavailable: nothing was ever written to remove.
   }

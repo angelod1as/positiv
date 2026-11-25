@@ -8,7 +8,7 @@ import type {
 } from "./presentations/presentation.types"
 import type { Answers, Question } from "./question.types"
 import { renderQuestion as defaultRenderQuestion } from "./render-question"
-import { useFormRuntime } from "./use-form-runtime"
+import { type RuntimePersistence, useFormRuntime } from "./use-form-runtime"
 
 type FormRunnerProps = {
   questions: Question[]
@@ -41,7 +41,7 @@ type FormRunnerProps = {
    */
   focusFirstScreen?: boolean
   /** Keeps the run alive across a refresh, under `form-runtime:<formId>:<scopeId>`. */
-  persistence?: { formId: string; scopeId: string }
+  persistence?: RuntimePersistence
   /** Where the caller believes the run is, typically mirrored from the url. */
   stepId?: StepId
   /**
