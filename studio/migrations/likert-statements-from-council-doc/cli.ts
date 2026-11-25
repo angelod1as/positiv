@@ -14,10 +14,12 @@ const client = (dataset: string) =>
 const { dryRun, document } = await run(
   process.argv.slice(separator === -1 ? 2 : separator + 1),
   (dataset) => ({
-    publishedScale: () =>
+    existingScale: () =>
       client(dataset)
         .withConfig({ perspective: "raw" })
-        .fetch(`*[_id == $id][0]{ _id }`, { id: LIKERT_SCALE_ID }),
+        .fetch(`*[_id in [$id, "drafts." + $id]][0]{ _id }`, {
+          id: LIKERT_SCALE_ID,
+        }),
     write: async (scale) => {
       await client(dataset).createOrReplace(scale)
     },

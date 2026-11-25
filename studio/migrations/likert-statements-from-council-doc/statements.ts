@@ -1,6 +1,3 @@
-// "Escala de Likert - afirmações para o conselho", the council's Google Doc,
-// as of 2026-11-25. The text is the doc's, verbatim, except that the
-// Markdown emphasis on "swinger" is dropped: the form shows the text as is.
 export const COUNCIL_STATEMENTS = [
   "Sou uma pessoa não-monogâmica.",
   "Me identifico como swinger.",

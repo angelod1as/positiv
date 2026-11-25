@@ -17,7 +17,7 @@ type LikertScaleDocument = {
 }
 
 export type Store = {
-  publishedScale(): Promise<{ _id: string } | null>
+  existingScale(): Promise<{ _id: string } | null>
   write(document: LikertScaleDocument): Promise<void>
 }
 
@@ -51,9 +51,10 @@ export async function run(
   }
 
   const store = connect(values.dataset)
-  if (await store.publishedScale()) {
+  const existing = await store.existingScale()
+  if (existing) {
     throw new Error(
-      `A Escala de Likert já está publicada em ${values.dataset}. Edite-a no Studio: trocar as chaves desligaria as respostas já gravadas.`,
+      `${values.dataset} already has a Likert scale (${existing._id}). Edit it in the Studio: replacing it would detach stored answers or discard a draft.`,
     )
   }
 

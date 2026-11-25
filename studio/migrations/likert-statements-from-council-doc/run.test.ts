@@ -6,9 +6,9 @@ import {
 } from "../../../app/business/cms/likert-key"
 import { run, type Store } from "./run"
 
-function fakeStore(published: Awaited<ReturnType<Store["publishedScale"]>> = null) {
+function fakeStore(existing: Awaited<ReturnType<Store["existingScale"]>> = null) {
   return {
-    publishedScale: vi.fn(async () => published),
+    existingScale: vi.fn(async () => existing),
     write: vi.fn(async () => undefined),
   }
 }
@@ -96,7 +96,16 @@ describe("run", () => {
 
     await expect(
       run(["--dataset", "production", "--no-dry-run"], () => store),
-    ).rejects.toThrow(/já está publicada/)
+    ).rejects.toThrow(/already has a Likert scale \(likertScale\)/)
+    expect(store.write).not.toHaveBeenCalled()
+  })
+
+  it("refuses when a draft scale exists: replacing it would discard an Editor's work", async () => {
+    const store = fakeStore({ _id: "drafts.likertScale" })
+
+    await expect(
+      run(["--dataset", "production", "--no-dry-run"], () => store),
+    ).rejects.toThrow(/already has a Likert scale \(drafts\.likertScale\)/)
     expect(store.write).not.toHaveBeenCalled()
   })
 })
