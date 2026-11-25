@@ -29,6 +29,7 @@ describe("stegaFilter", () => {
     "component",
     "color",
     "emoji",
+    "part",
   ])(
     "skips the non-display field %s",
     (field) => {
@@ -72,6 +73,7 @@ const result = {
   seo: { title: "Positiv | Sobre", description: "Quem organiza a Positiv" },
   section: { title: "Nossa equipe", alt: "Foto da Nana" },
   systemComponent: { component: "analyticsOptOut" },
+  rulesSection: { part: "generalRules" },
   chart: { chartType: "bar", unit: "percent" },
 }
 
@@ -87,6 +89,7 @@ const paths = [
   "$['section']['title']",
   "$['section']['alt']",
   "$['systemComponent']['component']",
+  "$['rulesSection']['part']",
   "$['chart']['chartType']",
   "$['chart']['unit']",
 ]
@@ -126,6 +129,7 @@ describe("stegaFilter end to end", () => {
     expect(isClean(encoded.seo.description)).toBe(true)
     expect(isClean(encoded.section.alt)).toBe(true)
     expect(isClean(encoded.systemComponent.component)).toBe(true)
+    expect(isClean(encoded.rulesSection.part)).toBe(true)
   })
 
   it("keeps the enum fields the default filter already skips clean", () => {
@@ -150,5 +154,6 @@ describe("stegaFilter end to end", () => {
     expect(isClean(withDefault.instagram)).toBe(false)
     expect(isClean(withDefault.videoTitle)).toBe(false)
     expect(isClean(withDefault.systemComponent.component)).toBe(false)
+    expect(isClean(withDefault.rulesSection.part)).toBe(false)
   })
 })

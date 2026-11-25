@@ -16,6 +16,7 @@ const NON_DISPLAY_FIELDS = new Set([
   "component", // systemComponent: a zod.enum naming the React component
   "color", // callout: a zod.enum picking the colour classes
   "emoji", // callout: one emoji, where hidden characters break the icon slot
+  "part", // rulesSection: a zod.enum picking which part of the Rules to show
 ])
 
 // Paths that only feed <head> through meta(), never a rendered node: the
