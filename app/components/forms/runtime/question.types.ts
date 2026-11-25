@@ -38,7 +38,11 @@ export type InputSpec =
   | { kind: "datetime" }
   | { kind: "select"; options: Option[] }
   | { kind: "radio"; options: Option[] }
-  | { kind: "checkbox"; options: Option[] }
+  /**
+   * `exclusive` names the option that rules the others out — "none of these".
+   * Ticking it clears the rest, and ticking any other clears it.
+   */
+  | { kind: "checkbox"; options: Option[]; exclusive?: string }
   /**
    * A list answered with `string[]`, drawn as pills. With `allowOther` the
    * answer may also be something the list never offered, which arrives in the
