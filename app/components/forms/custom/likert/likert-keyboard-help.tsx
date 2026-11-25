@@ -28,8 +28,8 @@ export function LikertKeyboardHelp() {
 
         {copy.groups.map((group) => (
           <section key={group.title} className="flex flex-col gap-2">
-            <h3 className="font-semibold">{group.title}</h3>
-            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+            <h3 className="text-base font-semibold">{group.title}</h3>
+            <dl className="grid grid-cols-[11rem_1fr] gap-x-4 gap-y-2 text-sm">
               {group.shortcuts.map((shortcut) => (
                 <Fragment key={shortcut.action + shortcut.keys.join()}>
                   <dt className="flex flex-wrap items-center gap-1">
