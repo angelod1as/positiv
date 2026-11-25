@@ -78,7 +78,9 @@ export const LikertOneAtATime: Presentation = (props) => {
 
       // A focused button keeps Enter and Space, and so does a radio reached
       // with Tab that is not picked yet: Space there means "this one".
-      const isControl = Boolean(target.closest?.("button, a"))
+      const isControl = Boolean(
+        target.closest?.('button, a, summary, [role="button"], [role="link"]'),
+      )
       const isUnpickedRadio =
         target instanceof HTMLInputElement &&
         target.type === "radio" &&

@@ -1,5 +1,7 @@
+import { runtimeStorageKey } from "~/components/forms/runtime/persistence"
+
 const ORDER_PREFIX = "likert-order:"
-const DRAFT_PREFIX = "form-runtime:likert:"
+const DRAFT_PREFIX = runtimeStorageKey("likert", "")
 
 const storageKey = (scope: string) => `${ORDER_PREFIX}${scope}`
 

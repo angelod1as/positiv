@@ -169,6 +169,21 @@ describe("LikertOneAtATime keyboard", () => {
     expect(first()).toBeVisible()
   })
 
+  it("leaves Enter to any other focused control", async () => {
+    const { user } = setup()
+    const widget = document.createElement("div")
+    widget.setAttribute("role", "button")
+    widget.tabIndex = 0
+    document.body.append(widget)
+
+    await user.keyboard("4")
+    widget.focus()
+    await user.keyboard("{Enter}")
+
+    expect(first()).toBeVisible()
+    widget.remove()
+  })
+
   it("tells assistive technology about the number keys", () => {
     setup()
 
