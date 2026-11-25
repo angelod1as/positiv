@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from './db-cleanup'
 import { createTestUser, generateTestEmail, generateTestPassword, type TestUser } from './user-management'
+import { uniqueValidCpf } from './unique-cpf'
 
 export interface NewsletterTestUser extends TestUser {
   profileId: string
@@ -40,6 +41,7 @@ export async function createNewsletterTestUser(
         orientation: ['Hétero'],
         pronouns: ['Ela/dela'],
         race_color: ['Branca'], // CRITICAL: Required to avoid profile update modal
+        cpf: uniqueValidCpf(), // and so is a valid CPF
         date_of_birth: '1990-01-01',
         where_lives: 'São Paulo',
         how_came_to_us: 'E2E Newsletter Tests',
