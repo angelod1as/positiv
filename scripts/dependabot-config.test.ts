@@ -55,12 +55,24 @@ describe("Dependabot config", () => {
     expect(studio).toMatch(/^ {4}ignore:\n {6}- dependency-name: "\*"\n(?! {8})/m)
   })
 
+  // Dependabot puts a dependency in the group whose pattern is most specific,
+  // and a group without patterns outranks every wildcard: catch-alls with only
+  // a dependency-type took sanity and react-router from their own groups and
+  // split pairs that must move together (#877, #878). "*" ranks lowest.
   it("batches npm security updates, and version updates in small groups with catch-alls last", () => {
     const npm = updateBlock("npm")
 
     expect(npm).toMatch(/applies-to: security-updates\n\s+patterns:\n\s+- "\*"/)
     expect(npm).toMatch(
-      /npm-production:\n\s+dependency-type: production\n\s+npm-development:\n\s+dependency-type: development\n\n/,
+      /npm-production:\n\s+dependency-type: production\n\s+patterns:\n\s+- "\*"\n\s+npm-development:\n\s+dependency-type: development\n\s+patterns:\n\s+- "\*"\n\n/,
+    )
+  })
+
+  // @varlock/vite-integration imports what only the matching varlock exports,
+  // and one is a development dependency, the other a production one.
+  it("updates varlock and its Vite plugin in the same group", () => {
+    expect(updateBlock("npm")).toMatch(
+      /varlock:\n\s+patterns:\n\s+- varlock\n\s+- "@varlock\/\*"\n/,
     )
   })
 

@@ -45,6 +45,7 @@ async function markersIn(
     },
     environment: "studio",
     getDocumentExists: async () => true,
+    validateReferenceTypes: false,
   })
 
   return markers

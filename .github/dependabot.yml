@@ -16,9 +16,12 @@ updates:
       - dependency-name: "*"
         update-types:
           - version-update:semver-major
-    # A dependency joins the first group it matches, so the narrow groups come
-    # first and the two catch-alls last. Small groups keep each pull request
-    # small enough to review and to go green on its own.
+    # A dependency joins the group whose pattern names it most specifically,
+    # not the first one listed. A group without patterns outranks every
+    # wildcard pattern, so the two catch-alls carry "*", the least specific
+    # pattern, or they take the narrow groups' dependencies (#877, #878).
+    # Small groups keep each pull request small enough to review and to go
+    # green on its own.
     groups:
       npm-security:
         applies-to: security-updates
@@ -41,6 +44,10 @@ updates:
           - kysely-supabase
           - pg
           - "@types/pg"
+      varlock:
+        patterns:
+          - varlock
+          - "@varlock/*"
       aws-sdk:
         patterns:
           - "@aws-sdk/*"
@@ -65,8 +72,12 @@ updates:
           - prettier
       npm-production:
         dependency-type: production
+        patterns:
+          - "*"
       npm-development:
         dependency-type: development
+        patterns:
+          - "*"
 
   # GitHub raises security alerts against studio/package.json as its own
   # manifest, and without this entry it opens a second, ungrouped pull request
