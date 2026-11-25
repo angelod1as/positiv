@@ -17,7 +17,7 @@ const kbdClassName =
 export function LikertKeyboardHelp() {
   return (
     <Dialog>
-      <DialogTrigger className="cursor-pointer text-red underline underline-offset-3 transition-colors duration-150 hover:text-purple">
+      <DialogTrigger className="hidden cursor-pointer text-red pointer-fine:inline underline underline-offset-3 transition-colors duration-150 hover:text-purple">
         {copy.open}
       </DialogTrigger>
       <DialogContent>

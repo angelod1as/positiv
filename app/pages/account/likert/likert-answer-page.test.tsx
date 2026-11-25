@@ -336,6 +336,17 @@ describe("LikertAnswerPage", () => {
     expect(screen.queryByRole("dialog")).toBeNull()
   })
 
+  // jsdom matches no media query, so the class is the only witness here: a
+  // touch screen has no keyboard, and the shortcuts would only confuse.
+  it("offers the keyboard help only where there is a mouse or trackpad", async () => {
+    renderPage()
+
+    const link = await screen.findByRole("button", {
+      name: "Use o teclado para preencher",
+    })
+    expect(link).toHaveClass("hidden", "pointer-fine:inline")
+  })
+
   it("says the scale is unavailable when nothing is published", () => {
     renderPage({ statements: null, profileId: "profile-1" })
 
