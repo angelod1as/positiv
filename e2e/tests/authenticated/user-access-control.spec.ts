@@ -77,7 +77,6 @@ test.describe('User Access Control', () => {
       await page.goto('/conta/escala/responder')
       await expect(page.getByRole('progressbar')).toBeVisible()
 
-      // The link opens the scale without putting a way in on the account page
       await page.goto('/conta')
       await expect(page.getByRole('link', { name: 'Mudar senha' })).toBeVisible()
       await expect(page.getByRole('link', { name: 'Escala de Likert' })).toHaveCount(0)

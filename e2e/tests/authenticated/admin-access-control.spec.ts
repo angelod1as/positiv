@@ -87,7 +87,6 @@ test.describe('Admin Access Control', () => {
     try {
       await setLikertSettings({ enabled: false, required: false })
 
-      // Both off: the scale still opens for the team
       await page.goto('/conta/escala/responder')
       await expect(page).toHaveURL('/conta/escala/responder')
       await expect(page.getByRole('progressbar')).toBeVisible()
@@ -102,7 +101,6 @@ test.describe('Admin Access Control', () => {
       await expect(settings.likertAccessSwitch()).toBeChecked()
       await expect(settings.likertRequiredSwitch()).toBeChecked()
 
-      // "Obrigatória" puts the way in on the account page
       await page.goto('/conta')
       await expect(likertLink()).toBeVisible()
 
