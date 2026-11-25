@@ -3,7 +3,13 @@ import path from "path"
 import { AdminDashboardPage } from "../../pages/admin/AdminDashboardPage"
 import { EventManagementPage } from "../../pages/admin/EventManagementPage"
 import { UserManagementPage } from "../../pages/admin/UserManagementPage"
-import { runEventTitle } from "../../utils/run-context"
+import { getBaseUrl, runEventTitle } from "../../utils/run-context"
+import {
+  getProfileId,
+  readLikertStatements,
+  setLikertSettings,
+} from "../../utils/likert-helpers"
+import { readSetupUser } from "../../utils/setup-user"
 import {
   waitForAGGridReady,
   sortByColumn,
@@ -782,6 +788,60 @@ test.describe("Admin User Management", () => {
     // Verify profile name appears in the detail view
     await expect(page.locator("h2").first()).toContainText(
       (profileName ?? "").trim(),
+    )
+  })
+
+  test("participant's Likert answers show on their profile (WEB-79)", async ({
+    page,
+    browser,
+  }) => {
+    const statements = readLikertStatements()
+    const comment = `Comentário do admin ${Date.now()}`
+    const answers = Object.fromEntries(
+      statements.map(({ key }, index) => [
+        key,
+        index === 0
+          ? { choice: "strongly_agree", comment }
+          : { choice: "disagree" },
+      ]),
+    )
+
+    const participant = await browser.newContext({
+      storageState: path.resolve(import.meta.dirname, "../../.auth/user.json"),
+    })
+    try {
+      await setLikertSettings({ enabled: true, required: false })
+      const response = await participant.request.post(
+        `${getBaseUrl()}/api/account/escala`,
+        { data: answers },
+      )
+      expect(response.ok()).toBe(true)
+      expect(await response.json()).toEqual({ ok: true })
+    } finally {
+      await participant.close()
+      await setLikertSettings({ enabled: false, required: false })
+    }
+
+    const profileId = await getProfileId((await readSetupUser()).userId)
+    await page.goto(`/admin/participantes/${profileId}`)
+    await expect(
+      page.getByRole("heading", { level: 3, name: "Escala de Likert" }),
+    ).toBeVisible()
+    await expect(page.getByText("mais recente")).toBeVisible()
+    await page.getByRole("link", { name: "Ver respostas" }).first().click()
+
+    await expect(page).toHaveURL(
+      new RegExp(`/admin/participantes/${profileId}/escala/[\\w-]+$`),
+    )
+    const rows = page.getByRole("row")
+    for (const { text } of statements) {
+      await expect(rows.filter({ hasText: text })).toHaveCount(1)
+    }
+    const first = rows.filter({ hasText: statements[0].text })
+    await expect(first).toContainText("Concordo totalmente")
+    await expect(first).toContainText(comment)
+    await expect(rows.filter({ hasText: statements[1].text })).toContainText(
+      "Discordo",
     )
   })
 })
