@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { redirect, useNavigate } from "react-router"
 import { getUserContext } from "~/business/auth/auth.server"
 import { likertScaleCache } from "~/business/cms/likert-scale-cache.server"
@@ -6,10 +6,21 @@ import { canSeeLikert } from "~/business/profile/likert-answers.server"
 import { Copy } from "~/components/atoms/copy/copy"
 import { buildLikertFlow } from "~/components/forms/custom/likert/build-likert-flow"
 import { buildLikertQuestions } from "~/components/forms/custom/likert/build-likert-questions"
+import {
+  clearLikertOrder,
+  likertOrder,
+  readLikertOrder,
+  writeLikertOrder,
+} from "~/components/forms/custom/likert/likert-order"
 import { commitJson } from "~/components/forms/runtime/commit-json"
 import { FormRunner } from "~/components/forms/runtime/form-runner"
+import {
+  readRuntimeState,
+  runtimeStorageKey,
+} from "~/components/forms/runtime/persistence"
 import { OneAtATime } from "~/components/forms/runtime/presentations/one-at-a-time"
 import type { Answers } from "~/components/forms/runtime/question.types"
+import { Skeleton } from "~/components/ui/skeleton"
 import { likertPageCopy as copy } from "~/copy/account"
 import { metaCopy } from "~/copy/meta"
 import { createMetaArray } from "~/lib/helpers/meta"
@@ -49,26 +60,50 @@ function fingerprint(statements: { key: string; text: string }[]): string {
   return (hash >>> 0).toString(36)
 }
 
+const FORM_ID = "likert"
+
 const LikertAnswerPage = ({ loaderData }: Route.ComponentProps) => {
   const { statements, profileId } = loaderData
   const navigate = useNavigate()
-
-  const questions = useMemo(
-    () => buildLikertQuestions(statements ?? []),
-    [statements],
-  )
-
-  const commit = useCallback(
-    async (answers: Answers): Promise<CommitResult> =>
-      commitJson(LIKERT_COMMIT, answers, (pathname) => void navigate(pathname)),
-    [navigate],
-  )
 
   // A draft kept against other statements, or other wording, would save
   // answers to questions the person was never asked.
   const draftScope = useMemo(
     () => `${profileId}:${fingerprint(statements ?? [])}`,
     [profileId, statements],
+  )
+
+  // Drawn in the browser, where the run is kept, so the server renders no order.
+  const [order, setOrder] = useState<string[] | null>(null)
+
+  useEffect(() => {
+    if (!statements) return
+
+    const draft = readRuntimeState(
+      runtimeStorageKey(FORM_ID, draftScope),
+      "local",
+    )
+    const next = likertOrder(
+      statements.map((statement) => statement.key),
+      readLikertOrder(draftScope),
+      new Set(Object.keys(draft?.answers ?? {})),
+    )
+
+    writeLikertOrder(draftScope, next)
+    setOrder(next)
+  }, [statements, draftScope])
+
+  const questions = useMemo(() => {
+    if (!statements || !order) return []
+
+    const byKey = new Map(statements.map((statement) => [statement.key, statement]))
+    return buildLikertQuestions(order.flatMap((key) => byKey.get(key) ?? []))
+  }, [statements, order])
+
+  const commit = useCallback(
+    async (answers: Answers): Promise<CommitResult> =>
+      commitJson(LIKERT_COMMIT, answers, (pathname) => void navigate(pathname)),
+    [navigate],
   )
 
   const flow = useMemo(
@@ -83,17 +118,31 @@ const LikertAnswerPage = ({ loaderData }: Route.ComponentProps) => {
       {statements ? (
         <>
           <Copy>{copy.answerIntro}</Copy>
-          <FormRunner
-            key={draftScope}
-            questions={questions}
-            flow={flow}
-            presentation={OneAtATime}
-            persistence={{ formId: "likert", scopeId: draftScope }}
-            pendingLabel={copy.sending}
-            onDone={() => {
-              void navigate(LIKERT)
-            }}
-          />
+          {order ? (
+            <FormRunner
+              key={draftScope}
+              questions={questions}
+              flow={flow}
+              presentation={OneAtATime}
+              persistence={{
+                formId: FORM_ID,
+                scopeId: draftScope,
+                storage: "local",
+                resume: "first-unanswered",
+              }}
+              pendingLabel={copy.sending}
+              onDone={() => {
+                clearLikertOrder(draftScope)
+                void navigate(LIKERT)
+              }}
+            />
+          ) : (
+            <div className="flex flex-col gap-8" aria-busy="true">
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-32" />
+            </div>
+          )}
         </>
       ) : (
         <Copy>{copy.unavailable}</Copy>
