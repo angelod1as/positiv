@@ -309,6 +309,43 @@ describe("LikertAnswerPage", () => {
     expect(screen.getByText("2/3")).toBeVisible()
   })
 
+  it("keeps the run in place when the loader hands the same statements again", async () => {
+    const user = userEvent.setup()
+    const three = [
+      ...statements,
+      { key: "limites", text: "Falo dos meus limites." },
+    ]
+    const { rerender } = renderPage({
+      statements: three,
+      profileId: "profile-1",
+    })
+    await answerScreen(user, "Concordo")
+    await user.click(screen.getByRole("button", { name: "Voltar" }))
+
+    vi.mocked(Math.random).mockReturnValue(0)
+    rerender(
+      <MemoryRouter initialEntries={["/conta/escala/responder"]}>
+        <LikertAnswerPage
+          {...({
+            loaderData: {
+              statements: three.map((statement) => ({ ...statement })),
+              profileId: "profile-1",
+            },
+          } as PageProps)}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(
+      await screen.findByRole("heading", { name: "Sinto ciúme e tudo bem." }),
+    ).toBeVisible()
+    expect(screen.getByText("1/3")).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+    expect(
+      screen.getByRole("heading", { name: "Pergunto antes de tocar." }),
+    ).toBeVisible()
+  })
+
   it("draws a new order for the next run once the answers are sent", async () => {
     const user = userEvent.setup()
     answers({ ok: true })
