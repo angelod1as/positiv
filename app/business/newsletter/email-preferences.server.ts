@@ -284,3 +284,19 @@ export const saveEmailPreferences = composable(
     return await mirrorInListmonk(profileId, storedId, preferences)
   },
 )
+
+/**
+ * Whether someone logged in still has to confirm their email choices: true
+ * until they save them, here or at sign-up.
+ */
+export const needsEmailConfirmation = composable(
+  async (profileId: string): Promise<boolean> => {
+    const row = await db
+      .selectFrom("email_consents")
+      .select("confirmed_at")
+      .where("profile_id", "=", profileId)
+      .executeTakeFirst()
+
+    return !row?.confirmed_at
+  },
+)

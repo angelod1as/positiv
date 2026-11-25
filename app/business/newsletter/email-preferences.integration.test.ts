@@ -35,6 +35,7 @@ vi.mock("./listmonk-client.server", async (importOriginal) => ({
 
 import {
   findEmailPreferences,
+  needsEmailConfirmation,
   saveEmailPreferences,
 } from "./email-preferences.server"
 
@@ -492,6 +493,35 @@ describe("email preferences - Integration Tests", () => {
 
       expect(result.success).toBe(false)
       expect((await consentOf(profile.id)).newsletter).toBe(false)
+    })
+  })
+
+  describe("needsEmailConfirmation", () => {
+    it("is true for someone who never confirmed their choices", async () => {
+      const profile = await newProfile()
+
+      expect(await needsEmailConfirmation(profile.id)).toEqual(ok(true))
+    })
+
+    it("is true for someone with no consent row at all", async () => {
+      const profile = await newProfile()
+      await kysely
+        .deleteFrom("email_consents")
+        .where("profile_id", "=", profile.id)
+        .execute()
+
+      expect(await needsEmailConfirmation(profile.id)).toEqual(ok(true))
+    })
+
+    it("is false once the choices are saved", async () => {
+      const profile = await newProfile()
+
+      await saveEmailPreferences(
+        profile.id,
+        answers({ registrationAlerts: true, newsletter: false, marketing: false }),
+      )
+
+      expect(await needsEmailConfirmation(profile.id)).toEqual(ok(false))
     })
   })
 })
