@@ -122,6 +122,9 @@ The Rules hold every rule of the Positiv, at the fixed id `rules`, in three
 lists: Regras Gerais, Acordos and Regras Privadas. Each rule is a title, a
 long rich text and an optional highlight, drawn in an alert. Like Site
 Settings, the Studio keeps only publish, discard changes and restore on it.
+Regras Gerais and Acordos need at least one rule; Regras Privadas may stay
+empty while they are written, and an empty part is left out wherever it would
+show.
 
 A Page shows one part through a Regras Section, which picks the part and holds
 no text of its own, so editing the Rules changes every Page that shows them.
