@@ -1,8 +1,21 @@
 import { describe, expect, it, vi } from "vitest"
+import { getAdminContext } from "~/business/auth/admin-context.server"
+import { PERMISSIONS } from "~/business/auth/permissions"
 import { loader } from "./dataviz-page"
 
 const { ENV } = vi.hoisted(() => ({ ENV: {} as Record<string, unknown> }))
 vi.mock("varlock/env", () => ({ ENV }))
+
+vi.mock("~/business/auth/admin-context.server", async () => {
+  const { PERMISSIONS } = await import("~/business/auth/permissions")
+  return {
+    getAdminContext: vi.fn(async () => ({
+      currentProfile: {
+        permissions: [PERMISSIONS.ADMIN_PANEL, PERMISSIONS.PAYMENTS_MANAGE],
+      },
+    })),
+  }
+})
 
 // Mock the data layer functions
 vi.mock("~/business/reporting/dataviz/kpi-scores.server", () => ({
@@ -306,5 +319,36 @@ describe("Numeros Page - Loader", () => {
     const result = await loader(makeRequest())
 
     expect(result.umamiUrl).toBe("https://umami.example.com/websites/site-123")
+  })
+
+  it("sends no revenue to a person without payments.manage", async () => {
+    const { getKpiScores } = await import(
+      "~/business/reporting/dataviz/kpi-scores.server"
+    )
+    const { getEventRevenueData } = await import(
+      "~/business/reporting/dataviz/event-metrics.server"
+    )
+    vi.mocked(getAdminContext).mockResolvedValueOnce({
+      currentProfile: { permissions: [PERMISSIONS.ADMIN_PANEL] },
+    } as unknown as Awaited<ReturnType<typeof getAdminContext>>)
+    vi.mocked(getKpiScores).mockResolvedValue({
+      total_profiles: 100,
+      total_revenue: 50000,
+      avg_revenue_per_event: 5000,
+    } as unknown as Awaited<ReturnType<typeof getKpiScores>>)
+    vi.mocked(getEventRevenueData).mockClear()
+
+    const result = await loader(makeRequest())
+
+    expect(getEventRevenueData).not.toHaveBeenCalled()
+    expect(result).toMatchObject({
+      canManagePayments: false,
+      eventRevenue: [],
+      kpiScores: {
+        total_profiles: 100,
+        total_revenue: 0,
+        avg_revenue_per_event: 0,
+      },
+    })
   })
 })

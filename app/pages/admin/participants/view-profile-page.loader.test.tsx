@@ -1,8 +1,9 @@
 import { NoResultError, type QueryNode } from "kysely"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { getAdminContext } from "~/business/auth/admin-context.server"
 import { getParticipantLikert } from "~/business/profile/participant-likert.server"
 import { getParticipantFullEventHistory, getProfileById } from "~/business/profile/profiles.server"
+import { getAdminContext } from "~/business/auth/admin-context.server"
+import { PERMISSIONS } from "~/business/auth/permissions"
 import { loader } from "./view-profile-page"
 
 const { logger } = vi.hoisted(() => ({
@@ -34,7 +35,7 @@ type AdminContext = Awaited<ReturnType<typeof getAdminContext>>
 
 const currentProfile = {
   id: "11111111-2222-4333-8444-555555555555",
-  permissions: ["admin.panel", "profiles.manage"],
+  permissions: ["admin.panel", "profiles.manage", "payments.manage"],
 }
 
 const runLoader = () =>
@@ -128,4 +129,49 @@ describe("view profile page loader", () => {
     })
     expect(data).toMatchObject({ likert })
   })
+
+  it.each([
+    {
+      permissions: [PERMISSIONS.ADMIN_PANEL, PERMISSIONS.PAYMENTS_MANAGE],
+      expected: { canManagePayments: true, paid_gross: 22000, payment_status: "paid" },
+    },
+    {
+      permissions: [PERMISSIONS.ADMIN_PANEL],
+      expected: { canManagePayments: false, paid_gross: 0, payment_status: null },
+    },
+  ])(
+    "sends the history's money only with payments.manage: $permissions",
+    async ({ permissions, expected }) => {
+      vi.mocked(getAdminContext).mockResolvedValue({
+        currentProfile: { permissions },
+      } as unknown as Awaited<ReturnType<typeof getAdminContext>>)
+      vi.mocked(getParticipantFullEventHistory).mockResolvedValue({
+        success: true,
+        data: [
+          {
+            id: "ep-1",
+            paid_gross: 22000,
+            net: 21000,
+            refunded: 0,
+            payment_status: "paid",
+            active_payment_id: "pay-1",
+          },
+        ],
+        errors: [],
+      } as unknown as HistoryResult)
+
+      const result = await runLoader()
+
+      expect(result).toMatchObject({
+        canManagePayments: expected.canManagePayments,
+        fullHistory: [
+          {
+            id: "ep-1",
+            paid_gross: expected.paid_gross,
+            payment_status: expected.payment_status,
+          },
+        ],
+      })
+    },
+  )
 })

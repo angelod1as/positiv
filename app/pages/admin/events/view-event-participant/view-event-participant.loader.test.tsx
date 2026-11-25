@@ -1,11 +1,12 @@
 import { NoResultError, type QueryNode } from "kysely"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { getEventParticipantBasic } from "~/business/application/event-participants.server"
-import { getAdminContext } from "~/business/auth/admin-context.server"
 import { getParticipantLikert } from "~/business/profile/participant-likert.server"
 import { getParticipantFullEventHistory, getProfileById } from "~/business/profile/profiles.server"
 import { getPaymentsForParticipant } from "~/business/payment/payment-totals.server"
 import { isOnlinePaymentsEnabled } from "~/business/payment/online-payments.server"
+import { getAdminContext } from "~/business/auth/admin-context.server"
+import { PERMISSIONS } from "~/business/auth/permissions"
 import { loader } from "./view-event-participant"
 
 const { logger } = vi.hoisted(() => ({
@@ -60,7 +61,7 @@ type AdminContext = Awaited<ReturnType<typeof getAdminContext>>
 
 const currentProfile = {
   id: "11111111-2222-4333-8444-555555555555",
-  permissions: ["admin.panel", "profiles.manage"],
+  permissions: ["admin.panel", "profiles.manage", "payments.manage"],
 }
 
 const runLoader = () =>
@@ -273,5 +274,48 @@ describe("view event participant loader", () => {
       viewer: currentProfile,
     })
     expect(data).toMatchObject({ likert })
+  })
+
+  it("sends no payment data to a person without payments.manage", async () => {
+    vi.mocked(getAdminContext).mockResolvedValue({
+      currentProfile: { permissions: [PERMISSIONS.ADMIN_PANEL] },
+    } as unknown as Awaited<ReturnType<typeof getAdminContext>>)
+    vi.mocked(isOnlinePaymentsEnabled).mockResolvedValue(true)
+    const paid = {
+      paid_gross: 22000,
+      net: 21000,
+      refunded: 0,
+      payment_status: "paid",
+      active_payment_id: "pay-1",
+    }
+    const blank = {
+      paid_gross: 0,
+      net: 0,
+      refunded: 0,
+      payment_status: null,
+      active_payment_id: null,
+    }
+    vi.mocked(getEventParticipantBasic).mockResolvedValue({
+      success: true,
+      data: { id: "participant-1", event_title: "Festa", ...paid },
+      errors: [],
+    } as unknown as ParticipantResult)
+    vi.mocked(getParticipantFullEventHistory).mockResolvedValue({
+      success: true,
+      data: [{ id: "ep-old", ...paid }],
+      errors: [],
+    } as unknown as Awaited<ReturnType<typeof getParticipantFullEventHistory>>)
+
+    const result = await runLoader()
+
+    expect(getPaymentsForParticipant).not.toHaveBeenCalled()
+    expect(result).toMatchObject({
+      canManagePayments: false,
+      paymentsEnabled: false,
+      participantPayments: undefined,
+      whatsappMessage: null,
+      eventParticipant: { id: "participant-1", ...blank },
+      fullHistory: [{ id: "ep-old", ...blank }],
+    })
   })
 })

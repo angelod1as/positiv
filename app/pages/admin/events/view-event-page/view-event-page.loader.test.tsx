@@ -81,8 +81,61 @@ describe("view event page loader", () => {
     vi.mocked(getPaymentsForEvent).mockResolvedValue({})
     vi.mocked(listInvitesForEvent).mockResolvedValue([])
     vi.mocked(getAdminContext).mockResolvedValue({
-      currentProfile: { permissions: [] },
+      currentProfile: { permissions: [PERMISSIONS.PAYMENTS_MANAGE] },
     } as unknown as Awaited<ReturnType<typeof getAdminContext>>)
+  })
+
+  it("sends no payment data to a person without payments.manage", async () => {
+    vi.mocked(getAdminContext).mockResolvedValue({
+      currentProfile: { permissions: [PERMISSIONS.ADMIN_PANEL] },
+    } as unknown as Awaited<ReturnType<typeof getAdminContext>>)
+    vi.mocked(isOnlinePaymentsEnabled).mockResolvedValue(true)
+    vi.mocked(getRejectedEventParticipants).mockResolvedValue([])
+    vi.mocked(getProfilesWithExtraDataById).mockResolvedValue({
+      success: true,
+      data: [
+        {
+          id: "ep-1",
+          full_name: "Ana",
+          paid_gross: 22000,
+          net: 21000,
+          refunded: 0,
+          payment_status: "paid",
+          active_payment_id: "pay-1",
+        },
+      ],
+      errors: [],
+    } as unknown as Awaited<ReturnType<typeof getProfilesWithExtraDataById>>)
+
+    const data = await runLoader()
+
+    expect(getPaymentsForEvent).not.toHaveBeenCalled()
+    expect(data).toMatchObject({
+      canManagePayments: false,
+      paymentsEnabled: false,
+      paymentsByParticipant: {},
+      whatsappMessageByParticipant: {},
+      participants: [
+        {
+          id: "ep-1",
+          full_name: "Ana",
+          paid_gross: 0,
+          net: 0,
+          refunded: 0,
+          payment_status: null,
+          active_payment_id: null,
+        },
+      ],
+    })
+  })
+
+  it("tells the page a person with payments.manage handles payments", async () => {
+    vi.mocked(getRejectedEventParticipants).mockResolvedValue([])
+
+    const data = await runLoader()
+
+    expect(data.canManagePayments).toBe(true)
+    expect(getPaymentsForEvent).toHaveBeenCalled()
   })
 
   it.each([

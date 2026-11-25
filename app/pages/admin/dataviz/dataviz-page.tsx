@@ -4,6 +4,8 @@ import {
   useLoaderData,
   useSearchParams,
 } from "react-router"
+import { getAdminContext } from "~/business/auth/admin-context.server"
+import { canSeePayments } from "~/business/payment/payment-visibility"
 import {
   type DatavizRange,
   datavizRange,
@@ -35,7 +37,9 @@ import { PartiesChapter } from "~/components/pages/admin/dataviz/parties-chapter
 import { PeopleChapter } from "~/components/pages/admin/dataviz/people-chapter"
 import { umamiDashboardUrl } from "~/lib/analytics/umami"
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request, params }: LoaderFunctionArgs) {
+  const { currentProfile } = await getAdminContext(request, params)
+  const canManagePayments = canSeePayments(currentProfile)
   const url = new URL(request.url)
   const modeParam = url.searchParams.get("mode")
   const demographicsMode: "all" | "attended" =
@@ -57,7 +61,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   ] = await Promise.all([
     getEventAttendanceData(fullDatavizRange()),
     getKpiScores(range),
-    getEventRevenueData(range),
+    canManagePayments ? getEventRevenueData(range) : [],
     getConversionFunnelData(range),
     getOccupancyData(range),
     getVeteranRookieData(range),
@@ -76,7 +80,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
     range,
     parties,
     demographicsMode,
-    kpiScores,
+    canManagePayments,
+    kpiScores: canManagePayments
+      ? kpiScores
+      : { ...kpiScores, total_revenue: 0, avg_revenue_per_event: 0 },
     eventAttendance,
     eventRevenue,
     conversionFunnel,
@@ -142,7 +149,9 @@ export default function NumerosPage() {
         onModeChange={handleModeChange}
       />
 
-      <MoneyChapter summary={data.partySummary} revenue={data.eventRevenue} />
+      {data.canManagePayments && (
+        <MoneyChapter summary={data.partySummary} revenue={data.eventRevenue} />
+      )}
     </div>
   )
 }

@@ -12,6 +12,10 @@ import { getEventParticipantBasic, updateEventParticipantById } from "~/business
 import { setProfileCpfExempt } from "~/business/profile/cpf-exemption.server"
 import { getParticipantLikert } from "~/business/profile/participant-likert.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
+import {
+  canSeePayments,
+  paymentsVisibleTo,
+} from "~/business/payment/payment-visibility"
 import { paymentProvider } from "~/business/payment/payment-provider.server"
 import { getPaymentsForParticipant } from "~/business/payment/payment-totals.server"
 import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
@@ -91,13 +95,16 @@ export async function action({ request, params }: Route.ActionArgs) {
   const paymentResult = await handlePaymentIntent(
     String(intent),
     formData,
-    context.currentProfile?.id,
+    context.currentProfile,
   )
   if (paymentResult) return paymentResult
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   assertUuidParams(params.eventId, params.profileId)
+
+  const { currentProfile } = await getAdminContext(request, params)
+  const canManagePayments = canSeePayments(currentProfile)
 
   const { eventId, profileId } = params
 
@@ -110,8 +117,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       ADMIN_VIEW_EVENT(eventId),
     )
   }
-
-  const { currentProfile } = await getAdminContext(request, params)
 
   // Run profile and event_participant queries in parallel
   const [profileResult, eventParticipantResult, likert] = await Promise.all([
@@ -156,7 +161,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     )
   }
 
-  const eventParticipant = eventParticipantResult.data
+  const [eventParticipant] = paymentsVisibleTo(currentProfile, [
+    eventParticipantResult.data,
+  ])
 
   // Get full participant history
   let fullHistory: ParticipantEventHistoryData[] = []
@@ -166,29 +173,37 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   })
 
   if (historyResult.success) {
-    fullHistory = historyResult.data
+    fullHistory = paymentsVisibleTo(currentProfile, historyResult.data)
   }
-
-  const onlinePaymentsEnabled = await isOnlinePaymentsEnabled()
-  const [participantPayments, cardPaymentsEnabled, whatsappMessageTemplate] =
-    await Promise.all([
-      getPaymentsForParticipant(eventParticipant.id),
-      isCardPaymentsEnabled(),
-      loadWhatsappPaymentMessage(),
-    ])
 
   // The same origin the link email builds from, so the two channels cannot
   // hand the participant different urls for one charge.
   const origin = appOrigin(null)
 
-  const whatsappMessage = buildWhatsappPaymentMessage({
-    template: whatsappMessageTemplate,
-    active: participantPayments.active,
-    participantName: profile.social_name || profile.full_name || "",
-    eventTitle: eventParticipant.event_title ?? "",
-    appOrigin: origin,
+  const [
+    onlinePaymentsEnabled,
+    participantPayments,
     cardPaymentsEnabled,
-  })
+    whatsappMessageTemplate,
+  ] = canManagePayments
+    ? await Promise.all([
+        isOnlinePaymentsEnabled(),
+        getPaymentsForParticipant(eventParticipant.id),
+        isCardPaymentsEnabled(),
+        loadWhatsappPaymentMessage(),
+      ])
+    : [false, undefined, false, null]
+
+  const whatsappMessage = participantPayments
+    ? buildWhatsappPaymentMessage({
+        template: whatsappMessageTemplate ?? "",
+        active: participantPayments.active,
+        participantName: profile.social_name || profile.full_name || "",
+        eventTitle: eventParticipant.event_title ?? "",
+        appOrigin: origin,
+        cardPaymentsEnabled,
+      })
+    : null
 
   return {
     profile,
@@ -201,6 +216,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     whatsappMessage,
     providerName: paymentProvider().name,
     likert,
+    canManagePayments,
   }
 }
 
@@ -216,6 +232,7 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
     whatsappMessage,
     providerName,
     likert,
+    canManagePayments,
   } = loaderData
 
   if (!profile) return null
@@ -234,6 +251,7 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
       whatsappMessage={whatsappMessage}
       providerName={providerName}
       likert={likert}
+      showPayments={canManagePayments}
     />
   )
 }

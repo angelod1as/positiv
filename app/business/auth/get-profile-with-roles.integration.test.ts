@@ -147,6 +147,7 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
       "notifications.receive_admin",
       "participants.add_directly",
       "participants.manage",
+      "payments.manage",
       "profiles.manage",
       "reports.read",
     ])

@@ -11,8 +11,15 @@ import {
   updateEventListmonkList,
 } from "~/business/newsletter/event-listmonk-sync.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
+import {
+  canSeePayments,
+  paymentsVisibleTo,
+} from "~/business/payment/payment-visibility"
 import { paymentProvider } from "~/business/payment/payment-provider.server"
-import { getPaymentsForEvent } from "~/business/payment/payment-totals.server"
+import {
+  getPaymentsForEvent,
+  type PaymentRow,
+} from "~/business/payment/payment-totals.server"
 import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
 import { isOnlinePaymentsEnabled } from "~/business/payment/online-payments.server"
 import { AddParticipantsSection } from "~/components/organisms/add-participants-modal/add-participants-section"
@@ -56,7 +63,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   const paymentResult = await handlePaymentIntent(
     intent,
     formData,
-    context.currentProfile?.id,
+    context.currentProfile,
   )
   if (paymentResult) return paymentResult
 
@@ -112,6 +119,8 @@ async function loadParticipants(eventId: string) {
   return result.data
 }
 
+const noPayments: Record<string, PaymentRow[]> = {}
+
 /** LOADER */
 export async function loader({ request, params }: Route.LoaderArgs) {
   assertUuidParams(params.id)
@@ -139,10 +148,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       ? await getEventDemographicsById({ eventId })
       : undefined
 
-  const onlinePaymentsEnabled = await isOnlinePaymentsEnabled()
+  const canManagePayments = canSeePayments(currentProfile)
+  const onlinePaymentsEnabled =
+    canManagePayments && (await isOnlinePaymentsEnabled())
 
   const [
-    participants,
+    allParticipants,
     rejectedParticipants,
     paymentsByParticipant,
     cardPaymentsEnabled,
@@ -155,7 +166,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
         logger.error("Failed to fetch rejected participants", { error })
         return []
       }),
-      getPaymentsForEvent(eventId),
+      canManagePayments ? getPaymentsForEvent(eventId) : noPayments,
       isCardPaymentsEnabled(),
       listInvitesForEvent(eventId),
       loadWhatsappPaymentMessage(),
@@ -165,8 +176,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   // hand the participant different urls for one charge.
   const origin = appOrigin(null)
 
+  const participants = paymentsVisibleTo(currentProfile, allParticipants)
+
   const whatsappMessageByParticipant = Object.fromEntries(
-    participants.map((participant) => [
+    (canManagePayments ? participants : []).map((participant) => [
       participant.id,
       buildWhatsappPaymentMessage({
         template: whatsappMessageTemplate,
@@ -194,6 +207,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     providerName: paymentProvider().name,
     invites,
     demographics: demographics?.success ? demographics.data : undefined,
+    canManagePayments,
     canAddParticipantsDirectly: can(
       currentProfile,
       PERMISSIONS.PARTICIPANTS_ADD_DIRECTLY,
@@ -231,6 +245,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
     demographics,
     invites,
     canAddParticipantsDirectly,
+    canManagePayments,
   } = loaderData
 
   const { title, emoji, time_event_start } = event
@@ -270,13 +285,14 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
         <AdminViewEventParticipantsTable
           participants={participants}
           eventId={event.id}
+          showPayments={canManagePayments}
           onParticipantSaved={() => setIsListStale(true)}
           onManagePayment={setManagedParticipantId}
         />
         <RejectedParticipantsSection participants={rejectedParticipants} />
       </div>
 
-      {managedParticipant && (
+      {canManagePayments && managedParticipant && (
         <ManagePaymentModal
           open
           onOpenChange={(open) => !open && setManagedParticipantId(null)}

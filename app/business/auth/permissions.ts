@@ -9,6 +9,7 @@ export const PERMISSIONS = {
   PARTICIPANTS_ADD_DIRECTLY: "participants.add_directly",
   PROFILES_MANAGE: "profiles.manage",
   NEWSLETTER_MANAGE: "newsletter.manage",
+  PAYMENTS_MANAGE: "payments.manage",
   REPORTS_READ: "reports.read",
   EVENTS_APPLY_DIRECT: "events.apply_direct",
   EVENTS_APPLY_AS_STAFF: "events.apply_as_staff",

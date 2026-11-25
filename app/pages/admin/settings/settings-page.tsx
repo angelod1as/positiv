@@ -1,4 +1,6 @@
+import { redirectWithError } from "remix-toast"
 import { getAdminContext } from "~/business/auth/admin-context.server"
+import { canSeePayments } from "~/business/payment/payment-visibility"
 import {
   cleanupListmonkTestCampaign,
   testListmonkConnection,
@@ -28,6 +30,16 @@ import { zod } from "~/lib/helpers/zod"
 import { MAX_REGISTRATION_LIMIT } from "~/lib/constants/constants"
 import type { Route } from "./+types/settings-page"
 import { readFormData } from "~/lib/request/read-form-data.server"
+import { errorsCopy } from "~/copy/errors"
+import paths from "~/lib/paths"
+
+const {
+  admin: { ADMIN_DASHBOARD },
+} = paths
+
+// How Positiv charges asks for payments.manage on top of entering the admin
+// area; the other settings come with the door.
+const PAYMENT_INTENTS = new Set(["set-online-payments", "set-card-payments"])
 
 export function meta({}: Route.MetaArgs) {
   return createMetaArray(metaCopy.adminSettings.title)
@@ -38,6 +50,17 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   const formData = await readFormData(request)
   const intent = formData.get("intent")
+
+  if (
+    typeof intent === "string" &&
+    PAYMENT_INTENTS.has(intent) &&
+    !canSeePayments(currentProfile)
+  ) {
+    throw await redirectWithError(
+      ADMIN_DASHBOARD,
+      errorsCopy.auth.paymentsPermissionRequired,
+    )
+  }
 
   if (intent === "set-online-payments") {
     await setOnlinePaymentsEnabled({
@@ -102,10 +125,13 @@ export async function action({ request, params }: Route.ActionArgs) {
   return { intent }
 }
 
-export async function loader() {
+export async function loader({ request, params }: Route.LoaderArgs) {
+  const { currentProfile } = await getAdminContext(request, params)
+  const canManagePayments = canSeePayments(currentProfile)
+
   return {
-    onlinePayments: await getOnlinePaymentsSetting(),
-    cardPayments: await isCardPaymentsEnabled(),
+    onlinePayments: canManagePayments ? await getOnlinePaymentsSetting() : null,
+    cardPayments: canManagePayments ? await isCardPaymentsEnabled() : false,
     registrationLimit: await getRegistrationLimit(),
     likertEnabled: await isLikertEnabled(),
     likertRequired: await isLikertRequired(),
@@ -117,12 +143,16 @@ const SettingsPage = ({ loaderData }: Route.ComponentProps) => {
     <CenteredLayout>
       <h1>{adminSettingsCopy.title}</h1>
 
-      <OnlinePaymentsSection
-        setting={loaderData.onlinePayments}
-        cardEnabled={loaderData.cardPayments}
-      />
+      {loaderData.onlinePayments && (
+        <>
+          <OnlinePaymentsSection
+            setting={loaderData.onlinePayments}
+            cardEnabled={loaderData.cardPayments}
+          />
 
-      <Separator />
+          <Separator />
+        </>
+      )}
 
       <RegistrationLimitSection limit={loaderData.registrationLimit} />
 

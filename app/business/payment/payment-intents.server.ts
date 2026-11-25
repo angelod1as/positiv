@@ -7,6 +7,8 @@ import { createPaymentOffer, resendPaymentOffer } from "./payment-offer.server"
 import { cancelPayment } from "./payment-cancel.server"
 import { syncPaymentFromProvider } from "./payment-sync.server"
 import { markManualRefunded } from "./payment-refund.server"
+import { can, PERMISSIONS } from "~/business/auth/permissions"
+import { errorsCopy } from "~/copy/errors"
 
 type PaymentIntentResult = {
   success: boolean
@@ -19,6 +21,11 @@ type PaymentIntentResult = {
    */
   emailSent?: boolean
 }
+
+type Actor =
+  | { id: string; permissions?: readonly string[] | null }
+  | null
+  | undefined
 
 type ComposableResult =
   | { success: true; data?: Record<string, unknown> }
@@ -48,58 +55,57 @@ const toIntentResult = (
       : undefined,
 })
 
+type Values = Record<string, FormDataEntryValue>
+
+/**
+ * Every payment intent and what answers it. The permission check reads this
+ * same map, so an intent cannot be added without it.
+ */
+const PAYMENT_HANDLERS: Record<
+  string,
+  (values: Values, createdBy: string | undefined) => Promise<ComposableResult>
+> = {
+  "payment-offer": (values, createdBy) =>
+    createPaymentOffer({ ...values, createdBy }),
+  "payment-resend": (values) => resendPaymentOffer(values),
+  "payment-sync": (values) => syncPaymentFromProvider(values),
+  "payment-manual": (values, createdBy) =>
+    registerManualPayment({ ...values, createdBy }),
+  "payment-manual-edit": (values) => editManualPayment(values),
+  "payment-manual-cancel": (values) => cancelManualPayment(values),
+  "payment-manual-refund": (values) => markManualRefunded(values),
+  "payment-cancel": (values) => cancelPayment(values),
+}
+
 /**
  * The payment intents the modal posts, answered the same way wherever it was
  * opened from. Both admin routes own a page the modal appears on, and their
  * copies of this would have to change together every time a guard does.
  *
  * Answers null for anything that is not a payment intent, so a route can carry
- * on to its own.
+ * on to its own. Entering the admin area is not enough to touch money: every
+ * intent asks for payments.manage here, whichever route posted it.
  */
 export async function handlePaymentIntent(
   intent: string,
   formData: FormData,
-  createdBy: string | undefined,
+  actor: Actor,
 ): Promise<PaymentIntentResult | null> {
-  const values = Object.fromEntries(formData)
+  const handler = Object.hasOwn(PAYMENT_HANDLERS, intent)
+    ? PAYMENT_HANDLERS[intent]
+    : undefined
+  if (!handler) return null
 
-  if (intent === "payment-offer") {
-    return toIntentResult(
+  if (!can(actor, PERMISSIONS.PAYMENTS_MANAGE)) {
+    return {
+      success: false,
       intent,
-      await createPaymentOffer({ ...values, createdBy }),
-    )
+      errors: [{ message: errorsCopy.auth.paymentsPermissionRequired }],
+    }
   }
 
-  if (intent === "payment-resend") {
-    return toIntentResult(intent, await resendPaymentOffer(values))
-  }
-
-  if (intent === "payment-sync") {
-    return toIntentResult(intent, await syncPaymentFromProvider(values))
-  }
-
-  if (intent === "payment-manual") {
-    return toIntentResult(
-      intent,
-      await registerManualPayment({ ...values, createdBy }),
-    )
-  }
-
-  if (intent === "payment-manual-edit") {
-    return toIntentResult(intent, await editManualPayment(values))
-  }
-
-  if (intent === "payment-manual-cancel") {
-    return toIntentResult(intent, await cancelManualPayment(values))
-  }
-
-  if (intent === "payment-manual-refund") {
-    return toIntentResult(intent, await markManualRefunded(values))
-  }
-
-  if (intent === "payment-cancel") {
-    return toIntentResult(intent, await cancelPayment(values))
-  }
-
-  return null
+  return toIntentResult(
+    intent,
+    await handler(Object.fromEntries(formData), actor?.id),
+  )
 }

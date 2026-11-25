@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { PERMISSIONS } from "~/business/auth/permissions"
 import { getAdminContext } from "~/business/auth/admin-context.server"
 import {
   cancelManualPayment,
@@ -123,7 +124,10 @@ describe("AdminViewEventPage action", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(getAdminContext).mockResolvedValue({
-      currentProfile: { id: "admin-1" },
+      currentProfile: {
+        id: "admin-1",
+        permissions: [PERMISSIONS.ADMIN_PANEL, PERMISSIONS.PAYMENTS_MANAGE],
+      },
     } as Awaited<ReturnType<typeof getAdminContext>>)
     vi.mocked(registerManualPayment).mockResolvedValue({
       success: true,
@@ -161,6 +165,25 @@ describe("AdminViewEventPage action", () => {
       expect(result).toMatchObject({ success: true, intent })
     })
   })
+
+  describe.each(INTENTS.filter(({ intent }) => intent.startsWith("payment-")))(
+    "$intent",
+    ({ intent, fields, mutation }) => {
+      it("should refuse someone in the admin area without payments.manage", async () => {
+        vi.mocked(getAdminContext).mockResolvedValue({
+          currentProfile: {
+            id: "interviewer-1",
+            permissions: [PERMISSIONS.ADMIN_PANEL],
+          },
+        } as unknown as Awaited<ReturnType<typeof getAdminContext>>)
+
+        const result = await runAction({ intent, ...fields })
+
+        expect(mutation).not.toHaveBeenCalled()
+        expect(result).toMatchObject({ success: false, intent })
+      })
+    },
+  )
 
   it("should record who registered a manual payment", async () => {
     await runAction({

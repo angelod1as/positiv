@@ -114,6 +114,8 @@ function getStoredFilter(key: string, defaultValue: string[] = []): string[] {
 type AdminViewEventParticipantsTableProps = {
   participants: ProfileWithExtraData[]
   eventId: string
+  /** False for a person without payments.manage: no payment columns at all. */
+  showPayments: boolean
   onParticipantSaved?: () => void
   /** Opens the manage-payment modal on the row's participant. */
   onManagePayment?: (eventParticipantId: string) => void
@@ -121,7 +123,13 @@ type AdminViewEventParticipantsTableProps = {
 
 export const AdminViewEventParticipantsTable: FC<
   AdminViewEventParticipantsTableProps
-> = ({ participants, eventId, onParticipantSaved, onManagePayment }) => {
+> = ({
+  participants,
+  eventId,
+  showPayments,
+  onParticipantSaved,
+  onManagePayment,
+}) => {
   const navigate = useNavigate()
 
   // What the toolbar's indicator used to read off the page's fetcher. Off the
@@ -495,67 +503,71 @@ export const AdminViewEventParticipantsTable: FC<
           onModelChange: setApprovedToAttendFilter,
         },
       },
-      {
-        field: "payment_status",
-        headerName: tableCopy.columns.paymentStatus,
-        headerTooltip: tableCopy.columns.paymentStatusTooltip,
-        editable: false,
-        // The cell and the filter read the same function on purpose: the
-        // filter takes its value straight off the row, so pointing it at the
-        // raw field while the cell mapped null itself would drop every unpaid
-        // participant the moment a status was picked.
-        valueGetter: (params) => paymentStatusFilterValue(params.data),
-        valueFormatter: (params) =>
-          params.value === NO_PAYMENT_STATUS
-            ? tableCopy.columns.noAmount
-            : paymentStatusPropMap(params.value),
-        filter: BaseMultiSelectFilter,
-        filterParams: {
-          options: paymentStatusOptions,
-          getValue: (node: IRowNode<ProfileWithExtraData>) =>
-            paymentStatusFilterValue(node.data),
-          model: paymentStatusFilter,
-          onModelChange: setPaymentStatusFilter,
-        },
-      },
-      {
-        field: "paid_gross",
-        headerName: tableCopy.columns.paidGross,
-        headerTooltip: tableCopy.columns.paidGrossTooltip,
-        editable: false,
-        // What the participant paid and Positiv still holds: the fees stay in,
-        // because the participant paid them, and a refund comes out, because
-        // it went back.
-        valueGetter: (params) =>
-          (params.data?.paid_gross ?? 0) - (params.data?.refunded ?? 0),
-        // The amount is zero for a spot that owed nothing, for a participant
-        // with no payment at all, and for a charge still waiting to be paid.
-        // Only the first of those is an amount, and the status is what says so.
-        valueFormatter: (params) =>
-          isSettledPayment(params.data?.payment_status)
-            ? formatCurrency(params.value ?? 0)
-            : tableCopy.columns.noAmount,
-      },
-      {
-        colId: "manage_payment",
-        headerName: tableCopy.columns.managePaymentHeader,
-        editable: false,
-        sortable: false,
-        filter: false,
-        width: 60,
-        cellRenderer: (params: ICellRendererParams<ProfileWithExtraData>) => (
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={tableCopy.columns.managePayment}
-            onClick={() =>
-              params.data && onManagePayment?.(params.data.id)
-            }
-          >
-            <DollarSign className="h-4 w-4" />
-          </Button>
-        ),
-      },
+      ...(showPayments
+        ? [
+          {
+            field: "payment_status",
+            headerName: tableCopy.columns.paymentStatus,
+            headerTooltip: tableCopy.columns.paymentStatusTooltip,
+            editable: false,
+            // The cell and the filter read the same function on purpose: the
+            // filter takes its value straight off the row, so pointing it at the
+            // raw field while the cell mapped null itself would drop every unpaid
+            // participant the moment a status was picked.
+            valueGetter: (params) => paymentStatusFilterValue(params.data),
+            valueFormatter: (params) =>
+              params.value === NO_PAYMENT_STATUS
+                ? tableCopy.columns.noAmount
+                : paymentStatusPropMap(params.value),
+            filter: BaseMultiSelectFilter,
+            filterParams: {
+              options: paymentStatusOptions,
+              getValue: (node: IRowNode<ProfileWithExtraData>) =>
+                paymentStatusFilterValue(node.data),
+              model: paymentStatusFilter,
+              onModelChange: setPaymentStatusFilter,
+            },
+          } satisfies ColDef<ProfileWithExtraData>,
+          {
+            field: "paid_gross",
+            headerName: tableCopy.columns.paidGross,
+            headerTooltip: tableCopy.columns.paidGrossTooltip,
+            editable: false,
+            // What the participant paid and Positiv still holds: the fees stay in,
+            // because the participant paid them, and a refund comes out, because
+            // it went back.
+            valueGetter: (params) =>
+              (params.data?.paid_gross ?? 0) - (params.data?.refunded ?? 0),
+            // The amount is zero for a spot that owed nothing, for a participant
+            // with no payment at all, and for a charge still waiting to be paid.
+            // Only the first of those is an amount, and the status is what says so.
+            valueFormatter: (params) =>
+              isSettledPayment(params.data?.payment_status)
+                ? formatCurrency(params.value ?? 0)
+                : tableCopy.columns.noAmount,
+          } satisfies ColDef<ProfileWithExtraData>,
+          {
+            colId: "manage_payment",
+            headerName: tableCopy.columns.managePaymentHeader,
+            editable: false,
+            sortable: false,
+            filter: false,
+            width: 60,
+            cellRenderer: (params: ICellRendererParams<ProfileWithExtraData>) => (
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={tableCopy.columns.managePayment}
+                onClick={() =>
+                  params.data && onManagePayment?.(params.data.id)
+                }
+              >
+                <DollarSign className="h-4 w-4" />
+              </Button>
+            ),
+          } satisfies ColDef<ProfileWithExtraData>,
+        ]
+        : []),
       {
         field: "spot_type",
         headerName: eventParticipantPropMap("spot_type"),
@@ -621,6 +633,7 @@ export const AdminViewEventParticipantsTable: FC<
       },
     ],
     [
+      showPayments,
       memoizedGenderOptions,
       memoizedOrientationOptions,
       applicationStatusFilter,
