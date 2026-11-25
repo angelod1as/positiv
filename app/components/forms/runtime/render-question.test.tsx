@@ -353,16 +353,34 @@ describe("renderQuestion", () => {
 
       const group = screen.getByRole("radiogroup", { name: "Pergunta" })
       expect(group).toBeInTheDocument()
-      expect(
-        screen
-          .getAllByRole("radio")
-          .map((radio) => radio.closest("label")?.textContent),
-      ).toEqual([
+      const names = [
         "Discordo totalmente",
         "Discordo",
         "Depende",
         "Concordo",
         "Concordo totalmente",
+      ]
+      expect(screen.getAllByRole("radio")).toEqual(
+        names.map((name) => screen.getByRole("radio", { name })),
+      )
+    })
+
+    it("numbers each point with the key that picks it", () => {
+      draw({ kind: "likert" })
+
+      expect(
+        screen
+          .getAllByRole("radio")
+          .map((radio) => [
+            radio.getAttribute("aria-keyshortcuts"),
+            radio.closest("label")?.querySelector("kbd")?.textContent,
+          ]),
+      ).toEqual([
+        ["1", "1"],
+        ["2", "2"],
+        ["3", "3"],
+        ["4", "4"],
+        ["5", "5"],
       ])
     })
 
