@@ -9,11 +9,12 @@ const find = (id: string) => {
 }
 
 describe("buildTermsQuestions", () => {
-  it("asks the three boxes, in reading order", () => {
+  it("asks for the terms, then the three email categories, in reading order", () => {
     expect(buildTermsQuestions().map((question) => question.id)).toEqual([
       "agree",
-      "commonEmails",
-      "mktEmails",
+      "registrationAlerts",
+      "newsletter",
+      "marketing",
     ])
   })
 
@@ -25,18 +26,15 @@ describe("buildTermsQuestions", () => {
 
   it("says beside each box what ticking it means", () => {
     expect(find("agree").prompt).toBe("Li tudo e estou de acordo!")
-    expect(find("commonEmails").prompt).toBe(
-      "Aceito receber e-mails gerais do sistema",
+    expect(find("registrationAlerts").prompt).toBe(
+      "Quero ser avisade quando abrirem as inscrições das festas.",
     )
-    expect(find("mktEmails").prompt).toBe(
-      "Aceito receber e-mails sobre a Positiv",
+    expect(find("newsletter").prompt).toBe(
+      "Quero receber a newsletter da Positiv.",
     )
-  })
-
-  it("explains the two e-mail choices", () => {
-    expect(find("commonEmails").help).toContain("candidatura")
-    expect(find("mktEmails").help).toContain("parcerias")
-    expect(find("agree").help).toBeUndefined()
+    expect(find("marketing").prompt).toBe(
+      "Aceito receber divulgações e parcerias.",
+    )
   })
 
   it("refuses to continue until the terms are agreed to", () => {
@@ -44,13 +42,10 @@ describe("buildTermsQuestions", () => {
     expect(validateQuestion(find("agree"), true).ok).toBe(true)
   })
 
-  it("refuses to continue without the e-mails the system has to send", () => {
-    expect(validateQuestion(find("commonEmails"), false).ok).toBe(false)
-    expect(validateQuestion(find("commonEmails"), true).ok).toBe(true)
-  })
-
-  it("takes either answer about the newsletter", () => {
-    expect(validateQuestion(find("mktEmails"), false).ok).toBe(true)
-    expect(validateQuestion(find("mktEmails"), true).ok).toBe(true)
+  it("takes either answer for every email category", () => {
+    for (const id of ["registrationAlerts", "newsletter", "marketing"]) {
+      expect(validateQuestion(find(id), false).ok).toBe(true)
+      expect(validateQuestion(find(id), true).ok).toBe(true)
+    }
   })
 })

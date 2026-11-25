@@ -5,9 +5,10 @@ import { db } from "~/lib/supabase/db.server"
 import { logger } from "~/lib/logger/logger.server"
 import { agreeToTermsSchema } from "./profile-schemas"
 import { contextSchema } from "../auth/auth-schemas"
-import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
-import { recordNewsletterRefusal } from "../newsletter/email-consents.server"
-import { unsubscribeProfile } from "../newsletter/subscription-helpers.server"
+import {
+  mirrorEmailPreferences,
+  recordEmailPreferences,
+} from "../newsletter/email-preferences.server"
 
 export const agreeToTerms = applySchema(
   agreeToTermsSchema,
@@ -80,48 +81,32 @@ export const agreeToTerms = applySchema(
     }
   }
 
-  // Handle newsletter subscription separately using the new table
-  const wantsMarketing = values.mktEmails || false
-
-  // Determine subscription source based on whether this is initial onboarding
-  // or a manual change after completing basic data
   const isOnboarding = !currentProfile || !currentProfile.basic_data_filled
-  const subscriptionSource = isOnboarding
-    ? "onboarding_auto"
-    : "terms_and_conditions"
+  const source = isOnboarding ? "onboarding_auto" : "terms_and_conditions"
+  const preferences = {
+    registrationAlerts: values.registrationAlerts,
+    newsletter: values.newsletter,
+    marketing: values.marketing,
+  }
 
-  if (wantsMarketing) {
-    const result = await subscribeProfileToNewsletter(
+  const recorded = await recordEmailPreferences(profileId, preferences, source)
+  if (!recorded.success) throw recorded.errors[0]
+
+  const mirrored = await mirrorEmailPreferences(
+    profileId,
+    recorded.data,
+    preferences,
+  )
+  if (!mirrored.success) {
+    // The choices are on the site; only the lists failed to follow, and the
+    // page says so without pretending nothing was saved.
+    logger.error("Could not bring Listmonk in line with the email choices", {
       profileId,
-      subscriptionSource,
-    )
-    if (!result.success) {
-      logger.error(
-        "Failed to subscribe profile to newsletter:",
-        { errors: result.errors.map(e => e.message) },
-      )
-      return {
-        ...context,
-        newsletterSubscriptionError: participantCopy.terms.newsletterFailed,
-      }
-    }
-    if (result.data?.syncStatus === "failed") {
-      logger.warn(
-        "Newsletter subscription created but sync failed. Will be retried by cron job.",
-        { profileId, subscriptionSource },
-      )
-    }
-  } else {
-    const result = await unsubscribeProfile(profileId)
-    if (!result.success && result.errors.length > 0) {
-      // It's ok if unsubscribe fails because no subscription exists.
-      // For other errors, we should throw.
-      if (!result.errors[0].message.includes("No subscription found")) {
-        logger.error("Failed to unsubscribe profile:", { error: result.errors[0].message })
-        throw result.errors[0]
-      }
-      const refusal = await recordNewsletterRefusal(profileId)
-      if (!refusal.success) throw refusal.errors[0]
+      errors: mirrored.errors.map((error) => error.message),
+    })
+    return {
+      ...context,
+      newsletterSubscriptionError: participantCopy.terms.newsletterFailed,
     }
   }
 

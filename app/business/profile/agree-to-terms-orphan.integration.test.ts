@@ -10,17 +10,15 @@ import type { z } from "zod"
 import type { contextSchema } from "~/business/auth/auth-schemas"
 import { sessionClientThatThrows } from "~/test/session-client-that-throws"
 
-vi.mock("~/business/newsletter/auto-subscribe.server", () => ({
-  subscribeProfileToNewsletter: vi.fn().mockResolvedValue({
+vi.mock("~/business/newsletter/email-preferences.server", () => ({
+  recordEmailPreferences: vi.fn().mockResolvedValue({
     success: true,
-    data: { syncStatus: "synced" },
+    data: null,
     errors: [],
   }),
-}))
-
-vi.mock("~/business/newsletter/subscription-helpers.server", () => ({
-  unsubscribeProfile: vi.fn().mockResolvedValue({
+  mirrorEmailPreferences: vi.fn().mockResolvedValue({
     success: true,
+    data: { bounced: false },
     errors: [],
   }),
 }))
@@ -62,7 +60,12 @@ describe("agreeToTerms orphan profile linking - Integration Tests", () => {
     })
 
     const context = buildContext(userId, testEmail)
-    const values = { agree: true, commonEmails: true, mktEmails: false }
+    const values = {
+      agree: true,
+      registrationAlerts: false,
+      newsletter: false,
+      marketing: false,
+    }
 
     const result = await agreeToTerms(values, context)
     expect(result).toMatchObject({ success: true })
@@ -81,7 +84,12 @@ describe("agreeToTerms orphan profile linking - Integration Tests", () => {
     const userId = await createTestAuthUser(testEmail, "test1234", tracker)
 
     const context = buildContext(userId, testEmail)
-    const values = { agree: true, commonEmails: true, mktEmails: false }
+    const values = {
+      agree: true,
+      registrationAlerts: false,
+      newsletter: false,
+      marketing: false,
+    }
 
     const result = await agreeToTerms(values, context)
     expect(result).toMatchObject({ success: true })
@@ -112,7 +120,12 @@ describe("agreeToTerms orphan profile linking - Integration Tests", () => {
     )
 
     const result = await agreeToTerms(
-      { agree: true, commonEmails: true, mktEmails: false },
+      {
+        agree: true,
+        registrationAlerts: false,
+        newsletter: false,
+        marketing: false,
+      },
       buildContext(userId, victimEmail),
     )
 

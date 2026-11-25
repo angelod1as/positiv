@@ -3,19 +3,9 @@ import { agreeToTerms } from "./agree-to-terms.server"
 import type { z } from "zod"
 import type { contextSchema } from "../auth/auth-schemas"
 
-// Mock the newsletter functions
-vi.mock("../newsletter/auto-subscribe.server", () => ({
-  subscribeProfileToNewsletter: vi.fn(),
-}))
-
-vi.mock("../newsletter/subscription-helpers.server", () => ({
-  unsubscribeProfile: vi.fn(),
-}))
-
-vi.mock("../newsletter/email-consents.server", () => ({
-  recordNewsletterRefusal: vi
-    .fn()
-    .mockResolvedValue({ success: true, data: undefined, errors: [] }),
+vi.mock("../newsletter/email-preferences.server", () => ({
+  recordEmailPreferences: vi.fn(),
+  mirrorEmailPreferences: vi.fn(),
 }))
 
 vi.mock("~/lib/logger/logger.server", () => ({
@@ -30,11 +20,51 @@ vi.mock("~/lib/supabase/db.server", () => ({
   },
 }))
 
-import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
-import { unsubscribeProfile } from "../newsletter/subscription-helpers.server"
-import { recordNewsletterRefusal } from "../newsletter/email-consents.server"
+import {
+  mirrorEmailPreferences,
+  recordEmailPreferences,
+} from "../newsletter/email-preferences.server"
 import { db } from "~/lib/supabase/db.server"
 import { logger } from "~/lib/logger/logger.server"
+
+const ALL_YES = {
+  agree: true,
+  registrationAlerts: true,
+  newsletter: true,
+  marketing: true,
+}
+
+const REFUSED = {
+  agree: true,
+  registrationAlerts: false,
+  newsletter: false,
+  marketing: false,
+}
+
+const CHOICES_REFUSED = {
+  registrationAlerts: false,
+  newsletter: false,
+  marketing: false,
+}
+
+const existingProfile = (basicDataFilled: boolean) => ({
+  id: "profile-123",
+  email: "test@example.com",
+  full_name: null,
+  basic_data_filled: basicDataFilled,
+  social_name: null,
+  pronouns: null,
+  rg: null,
+  cpf: null,
+  phone: null,
+  date_of_birth: null,
+  gender: null,
+  orientation: null,
+  where_lives: null,
+  how_came_to_us: null,
+  rg_issuer: null,
+  created_at: "2025-01-01T00:00:00Z",
+})
 
 describe("agreeToTerms", () => {
   let mockValues: Mock
@@ -79,31 +109,14 @@ describe("agreeToTerms", () => {
     // Default: update succeeds (used in orphan-linking tests)
     mockKyselyUpdateReturning({ id: "orphan-profile-456" })
 
-    // Setup default mocks for newsletter subscription
-    vi.mocked(subscribeProfileToNewsletter).mockResolvedValue({
+    vi.mocked(recordEmailPreferences).mockResolvedValue({
       success: true,
-      data: { syncStatus: "synced" },
+      data: 42,
       errors: [],
     })
-
-    vi.mocked(unsubscribeProfile).mockResolvedValue({
+    vi.mocked(mirrorEmailPreferences).mockResolvedValue({
       success: true,
-      data: {
-        id: "sub-123",
-        profile_id: "profile-123",
-        consent_given: false,
-        first_consent_given_at: new Date().toISOString(),
-        last_consent_given_at: new Date().toISOString(),
-        subscribed_at: new Date().toISOString(),
-        unsubscribed_at: new Date().toISOString(),
-        subscription_source: "onboarding_auto",
-        listmonk_subscriber_id: null,
-        sync_status: "unsubscribed",
-        last_sync_attempt_at: null,
-        retry_count: 0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
+      data: { bounced: false },
       errors: [],
     })
   })
@@ -118,14 +131,10 @@ describe("agreeToTerms", () => {
     ...overrides,
   })
 
-  it("should create a new profile and subscribe when profile doesn't exist and mktEmails is true", async () => {
+  it("should create a new profile and record its email choices as onboarding", async () => {
     const context = createContext({ currentProfile: null })
 
-    const values = {
-      agree: true,
-      commonEmails: true,
-      mktEmails: true,
-    }
+    const values = ALL_YES
 
     await agreeToTerms(values, context)
 
@@ -134,21 +143,33 @@ describe("agreeToTerms", () => {
       user_id: "user-123",
       email: "test@example.com",
     })
-    expect(subscribeProfileToNewsletter).toHaveBeenCalledWith("new-profile-123", "onboarding_auto")
-    expect(unsubscribeProfile).not.toHaveBeenCalled()
+    expect(recordEmailPreferences).toHaveBeenCalledWith(
+      "new-profile-123",
+      { registrationAlerts: true, newsletter: true, marketing: true },
+      "onboarding_auto",
+    )
+    expect(mirrorEmailPreferences).toHaveBeenCalledWith(
+      "new-profile-123",
+      42,
+      { registrationAlerts: true, newsletter: true, marketing: true },
+    )
   })
 
   it("should link orphan profile when orphan profile exists for user email", async () => {
     mockKyselySelectReturning({ id: "orphan-profile-456" })
 
     const context = createContext({ currentProfile: null })
-    const values = { agree: true, commonEmails: true, mktEmails: false }
+    const values = REFUSED
 
     await agreeToTerms(values, context)
 
     expect(db.insertInto).not.toHaveBeenCalled()
     expect(db.updateTable).toHaveBeenCalledWith("profiles")
-    expect(unsubscribeProfile).toHaveBeenCalledWith("orphan-profile-456")
+    expect(recordEmailPreferences).toHaveBeenCalledWith(
+      "orphan-profile-456",
+      CHOICES_REFUSED,
+      "onboarding_auto",
+    )
   })
 
   it("should throw error when orphan profile is claimed between SELECT and UPDATE (TOCTOU)", async () => {
@@ -156,7 +177,7 @@ describe("agreeToTerms", () => {
     mockKyselyUpdateReturning(undefined) // 0 rows updated — race condition
 
     const context = createContext({ currentProfile: null })
-    const values = { agree: true, commonEmails: true, mktEmails: false }
+    const values = REFUSED
 
     const result = await agreeToTerms(values, context)
 
@@ -166,39 +187,30 @@ describe("agreeToTerms", () => {
     expect(db.insertInto).not.toHaveBeenCalled()
   })
 
-  it("should unsubscribe existing profile when mktEmails is false", async () => {
-    const context = createContext({
-      currentProfile: {
-        id: "profile-123",
-        email: "test@example.com",
-        full_name: null,
-        basic_data_filled: false,
-        social_name: null,
-        pronouns: null,
-        rg: null,
-        cpf: null,
-        phone: null,
-        date_of_birth: null,
-        gender: null,
-        orientation: null,
-        where_lives: null,
-        how_came_to_us: null,
-        rg_issuer: null,
-        created_at: "2025-01-01T00:00:00Z",
-      },
-    })
+  it("should record a refusal for a profile that had nothing on record", async () => {
+    const context = createContext({ currentProfile: existingProfile(false) })
 
-    const values = {
-      agree: true,
-      commonEmails: true,
-      mktEmails: false,
-    }
+    const result = await agreeToTerms(REFUSED, context)
 
-    await agreeToTerms(values, context)
-
+    expect(result).toMatchObject({ success: true })
     expect(db.insertInto).not.toHaveBeenCalled()
-    expect(unsubscribeProfile).toHaveBeenCalledWith("profile-123")
-    expect(subscribeProfileToNewsletter).not.toHaveBeenCalled()
+    expect(recordEmailPreferences).toHaveBeenCalledWith(
+      "profile-123",
+      CHOICES_REFUSED,
+      "onboarding_auto",
+    )
+  })
+
+  it("should record the choices as a terms change once the basic data is filled", async () => {
+    const context = createContext({ currentProfile: existingProfile(true) })
+
+    await agreeToTerms(ALL_YES, context)
+
+    expect(recordEmailPreferences).toHaveBeenCalledWith(
+      "profile-123",
+      { registrationAlerts: true, newsletter: true, marketing: true },
+      "terms_and_conditions",
+    )
   })
 
   it("should return error when user is not authenticated", async () => {
@@ -207,11 +219,7 @@ describe("agreeToTerms", () => {
       currentProfile: null,
     })
 
-    const values = {
-      agree: true,
-      commonEmails: true,
-      mktEmails: true,
-    }
+    const values = ALL_YES
 
     const result = await agreeToTerms(values, context)
 
@@ -228,11 +236,7 @@ describe("agreeToTerms", () => {
     mockInsertTakeFirst.mockRejectedValue(cause)
     const context = createContext({ currentProfile: null })
 
-    const values = {
-      agree: true,
-      commonEmails: true,
-      mktEmails: true,
-    }
+    const values = ALL_YES
 
     const result = await agreeToTerms(values, context)
 
@@ -246,120 +250,35 @@ describe("agreeToTerms", () => {
     })
   })
 
-  it("should handle unsubscribe when no subscription exists", async () => {
-    vi.mocked(unsubscribeProfile).mockResolvedValue({
-      success: false,
-      errors: [new Error("No subscription found")],
-    })
-
-    const context = createContext({
-      currentProfile: {
-        id: "profile-123",
-        email: "test@example.com",
-        full_name: null,
-        basic_data_filled: false,
-        social_name: null,
-        pronouns: null,
-        rg: null,
-        cpf: null,
-        phone: null,
-        date_of_birth: null,
-        gender: null,
-        orientation: null,
-        where_lives: null,
-        how_came_to_us: null,
-        rg_issuer: null,
-        created_at: "2025-01-01T00:00:00Z",
-      },
-    })
-
-    const values = {
-      agree: true,
-      commonEmails: true,
-      mktEmails: false,
-    }
-
-    const result = await agreeToTerms(values, context)
-
-    // Should succeed even if no subscription exists
-    expect('success' in result ? result.success : true).toBe(true)
-    expect(unsubscribeProfile).toHaveBeenCalledWith("profile-123")
-    expect(recordNewsletterRefusal).toHaveBeenCalledWith("profile-123")
-  })
-
-  it("should fail when the refusal cannot be recorded", async () => {
-    vi.mocked(unsubscribeProfile).mockResolvedValue({
-      success: false,
-      errors: [new Error("No subscription found")],
-    })
-    vi.mocked(recordNewsletterRefusal).mockResolvedValueOnce({
+  it("should fail when the choices cannot be recorded on the site", async () => {
+    vi.mocked(recordEmailPreferences).mockResolvedValueOnce({
       success: false,
       errors: [new Error("connection refused")],
     })
+    const context = createContext({ currentProfile: existingProfile(false) })
 
-    const context = createContext({
-      currentProfile: {
-        id: "profile-123",
-        email: "test@example.com",
-        full_name: null,
-        basic_data_filled: false,
-        social_name: null,
-        pronouns: null,
-        rg: null,
-        cpf: null,
-        phone: null,
-        date_of_birth: null,
-        gender: null,
-        orientation: null,
-        where_lives: null,
-        how_came_to_us: null,
-        rg_issuer: null,
-        created_at: "2025-01-01T00:00:00Z",
-      },
-    })
-
-    const result = await agreeToTerms(
-      { agree: true, commonEmails: true, mktEmails: false },
-      context,
-    )
+    const result = await agreeToTerms(REFUSED, context)
 
     expect(result).toMatchObject({ success: false })
     expect(result.success ? [] : result.errors[0].message).toBe(
       "connection refused",
     )
+    expect(mirrorEmailPreferences).not.toHaveBeenCalled()
   })
 
-  it("should subscribe existing profile when mktEmails is true", async () => {
-    const context = createContext({
-      currentProfile: {
-        id: "profile-123",
-        email: "test@example.com",
-        full_name: null,
-        basic_data_filled: false,
-        social_name: null,
-        pronouns: null,
-        rg: null,
-        cpf: null,
-        phone: null,
-        date_of_birth: null,
-        gender: null,
-        orientation: null,
-        where_lives: null,
-        how_came_to_us: null,
-        rg_issuer: null,
-        created_at: "2025-01-01T00:00:00Z",
-      },
+  it("should succeed with a warning when Listmonk does not take the choices", async () => {
+    vi.mocked(mirrorEmailPreferences).mockResolvedValueOnce({
+      success: false,
+      errors: [new Error("Listmonk down")],
     })
+    const context = createContext({ currentProfile: existingProfile(false) })
 
-    const values = {
-      agree: true,
-      commonEmails: true,
-      mktEmails: true,
-    }
+    const result = await agreeToTerms(ALL_YES, context)
 
-    await agreeToTerms(values, context)
-
-    expect(subscribeProfileToNewsletter).toHaveBeenCalledWith("profile-123", "onboarding_auto")
-    expect(unsubscribeProfile).not.toHaveBeenCalled()
+    expect(result).toMatchObject({
+      success: true,
+      data: { newsletterSubscriptionError: expect.any(String) },
+    })
+    expect(logger.error).toHaveBeenCalled()
   })
 })

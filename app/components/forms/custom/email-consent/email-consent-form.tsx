@@ -1,14 +1,13 @@
-import { useCallback, useMemo } from "react"
+import { useMemo } from "react"
 import type { EmailPreferences } from "~/business/newsletter/email-preferences-schema"
 import { Copy } from "~/components/atoms/copy/copy"
 import type { CommitFn } from "~/components/forms/runtime/commit.types"
 import { FormRunner } from "~/components/forms/runtime/form-runner"
 import { AllAtOnce } from "~/components/forms/runtime/presentations/all-at-once"
-import type { RenderQuestion } from "~/components/forms/runtime/presentations/presentation.types"
-import { renderQuestion as defaultRenderQuestion } from "~/components/forms/runtime/render-question"
 import { buildSingleScreenFlow } from "~/components/forms/runtime/single-screen-flow"
 import { emailConsentCopy } from "~/copy/emails"
 import { buildEmailConsentQuestions } from "./build-email-consent-questions"
+import { renderEmailConsentQuestion } from "./render-email-consent-question"
 
 type EmailConsentFormProps = {
   initialPreferences: EmailPreferences
@@ -32,22 +31,6 @@ export const EmailConsentForm = ({
     [questions, commit],
   )
 
-  const renderQuestion = useCallback<RenderQuestion>((args) => {
-    const control = defaultRenderQuestion(args)
-    if (args.question.id !== "registrationAlerts" || args.value !== false) {
-      return control
-    }
-
-    return (
-      <>
-        {control}
-        <p role="status" className="text-sm text-destructive">
-          {emailConsentCopy.alertsOffWarning}
-        </p>
-      </>
-    )
-  }, [])
-
   return (
     <div className="flex flex-col gap-8">
       <div className="text-muted-foreground">
@@ -57,7 +40,7 @@ export const EmailConsentForm = ({
         questions={questions}
         flow={flow}
         presentation={AllAtOnce}
-        renderQuestion={renderQuestion}
+        renderQuestion={renderEmailConsentQuestion}
         initialAnswers={initialPreferences}
         continueLabel={emailConsentCopy.save}
         pendingLabel={emailConsentCopy.saving}

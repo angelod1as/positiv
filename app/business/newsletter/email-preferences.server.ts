@@ -23,6 +23,7 @@ import {
   subscribeProfile,
   updateSyncStatus,
 } from "./subscription-helpers.server"
+import type { SubscriptionSource } from "./types"
 
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -85,7 +86,11 @@ export const findEmailPreferences = composable(
   },
 )
 
-async function recordOnSite(profileId: string, preferences: EmailPreferences) {
+async function recordOnSite(
+  profileId: string,
+  preferences: EmailPreferences,
+  source: SubscriptionSource,
+) {
   const subscription = await db
     .selectFrom("newsletter_subscriptions")
     .select(["consent_given", "listmonk_subscriber_id"])
@@ -93,7 +98,7 @@ async function recordOnSite(profileId: string, preferences: EmailPreferences) {
     .executeTakeFirst()
 
   if (preferences.newsletter) {
-    const subscribed = await subscribeProfile(profileId, "manual_button")
+    const subscribed = await subscribeProfile(profileId, source)
     if (!subscribed.success) {
       throw subscribed.errors[0]
     }
@@ -246,17 +251,35 @@ async function mirrorInListmonk(
 }
 
 /**
+ * The site half of a save: the three choices, each dated now, and
+ * `confirmed_at`. Resolves to the Listmonk subscriber id on record, if any,
+ * for `mirrorEmailPreferences`.
+ */
+export const recordEmailPreferences = composable(
+  async (
+    profileId: string,
+    preferences: EmailPreferences,
+    source: SubscriptionSource = "manual_button",
+  ): Promise<number | null> => recordOnSite(profileId, preferences, source),
+)
+
+/**
+ * The Listmonk half of a save, by subscriber id. A block is lifted when the
+ * person opts back in, unless Listmonk recorded a bounce: then the address is
+ * the problem, and `bounced` says so. Marketing has no list yet (WEB-8:
+ * created on first use), so it lives on the site only.
+ */
+export const mirrorEmailPreferences = composable(mirrorInListmonk)
+
+/**
  * Records the three choices on the site, where consent lives, then brings
- * Listmonk in line by subscriber id. A block is lifted when the person opts
- * back in, unless Listmonk recorded a bounce: then the address is the
- * problem, and `bounced` asks the page to say so. Marketing has no list yet
- * (WEB-8: created on first use), so it lives on the site only.
+ * Listmonk in line.
  */
 export const saveEmailPreferences = composable(
   async (profileId: string, answers: unknown): Promise<{ bounced: boolean }> => {
     const preferences = emailPreferencesSchema.parse(answers)
 
-    const storedId = await recordOnSite(profileId, preferences)
+    const storedId = await recordOnSite(profileId, preferences, "manual_button")
 
     return await mirrorInListmonk(profileId, storedId, preferences)
   },

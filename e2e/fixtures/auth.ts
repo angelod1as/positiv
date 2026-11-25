@@ -1,5 +1,6 @@
 import { type Page, expect } from "@playwright/test"
 import { agreeToTermsCopy } from "../../app/copy/dashboard"
+import { emailConsentCopy } from "../../app/copy/emails"
 import { LoginPage } from "../pages/LoginPage"
 import { TEST_USER_PROFILE_DATA } from "./test-data"
 import { uniqueValidCpf } from "../utils/unique-cpf"
@@ -81,7 +82,7 @@ export async function completeOnboarding(
   const expectedDashboardUrl = isAdmin ? ADMIN_DASHBOARD_URL : DASHBOARD_URL
 
   // Need to agree to terms first
-  // The page holds three checkboxes; only the agreement one is named this.
+  // The page holds four checkboxes; only the agreement one is named this.
   const agreeLabel = page.locator("label", {
     hasText: agreeToTermsCopy.labels.agree,
   })
@@ -91,14 +92,13 @@ export async function completeOnboarding(
     page.getByRole("checkbox", { name: agreeToTermsCopy.labels.agree }),
   ).toBeChecked()
 
-  // Handle newsletter subscription checkbox (checked by default in UI)
-  // Only uncheck if explicitly requested
+  // The newsletter box opens ticked; it is unticked only when asked.
   if (!subscribeToNewsletter) {
-    const mktEmailsCheckbox = page.locator("label", {
-      hasText: agreeToTermsCopy.labels.mktEmails,
+    const newsletterCheckbox = page.locator("label", {
+      hasText: emailConsentCopy.labels.newsletter,
     })
-    await expect(mktEmailsCheckbox).toBeVisible({ timeout: 10000 })
-    await mktEmailsCheckbox.click()
+    await expect(newsletterCheckbox).toBeVisible({ timeout: 10000 })
+    await newsletterCheckbox.click()
   }
 
   const continueButton = page.getByRole("button", {
