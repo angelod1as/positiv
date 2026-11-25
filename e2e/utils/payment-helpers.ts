@@ -137,6 +137,35 @@ export async function getParticipantPayments(profileId: string, eventId: string)
   return data
 }
 
+export async function recordManualPayment(profileId: string, eventId: string, amount: number) {
+  const supabase = createSupabaseAdminClient()
+
+  const { data: participant, error: participantError } = await supabase
+    .from('event_participants')
+    .select('id')
+    .eq('profile_id', profileId)
+    .eq('event_id', eventId)
+    .single()
+
+  if (participantError || !participant) {
+    throw new Error(`No participant for profile ${profileId}: ${participantError?.message}`)
+  }
+
+  const paidAt = '2026-08-20T12:00:00Z'
+  const { error } = await supabase.from('payments').insert({
+    event_participant_id: participant.id,
+    kind: 'manual',
+    status: 'paid',
+    method: 'pix',
+    base_amount: amount,
+    amount,
+    paid_at: paidAt,
+    due_at: paidAt,
+  })
+
+  if (error) throw new Error(`Failed to record a payment: ${error.message}`)
+}
+
 // Enrols an existing account on an event as a regular spot, the only kind a
 // charge can be sent to.
 export async function enrolRegularParticipant(userId: string, eventId: string) {
