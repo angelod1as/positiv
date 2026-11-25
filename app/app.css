@@ -47,6 +47,12 @@
   --color-purple: #bf03c3;
   --color-red: #b7002d;
   --color-yellow: #ece010;
+
+  --color-likert-1: #c2410c;
+  --color-likert-2: #fdba74;
+  --color-likert-3: #404040;
+  --color-likert-4: #b4c6ee;
+  --color-likert-5: #4a75d2;
 }
 
 /* Positiv styles */

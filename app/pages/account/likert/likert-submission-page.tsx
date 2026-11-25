@@ -3,9 +3,8 @@ import { getUserContext } from "~/business/auth/auth.server"
 import { canSeeLikert } from "~/business/profile/likert-answers.server"
 import { getLikertSubmission } from "~/business/profile/likert-submissions.server"
 import { Button } from "~/components/atoms/button/button"
-import { LIKERT_CHOICES } from "~/components/forms/runtime/likert"
+import { LikertAnswerScale } from "~/components/molecules/likert-answer-scale/likert-answer-scale"
 import { likertPageCopy as copy } from "~/copy/account"
-import { likertCopy } from "~/copy/forms"
 import { metaCopy } from "~/copy/meta"
 import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
@@ -52,11 +51,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   }
 }
 
-const choiceLabel = (answer: number) => {
-  const choice = LIKERT_CHOICES[answer - 1]
-  return choice ? likertCopy.choices[choice] : String(answer)
-}
-
 const LikertSubmissionPage = ({ loaderData }: Route.ComponentProps) => {
   const { submittedAt, answers } = loaderData
 
@@ -69,11 +63,14 @@ const LikertSubmissionPage = ({ loaderData }: Route.ComponentProps) => {
       <div className="flex flex-col gap-8">
         <ol className="flex flex-col gap-6">
           {answers.map(({ statementText, answer, comment }, index) => (
-            <li key={index} className="flex flex-col gap-1">
-              <p>{statementText}</p>
-              <p className="font-semibold">{choiceLabel(answer)}</p>
+            <li
+              key={index}
+              className="flex flex-col gap-3 rounded-lg border p-4"
+            >
+              <p className="font-semibold">{statementText}</p>
+              <LikertAnswerScale answer={answer} />
               {comment ? (
-                <div className="text-sm text-muted-foreground">
+                <div className="border-l-2 pl-3 text-sm text-muted-foreground">
                   <p className="sr-only">{copy.commentLabel}</p>
                   <p>{comment}</p>
                 </div>
