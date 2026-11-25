@@ -99,9 +99,7 @@ describe("BasicDataPage", () => {
       expect(
         screen.getByRole("checkbox", { name: "Casa de swing" }),
       ).not.toBeChecked()
-      expect(screen.getByRole("combobox", { name: /ano/i })).toHaveTextContent(
-        "2015",
-      )
+      expect(screen.getByRole("combobox", { name: "Ano" })).toHaveValue("2015")
     })
 
     it("prefers a profile left behind under the same e-mail", () => {

@@ -10,5 +10,7 @@ export const TEST_USER_PROFILE_DATA = {
   rg: '123456789',
   rg_issuer: 'SSP/SP',
   where_lives: 'São Paulo',
-  how_came_to_us: 'E2E Tests'
+  how_came_to_us: 'E2E Tests',
+  places_attended: ['Sauna'] as string[],
+  non_monogamy_since: 2015,
 }
