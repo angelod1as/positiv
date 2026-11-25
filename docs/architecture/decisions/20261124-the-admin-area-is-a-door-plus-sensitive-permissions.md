@@ -22,7 +22,8 @@ where it made sense, was designed and set aside: with two roles (`admin` and
   people come with it.
 - Sensitive parts ask for a permission on top of the door. Money is the new
   one: `payments.manage` covers payment data, payment actions, the numbers
-  page's revenue and the settings page. `events.manage` and
+  page's revenue and the settings page's payment switches. The rest of the
+  settings page is not money and comes with the door. `events.manage` and
   `newsletter.manage` already worked this way.
 - Without `payments.manage` the server does not send the data:
   `paymentsVisibleTo` blanks the payment fields before rows leave the loader,

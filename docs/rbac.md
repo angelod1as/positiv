@@ -26,8 +26,8 @@ redirect politely.
 
 **The admin area is a door plus permissions for its sensitive parts**
 ([ADR](./architecture/decisions/20261124-the-admin-area-is-a-door-plus-sensitive-permissions.md)).
-`admin.panel` opens it: events, participants and people. Money and settings
-ask for `payments.manage` on top; editing events asks for `events.manage`;
+`admin.panel` opens it: events, participants, people and settings. Money
+asks for `payments.manage` on top; editing events asks for `events.manage`;
 the newsletter asks for `newsletter.manage`.
 
 ## Roles
@@ -50,8 +50,9 @@ admin area.
 ### `admin.panel`
 
 Enters the admin area: the dashboard, events, an event's participants table,
-a participant's page, the people list and profile pages, feedbacks and the
-numbers page (without its money chapter).
+a participant's page, the people list and profile pages, feedbacks, the
+numbers page (without its money chapter) and the settings page (without its
+payments section).
 
 - App: `getAdminContext` (`app/business/auth/admin-context.server.ts`), called
   by the admin guard (`app/pages/guard/admin.tsx`), the admin layout and every
@@ -88,23 +89,25 @@ Puts a person on an event without an application of their own.
 
 Sees and handles money: payments, amounts and totals, recording and
 cancelling payments, refunds, the WhatsApp payment message, the numbers
-page's money chapter and the settings page (online and card payments, the
-registration limit, the Listmonk check, the Likert switches). An event's
-ticket price is public, so it stays visible without it.
+page's money chapter and the settings page's online and card payment
+switches. The rest of the settings page (the registration limit, the Likert
+switches, the Listmonk check) is not money and comes with `admin.panel`. An
+event's ticket price is public, so it stays visible without it.
 
 - App, actions: `handlePaymentIntent`
   (`app/business/payment/payment-intents.server.ts`) refuses every payment
-  intent without it; the settings page's loader and action redirect to the
-  admin dashboard.
+  intent without it; the settings page's action redirects the two payment
+  switches to the admin dashboard.
 - App, data: `paymentsVisibleTo` and `canSeePayments`
   (`app/business/payment/payment-visibility.ts`) blank the payment fields of
   participant rows and event history before they leave the server. A blanked
   row reads as unpaid, and its type does not say otherwise, so a screen that
   shows one must ask `canSeePayments` too. The event
   page, the participant page, the profile page and the numbers page skip
-  loading payments, the WhatsApp message and revenue without it. On screen,
-  the payment columns, the payment line, the financial summary, the
-  manage-payment button and the dashboard's settings link disappear.
+  loading payments, the WhatsApp message and revenue without it, and the
+  settings page skips the payment switches. On screen, the payment columns,
+  the payment line, the financial summary, the manage-payment button and the
+  settings page's payments section disappear.
 - Database: no policy.
 
 ### `profiles.manage`

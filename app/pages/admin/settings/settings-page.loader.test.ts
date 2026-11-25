@@ -42,13 +42,25 @@ describe("SettingsPage loader", () => {
     } as Awaited<ReturnType<typeof getAdminContext>>)
   })
 
-  it("sends a person without payments.manage back to the admin dashboard", async () => {
+  it("leaves the payments settings out for a person without payments.manage", async () => {
     vi.mocked(getAdminContext).mockResolvedValue({
       currentProfile: { permissions: [PERMISSIONS.ADMIN_PANEL] },
     } as Awaited<ReturnType<typeof getAdminContext>>)
+    vi.mocked(getRegistrationLimit).mockResolvedValue(120)
+    vi.mocked(isLikertEnabled).mockResolvedValue(true)
+    vi.mocked(isLikertRequired).mockResolvedValue(false)
 
-    await expect(runLoader()).rejects.toBeInstanceOf(Response)
+    const result = await runLoader()
+
     expect(getOnlinePaymentsSetting).not.toHaveBeenCalled()
+    expect(isCardPaymentsEnabled).not.toHaveBeenCalled()
+    expect(result).toEqual({
+      onlinePayments: null,
+      cardPayments: false,
+      registrationLimit: 120,
+      likertEnabled: true,
+      likertRequired: false,
+    })
   })
 
   it("hands the page the payments settings, the registration limit and the Likert switches", async () => {

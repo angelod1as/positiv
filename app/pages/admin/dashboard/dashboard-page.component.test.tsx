@@ -55,7 +55,6 @@ type LoaderData = Route.ComponentProps["loaderData"]
 
 const createMockComponentProps = (
   events: DashboardEvent[],
-  canManagePayments = true,
 ): Route.ComponentProps => {
   return {
     loaderData: {
@@ -63,7 +62,6 @@ const createMockComponentProps = (
       recentProfiles: [] as LoaderData["recentProfiles"],
       recentFeedbacks: [] as LoaderData["recentFeedbacks"],
       cardPaymentsEnabled: false,
-      canManagePayments,
     },
     params: {},
     matches: [] as unknown as Route.ComponentProps["matches"],
@@ -175,14 +173,6 @@ describe("AdminDashboard Component", () => {
     expect(
       screen.getByRole("link", { name: adminDashboardCopy.settings.cta }),
     ).toHaveAttribute("href", paths.admin.ADMIN_SETTINGS)
-  })
-
-  it("should not offer the settings to a person without payments.manage", () => {
-    render(<AdminDashboard {...createMockComponentProps([], false)} />)
-
-    expect(
-      screen.queryByRole("link", { name: adminDashboardCopy.settings.cta }),
-    ).not.toBeInTheDocument()
   })
 
   it("should link to the numbers page", () => {

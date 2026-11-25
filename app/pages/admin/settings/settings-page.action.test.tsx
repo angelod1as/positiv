@@ -77,6 +77,11 @@ const INTENTS = [
   },
 ] as const
 
+const PAYMENT_INTENTS: readonly string[] = [
+  "set-online-payments",
+  "set-card-payments",
+]
+
 describe("SettingsPage action", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -95,18 +100,6 @@ describe("SettingsPage action", () => {
       vi.mocked(getAdminContext).mockRejectedValue(
         new Response(null, { status: 302 }),
       )
-
-      await expect(runAction({ intent, ...fields })).rejects.toBeInstanceOf(
-        Response,
-      )
-
-      expect(mutation).not.toHaveBeenCalled()
-    })
-
-    it("should refuse to run without payments.manage", async () => {
-      vi.mocked(getAdminContext).mockResolvedValue({
-        currentProfile: { id: "staff-1", permissions: [PERMISSIONS.ADMIN_PANEL] },
-      } as Awaited<ReturnType<typeof getAdminContext>>)
 
       await expect(runAction({ intent, ...fields })).rejects.toBeInstanceOf(
         Response,
@@ -211,10 +204,44 @@ describe("SettingsPage action", () => {
   )
 })
 
+describe.each(
+  INTENTS.filter(({ intent }) => PAYMENT_INTENTS.includes(intent)),
+)("$intent without payments.manage", ({ intent, fields, mutation }) => {
+  it("should refuse to run", async () => {
+    vi.clearAllMocks()
+    vi.mocked(getAdminContext).mockResolvedValue({
+      currentProfile: { id: "staff-1", permissions: [PERMISSIONS.ADMIN_PANEL] },
+    } as Awaited<ReturnType<typeof getAdminContext>>)
+
+    await expect(runAction({ intent, ...fields })).rejects.toBeInstanceOf(
+      Response,
+    )
+
+    expect(mutation).not.toHaveBeenCalled()
+  })
+})
+
+describe.each(
+  INTENTS.filter(({ intent }) => !PAYMENT_INTENTS.includes(intent)),
+)("$intent with admin.panel only", ({ intent, fields, mutation }) => {
+  it("should run", async () => {
+    vi.clearAllMocks()
+    vi.mocked(getAdminContext).mockResolvedValue({
+      currentProfile: { id: "staff-1", permissions: [PERMISSIONS.ADMIN_PANEL] },
+    } as Awaited<ReturnType<typeof getAdminContext>>)
+    vi.mocked(testListmonkConnection).mockResolvedValue({} as never)
+    vi.mocked(cleanupListmonkTestCampaign).mockResolvedValue({} as never)
+
+    await runAction({ intent, ...fields })
+
+    expect(mutation).toHaveBeenCalled()
+  })
+})
+
 describe("SettingsPage action - non-form body", () => {
   it("answers a JSON body with 415", async () => {
     vi.mocked(getAdminContext).mockResolvedValue({
-      currentProfile: { permissions: [PERMISSIONS.PAYMENTS_MANAGE] },
+      currentProfile: { permissions: [PERMISSIONS.ADMIN_PANEL] },
     } as Awaited<ReturnType<typeof getAdminContext>>)
 
     const thrown = await action({
