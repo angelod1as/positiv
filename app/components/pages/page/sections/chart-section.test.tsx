@@ -1,6 +1,6 @@
 import userEvent from "@testing-library/user-event"
 import { cloneElement, isValidElement } from "react"
-import { describe, expect, it, vi } from "vitest"
+import { beforeAll, describe, expect, it, vi } from "vitest"
 import {
   type PageSection,
   pageSectionDocumentSchema,
@@ -52,6 +52,12 @@ const budget = chart({
 
 const chartFrame = (container: HTMLElement) =>
   container.querySelector("[data-chart]")
+
+// The drawing is lazy, and its first import loads Recharts from cold. Paid
+// here, under the hook's timeout, it no longer eats the first test's waitFor.
+beforeAll(async () => {
+  await import("./chart-section-drawing")
+})
 
 describe("ChartSection", () => {
   it("shows the title and the Resumo", () => {
