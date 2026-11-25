@@ -22,4 +22,21 @@ export class AdminSettingsPage extends BasePage {
     await this.onlinePaymentsSwitch().click()
     await expect(this.onlinePaymentsSwitch()).toBeChecked()
   }
+
+  likertAccessSwitch() {
+    return this.page.getByRole("switch", { name: "Acessível por link" })
+  }
+
+  likertRequiredSwitch() {
+    return this.page.getByRole("switch", { name: "Obrigatória" })
+  }
+
+  async setLikertSwitch(name: "access" | "required", on: boolean): Promise<void> {
+    const toggle = name === "access" ? this.likertAccessSwitch() : this.likertRequiredSwitch()
+    await toggle.click()
+    if (on) await expect(toggle).toBeChecked()
+    else await expect(toggle).not.toBeChecked()
+    // The switch is disabled while its save is in flight.
+    await expect(toggle).toBeEnabled()
+  }
 }

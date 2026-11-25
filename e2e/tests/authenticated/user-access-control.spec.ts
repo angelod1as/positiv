@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import path from 'path'
+import { setLikertSettings } from '../../utils/likert-helpers'
 
 test.describe('User Access Control', () => {
   test.use({ storageState: path.resolve(import.meta.dirname, '../../.auth/user.json') })
@@ -59,5 +60,29 @@ test.describe('User Access Control', () => {
     // Admin menu should not be accessible
     const adminMenuItem = page.getByRole('link', { name: /painel admin/i })
     await expect(adminMenuItem).not.toBeVisible()
+  })
+
+  test('user reaches the Likert scale by its link only while "Acessível por link" is on', async ({ page }) => {
+    try {
+      await setLikertSettings({ enabled: false, required: false })
+      await page.goto('/conta/escala')
+      await expect(page).toHaveURL('/conta')
+      await page.goto('/conta/escala/responder')
+      await expect(page).toHaveURL('/conta')
+
+      await setLikertSettings({ enabled: true, required: false })
+      await page.goto('/conta/escala')
+      await expect(page).toHaveURL('/conta/escala')
+      await expect(page.getByRole('heading', { level: 1, name: 'Escala de Likert' })).toBeVisible()
+      await page.goto('/conta/escala/responder')
+      await expect(page.getByRole('progressbar')).toBeVisible()
+
+      // The link opens the scale without putting a way in on the account page
+      await page.goto('/conta')
+      await expect(page.getByRole('link', { name: 'Mudar senha' })).toBeVisible()
+      await expect(page.getByRole('link', { name: 'Escala de Likert' })).toHaveCount(0)
+    } finally {
+      await setLikertSettings({ enabled: false, required: false })
+    }
   })
 })
