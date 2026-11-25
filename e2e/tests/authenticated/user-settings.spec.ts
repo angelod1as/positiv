@@ -2,6 +2,8 @@ import { test, expect } from '@playwright/test'
 import { emailConsentCopy, emailsPageCopy } from '../../../app/copy/emails'
 import { agreeToTermsCopy } from '../../../app/copy/dashboard'
 import { headerCopy } from '../../../app/copy/layout'
+import { LikertAnswerPage } from '../../pages/LikertAnswerPage'
+import { setLikertSettings } from '../../utils/likert-helpers'
 
 test.describe('POS-192: User Settings and Profile Management', () => {
   test('Can navigate to account settings', async ({ page }) => {
@@ -173,5 +175,146 @@ test.describe('POS-192: User Settings and Profile Management', () => {
 
     await page.goto('/conta/termos-e-condicoes')
     await expect(newsletter()).toBeChecked({ checked: initialState })
+  })
+
+  test('Answers the Likert scale from the keyboard, resumes it and sees it in the history', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000)
+    const likertLink = () => page.getByRole('link', { name: 'Escala de Likert' })
+    const submissions = () => page.getByRole('link', { name: /^Enviada em / })
+
+    try {
+      // Without "Obrigatória" the account page shows no way in
+      await setLikertSettings({ enabled: false, required: false })
+      await page.goto('/conta')
+      await expect(page.getByRole('link', { name: 'Mudar senha' })).toBeVisible()
+      await expect(likertLink()).toHaveCount(0)
+
+      await setLikertSettings({ enabled: false, required: true })
+      await page.goto('/conta')
+      await likertLink().click()
+      await expect(page).toHaveURL('/conta/escala')
+      await expect(page.getByRole('heading', { level: 1, name: 'Escala de Likert' })).toBeVisible()
+      const submittedBefore = await submissions().count()
+
+      await page.getByRole('link', { name: /^Responder/ }).click()
+      await expect(page).toHaveURL('/conta/escala/responder')
+      const likert = new LikertAnswerPage(page)
+      await expect(likert.statement()).toBeVisible()
+      await likert.waitForHydration()
+      await likert.expectPosition(1, 7)
+
+      // The shortcut dialog opens and closes, and the numbers pick nothing while it is open
+      await likert.keyboardHelpLink().click()
+      await expect(likert.keyboardHelp()).toBeVisible()
+      await page.keyboard.press('2')
+      await page.keyboard.press('Escape')
+      await expect(likert.keyboardHelp()).toBeHidden()
+      await likert.expectPicked(null)
+
+      // 1 to 5 pick; Enter, Space and the right arrow move on
+      const answered: string[] = [await likert.statementText()]
+      await page.keyboard.press('4')
+      await likert.expectPicked(4)
+      await page.keyboard.press('Enter')
+      answered.push(await likert.expectMovedFrom(answered[0]))
+      await likert.expectPosition(2, 7)
+
+      await page.keyboard.press('2')
+      await likert.expectPicked(2)
+      await page.keyboard.press(' ')
+      answered.push(await likert.expectMovedFrom(answered[1]))
+      await likert.expectPosition(3, 7)
+
+      await page.keyboard.press('5')
+      await likert.expectPicked(5)
+      await page.keyboard.press('ArrowRight')
+      const fourth = await likert.expectMovedFrom(answered[2])
+      await likert.expectPosition(4, 7)
+
+      // The left arrow goes back to the answer as it was left
+      await page.keyboard.press('ArrowLeft')
+      await expect(likert.statement()).toHaveText(answered[2])
+      await likert.expectPicked(5)
+      await page.keyboard.press('ArrowRight')
+      await expect(likert.statement()).toHaveText(fourth)
+      answered.push(fourth)
+
+      // Inside the comment the keys type: digits stay text, Enter breaks the line,
+      // and Ctrl/Cmd + Enter moves on
+      await page.keyboard.press('3')
+      await likert.comment().click()
+      await page.keyboard.type('linha 1')
+      await page.keyboard.press('Enter')
+      await page.keyboard.type('linha 2')
+      await expect(likert.comment()).toHaveValue('linha 1\nlinha 2')
+      await expect(likert.statement()).toHaveText(fourth)
+      await likert.expectPicked(3)
+      await page.keyboard.press('ControlOrMeta+Enter')
+      const fifth = await likert.expectMovedFrom(fourth)
+      await likert.expectPosition(5, 7)
+
+      // Leaving halfway and coming back lands on the first unanswered statement,
+      // and the left arrow walks back through the answers in the order given
+      await page.goto('/conta')
+      await likert.navigate()
+      await likert.expectPosition(5, 7)
+      await expect(likert.statement()).toHaveText(fifth)
+      expect(answered).not.toContain(fifth)
+
+      for (const [index, text] of [...answered].reverse().entries()) {
+        await page.keyboard.press('ArrowLeft')
+        await expect(likert.statement()).toHaveText(text)
+        await likert.expectPosition(4 - index, 7)
+      }
+      await likert.expectPicked(4)
+      for (const text of answered.slice(1)) {
+        await page.keyboard.press('ArrowRight')
+        await expect(likert.statement()).toHaveText(text)
+      }
+      await expect(likert.comment()).toHaveValue('linha 1\nlinha 2')
+      await page.keyboard.press('ArrowRight')
+      await expect(likert.statement()).toHaveText(fifth)
+
+      // Escape leaves the comment, and the numbers pick again
+      await likert.comment().click()
+      await page.keyboard.press('Escape')
+      await page.keyboard.press('2')
+      await likert.expectPicked(2)
+      await expect(likert.comment()).toHaveValue('')
+      await page.keyboard.press('Enter')
+      const sixth = await likert.expectMovedFrom(fifth)
+
+      await page.keyboard.press('1')
+      await page.keyboard.press('Enter')
+      await likert.expectMovedFrom(sixth)
+      await likert.expectPosition(7, 7)
+      await page.keyboard.press('5')
+      await page.keyboard.press('Enter')
+
+      // Sent: the history gains the submission, which holds the answers given
+      await expect(page).toHaveURL('/conta/escala')
+      await expect(submissions()).toHaveCount(submittedBefore + 1)
+      await submissions().first().click()
+      await expect(page.getByRole('heading', { level: 1, name: /^Respostas de / })).toBeVisible()
+      for (const text of [...answered, fifth, sixth]) {
+        await expect(page.getByText(text, { exact: true })).toBeVisible()
+      }
+      await expect(page.getByText('linha 1')).toBeVisible()
+
+      // The draft went with the submission: answering again starts over
+      await likert.navigate()
+      await likert.expectPosition(1, 7)
+      await likert.expectPicked(null)
+
+      // Turning "Obrigatória" off takes the way in away again
+      await setLikertSettings({ enabled: false, required: false })
+      await page.goto('/conta')
+      await expect(page.getByRole('link', { name: 'Mudar senha' })).toBeVisible()
+      await expect(likertLink()).toHaveCount(0)
+    } finally {
+      await setLikertSettings({ enabled: false, required: false })
+    }
   })
 })
