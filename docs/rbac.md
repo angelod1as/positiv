@@ -98,7 +98,9 @@ it stays visible without it.
   admin dashboard.
 - App, data: `paymentsVisibleTo` and `canSeePayments`
   (`app/business/payment/payment-visibility.ts`) blank the payment fields of
-  participant rows and event history before they leave the server. The event
+  participant rows and event history before they leave the server. A blanked
+  row reads as unpaid, and its type does not say otherwise, so a screen that
+  shows one must ask `canSeePayments` too. The event
   page, the participant page, the profile page and the numbers page skip
   loading payments, the WhatsApp message and revenue without it. On screen,
   the payment columns, the payment line, the financial summary, the
