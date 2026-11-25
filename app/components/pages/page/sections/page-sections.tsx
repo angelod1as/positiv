@@ -1,6 +1,7 @@
 import { type MouseEvent, Suspense } from "react"
 import { Await } from "react-router"
 import type { PageSection } from "~/business/cms/page.schema"
+import type { Rule } from "~/business/cms/rules.schema"
 import { useAnalytics } from "~/lib/hooks/use-analytics"
 import { AboutSection } from "./about-section"
 import { CalloutSection } from "./callout-section"
@@ -15,6 +16,7 @@ import { PagePlaceholder } from "../placeholder/page-placeholder"
 import { ChartSection } from "./chart-section"
 import { ImageSection } from "./image-section"
 import { RichTextSection } from "./rich-text-section"
+import { RulesSection } from "./rules-section"
 import { SideBySideSection } from "./side-by-side-section"
 import { StatsSection } from "./stats-section"
 import { SystemComponentSection } from "./system-component-section"
@@ -24,6 +26,7 @@ type PageSectionsProps = {
   sections: PageSection[]
   events: Promise<Event[] | undefined> | undefined
   isLoggedIn: boolean
+  privateRules?: Rule[] | null
 }
 
 const linkLabel = (link: HTMLAnchorElement) =>
@@ -37,6 +40,7 @@ export const PageSections = ({
   sections,
   events,
   isLoggedIn,
+  privateRules = null,
 }: PageSectionsProps) => {
   const { track } = useAnalytics()
 
@@ -60,6 +64,7 @@ export const PageSections = ({
         events,
         isLoggedIn,
         sections[index - 1]?._type === "callout",
+        privateRules,
       )}
     </div>
   ))
@@ -70,6 +75,7 @@ const renderSection = (
   events: PageSectionsProps["events"],
   isLoggedIn: boolean,
   followsCallout: boolean,
+  privateRules: Rule[] | null,
 ) => {
   switch (section._type) {
     case "nextEvents":
@@ -110,6 +116,8 @@ const renderSection = (
       return <SideBySideSection content={section} />
     case "systemComponent":
       return <SystemComponentSection content={section} />
+    case "rulesSection":
+      return <RulesSection content={section} privateRules={privateRules} />
     case "placeholder":
       return <PagePlaceholder variant="section" missing={section.missing} />
   }

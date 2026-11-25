@@ -9,6 +9,7 @@ import {
   findPage,
   resolvePagesSnapshot,
 } from "~/business/cms/resolve-snapshot"
+import { rulesCache } from "~/business/cms/rules-cache.server"
 import { siteSnapshotCache } from "~/business/cms/site-snapshot-cache.server"
 import { OverlayProvider } from "~/components/pages/page/overlay/overlay-provider"
 import { metaCopy } from "~/copy/meta"
@@ -71,6 +72,25 @@ function eventsFor(page: Page, profileId: string | undefined) {
   return nextEvents ? loadEvents(profileId, nextEvents.count) : undefined
 }
 
+// Read per request and only for a signed-in visitor: the cached snapshot every
+// visitor shares never holds the Regras Privadas.
+async function privateRulesFor(page: Page, isLoggedIn: boolean) {
+  const showsPrivateRules = page.sections.some(
+    (section) =>
+      section._type === "rulesSection" && section.part === "privateRules",
+  )
+  if (!isLoggedIn || !showsPrivateRules) return null
+
+  try {
+    return (await rulesCache.get())?.privateRules ?? null
+  } catch (error) {
+    logger.error("Could not load the Regras Privadas", {
+      error: error instanceof Error ? error.message : String(error),
+    })
+    return null
+  }
+}
+
 export async function loader({ params, request }: Route.LoaderArgs) {
   const address = `/${params["*"] ?? ""}`
   if (isReservedAddress(address)) {
@@ -113,6 +133,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         address,
         events: eventsFor(page, currentProfile?.id),
         isLoggedIn: !!currentUser?.id,
+        privateRules: await privateRulesFor(page, !!currentUser?.id),
       }
     }
 
@@ -127,6 +148,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       page,
       events: eventsFor(page, currentProfile?.id),
       isLoggedIn: !!currentUser?.id,
+      privateRules: await privateRulesFor(page, !!currentUser?.id),
     }
   }
 
@@ -142,6 +164,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     page,
     events: eventsFor(page, currentProfile?.id),
     isLoggedIn: !!currentUser?.id,
+    privateRules: await privateRulesFor(page, !!currentUser?.id),
   }
 }
 
@@ -180,7 +203,7 @@ export function meta({ data }: Route.MetaArgs) {
 }
 
 export default function PageRoute({ loaderData }: Route.ComponentProps) {
-  const { page, events, isLoggedIn } = loaderData
+  const { page, events, isLoggedIn, privateRules } = loaderData
   const address = loaderData.draftMode ? loaderData.address : undefined
 
   // Live Page held per address: a null result keeps the last good one, and a
@@ -198,7 +221,14 @@ export default function PageRoute({ loaderData }: Route.ComponentProps) {
   )
 
   if (!loaderData.draftMode) {
-    return <PageContent page={page} events={events} isLoggedIn={isLoggedIn} />
+    return (
+      <PageContent
+        page={page}
+        events={events}
+        isLoggedIn={isLoggedIn}
+        privateRules={privateRules}
+      />
+    )
   }
 
   const activePage =
@@ -209,7 +239,12 @@ export default function PageRoute({ loaderData }: Route.ComponentProps) {
   // a nextEvents section only takes effect on reload. Accepted for preview —
   // recomputing live would need a per-edit server round-trip.
   const content = (
-    <PageContent page={activePage} events={events} isLoggedIn={isLoggedIn} />
+    <PageContent
+      page={activePage}
+      events={events}
+      isLoggedIn={isLoggedIn}
+      privateRules={privateRules}
+    />
   )
 
   return (

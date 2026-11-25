@@ -1,3 +1,5 @@
+import { ruleProjection } from "./rules-query"
+
 export const pagesQuery = `*[_type == "page"]{
   _id,
   _updatedAt,
@@ -70,7 +72,14 @@ export const pagesQuery = `*[_type == "page"]{
       title,
       items[]{ _type, _key, emoji, title, body, color }
     },
-    _type == "systemComponent" => { component }
+    _type == "systemComponent" => { component },
+    _type == "rulesSection" => {
+      part,
+      "rules": select(
+        part == "generalRules" => *[_id == "rules"][0].generalRules[]${ruleProjection},
+        part == "agreements" => *[_id == "rules"][0].agreements[]${ruleProjection}
+      )
+    }
   },
   seo{ title, description, image{ alt, hotspot, crop, asset }, noIndex }
 }`

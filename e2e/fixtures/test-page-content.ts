@@ -12,6 +12,7 @@ export const testPageContent = {
   statsTitle: 'Números de exemplo',
   chartTitle: 'Para onde foi o dinheiro',
   chartSummary: 'Mais da metade foi para o aluguel do espaço.',
+  ruleTitle: '[Exemplo] Regra geral 1',
   seoDescription: 'Página exclusiva dos testes end-to-end.',
 } as const
 

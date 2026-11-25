@@ -1,4 +1,5 @@
 import type { Page } from "~/business/cms/page.schema"
+import type { Rule } from "~/business/cms/rules.schema"
 import { FloatingWhatsAppButton } from "~/components/atoms/floating-whatsapp-button/floating-whatsapp-button"
 import { PageHeader } from "~/components/pages/page/header/page-header"
 import { PageSections } from "~/components/pages/page/sections/page-sections"
@@ -10,9 +11,15 @@ type PageContentProps = {
   page: Page
   events: Promise<Event[] | undefined> | undefined
   isLoggedIn: boolean
+  privateRules?: Rule[] | null
 }
 
-export function PageContent({ page, events, isLoggedIn }: PageContentProps) {
+export function PageContent({
+  page,
+  events,
+  isLoggedIn,
+  privateRules = null,
+}: PageContentProps) {
   return (
     <>
       <div>
@@ -22,6 +29,7 @@ export function PageContent({ page, events, isLoggedIn }: PageContentProps) {
           sections={page.sections}
           events={events}
           isLoggedIn={isLoggedIn}
+          privateRules={privateRules}
         />
       </div>
       {page.address === HOMEPAGE_ADDRESS && <FloatingWhatsAppButton />}

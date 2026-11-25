@@ -1,29 +1,30 @@
+import { ruleParts } from "~/business/cms/rule-parts"
+import type { Rules } from "~/business/cms/rules.schema"
 import { Copy } from "~/components/atoms/copy/copy"
-import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
-import { Separator } from "~/components/ui/separator"
+import { RulesPart } from "~/components/organisms/rules/rules-part"
+import { Alert, AlertDescription } from "~/components/ui/alert"
 import { rulesCopy } from "~/copy/events"
 
-export const RulesText = () => {
+type RulesTextProps = { rules: Rules | null }
+
+export const RulesText = ({ rules }: RulesTextProps) => {
   return (
     <>
       <h1>{rulesCopy.title}</h1>
       <Copy>{rulesCopy.intro}</Copy>
 
-      {rulesCopy.sections.map((section) => (
-        <div key={section.heading} className="flex flex-col gap-8">
-          <Separator />
-          <h4>{section.heading}</h4>
-          <Copy>{section.body}</Copy>
-          {section.alert && (
-            <Alert className="flex flex-col gap-4">
-              <AlertTitle>{section.alert.title}</AlertTitle>
-              <AlertDescription className="flex flex-col gap-4">
-                <Copy>{section.alert.body}</Copy>
-              </AlertDescription>
-            </Alert>
-          )}
-        </div>
-      ))}
+      {rules ? (
+        ruleParts.map(
+          (part) =>
+            rules[part].length > 0 && (
+              <RulesPart key={part} part={part} rules={rules[part]} />
+            ),
+        )
+      ) : (
+        <Alert>
+          <AlertDescription>{rulesCopy.unavailable}</AlertDescription>
+        </Alert>
+      )}
     </>
   )
 }

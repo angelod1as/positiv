@@ -8,11 +8,14 @@ export const EMAIL_TEMPLATES_ID = "emailTemplates"
 
 export const LIKERT_SCALE_ID = "likertScale"
 
+export const RULES_ID = "rules"
+
 const singletonTypes = [
   "siteSettings",
   "paymentMessages",
   "emailTemplates",
   "likertScale",
+  "rules",
 ]
 
 const actionsSingletonsKeep = ["publish", "discardChanges", "restore"]

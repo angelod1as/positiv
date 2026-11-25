@@ -17,7 +17,7 @@ pnpm workspace package, deployed to Sanity's hosting at
 | `schemas/objects/long-rich-text.ts` | Long Portable Text: adds h2, h3, blockquote and lists — the Rich Text Section    |
 | `schemas/objects/seo.ts`            | A Page's SEO: title, description, share image, noIndex                           |
 | `schemas/objects/site-link.ts`      | A label and exactly one target, a Page or a URL — the Navigation and footer      |
-| `schemas/documents/`                | `page`, `person`. Singletons: `homepage` (until `/` replaces it), `siteSettings` |
+| `schemas/documents/`                | `page`, `person`. Singletons: `homepage` (until `/` replaces it), `siteSettings`, `rules` |
 | `schemas/page-header/`              | The three Page Header forms: Homepage Hero, Hero and Title                       |
 | `schemas/sections/`                 | One object type per Section                                                      |
 | `page-actions.ts`                   | Keeps the Page at `/` from being deleted or unpublished                          |
@@ -115,6 +115,31 @@ payment link), `{{data}}` (the due date), `{{nome}}` (the person), `{{evento}}`
 validation rule rejects any other `{{variable}}`. The app mirrors the field in
 `app/business/cms/payment-messages.schema.ts` and falls back to a built-in
 default (pinned to the seed) when the CMS is unavailable.
+
+### Rules
+
+The Rules hold every rule of the Positiv, at the fixed id `rules`, in three
+lists: Regras Gerais, Acordos and Regras Privadas. Each rule is a title, a
+long rich text and an optional highlight, drawn in an alert. Like Site
+Settings, the Studio keeps only publish, discard changes and restore on it.
+
+A Page shows one part through a Regras Section, which picks the part and holds
+no text of its own, so editing the Rules changes every Page that shows them.
+The Page query joins Regras Gerais and Acordos into the snapshot. It never
+reads the Regras Privadas: the Page loader reads them per request, only for a
+signed-in visitor, so anyone else gets nothing of that Section.
+`app/business/cms/pages-query.test.ts` fails if the site query mentions them.
+For the same reason the Presentation preview shows the published Regras
+Privadas: an edit to them appears only once it is published.
+
+Step 1 of the event application shows all three parts, read through
+`rulesCache`. Neither place keeps a copy in code: with no published Rules,
+a Regras Section renders nothing and the application says the rules could
+not be loaded.
+
+The rules quiz is not in Sanity: its questions and answers are
+`rulesQuestionsCopy` in `app/copy/events.ts`. A change to a rule that a
+question asks about needs the question changed there too.
 
 ### Development mirrors production
 

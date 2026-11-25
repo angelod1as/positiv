@@ -12,6 +12,8 @@ import {
   sanityImageSchema,
   sectionsFields,
 } from "./content.schema"
+import { ruleParts } from "./rule-parts"
+import { ruleListSchema } from "./rules.schema"
 
 export function isReservedAddress(address: string) {
   return reservedAddresses.includes(address.split("/")[1])
@@ -133,6 +135,10 @@ const sharedSections = [
   }),
   section("systemComponent", {
     component: zod.enum(["analyticsOptOut"]),
+  }),
+  section("rulesSection", {
+    part: zod.enum(ruleParts),
+    rules: ruleListSchema.nullish(),
   }),
 ] as const
 

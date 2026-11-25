@@ -22,6 +22,8 @@ const fieldLabels = {
   emoji: "o emoji",
   color: "a cor",
   items: "os blocos",
+  part: "a parte das regras",
+  rules: "as regras",
   _type: "o tipo",
 } as const
 

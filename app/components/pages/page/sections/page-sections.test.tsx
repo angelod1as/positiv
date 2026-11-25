@@ -9,6 +9,7 @@ import { homepageCopy } from "~/copy/homepage"
 import { analyticsOptOutCopy } from "~/copy/privacy"
 import { paragraph, sections } from "~/test/page-documents"
 import { pageFixture } from "~/test/pages-snapshot-fixture"
+import { rulesFixture } from "~/test/rules-documents"
 import { renderWithRouter, screen, waitFor } from "~/test/test-utils"
 import type { Event } from "~types/database/entities.types"
 import { PageSections } from "./page-sections"
@@ -79,6 +80,29 @@ describe("PageSections", () => {
       screen.getByRole("img", {
         name: "Imagem de exemplo do ambiente de desenvolvimento",
       }),
+    ).toBeInTheDocument()
+  })
+
+  it("renders a Regras Privadas Section from the rules the loader read", () => {
+    const rulesSection = pageSectionDocumentSchema.parse({
+      ...sections.rulesSection,
+      part: "privateRules",
+      rules: null,
+    })
+    if (rulesSection._type !== "rulesSection") throw new Error("Not rules")
+
+    renderWithRouter(
+      <PageSections
+        page="/regras-e-acordos"
+        sections={[rulesSection]}
+        events={undefined}
+        isLoggedIn
+        privateRules={rulesFixture.privateRules}
+      />,
+    )
+
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Regras Privadas" }),
     ).toBeInTheDocument()
   })
 

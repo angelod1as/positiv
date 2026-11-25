@@ -7,6 +7,8 @@ import {
 } from "react-router"
 import { ENV } from "varlock/env"
 import { getUserContext } from "~/business/auth/auth.server"
+import { rulesCache } from "~/business/cms/rules-cache.server"
+import type { Rules } from "~/business/cms/rules.schema"
 import { findVisibleEvent } from "~/business/event/find-visible-event.server"
 import { isVeteran } from "~/business/profile/is-veteran.server"
 import { buildCorrectRulesAnswers } from "~/components/forms/custom/rules/build-correct-rules-answers"
@@ -41,6 +43,7 @@ import {
 } from "~/components/ui/card"
 import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
+import { logger } from "~/lib/logger/logger.server"
 import type { FCC } from "~types/utils/utils.types"
 import type { Route } from "./+types/event-rules-page"
 import { rulesQuizCopy, rulesStatusNoticeCopy } from "~/copy/events"
@@ -65,20 +68,35 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   // Asked here rather than taken from the browser: the quiz is a gate, and the
   // shorter run behind it has to be earned against the database.
+  const [veteran, rules] = await Promise.all([
+    currentProfile ? isVeteran(currentProfile.id) : false,
+    loadRules(),
+  ])
+
   return {
     eventStatus: event.event_status,
-    isVeteran: currentProfile
-      ? await isVeteran(currentProfile.id)
-      : false,
+    isVeteran: veteran,
     profileId: currentProfile?.id ?? "",
+    rules,
   }
 }
 
-type WrapperProps = { notice?: string }
+async function loadRules(): Promise<Rules | null> {
+  try {
+    return await rulesCache.get()
+  } catch (error) {
+    logger.error("Could not load the Rules", {
+      error: error instanceof Error ? error.message : String(error),
+    })
+    return null
+  }
+}
 
-const Wrapper: FCC<WrapperProps> = ({ children, notice }) => (
+type WrapperProps = { notice?: string; rules: Rules | null }
+
+const Wrapper: FCC<WrapperProps> = ({ children, notice, rules }) => (
   <>
-    <RulesText />
+    <RulesText rules={rules} />
 
     <Card>
       <CardHeader>
@@ -252,7 +270,7 @@ const EventRulesPage = ({ params, loaderData }: Route.ComponentProps) => {
   }
 
   return (
-    <Wrapper notice={notice}>
+    <Wrapper notice={notice} rules={loaderData.rules}>
       <FormRunner
         // The runtime seeds its answers and its first-attempt records once, at
         // mount. A loader that comes back with someone else while the route

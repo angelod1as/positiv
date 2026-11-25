@@ -1,35 +1,55 @@
 import { screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
+import { rulesCopy } from "~/copy/events"
+import { rulesFixture } from "~/test/rules-documents"
 import { renderWithRouter } from "~/test/test-utils"
 import { RulesText } from "./rules-text"
 
-const EXPECTED_HEADINGS = [
-  "🚨 Nenhuma pessoa é obrigada a nada 🚨",
-  "🤫 Você não fala sobre quem vai à Positiv 🤫",
-  "👍 Apenas SIM é SIM 👍",
-  "🥡 A Positiv não é marmitaria 🥡",
-  "😷 Proteção e saúde 😷",
-  "📸 Sem celular e sem fotos 📸",
-  "💪 Experiência intensa 💪",
-  "🗑️ Não deixe rastros 🧼🫧",
-  "🕺 Não somos uma balada 🪩",
-]
-
 describe("RulesText", () => {
   it("renders no accidental code blocks", () => {
-    const { container } = renderWithRouter(<RulesText />)
+    const { container } = renderWithRouter(<RulesText rules={rulesFixture} />)
 
     expect(container.querySelector("pre")).toBeNull()
   })
 
-  it("renders section headings in copy order", () => {
-    renderWithRouter(<RulesText />)
+  it("shows Regras Gerais, Acordos and Regras Privadas, in that order", () => {
+    renderWithRouter(<RulesText rules={rulesFixture} />)
 
-    const renderedHeadings = screen
-      .getAllByRole("heading", { level: 4 })
-      .map((heading) => heading.textContent)
-      .filter((text) => EXPECTED_HEADINGS.includes(text ?? ""))
+    expect(
+      screen
+        .getAllByRole("heading", { level: 2 })
+        .map((heading) => heading.textContent),
+    ).toEqual(["Regras Gerais", "Acordos", "Regras Privadas"])
+    expect(
+      screen
+        .getAllByRole("heading", { level: 3 })
+        .map((heading) => heading.textContent),
+    ).toEqual([
+      "👍 Apenas SIM é SIM 👍",
+      "⏰ Pontualidade 🕐",
+      "🥡 A Positiv não é marmitaria 🥡",
+    ])
+  })
 
-    expect(renderedHeadings).toEqual(EXPECTED_HEADINGS)
+  it("leaves out a part with no rules", () => {
+    renderWithRouter(
+      <RulesText rules={{ ...rulesFixture, privateRules: [] }} />,
+    )
+
+    expect(
+      screen
+        .getAllByRole("heading", { level: 2 })
+        .map((heading) => heading.textContent),
+    ).toEqual(["Regras Gerais", "Acordos"])
+  })
+
+  it("keeps the introduction and says the rules are missing without them", () => {
+    renderWithRouter(<RulesText rules={null} />)
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: rulesCopy.title }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(rulesCopy.unavailable)).toBeInTheDocument()
+    expect(screen.queryByRole("heading", { level: 2 })).not.toBeInTheDocument()
   })
 })

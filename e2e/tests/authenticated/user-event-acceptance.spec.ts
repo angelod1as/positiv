@@ -57,6 +57,14 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
     // the rules heading is the honest signal that it arrived.
     expect(await applicationPage.isOnRulesPage()).toBe(true)
 
+    // The rules come from Sanity, Regras Privadas included
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'Regras Privadas' }),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('heading', { level: 3, name: '[Exemplo] Regra privada 1' }),
+    ).toBeVisible()
+
     // One question on screen, not the whole quiz at once
     await expect(applicationPage.questions).toHaveCount(1)
 

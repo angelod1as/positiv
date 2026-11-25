@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 import { createSanityClient, SANITY_API_VERSION } from "../../app/business/cms/sanity-client.server"
+import { rulesQuery } from "../../app/business/cms/rules-query"
 import { siteSnapshotQuery } from "../../app/business/cms/site-snapshot-query"
+import rulesFixture from "../fixtures/rules.json"
 import pagesFixture from "../fixtures/pages-snapshot.json"
 import siteSettingsFixture from "../fixtures/site-settings.json"
 import {
@@ -38,6 +40,13 @@ describe("sanity mock server", () => {
     expect(response.status).toBe(200)
     expect(response.headers.get("content-type")).toMatch(/^application\/json/)
     expect(await response.json()).toEqual({ result: snapshot, ms: 1, query: siteSnapshotQuery })
+  })
+
+  it("answers the Rules query with the Rules fixture", async () => {
+    const response = await fetch(queryUrl(rulesQuery))
+
+    expect(response.status).toBe(200)
+    expect((await response.json()).result).toEqual(rulesFixture)
   })
 
   it("leaves the query out of the envelope when asked to, as the client does", async () => {

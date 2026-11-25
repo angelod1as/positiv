@@ -140,6 +140,7 @@ export const page = defineType({
         defineArrayMember({ type: "callout" }),
         defineArrayMember({ type: "sideBySide" }),
         defineArrayMember({ type: "systemComponent" }),
+        defineArrayMember({ type: "rulesSection" }),
       ],
       validation: (rule) =>
         rule

@@ -175,6 +175,22 @@ export const sections = {
       },
     ],
   },
+  rulesSection: {
+    _type: "rulesSection",
+    _key: "rules",
+    part: "generalRules",
+    rules: [
+      {
+        _key: "sim",
+        title: "👍 Apenas SIM é SIM 👍",
+        body: paragraph("Essa é nossa regra de ouro do rolê."),
+        highlight: {
+          title: "👀 Olhar tira pedaço, sim! 👀",
+          body: paragraph("Ser encarade pode ser muito ruim."),
+        },
+      },
+    ],
+  },
 }
 
 export const headers = {
