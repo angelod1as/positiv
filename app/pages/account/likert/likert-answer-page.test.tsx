@@ -284,6 +284,31 @@ describe("LikertAnswerPage", () => {
     ).toBeVisible()
   })
 
+  it("does not count a statement with only a comment as answered", async () => {
+    const user = userEvent.setup()
+    const three = [
+      ...statements,
+      { key: "limites", text: "Falo dos meus limites." },
+    ]
+    const { unmount } = renderPage({
+      statements: three,
+      profileId: "profile-1",
+    })
+    await answerScreen(user, "Concordo")
+    await user.type(
+      await screen.findByRole("textbox", { name: /Comentário/ }),
+      "ainda pensando",
+    )
+    unmount()
+
+    renderPage({ statements: three, profileId: "profile-1" })
+
+    expect(
+      await screen.findByRole("heading", { name: "Pergunto antes de tocar." }),
+    ).toBeVisible()
+    expect(screen.getByText("2/3")).toBeVisible()
+  })
+
   it("draws a new order for the next run once the answers are sent", async () => {
     const user = userEvent.setup()
     answers({ ok: true })

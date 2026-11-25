@@ -76,7 +76,13 @@ export const LikertOneAtATime: Presentation = (props) => {
 
       if (event.ctrlKey || event.metaKey || event.altKey) return
 
+      // A focused button keeps Enter and Space, and so does a radio reached
+      // with Tab that is not picked yet: Space there means "this one".
       const isControl = Boolean(target.closest?.("button, a"))
+      const isUnpickedRadio =
+        target instanceof HTMLInputElement &&
+        target.type === "radio" &&
+        !target.checked
       const choice = /^[1-5]$/.test(event.key)
         ? LIKERT_CHOICES[Number(event.key) - 1]
         : undefined
@@ -92,7 +98,11 @@ export const LikertOneAtATime: Presentation = (props) => {
       if (event.repeat) return
 
       const isActivation = event.key === "Enter" || event.key === " "
-      if (event.key === "ArrowRight" || (isActivation && !isControl)) {
+      const keepsSpace = event.key === " " && isUnpickedRadio
+      if (
+        event.key === "ArrowRight" ||
+        (isActivation && !isControl && !keepsSpace)
+      ) {
         event.preventDefault()
         onContinue()
         return

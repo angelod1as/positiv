@@ -1,4 +1,10 @@
-const storageKey = (scope: string) => `likert-order:${scope}`
+const ORDER_PREFIX = "likert-order:"
+const DRAFT_PREFIX = "form-runtime:likert:"
+
+const storageKey = (scope: string) => `${ORDER_PREFIX}${scope}`
+
+const isKeyList = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((key) => typeof key === "string")
 
 export function shuffle(items: string[]): string[] {
   const shuffled = [...items]
@@ -41,10 +47,7 @@ export function readLikertOrder(scope: string): string[] | null {
     if (!raw) return null
 
     const parsed: unknown = JSON.parse(raw)
-    return Array.isArray(parsed) &&
-      parsed.every((key) => typeof key === "string")
-      ? (parsed as string[])
-      : null
+    return isKeyList(parsed) ? parsed : null
   } catch {
     return null
   }
@@ -61,6 +64,25 @@ export function writeLikertOrder(scope: string, order: string[]): void {
 export function clearLikertOrder(scope: string): void {
   try {
     localStorage.removeItem(storageKey(scope))
+  } catch {
+    // Storage unavailable: nothing was ever written to remove.
+  }
+}
+
+/**
+ * Removes every Likert draft and order this browser keeps, for whoever signed
+ * in here. They outlive the tab, so signing out is the moment they must go.
+ */
+export function clearLikertDrafts(): void {
+  try {
+    const keys = Array.from({ length: localStorage.length }, (_, index) =>
+      localStorage.key(index),
+    )
+    for (const key of keys) {
+      if (key?.startsWith(ORDER_PREFIX) || key?.startsWith(DRAFT_PREFIX)) {
+        localStorage.removeItem(key)
+      }
+    }
   } catch {
     // Storage unavailable: nothing was ever written to remove.
   }

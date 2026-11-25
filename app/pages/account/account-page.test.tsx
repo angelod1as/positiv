@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { createMemoryRouter, RouterProvider } from "react-router"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -31,6 +32,7 @@ const renderPage = (loaderData: PageProps["loaderData"]) => {
       {
         path: "/conta",
         element: <AccountPage {...({ loaderData } as PageProps)} />,
+        action: () => null,
       },
     ],
     { initialEntries: ["/conta"] },
@@ -83,5 +85,21 @@ describe("AccountPage", () => {
     renderPage({ basic_data_filled: true, likert: false })
 
     expect(screen.queryByRole("link", { name: "Escala de Likert" })).toBeNull()
+  })
+
+  // The Likert draft outlives the tab, so the next person at a shared
+  // computer must not find someone else's answers left behind.
+  it("clears the Likert drafts kept in this browser on sign-out", async () => {
+    const user = userEvent.setup()
+    localStorage.setItem("form-runtime:likert:profile-1:abc", "{}")
+    localStorage.setItem("likert-order:profile-1:abc", "[]")
+    localStorage.setItem("outra-coisa", "fica")
+    renderPage({ basic_data_filled: true, likert: false })
+
+    await user.click(screen.getByRole("button", { name: "Deslogar conta" }))
+
+    expect(localStorage.getItem("form-runtime:likert:profile-1:abc")).toBeNull()
+    expect(localStorage.getItem("likert-order:profile-1:abc")).toBeNull()
+    expect(localStorage.getItem("outra-coisa")).toBe("fica")
   })
 })

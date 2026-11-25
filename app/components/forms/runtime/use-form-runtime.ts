@@ -119,7 +119,8 @@ export function useFormRuntime({
   }
 
   // The visible steps the flow would walk with these answers, and the first of
-  // them still waiting for one — the last when none is.
+  // them still waiting for a valid one — the last when none is. Validity, not
+  // presence: a half-filled answer is not one to skip past.
   const firstUnanswered = (
     answers: Answers,
     firstTryCorrect: Record<string, boolean>,
@@ -127,9 +128,15 @@ export function useFormRuntime({
     const visible = projectPath(flow, answers, { firstTryCorrect, data }).filter(
       (id) => flow.steps[id]?.kind !== "commit",
     )
+    const values = asAnsweredValues(questionsById.values(), answers)
+    const settled = (id: StepId) =>
+      questionsForStep(flow.steps[id], questionsById).every(
+        (question) =>
+          validateQuestion(question, answers[question.id], values).ok,
+      )
 
     return (
-      visible.find((id) => !canShow(id, answers)) ??
+      visible.find((id) => !settled(id)) ??
       visible[visible.length - 1] ??
       flow.start
     )

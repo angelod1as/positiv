@@ -299,4 +299,23 @@ describe("useFormRuntime persistence", () => {
     await waitFor(() => expect(result.current.isRestored).toBe(true))
     expect(result.current.currentStepId).toBe("c")
   })
+
+  it("does not count an answer that fails its question as answered", async () => {
+    writeRuntimeState(key, {
+      answers: { a: "resposta a", b: "" },
+      currentStepId: "a",
+      firstTryCorrect: {},
+    })
+
+    const { result } = renderHook(() =>
+      useFormRuntime({
+        questions,
+        flow,
+        persistence: { ...persistence, resume: "first-unanswered" },
+      }),
+    )
+
+    await waitFor(() => expect(result.current.isRestored).toBe(true))
+    expect(result.current.currentStepId).toBe("b")
+  })
 })

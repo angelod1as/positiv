@@ -1,5 +1,6 @@
 import { Separator } from "@radix-ui/react-separator"
 import { Form } from "react-router"
+import { clearLikertDrafts } from "~/components/forms/custom/likert/likert-order"
 import {
   getContext,
   getUserContext,
@@ -87,7 +88,7 @@ const AccountPage = ({ loaderData }: Route.ComponentProps) => {
         </div>
         <div className="flex flex-col gap-4">
           <Separator />
-          <Form method="POST" className="w-full">
+          <Form method="POST" className="w-full" onSubmit={clearLikertDrafts}>
             <Button variant="outline" className="w-full">
               {accountCopy.logout}
             </Button>

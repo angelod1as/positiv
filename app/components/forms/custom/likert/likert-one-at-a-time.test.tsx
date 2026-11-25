@@ -146,6 +146,19 @@ describe("LikertOneAtATime keyboard", () => {
     ).not.toBeChecked()
   })
 
+  it("lets Space pick a radio reached with Tab instead of moving on", async () => {
+    const { user } = setup()
+
+    screen.getByRole("radio", { name: "Depende" }).focus()
+    await user.keyboard(" ")
+
+    expect(first()).toBeVisible()
+    expect(screen.getByRole("radio", { name: "Depende" })).toBeChecked()
+
+    await user.keyboard(" ")
+    expect(second()).toBeVisible()
+  })
+
   it("lets a focused back button go back with Enter", async () => {
     const { user } = setup()
 

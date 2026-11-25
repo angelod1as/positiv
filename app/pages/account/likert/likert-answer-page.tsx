@@ -15,6 +15,7 @@ import {
   writeLikertOrder,
 } from "~/components/forms/custom/likert/likert-order"
 import { commitJson } from "~/components/forms/runtime/commit-json"
+import { likertSchema } from "~/components/forms/runtime/likert"
 import { FormRunner } from "~/components/forms/runtime/form-runner"
 import {
   readRuntimeState,
@@ -87,7 +88,12 @@ const LikertAnswerPage = ({ loaderData }: Route.ComponentProps) => {
     const next = likertOrder(
       statements.map((statement) => statement.key),
       readLikertOrder(draftScope),
-      new Set(Object.keys(draft?.answers ?? {})),
+      // Answered means a point picked: a comment alone leaves it waiting.
+      new Set(
+        Object.entries(draft?.answers ?? {})
+          .filter(([, answer]) => likertSchema.safeParse(answer).success)
+          .map(([key]) => key),
+      ),
     )
 
     writeLikertOrder(draftScope, next)
