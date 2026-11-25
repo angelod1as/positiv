@@ -1,7 +1,7 @@
 -- supabase/seeds/12_likert_submissions.sql
 
 -- Two Likert submissions from user1@example.com, so the admin participant page
--- shows both the open submission and the list of earlier ones. The newer one
+-- lists more than one and the submission page can move between them. The newer one
 -- answers a statement the older one never saw, as happens when the scale
 -- changes between submissions. Everyone else has never answered.
 

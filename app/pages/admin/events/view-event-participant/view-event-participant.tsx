@@ -111,10 +111,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     )
   }
 
+  const { currentProfile } = await getAdminContext(request, params)
+
   // Run profile and event_participant queries in parallel
-  const [profileResult, eventParticipantResult] = await Promise.all([
+  const [profileResult, eventParticipantResult, likert] = await Promise.all([
     getProfileById({ profileId }),
     getEventParticipantBasic({ profileId, eventId }),
+    getParticipantLikert({ profileId, viewer: currentProfile }),
   ])
 
   if (!profileResult.success) {
@@ -165,12 +168,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   if (historyResult.success) {
     fullHistory = historyResult.data
   }
-
-  const { currentProfile } = await getAdminContext(request, params)
-  const likert = await getParticipantLikert({
-    profileId: profile.id,
-    viewer: currentProfile,
-  })
 
   const onlinePaymentsEnabled = await isOnlinePaymentsEnabled()
   const [participantPayments, cardPaymentsEnabled, whatsappMessageTemplate] =

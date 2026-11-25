@@ -89,6 +89,16 @@ describe("view event participant loader", () => {
     } as unknown as ParticipantResult)
   })
 
+  it("checks the admin before reading anything about the person", async () => {
+    const denied = new Response(null, { status: 403 })
+    vi.mocked(getAdminContext).mockRejectedValue(denied)
+
+    await expect(runLoader()).rejects.toBe(denied)
+    expect(getProfileById).not.toHaveBeenCalled()
+    expect(getEventParticipantBasic).not.toHaveBeenCalled()
+    expect(getParticipantLikert).not.toHaveBeenCalled()
+  })
+
   it("warns, without alerting, when the profile does not exist", async () => {
     vi.mocked(getProfileById).mockResolvedValue({
       success: false,
