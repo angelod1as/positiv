@@ -176,6 +176,11 @@ export default [
           "participantes/:profileId",
           "pages/admin/participants/view-profile-page.tsx",
         ),
+        // One Likert submission of a participant
+        route(
+          "participantes/:profileId/escala/:submissionId",
+          "pages/admin/participants/likert-submission-page.tsx",
+        ),
         // Feedbacks
         route("feedbacks", "pages/admin/feedbacks/feedbacks-page.tsx"),
         // Dataviz

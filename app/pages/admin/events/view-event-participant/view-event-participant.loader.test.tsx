@@ -1,6 +1,8 @@
 import { NoResultError, type QueryNode } from "kysely"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { getEventParticipantBasic } from "~/business/application/event-participants.server"
+import { getAdminContext } from "~/business/auth/admin-context.server"
+import { getParticipantLikert } from "~/business/profile/participant-likert.server"
 import { getParticipantFullEventHistory, getProfileById } from "~/business/profile/profiles.server"
 import { getPaymentsForParticipant } from "~/business/payment/payment-totals.server"
 import { isOnlinePaymentsEnabled } from "~/business/payment/online-payments.server"
@@ -16,6 +18,9 @@ vi.mock("~/lib/logger/logger.server", () => ({
 
 vi.mock("~/business/auth/admin-context.server", () => ({
   getAdminContext: vi.fn(),
+}))
+vi.mock("~/business/profile/participant-likert.server", () => ({
+  getParticipantLikert: vi.fn(),
 }))
 vi.mock("~/business/profile/profiles.server", () => ({
   getParticipantFullEventHistory: vi.fn(),
@@ -51,16 +56,26 @@ vi.mock("~/business/payment/payment-messages.server", async (importActual) => ({
 
 type ProfileResult = Awaited<ReturnType<typeof getProfileById>>
 type ParticipantResult = Awaited<ReturnType<typeof getEventParticipantBasic>>
+type AdminContext = Awaited<ReturnType<typeof getAdminContext>>
+
+const currentProfile = {
+  id: "11111111-2222-4333-8444-555555555555",
+  permissions: ["admin.panel", "profiles.manage"],
+}
 
 const runLoader = () =>
   loader({
-    request: new Request("http://localhost/admin/eventos/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f"),
+    request: new Request(`http://localhost/admin/eventos/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/participantes/7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f`),
     params: { eventId: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c", profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f" },
   } as Parameters<typeof loader>[0])
 
 describe("view event participant loader", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(getAdminContext).mockResolvedValue({
+      currentProfile,
+    } as unknown as AdminContext)
+    vi.mocked(getParticipantLikert).mockResolvedValue([])
     vi.mocked(isOnlinePaymentsEnabled).mockResolvedValue(false)
     vi.mocked(getProfileById).mockResolvedValue({
       success: true,
@@ -72,6 +87,16 @@ describe("view event participant loader", () => {
       data: null,
       errors: [],
     } as unknown as ParticipantResult)
+  })
+
+  it("checks the admin before reading anything about the person", async () => {
+    const denied = new Response(null, { status: 403 })
+    vi.mocked(getAdminContext).mockRejectedValue(denied)
+
+    await expect(runLoader()).rejects.toBe(denied)
+    expect(getProfileById).not.toHaveBeenCalled()
+    expect(getEventParticipantBasic).not.toHaveBeenCalled()
+    expect(getParticipantLikert).not.toHaveBeenCalled()
   })
 
   it("warns, without alerting, when the profile does not exist", async () => {
@@ -220,5 +245,33 @@ describe("view event participant loader", () => {
     }
 
     expect(whatsappMessage).toBeNull()
+  })
+
+  it("hands the page the person's Likert submissions", async () => {
+    vi.mocked(getEventParticipantBasic).mockResolvedValue({
+      success: true,
+      data: { id: "participant-1", event_title: "Festa" },
+      errors: [],
+    } as unknown as ParticipantResult)
+    vi.mocked(getParticipantFullEventHistory).mockResolvedValue({
+      success: true,
+      data: [],
+      errors: [],
+    } as unknown as Awaited<ReturnType<typeof getParticipantFullEventHistory>>)
+    const likert = [
+      {
+        id: "aaaaaaaa-1111-4111-8111-111111111111",
+        submittedAt: new Date("2026-11-10T12:00:00Z"),
+      },
+    ]
+    vi.mocked(getParticipantLikert).mockResolvedValue(likert)
+
+    const data = await runLoader()
+
+    expect(getParticipantLikert).toHaveBeenCalledWith({
+      profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",
+      viewer: currentProfile,
+    })
+    expect(data).toMatchObject({ likert })
   })
 })

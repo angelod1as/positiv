@@ -10,6 +10,7 @@ import {
 } from "~/business/profile/profiles.server"
 import { getEventParticipantBasic, updateEventParticipantById } from "~/business/application/event-participants.server"
 import { setProfileCpfExempt } from "~/business/profile/cpf-exemption.server"
+import { getParticipantLikert } from "~/business/profile/participant-likert.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
 import { paymentProvider } from "~/business/payment/payment-provider.server"
 import { getPaymentsForParticipant } from "~/business/payment/payment-totals.server"
@@ -95,7 +96,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (paymentResult) return paymentResult
 }
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
   assertUuidParams(params.eventId, params.profileId)
 
   const { eventId, profileId } = params
@@ -110,10 +111,13 @@ export async function loader({ params }: Route.LoaderArgs) {
     )
   }
 
+  const { currentProfile } = await getAdminContext(request, params)
+
   // Run profile and event_participant queries in parallel
-  const [profileResult, eventParticipantResult] = await Promise.all([
+  const [profileResult, eventParticipantResult, likert] = await Promise.all([
     getProfileById({ profileId }),
     getEventParticipantBasic({ profileId, eventId }),
+    getParticipantLikert({ profileId, viewer: currentProfile }),
   ])
 
   if (!profileResult.success) {
@@ -196,6 +200,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     appOrigin: origin,
     whatsappMessage,
     providerName: paymentProvider().name,
+    likert,
   }
 }
 
@@ -210,6 +215,7 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
     appOrigin: origin,
     whatsappMessage,
     providerName,
+    likert,
   } = loaderData
 
   if (!profile) return null
@@ -227,6 +233,7 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
       appOrigin={origin}
       whatsappMessage={whatsappMessage}
       providerName={providerName}
+      likert={likert}
     />
   )
 }

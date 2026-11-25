@@ -1,5 +1,7 @@
 import { NoResultError, type QueryNode } from "kysely"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { getAdminContext } from "~/business/auth/admin-context.server"
+import { getParticipantLikert } from "~/business/profile/participant-likert.server"
 import { getParticipantFullEventHistory, getProfileById } from "~/business/profile/profiles.server"
 import { loader } from "./view-profile-page"
 
@@ -16,6 +18,9 @@ vi.mock("~/business/profile/cpf-exemption.server", () => ({
 vi.mock("~/business/auth/admin-context.server", () => ({
   getAdminContext: vi.fn(),
 }))
+vi.mock("~/business/profile/participant-likert.server", () => ({
+  getParticipantLikert: vi.fn(),
+}))
 vi.mock("~/business/profile/profiles.server", () => ({
   getParticipantFullEventHistory: vi.fn(),
   getProfileById: vi.fn(),
@@ -25,11 +30,17 @@ vi.mock("~/business/profile/profiles.server", () => ({
 
 type ProfileResult = Awaited<ReturnType<typeof getProfileById>>
 type HistoryResult = Awaited<ReturnType<typeof getParticipantFullEventHistory>>
+type AdminContext = Awaited<ReturnType<typeof getAdminContext>>
+
+const currentProfile = {
+  id: "11111111-2222-4333-8444-555555555555",
+  permissions: ["admin.panel", "profiles.manage"],
+}
 
 const runLoader = () =>
   loader({
     request: new Request(
-      "http://localhost/admin/perfis/7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",
+      `http://localhost/admin/participantes/7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f`,
     ),
     params: { profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f" },
   } as Parameters<typeof loader>[0])
@@ -37,6 +48,10 @@ const runLoader = () =>
 describe("view profile page loader", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(getAdminContext).mockResolvedValue({
+      currentProfile,
+    } as unknown as AdminContext)
+    vi.mocked(getParticipantLikert).mockResolvedValue([])
     vi.mocked(getProfileById).mockResolvedValue({
       success: true,
       data: { id: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f" },
@@ -94,5 +109,23 @@ describe("view profile page loader", () => {
       "Failed to fetch participant history",
       { profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f", errors },
     )
+  })
+
+  it("hands the page the person's Likert submissions", async () => {
+    const likert = [
+      {
+        id: "aaaaaaaa-1111-4111-8111-111111111111",
+        submittedAt: new Date("2026-11-10T12:00:00Z"),
+      },
+    ]
+    vi.mocked(getParticipantLikert).mockResolvedValue(likert)
+
+    const data = await runLoader()
+
+    expect(getParticipantLikert).toHaveBeenCalledWith({
+      profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",
+      viewer: currentProfile,
+    })
+    expect(data).toMatchObject({ likert })
   })
 })
