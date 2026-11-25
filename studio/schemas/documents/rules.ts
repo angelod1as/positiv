@@ -5,7 +5,7 @@ function rulesList(
   name: string,
   title: string,
   description: string,
-  required = true,
+  { optional = false } = {},
 ) {
   return defineField({
     name,
@@ -13,7 +13,7 @@ function rulesList(
     description,
     type: "array",
     of: [defineArrayMember({ type: "rule" })],
-    validation: (rule) => (required ? rule.required().min(1) : rule),
+    validation: (rule) => (optional ? rule : rule.required().min(1)),
   })
 }
 
@@ -37,7 +37,7 @@ export const rules = defineType({
       "privateRules",
       "Regras Privadas",
       "Só aparecem para quem entrou na conta: na candidatura aos eventos e onde houver um bloco Regras Privadas. Podem ficar vazias enquanto são escritas.",
-      false,
+      { optional: true },
     ),
   ],
   preview: {
