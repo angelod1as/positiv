@@ -136,6 +136,21 @@ export const basicDataCopy = {
   validation: basicDataValidation,
 } as const
 
+export const objectiveQuestionsCopy = {
+  labels: {
+    places_attended: "A quais destes você já foi?",
+    non_monogamy_since: "Desde quando você vive a não-monogamia?",
+  },
+  descriptions: {
+    places_attended: "Pode marcar mais de um.",
+  },
+  notLiving: "Não vivo a não-monogamia hoje",
+  validation: {
+    placesRequired: "Marque pelo menos uma opção",
+    noneAlone: "\"Nenhum destes\" não pode ser marcado junto com outra opção",
+  },
+} as const
+
 export const genderPronounsOrientationCopy = {
   labels: {
     gender: "Gênero",

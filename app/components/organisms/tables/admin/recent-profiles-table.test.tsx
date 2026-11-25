@@ -69,6 +69,9 @@ describe("RecentProfilesTable", () => {
       provider_customer_id: null,
       phone_is_international: false,
       cpf_exempt: false,
+      places_attended: null,
+      non_monogamy_since: null,
+      non_monogamy_not_living: false,
     } as ProfileGlobal,
     {
       id: "2",
@@ -104,6 +107,9 @@ describe("RecentProfilesTable", () => {
       provider_customer_id: null,
       phone_is_international: false,
       cpf_exempt: false,
+      places_attended: null,
+      non_monogamy_since: null,
+      non_monogamy_not_living: false,
     } as ProfileGlobal,
   ]
 

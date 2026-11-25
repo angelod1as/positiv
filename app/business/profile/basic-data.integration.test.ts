@@ -27,6 +27,8 @@ const answersFor = (email: string) => ({
   orientation: ["Bi"],
   pronouns: ["Ela/dela"],
   race_color: ["Preta"],
+  places_attended: ["Sauna"],
+  non_monogamy_since: { year: 2015 },
   email,
 })
 
@@ -151,7 +153,38 @@ describe("saveBasicData - Integration Tests", () => {
     expect(Number(saved.phone)).toBe(11999999999)
     expect(saved.gender).toEqual(["Travesti"])
     expect(saved.race_color).toEqual(["Preta"])
+    expect(saved.places_attended).toEqual(["Sauna"])
+    expect(saved.non_monogamy_since).toBe(2015)
+    expect(saved.non_monogamy_not_living).toBe(false)
     expect(saved.basic_data_filled).toBe(true)
+  })
+
+  it("replaces the year with the opt-out when the person stops living non-monogamy", async () => {
+    const email = "test-save-basic-data-not-living@example.com"
+    const userId = await createTestAuthUser(email, "test1234", tracker)
+    const profile = await createTestProfile(tracker, kysely, {
+      email,
+      user_id: userId,
+    })
+    const save = (non_monogamy_since: unknown) =>
+      saveBasicData({
+        answers: { ...answersFor(email), non_monogamy_since },
+        context: contextFor(email, userId) as never,
+      })
+    const answerOf = () =>
+      kysely
+        .selectFrom("profiles")
+        .select(["non_monogamy_since", "non_monogamy_not_living"])
+        .where("id", "=", profile.id)
+        .executeTakeFirstOrThrow()
+
+    expect(await save({ year: 2015 })).toEqual({ ok: true })
+    expect(await save({ none: true })).toEqual({ ok: true })
+
+    expect(await answerOf()).toEqual({
+      non_monogamy_since: null,
+      non_monogamy_not_living: true,
+    })
   })
 
   it("writes a phone flagged international, and unflags it once it is Brazilian again", async () => {
