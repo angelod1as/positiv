@@ -55,14 +55,14 @@ isOneToOne: false
                   ]
                 },"email_consents": {
                   Row: {
-                    "access_token": string,"created_at": string,"marketing": boolean,"marketing_at": string | null,"newsletter": boolean,"newsletter_at": string | null,"profile_id": string,"registration_alerts": boolean,"registration_alerts_at": string | null
+                    "access_token": string,"confirmed_at": string | null,"created_at": string,"marketing": boolean,"marketing_at": string | null,"newsletter": boolean,"newsletter_at": string | null,"profile_id": string,"registration_alerts": boolean,"registration_alerts_at": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "access_token"?: string,"created_at"?: string,"marketing"?: boolean,"marketing_at"?: string | null,"newsletter"?: boolean,"newsletter_at"?: string | null,"profile_id": string,"registration_alerts"?: boolean,"registration_alerts_at"?: string | null
+                    "access_token"?: string,"confirmed_at"?: string | null,"created_at"?: string,"marketing"?: boolean,"marketing_at"?: string | null,"newsletter"?: boolean,"newsletter_at"?: string | null,"profile_id": string,"registration_alerts"?: boolean,"registration_alerts_at"?: string | null
                   }
                   Update: {
-                    "access_token"?: string,"created_at"?: string,"marketing"?: boolean,"marketing_at"?: string | null,"newsletter"?: boolean,"newsletter_at"?: string | null,"profile_id"?: string,"registration_alerts"?: boolean,"registration_alerts_at"?: string | null
+                    "access_token"?: string,"confirmed_at"?: string | null,"created_at"?: string,"marketing"?: boolean,"marketing_at"?: string | null,"newsletter"?: boolean,"newsletter_at"?: string | null,"profile_id"?: string,"registration_alerts"?: boolean,"registration_alerts_at"?: string | null
                   }
                   Relationships: [
                     {

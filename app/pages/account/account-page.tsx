@@ -16,7 +16,7 @@ import { createMetaArray } from "~/lib/helpers/meta"
 import type { Route } from "./+types/account-page"
 
 const {
-  root: { CODE_OF_CONDUCT },
+  root: { CODE_OF_CONDUCT, EMAILS },
   dash: {
     account: { CHANGE_PASSWORD, BASIC_DATA },
     participant: { AGREE_TO_TERMS },
@@ -69,6 +69,9 @@ const AccountPage = ({ loaderData }: Route.ComponentProps) => {
               {accountCopy.fillBasicData}
             </Button>
           )}
+          <Button variant="outline" to={EMAILS}>
+            {accountCopy.emails}
+          </Button>
           <Button variant="outline" to={CODE_OF_CONDUCT}>
             {accountCopy.codeOfConduct}
           </Button>

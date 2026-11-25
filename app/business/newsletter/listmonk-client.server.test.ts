@@ -10,6 +10,11 @@ import {
   unsubscribeSubscriber,
   createCampaign,
   updateCampaignStatus,
+  setSubscriberAttribs,
+  getSubscriberById,
+  getSubscriberBounceCount,
+  enableSubscriber,
+  setListMembership,
 } from "./listmonk-client.server"
 
 vi.mock("varlock/env", () => ({
@@ -1317,5 +1322,203 @@ describe("test-run guard", () => {
       "https://newsletter.example.com/api/subscribers",
       expect.anything()
     )
+  })
+})
+
+describe("setSubscriberAttribs", () => {
+  let fetchSpy: MockInstance
+
+  beforeEach(() => {
+    fetchSpy = vi.spyOn(global, "fetch")
+  })
+
+  afterEach(() => {
+    fetchSpy.mockRestore()
+    vi.clearAllMocks()
+  })
+
+  it("puts the merged attributes by id in one call, keeping the email, name and lists", async () => {
+    fetchSpy.mockResolvedValue({ ok: true, json: async () => ({}) } as Response)
+
+    const result = await setSubscriberAttribs(
+      {
+        id: 7,
+        email: "a@example.com",
+        name: "A",
+        lists: [{ id: 4 }, { id: 143 }],
+        attribs: { profile_id: "p-1" },
+      },
+      { email_token: "tok" },
+    )
+
+    expect(result.success).toBe(true)
+    expect(fetchSpy).toHaveBeenCalledOnce()
+    const [url, init] = fetchSpy.mock.calls[0]
+    expect(url).toBe("https://listmonk.test/api/subscribers/7")
+    expect(init.method).toBe("PUT")
+    expect(JSON.parse(init.body as string)).toEqual({
+      email: "a@example.com",
+      name: "A",
+      attribs: { profile_id: "p-1", email_token: "tok" },
+      lists: [4, 143],
+    })
+  })
+
+  it("fails when Listmonk refuses", async () => {
+    fetchSpy.mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: "Server Error",
+      text: async () => "boom",
+    } as Response)
+
+    const result = await setSubscriberAttribs(
+      { id: 7, email: "a@example.com", name: "A", lists: [], attribs: {} },
+      { email_token: "tok" },
+    )
+
+    expect(result.success).toBe(false)
+  })
+})
+
+describe("subscriber by id", () => {
+  let fetchSpy: MockInstance
+
+  beforeEach(() => {
+    fetchSpy = vi.spyOn(global, "fetch")
+  })
+
+  afterEach(() => {
+    fetchSpy.mockRestore()
+    vi.clearAllMocks()
+  })
+
+  const okJson = (body: unknown) =>
+    ({ ok: true, status: 200, json: async () => body }) as Response
+
+  describe("getSubscriberById", () => {
+    it("reads the subscriber with its status and memberships", async () => {
+      const data = {
+        id: 9,
+        email: "a@example.com",
+        name: "A",
+        status: "blocklisted",
+        lists: [{ id: 4, subscription_status: "unsubscribed" }],
+        attribs: { profile_id: "p" },
+      }
+      fetchSpy.mockResolvedValue(okJson({ data }))
+
+      const result = await getSubscriberById(9)
+
+      expect(fetchSpy.mock.calls[0][0]).toBe(
+        "https://listmonk.test/api/subscribers/9",
+      )
+      expect(result.success && result.data).toEqual(data)
+    })
+
+    it("answers null when Listmonk has no such subscriber", async () => {
+      fetchSpy.mockResolvedValue({ ok: false, status: 404 } as Response)
+
+      const result = await getSubscriberById(9)
+
+      expect(result.success && result.data).toBeNull()
+    })
+  })
+
+  describe("getSubscriberBounceCount", () => {
+    it("counts the bounces recorded for the subscriber", async () => {
+      fetchSpy.mockResolvedValue(okJson({ data: [{ id: 1 }, { id: 2 }] }))
+
+      const result = await getSubscriberBounceCount(9)
+
+      expect(fetchSpy.mock.calls[0][0]).toBe(
+        "https://listmonk.test/api/subscribers/9/bounces",
+      )
+      expect(result.success && result.data).toBe(2)
+    })
+
+    it("counts none when the answer has no list", async () => {
+      fetchSpy.mockResolvedValue(okJson({ data: null }))
+
+      const result = await getSubscriberBounceCount(9)
+
+      expect(result.success && result.data).toBe(0)
+    })
+  })
+
+  describe("enableSubscriber", () => {
+    it("puts the subscriber back to enabled, keeping everything else", async () => {
+      fetchSpy.mockResolvedValue(okJson({}))
+
+      await enableSubscriber({
+        id: 9,
+        email: "a@example.com",
+        name: "A",
+        lists: [{ id: 4 }],
+        attribs: { profile_id: "p" },
+      })
+
+      const [url, init] = fetchSpy.mock.calls[0]
+      expect(url).toBe("https://listmonk.test/api/subscribers/9")
+      expect(init.method).toBe("PUT")
+      expect(JSON.parse(init.body as string)).toEqual({
+        email: "a@example.com",
+        name: "A",
+        status: "enabled",
+        attribs: { profile_id: "p" },
+        lists: [4],
+      })
+    })
+  })
+
+  describe("setListMembership", () => {
+    it("drops the old membership and adds a confirmed one when turned on", async () => {
+      fetchSpy.mockResolvedValue(okJson({}))
+
+      const result = await setListMembership(9, 143, true)
+
+      expect(result.success).toBe(true)
+      expect(fetchSpy).toHaveBeenCalledTimes(2)
+      expect(JSON.parse(fetchSpy.mock.calls[0][1].body as string)).toEqual({
+        ids: [9],
+        action: "remove",
+        target_list_ids: [143],
+      })
+      expect(JSON.parse(fetchSpy.mock.calls[1][1].body as string)).toEqual({
+        ids: [9],
+        action: "add",
+        target_list_ids: [143],
+        status: "confirmed",
+      })
+    })
+
+    it("marks the membership unsubscribed when turned off", async () => {
+      fetchSpy.mockResolvedValue(okJson({}))
+
+      await setListMembership(9, 4, false)
+
+      expect(fetchSpy).toHaveBeenCalledOnce()
+      expect(fetchSpy.mock.calls[0][0]).toBe(
+        "https://listmonk.test/api/subscribers/lists",
+      )
+      expect(JSON.parse(fetchSpy.mock.calls[0][1].body as string)).toEqual({
+        ids: [9],
+        action: "unsubscribe",
+        target_list_ids: [4],
+      })
+    })
+
+    it("fails when Listmonk refuses", async () => {
+      fetchSpy.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Server Error",
+        text: async () => "boom",
+      } as Response)
+
+      const result = await setListMembership(9, 4, false)
+
+      expect(result.success).toBe(false)
+    })
   })
 })

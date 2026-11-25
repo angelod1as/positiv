@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { emailConsentCopy, emailsPageCopy } from '../../../app/copy/emails'
 import { headerCopy } from '../../../app/copy/layout'
 
 test.describe('POS-192: User Settings and Profile Management', () => {
@@ -53,6 +54,53 @@ test.describe('POS-192: User Settings and Profile Management', () => {
     await expect(
       page.getByRole('heading', { level: 1, name: 'Código de Conduta' }),
     ).toBeVisible()
+  })
+
+  test('Can choose which e-mails to receive from the account page', async ({
+    page,
+  }) => {
+    const alerts = () =>
+      page.getByRole('checkbox', {
+        name: emailConsentCopy.labels.registrationAlerts,
+      })
+    // The box itself is visually hidden behind its styled twin, so the label
+    // is what a person clicks.
+    const setAlerts = async (on: boolean) => {
+      if ((await alerts().isChecked()) !== on) {
+        await page
+          .getByText(emailConsentCopy.labels.registrationAlerts, { exact: true })
+          .click()
+      }
+      await expect(alerts()).toBeChecked({ checked: on })
+    }
+    const save = async () => {
+      await page.getByRole('button', { name: emailConsentCopy.save }).click()
+      await expect(page.getByText(emailsPageCopy.successToast)).toBeVisible()
+    }
+
+    await page.goto('/conta')
+    await page.getByRole('link', { name: emailsPageCopy.title }).click()
+
+    await expect(page).toHaveURL('/emails')
+    await expect(
+      page.getByRole('heading', { level: 1, name: emailsPageCopy.title }),
+    ).toBeVisible()
+    await expect(page.getByText(emailConsentCopy.alwaysSent)).toBeVisible()
+
+    // Start from alerts on, whatever an earlier run left behind
+    await setAlerts(true)
+    await expect(page.getByText(emailConsentCopy.alertsOffWarning)).toBeHidden()
+
+    await setAlerts(false)
+    await expect(page.getByText(emailConsentCopy.alertsOffWarning)).toBeVisible()
+    await save()
+
+    await page.reload()
+    await expect(alerts()).not.toBeChecked()
+
+    // Leave the shared user as it found it
+    await setAlerts(true)
+    await save()
   })
 
   test('Can navigate to change password page', async ({ page }) => {

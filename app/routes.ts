@@ -20,6 +20,7 @@ export default [
   route("/api/process-campaigns", "pages/api/process-campaigns.ts"),
   route("/api/retry-newsletter-syncs", "pages/api/retry-newsletter-syncs.ts"),
   route("/api/sync-listmonk-unsubscribes", "pages/api/sync-listmonk-unsubscribes.ts"),
+  route("/api/emails", "pages/api/emails.ts"),
   route("/api/sync-veterans-list", "pages/api/sync-veterans-list.ts"),
   route("/api/sync-registration-alerts-list", "pages/api/sync-registration-alerts-list.ts"),
   route(
@@ -80,6 +81,7 @@ export default [
     ),
   ]),
   route("/newsletter/unsubscribe", "pages/newsletter/unsubscribe.tsx"),
+  route("/emails", "pages/emails/emails-page.tsx"),
   layout("pages/auth/layout.tsx", [
     route("/feedback", "pages/public/feedback-page.tsx"),
     ...prefix("/entrar", [

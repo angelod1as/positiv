@@ -43,6 +43,7 @@ export const accountCopy = {
   editBasicData: "Editar dados básicos",
   fillBasicData: "Preencher dados básicos",
   terms: "Termos e condições",
+  emails: "Seus e-mails",
   codeOfConduct: "Código de Conduta",
   logout: "Deslogar conta",
   deleteAccount: {

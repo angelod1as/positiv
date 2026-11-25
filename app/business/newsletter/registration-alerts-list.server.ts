@@ -24,6 +24,7 @@ export async function getRegistrationAlertsProfiles() {
       "p.is_veteran",
       "p.approved_to_attend",
       "ec.registration_alerts_at",
+      "ec.access_token as email_token",
     ])
     .where("ec.registration_alerts", "=", true)
     .execute()
