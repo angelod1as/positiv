@@ -119,6 +119,10 @@ describe("LikertAnswerPage", () => {
   beforeEach(() => {
     navigate.mockClear()
     sessionStorage.clear()
+    localStorage.clear()
+    // The highest draw leaves every statement where it is, so a test reads
+    // them in Sanity's order unless it asks for a shuffle.
+    vi.spyOn(Math, "random").mockReturnValue(0.999)
   })
 
   afterEach(() => {
@@ -234,6 +238,175 @@ describe("LikertAnswerPage", () => {
       await screen.findByText("Não foi possível salvar agora. Tente novamente."),
     ).toBeVisible()
     expect(navigate).not.toHaveBeenCalled()
+  })
+
+  it("asks the statements in an order drawn at random", async () => {
+    vi.mocked(Math.random).mockReturnValue(0)
+    renderPage()
+
+    expect(
+      await screen.findByRole("heading", { name: "Pergunto antes de tocar." }),
+    ).toBeVisible()
+  })
+
+  it("comes back, after the tab closed, to the first statement still unanswered", async () => {
+    const user = userEvent.setup()
+    const three = [
+      ...statements,
+      { key: "limites", text: "Falo dos meus limites." },
+    ]
+    const { unmount } = renderPage({
+      statements: three,
+      profileId: "profile-1",
+    })
+    await answerScreen(user, "Concordo")
+    await answerScreen(user, "Depende")
+    await user.click(screen.getByRole("button", { name: "Voltar" }))
+    await user.click(screen.getByRole("button", { name: "Voltar" }))
+    unmount()
+    sessionStorage.clear()
+
+    vi.mocked(Math.random).mockReturnValue(0)
+    renderPage({ statements: three, profileId: "profile-1" })
+
+    expect(
+      await screen.findByRole("heading", { name: "Falo dos meus limites." }),
+    ).toBeVisible()
+    expect(screen.getByText("3/3")).toBeVisible()
+
+    await user.click(screen.getByRole("button", { name: "Voltar" }))
+    expect(
+      screen.getByRole("heading", { name: "Pergunto antes de tocar." }),
+    ).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "Voltar" }))
+    expect(
+      screen.getByRole("heading", { name: "Sinto ciúme e tudo bem." }),
+    ).toBeVisible()
+  })
+
+  it("does not count a statement with only a comment as answered", async () => {
+    const user = userEvent.setup()
+    const three = [
+      ...statements,
+      { key: "limites", text: "Falo dos meus limites." },
+    ]
+    const { unmount } = renderPage({
+      statements: three,
+      profileId: "profile-1",
+    })
+    await answerScreen(user, "Concordo")
+    await user.type(
+      await screen.findByRole("textbox", { name: /Comentário/ }),
+      "ainda pensando",
+    )
+    unmount()
+
+    renderPage({ statements: three, profileId: "profile-1" })
+
+    expect(
+      await screen.findByRole("heading", { name: "Pergunto antes de tocar." }),
+    ).toBeVisible()
+    expect(screen.getByText("2/3")).toBeVisible()
+  })
+
+  it("keeps the run in place when the loader hands the same statements again", async () => {
+    const user = userEvent.setup()
+    const three = [
+      ...statements,
+      { key: "limites", text: "Falo dos meus limites." },
+    ]
+    const { rerender } = renderPage({
+      statements: three,
+      profileId: "profile-1",
+    })
+    await answerScreen(user, "Concordo")
+    await user.click(screen.getByRole("button", { name: "Voltar" }))
+
+    vi.mocked(Math.random).mockReturnValue(0)
+    rerender(
+      <MemoryRouter initialEntries={["/conta/escala/responder"]}>
+        <LikertAnswerPage
+          {...({
+            loaderData: {
+              statements: three.map((statement) => ({ ...statement })),
+              profileId: "profile-1",
+            },
+          } as PageProps)}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(
+      await screen.findByRole("heading", { name: "Sinto ciúme e tudo bem." }),
+    ).toBeVisible()
+    expect(screen.getByText("1/3")).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+    expect(
+      screen.getByRole("heading", { name: "Pergunto antes de tocar." }),
+    ).toBeVisible()
+  })
+
+  it("draws a new order for the next run once the answers are sent", async () => {
+    const user = userEvent.setup()
+    answers({ ok: true })
+    const { unmount } = renderPage()
+    await answerScreen(user, "Concordo")
+    await answerScreen(user, "Depende")
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith("/conta/escala"))
+    unmount()
+
+    vi.mocked(Math.random).mockReturnValue(0)
+    renderPage()
+
+    expect(
+      await screen.findByRole("heading", { name: "Pergunto antes de tocar." }),
+    ).toBeVisible()
+    expect(screen.getByText("1/2")).toBeVisible()
+  })
+
+  it("answers from the keyboard", async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByRole("heading", { name: "Sinto ciúme e tudo bem." })
+
+    await user.keyboard("4{Enter}")
+
+    expect(
+      await screen.findByRole("heading", { name: "Pergunto antes de tocar." }),
+    ).toBeVisible()
+  })
+
+  it("explains the keyboard shortcuts in a dialog", async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByRole("heading", { name: "Sinto ciúme e tudo bem." })
+
+    await user.click(
+      screen.getByRole("button", { name: "Use o teclado para preencher" }),
+    )
+
+    const dialog = screen.getByRole("dialog", { name: "Preencher pelo teclado" })
+    expect(dialog).toHaveTextContent("Ctrl + Enter")
+    expect(dialog).toHaveTextContent("Esc")
+
+    await user.keyboard("4")
+    expect(
+      screen.getByRole("radio", { name: "Concordo", hidden: true }),
+    ).not.toBeChecked()
+
+    await user.keyboard("{Escape}")
+    expect(screen.queryByRole("dialog")).toBeNull()
+  })
+
+  // jsdom matches no media query, so the class is the only witness here: a
+  // touch screen has no keyboard, and the shortcuts would only confuse.
+  it("offers the keyboard help only where there is a mouse or trackpad", async () => {
+    renderPage()
+
+    const link = await screen.findByRole("button", {
+      name: "Use o teclado para preencher",
+    })
+    expect(link).toHaveClass("hidden", "pointer-fine:inline")
   })
 
   it("says the scale is unavailable when nothing is published", () => {

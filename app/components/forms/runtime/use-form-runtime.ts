@@ -9,6 +9,7 @@ import {
   readRuntimeState,
   runtimeStorageKey,
   writeRuntimeState,
+  type RuntimeStorage,
 } from "./persistence"
 import { projectPath } from "./project-path"
 import type { Answers, Question } from "./question.types"
@@ -17,6 +18,19 @@ import { asAnsweredValues, validateQuestion } from "./validate-question"
 // Shared so a caller with no data of its own does not sink every memo that
 // reads it with a fresh object each render.
 const NO_DATA: Record<string, unknown> = {}
+
+export type RuntimePersistence = {
+  formId: string
+  scopeId: string
+  /** Session storage unless asked otherwise. */
+  storage?: RuntimeStorage
+  /**
+   * Where a restored run opens: the step it was left on, or the first one still
+   * unanswered — for a run walked straight through, where looking back at an
+   * answer is no reason to land on it again.
+   */
+  resume?: "where-left" | "first-unanswered"
+}
 
 type UseFormRuntimeOptions = {
   questions: Question[]
@@ -34,7 +48,7 @@ type UseFormRuntimeOptions = {
    */
   stepId?: StepId
   /** Keeps the run alive across a refresh. Without it, memory only. */
-  persistence?: { formId: string; scopeId: string }
+  persistence?: RuntimePersistence
   /** Called once per question whose first attempt was wrong. */
   onFirstTryWrong?: (questionId: string) => void
 }
@@ -104,9 +118,35 @@ export function useFormRuntime({
     )
   }
 
+  // The visible steps the flow would walk with these answers, and the first of
+  // them still waiting for a valid one — the last when none is. Validity, not
+  // presence: a half-filled answer is not one to skip past.
+  const firstUnanswered = (
+    answers: Answers,
+    firstTryCorrect: Record<string, boolean>,
+  ): StepId => {
+    const visible = projectPath(flow, answers, { firstTryCorrect, data }).filter(
+      (id) => flow.steps[id]?.kind !== "commit",
+    )
+    const values = asAnsweredValues(questionsById.values(), answers)
+    const settled = (id: StepId) =>
+      questionsForStep(flow.steps[id], questionsById).every(
+        (question) =>
+          validateQuestion(question, answers[question.id], values).ok,
+      )
+
+    return (
+      visible.find((id) => !settled(id)) ??
+      visible[visible.length - 1] ??
+      flow.start
+    )
+  }
+
   const storageKey = persistence
     ? runtimeStorageKey(persistence.formId, persistence.scopeId)
     : null
+  const storage = persistence?.storage ?? "session"
+  const resumeRule = persistence?.resume ?? "where-left"
 
   const [currentStepId, setCurrentStepId] = useState<StepId>(flow.start)
   const [answers, setAnswers] = useState<Answers>(initialAnswers ?? {})
@@ -148,11 +188,11 @@ export function useFormRuntime({
     if (!storageKey || restoredRef.current) return
     restoredRef.current = true
 
-    const stored = readRuntimeState(storageKey)
+    const stored = readRuntimeState(storageKey, storage)
 
     // A step the flow no longer has means the record predates a change to it.
     if (stored && !flow.steps[stored.currentStepId]) {
-      clearRuntimeState(storageKey)
+      clearRuntimeState(storageKey, storage)
     } else if (stored) {
       answersRef.current = stored.answers
       firstTryRef.current = stored.firstTryCorrect
@@ -161,7 +201,9 @@ export function useFormRuntime({
 
       const resumed = canShow(stepId, stored.answers)
         ? (stepId as StepId)
-        : stored.currentStepId
+        : resumeRule === "first-unanswered"
+          ? firstUnanswered(stored.answers, stored.firstTryCorrect)
+          : stored.currentStepId
 
       stepRef.current = resumed
       setCurrentStepId(resumed)
@@ -173,8 +215,13 @@ export function useFormRuntime({
   useEffect(() => {
     if (!storageKey || !isRestored || isDone) return
 
-    writeRuntimeState(storageKey, { answers, currentStepId, firstTryCorrect })
+    writeRuntimeState(
+      storageKey,
+      { answers, currentStepId, firstTryCorrect },
+      storage,
+    )
   }, [
+    storage,
     storageKey,
     isRestored,
     isDone,
@@ -188,10 +235,10 @@ export function useFormRuntime({
     if (!storageKey || !isDone) return
 
     // Read at completion, so a flag added part way through the run still counts.
-    if (readKeepOnDone(storageKey)) return
+    if (readKeepOnDone(storageKey, storage)) return
 
-    clearRuntimeState(storageKey)
-  }, [storageKey, isDone])
+    clearRuntimeState(storageKey, storage)
+  }, [storage, storageKey, isDone])
 
   // The browser's back button, mirrored in the url, arrives here as a changed
   // stepId. Which is why a caller mirroring the current step must not hand that

@@ -17,6 +17,7 @@ const state = {
 
 beforeEach(() => {
   sessionStorage.clear()
+  localStorage.clear()
 })
 
 afterEach(() => {
@@ -96,6 +97,33 @@ describe("readRuntimeState", () => {
 
     expect(() => readRuntimeState(key)).not.toThrow()
     expect(readRuntimeState(key)).toBeNull()
+  })
+})
+
+describe("local storage", () => {
+  it("reads back what was written, outside the tab's own storage", () => {
+    writeRuntimeState(key, state, "local")
+
+    expect(sessionStorage.getItem(key)).toBeNull()
+    expect(readRuntimeState(key, "local")).toEqual(state)
+    expect(readRuntimeState(key)).toBeNull()
+  })
+
+  it("clears only the storage it is pointed at", () => {
+    writeRuntimeState(key, state, "local")
+    writeRuntimeState(key, state)
+
+    clearRuntimeState(key, "local")
+
+    expect(localStorage.getItem(key)).toBeNull()
+    expect(readRuntimeState(key)).toEqual(state)
+  })
+
+  it("honours a keepOnDone flag kept there", () => {
+    localStorage.setItem(key, JSON.stringify({ v: 1, keepOnDone: true }))
+
+    expect(readKeepOnDone(key, "local")).toBe(true)
+    expect(readKeepOnDone(key)).toBe(false)
   })
 })
 

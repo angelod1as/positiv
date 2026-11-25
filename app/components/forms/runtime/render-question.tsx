@@ -256,7 +256,7 @@ export const renderQuestion: RenderQuestion = ({
               aria-hidden="true"
               className="absolute top-3 right-[10%] left-[10%] h-px bg-muted-foreground/40"
             />
-            {LIKERT_CHOICES.map((choice) => (
+            {LIKERT_CHOICES.map((choice, index) => (
               <Label
                 key={choice}
                 className="relative mb-0 flex cursor-pointer flex-col items-center gap-2 px-0.5 text-center text-[11px] leading-tight wrap-normal sm:text-sm"
@@ -266,9 +266,18 @@ export const renderQuestion: RenderQuestion = ({
                   name={question.id}
                   value={choice}
                   checked={answer.choice === choice}
+                  aria-keyshortcuts={String(index + 1)}
                   onChange={() => onChange({ ...answer, choice })}
                 />
                 <span>{likertCopy.choices[choice]}</span>
+                {/* The key that picks it, for whoever has a keyboard; the
+                    radio announces it through aria-keyshortcuts. */}
+                <kbd
+                  aria-hidden="true"
+                  className="hidden min-w-5 rounded border border-muted-foreground/40 px-1 font-mono text-xs text-muted-foreground pointer-fine:inline-block"
+                >
+                  {index + 1}
+                </kbd>
               </Label>
             ))}
           </div>
