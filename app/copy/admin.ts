@@ -77,6 +77,16 @@ export const registrationLimitSettingCopy = {
   invalid: "O limite precisa ser um número inteiro entre 1 e 10.000.",
 } as const
 
+export const likertSettingCopy = {
+  title: "Escala de Likert",
+  accessLabel: "Acessível por link",
+  accessHelp:
+    "Ligada, quem tiver o link (/conta/escala) consegue responder a escala. Nenhum link aparece no site. Desligada, só a equipe admin vê a escala.",
+  requiredLabel: "Obrigatória",
+  requiredHelp:
+    "Ligada, a escala aparece em Minha conta para todo mundo, mesmo com o acesso por link desligado.",
+} as const
+
 export const adminFeedbacksCopy = {
   title: "Feedbacks",
   loadFailed: "Erro ao carregar feedbacks. Tente novamente.",

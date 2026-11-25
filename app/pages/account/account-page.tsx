@@ -5,6 +5,7 @@ import {
   getUserContext,
   logoutUser,
 } from "~/business/auth/auth.server"
+import { showsLikertEntryPoints } from "~/business/profile/likert-answers.server"
 import { Button } from "~/components/atoms/button/button"
 import { Copy } from "~/components/atoms/copy/copy"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
@@ -18,7 +19,7 @@ import type { Route } from "./+types/account-page"
 const {
   root: { CODE_OF_CONDUCT, EMAILS },
   dash: {
-    account: { CHANGE_PASSWORD, BASIC_DATA },
+    account: { CHANGE_PASSWORD, BASIC_DATA, LIKERT },
     participant: { AGREE_TO_TERMS },
   },
 } = paths
@@ -29,7 +30,10 @@ export function meta({}: Route.MetaArgs) {
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { currentProfile } = await getUserContext(request, params)
-  return { basic_data_filled: currentProfile?.basic_data_filled }
+  return {
+    basic_data_filled: currentProfile?.basic_data_filled,
+    likert: await showsLikertEntryPoints(),
+  }
 }
 
 export async function action({ params, request }: Route.ActionArgs) {
@@ -44,7 +48,7 @@ It needs, in this order:
 */
 
 const AccountPage = ({ loaderData }: Route.ComponentProps) => {
-  const { basic_data_filled } = loaderData
+  const { basic_data_filled, likert } = loaderData
 
   return (
     <>
@@ -72,6 +76,11 @@ const AccountPage = ({ loaderData }: Route.ComponentProps) => {
           <Button variant="outline" to={EMAILS}>
             {accountCopy.emails}
           </Button>
+          {likert && (
+            <Button variant="outline" to={LIKERT}>
+              {accountCopy.likert}
+            </Button>
+          )}
           <Button variant="outline" to={CODE_OF_CONDUCT}>
             {accountCopy.codeOfConduct}
           </Button>

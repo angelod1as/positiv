@@ -7,10 +7,15 @@ import { getOnlinePaymentsSetting } from "~/business/payment/online-payments.ser
 import {
   getRegistrationLimit,
   isCardPaymentsEnabled,
+  isLikertEnabled,
+  isLikertRequired,
   setCardPaymentsEnabled,
+  setLikertEnabled,
+  setLikertRequired,
   setOnlinePaymentsEnabled,
   setRegistrationLimit,
 } from "~/business/settings/app-settings.server"
+import { LikertSection } from "~/components/pages/admin/likert-section"
 import { ListmonkDiagnosticSection } from "~/components/pages/admin/listmonk-diagnostic-section"
 import { OnlinePaymentsSection } from "~/components/pages/admin/online-payments-section"
 import { RegistrationLimitSection } from "~/components/pages/admin/registration-limit-section"
@@ -44,6 +49,22 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   if (intent === "set-card-payments") {
     await setCardPaymentsEnabled({
+      enabled: formData.get("enabled") === "true",
+      profileId: currentProfile?.id,
+    })
+    return { intent }
+  }
+
+  if (intent === "set-likert") {
+    await setLikertEnabled({
+      enabled: formData.get("enabled") === "true",
+      profileId: currentProfile?.id,
+    })
+    return { intent }
+  }
+
+  if (intent === "set-likert-required") {
+    await setLikertRequired({
       enabled: formData.get("enabled") === "true",
       profileId: currentProfile?.id,
     })
@@ -86,6 +107,8 @@ export async function loader() {
     onlinePayments: await getOnlinePaymentsSetting(),
     cardPayments: await isCardPaymentsEnabled(),
     registrationLimit: await getRegistrationLimit(),
+    likertEnabled: await isLikertEnabled(),
+    likertRequired: await isLikertRequired(),
   }
 }
 
@@ -102,6 +125,13 @@ const SettingsPage = ({ loaderData }: Route.ComponentProps) => {
       <Separator />
 
       <RegistrationLimitSection limit={loaderData.registrationLimit} />
+
+      <Separator />
+
+      <LikertSection
+        enabled={loaderData.likertEnabled}
+        required={loaderData.likertRequired}
+      />
 
       <Separator />
 

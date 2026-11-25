@@ -45,6 +45,7 @@ export const accountCopy = {
   terms: "Termos e condições",
   emails: "Seus e-mails",
   codeOfConduct: "Código de Conduta",
+  likert: "Escala de Likert",
   logout: "Deslogar conta",
   deleteAccount: {
     trigger: "Apagar conta",
@@ -53,6 +54,27 @@ export const accountCopy = {
       `Esta funcionalidade está em implementação. Entre em contato conosco para deletar sua conta, através do email [${email}](mailto:${email})`,
     cancelLabel: "Entendi",
   },
+} as const
+
+export const likertPageCopy = {
+  title: "Escala de Likert",
+  answerIntro:
+    "Uma afirmação por vez: escolha o quanto você concorda com cada uma. O comentário é opcional. Se sair no meio, o que você já respondeu fica guardado neste navegador até você enviar.",
+  sending: "Enviando...",
+  historyIntro:
+    "A equipe da Positiv lê suas respostas. Cada envio fica guardado com as afirmações como estavam quando você respondeu, e você pode responder de novo quando quiser.",
+  empty: "Você ainda não respondeu a escala.",
+  answer: "Responder",
+  answerAgain: "Responder de novo",
+  historyTitle: "Seus envios",
+  submittedOn: (date: string) => `Enviada em ${date}`,
+  submissionTitle: (date: string) => `Respostas de ${date}`,
+  commentLabel: "Seu comentário",
+  backToHistory: "Voltar para o histórico",
+  unavailable:
+    "A escala não está disponível agora. Tente de novo mais tarde.",
+  scaleChanged:
+    "A escala mudou enquanto você respondia. Recarregue a página para responder à versão atual.",
 } as const
 
 export const basicDataValidation = {

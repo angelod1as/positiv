@@ -6,6 +6,8 @@ import {
 } from "~/business/newsletter/test-listmonk-connection.server"
 import {
   setCardPaymentsEnabled,
+  setLikertEnabled,
+  setLikertRequired,
   setOnlinePaymentsEnabled,
   setRegistrationLimit,
 } from "~/business/settings/app-settings.server"
@@ -22,6 +24,8 @@ vi.mock("~/business/newsletter/test-listmonk-connection.server", () => ({
 
 vi.mock("~/business/settings/app-settings.server", () => ({
   setCardPaymentsEnabled: vi.fn(),
+  setLikertEnabled: vi.fn(),
+  setLikertRequired: vi.fn(),
   setOnlinePaymentsEnabled: vi.fn(),
   setRegistrationLimit: vi.fn(),
 }))
@@ -59,6 +63,16 @@ const INTENTS = [
     intent: "set-registration-limit",
     fields: { limit: "90" },
     mutation: setRegistrationLimit,
+  },
+  {
+    intent: "set-likert",
+    fields: { enabled: "false" },
+    mutation: setLikertEnabled,
+  },
+  {
+    intent: "set-likert-required",
+    fields: { enabled: "false" },
+    mutation: setLikertRequired,
   },
 ] as const
 
@@ -120,6 +134,37 @@ describe("SettingsPage action", () => {
         enabled: expected,
         profileId: "admin-1",
       })
+    },
+  )
+
+  it.each([
+    ["true", true],
+    ["false", false],
+  ])(
+    "should switch the Likert scale to %s on behalf of the admin",
+    async (enabled, expected) => {
+      await runAction({ intent: "set-likert", enabled })
+
+      expect(setLikertEnabled).toHaveBeenCalledWith({
+        enabled: expected,
+        profileId: "admin-1",
+      })
+    },
+  )
+
+  it.each([
+    ["true", true],
+    ["false", false],
+  ])(
+    "should switch the Likert requirement to %s on behalf of the admin",
+    async (enabled, expected) => {
+      await runAction({ intent: "set-likert-required", enabled })
+
+      expect(setLikertRequired).toHaveBeenCalledWith({
+        enabled: expected,
+        profileId: "admin-1",
+      })
+      expect(setLikertEnabled).not.toHaveBeenCalled()
     },
   )
 
