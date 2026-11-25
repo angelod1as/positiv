@@ -2,12 +2,13 @@
 // test so the suite never reads a real dataset. The app's client, given a custom
 // apiHost, sends every query — CDN or not — to
 // GET <apiHost>/v<apiVersion>/data/query/<dataset>?query=…, and this answers the
-// site snapshot and Rules queries there with the recorded fixtures.
+// site snapshot, Rules and Likert scale queries there with the recorded fixtures.
 import { readFileSync } from "node:fs"
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 import type { AddressInfo } from "node:net"
 import { join } from "node:path"
 import { SANITY_API_VERSION } from "../../app/business/cms/sanity-client.server"
+import { likertScaleQuery } from "../../app/business/cms/likert-scale-query"
 import { rulesQuery } from "../../app/business/cms/rules-query"
 import { siteSnapshotQuery } from "../../app/business/cms/site-snapshot-query"
 
@@ -32,6 +33,7 @@ const RESULTS = new Map<string, unknown>([
     },
   ],
   [rulesQuery, readFixture("rules.json")],
+  [likertScaleQuery, readFixture("likert-scale.json")],
 ])
 
 let server: Server | null = null
