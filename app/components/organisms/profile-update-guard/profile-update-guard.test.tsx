@@ -109,4 +109,58 @@ describe("ProfileUpdateGuard", () => {
 
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
   })
+
+  describe("email choices still to confirm", () => {
+    const renderGuard = (
+      props: Partial<{
+        currentPath: string
+        needsProfileUpdate: boolean
+        needsEmailConfirmation: boolean
+      }> = {},
+    ) =>
+      render(
+        <ProfileUpdateGuard
+          currentProfile={mockProfile}
+          currentPath="/dashboard"
+          needsProfileUpdate={false}
+          needsEmailConfirmation={true}
+          {...props}
+        />,
+        { wrapper },
+      )
+
+    it("asks to confirm the email choices and links to the page", () => {
+      renderGuard()
+
+      expect(screen.getByRole("alertdialog")).toHaveTextContent(
+        "Agora você escolhe quais e-mails recebe. Confira suas escolhas: sem confirmar, você continua recebendo como hoje.",
+      )
+      expect(
+        screen.getByRole("button", { name: "Conferir meus e-mails" }),
+      ).toBeInTheDocument()
+    })
+
+    it("stays out of the way on the email page itself", () => {
+      renderGuard({ currentPath: "/emails" })
+
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+    })
+
+    it("asks for the profile first when both are due", () => {
+      renderGuard({ needsProfileUpdate: true })
+
+      expect(screen.getByRole("alertdialog")).toHaveTextContent(
+        "Precisamos que você atualize seus dados básicos.",
+      )
+      expect(
+        screen.queryByRole("button", { name: "Conferir meus e-mails" }),
+      ).not.toBeInTheDocument()
+    })
+
+    it("asks nothing once the choices are confirmed", () => {
+      renderGuard({ needsEmailConfirmation: false })
+
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+    })
+  })
 })

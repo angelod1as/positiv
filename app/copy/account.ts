@@ -156,6 +156,13 @@ Estamos pedindo informação de raça ou cor para acompanhar nossos dados demogr
   cta: "Atualizar meu perfil",
 } as const
 
+export const emailConfirmationCopy = {
+  title: "Seus e-mails",
+  message:
+    "Agora você escolhe quais e-mails recebe. Confira suas escolhas: sem confirmar, você continua recebendo como hoje.",
+  cta: "Conferir meus e-mails",
+} as const
+
 export const cpfExemptionCopy = {
   requestLink: "Não tenho CPF ou sou pessoa estrangeira",
   pending:

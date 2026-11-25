@@ -32,6 +32,12 @@ vi.mock("./components/organisms/news-dialog/news-utils", () => ({
   NEWS_VERSION: "1",
 }))
 
+const needsEmailConfirmation = vi.hoisted(() => vi.fn())
+
+vi.mock("./business/newsletter/email-preferences.server", () => ({
+  needsEmailConfirmation,
+}))
+
 vi.mock("composable-functions", () => ({
   inputFromFormData: vi.fn(),
 }))
@@ -64,6 +70,12 @@ describe("root loader", () => {
       paymentMessages: null,
     })
     isDraftModeEnabled.mockResolvedValue(false)
+    needsEmailConfirmation.mockReset()
+    needsEmailConfirmation.mockResolvedValue({
+      success: true,
+      data: false,
+      errors: [],
+    })
     loadDraftSnapshotQuery.mockResolvedValue({
       initial: { data: { pages: [], siteSettings: null } },
       query: "the-snapshot-query",
@@ -451,6 +463,55 @@ describe("root loader", () => {
 
     it("asks nothing of a visitor with no profile", async () => {
       expect(await loadWithProfile(null)).toBe(false)
+    })
+  })
+
+  describe("needsEmailConfirmation", () => {
+    const load = async (profile: Record<string, unknown> | null) => {
+      mockGetContext.mockResolvedValue({
+        currentProfile: profile,
+        currentUser: profile ? { id: "user-1", email: "test@test.com" } : null,
+        isProdInDev: false,
+        supabaseHeaders: new Headers(),
+        supabase: {},
+        host: "localhost",
+      })
+      mockGetToast.mockResolvedValue({ toast: null, headers: new Headers() })
+
+      const request = new Request("http://localhost:5173/")
+      const result = (await loader({ request, params: {} } as never)) as {
+        data: { needsEmailConfirmation: boolean }
+      }
+      return result.data.needsEmailConfirmation
+    }
+
+    it("asks a logged-in person who never confirmed their email choices", async () => {
+      needsEmailConfirmation.mockResolvedValue({
+        success: true,
+        data: true,
+        errors: [],
+      })
+
+      expect(await load({ id: "profile-1" })).toBe(true)
+      expect(needsEmailConfirmation).toHaveBeenCalledWith("profile-1")
+    })
+
+    it("leaves alone someone who already confirmed", async () => {
+      expect(await load({ id: "profile-1" })).toBe(false)
+    })
+
+    it("asks nothing when the check itself fails", async () => {
+      needsEmailConfirmation.mockResolvedValue({
+        success: false,
+        errors: [new Error("db down")],
+      })
+
+      expect(await load({ id: "profile-1" })).toBe(false)
+    })
+
+    it("asks nothing of a visitor with no profile", async () => {
+      expect(await load(null)).toBe(false)
+      expect(needsEmailConfirmation).not.toHaveBeenCalled()
     })
   })
 

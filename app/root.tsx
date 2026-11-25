@@ -37,6 +37,7 @@ import { POSITIV_EMAIL } from "~/lib/constants/constants"
 import type { Route } from "./+types/root"
 import "./app.css"
 import { getContext } from "./business/auth/auth.server"
+import { needsEmailConfirmation } from "./business/newsletter/email-preferences.server"
 import { isDraftModeEnabled } from "./business/cms/draft-mode.server"
 import {
   type DraftSnapshotQuery,
@@ -199,6 +200,10 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         ? cpfExemptionLinks({ profileId: currentProfile.id }).request
         : null
 
+    const emailCheck = currentProfile
+      ? await needsEmailConfirmation(currentProfile.id)
+      : null
+
     return data(
       {
         currentUser,
@@ -207,6 +212,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         isProdInDev,
         isThereAnyNews: shouldShowNews,
         needsProfileUpdate,
+        needsEmailConfirmation: emailCheck?.success === true && emailCheck.data,
         cpfExemptionLink,
         draftMode,
         liveSnapshot,
@@ -226,6 +232,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       isProdInDev: null,
       isThereAnyNews: null,
       needsProfileUpdate: false,
+      needsEmailConfirmation: false,
       cpfExemptionLink: null,
       draftMode,
       liveSnapshot: liveSnapshotFrom(draft),
@@ -315,6 +322,7 @@ type AppShellProps = {
   isProdInDev: boolean | null | undefined
   isThereAnyNews: boolean
   needsProfileUpdate: boolean
+  needsEmailConfirmation: boolean
   cpfExemptionLink: string | null
   currentPath: string
   siteSettings: SiteSettings | null
@@ -329,6 +337,7 @@ function AppShell({
   isProdInDev,
   isThereAnyNews,
   needsProfileUpdate,
+  needsEmailConfirmation,
   cpfExemptionLink,
   currentPath,
   siteSettings,
@@ -349,6 +358,7 @@ function AppShell({
         currentProfile={profile}
         currentPath={currentPath}
         needsProfileUpdate={needsProfileUpdate}
+        needsEmailConfirmation={needsEmailConfirmation}
         cpfExemptionLink={cpfExemptionLink}
       />
       <div className="flex flex-col grow mt-[var(--site-header-height,4rem)]">
@@ -371,6 +381,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
     isProdInDev,
     isThereAnyNews = false,
     needsProfileUpdate = false,
+    needsEmailConfirmation = false,
     cpfExemptionLink = null,
     siteSettings,
     editorialSystemUnavailable = false,
@@ -415,6 +426,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
         isProdInDev={isProdInDev}
         isThereAnyNews={isThereAnyNews ?? false}
         needsProfileUpdate={needsProfileUpdate}
+        needsEmailConfirmation={needsEmailConfirmation}
         cpfExemptionLink={cpfExemptionLink}
         currentPath={location.pathname}
         siteSettings={activeSiteSettings}

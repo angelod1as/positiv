@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react"
-import { redirect, useNavigate } from "react-router"
+import { redirect, useNavigate, useRevalidator } from "react-router"
 import { toast } from "sonner"
 import { getUserContext } from "~/business/auth/auth.server"
 import { findEmailPreferences } from "~/business/newsletter/email-preferences.server"
@@ -65,6 +65,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 const EmailsPage = ({ loaderData }: Route.ComponentProps) => {
   const { token, email, preferences } = loaderData
   const navigate = useNavigate()
+  const revalidator = useRevalidator()
   const [bounced, setBounced] = useState(false)
   const lastBounced = useRef(false)
 
@@ -96,6 +97,7 @@ const EmailsPage = ({ loaderData }: Route.ComponentProps) => {
         initialPreferences={preferences}
         commit={commit}
         onDone={() => {
+          void revalidator.revalidate()
           setBounced(lastBounced.current)
           if (!lastBounced.current) {
             toast.success(emailsPageCopy.successToast)
