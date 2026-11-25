@@ -255,7 +255,10 @@ describe("LikertAnswerPage", () => {
       ...statements,
       { key: "limites", text: "Falo dos meus limites." },
     ]
-    const { unmount } = renderPage({ statements: three, profileId: "profile-1" })
+    const { unmount } = renderPage({
+      statements: three,
+      profileId: "profile-1",
+    })
     await answerScreen(user, "Concordo")
     await answerScreen(user, "Depende")
     await user.click(screen.getByRole("button", { name: "Voltar" }))
@@ -297,6 +300,40 @@ describe("LikertAnswerPage", () => {
       await screen.findByRole("heading", { name: "Pergunto antes de tocar." }),
     ).toBeVisible()
     expect(screen.getByText("1/2")).toBeVisible()
+  })
+
+  it("answers from the keyboard", async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByRole("heading", { name: "Sinto ciúme e tudo bem." })
+
+    await user.keyboard("4{Enter}")
+
+    expect(
+      await screen.findByRole("heading", { name: "Pergunto antes de tocar." }),
+    ).toBeVisible()
+  })
+
+  it("explains the keyboard shortcuts in a dialog", async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByRole("heading", { name: "Sinto ciúme e tudo bem." })
+
+    await user.click(
+      screen.getByRole("button", { name: "Use o teclado para preencher" }),
+    )
+
+    const dialog = screen.getByRole("dialog", { name: "Preencher pelo teclado" })
+    expect(dialog).toHaveTextContent("Ctrl + Enter")
+    expect(dialog).toHaveTextContent("Esc")
+
+    await user.keyboard("4")
+    expect(
+      screen.getByRole("radio", { name: "Concordo", hidden: true }),
+    ).not.toBeChecked()
+
+    await user.keyboard("{Escape}")
+    expect(screen.queryByRole("dialog")).toBeNull()
   })
 
   it("says the scale is unavailable when nothing is published", () => {

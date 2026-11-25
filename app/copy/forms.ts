@@ -33,6 +33,41 @@ export const likertCopy = {
   commentLabel: "Comentário (opcional)",
   choiceRequired: "Escolha uma opção",
   commentTooLong: "O comentário pode ter até 5000 caracteres",
+  keyboard: {
+    open: "Use o teclado para preencher",
+    title: "Preencher pelo teclado",
+    description:
+      "Dá para responder a escala inteira sem tirar as mãos do teclado.",
+    or: "ou",
+    groups: [
+      {
+        title: "Escolhendo a resposta",
+        shortcuts: [
+          {
+            keys: ["1", "2", "3", "4", "5"],
+            action:
+              "Escolhem a resposta, de Discordo totalmente (1) a Concordo totalmente (5)",
+          },
+          { keys: ["Enter", "Espaço", "→"], action: "Continua para a próxima" },
+          { keys: ["←"], action: "Volta para a anterior" },
+        ],
+      },
+      {
+        title: "Escrevendo o comentário",
+        shortcuts: [
+          { keys: ["Enter"], action: "Pula linha" },
+          {
+            keys: ["Ctrl + Enter", "⌘ + Enter"],
+            action: "Continua para a próxima",
+          },
+          {
+            keys: ["Esc"],
+            action: "Sai do comentário e volta para os atalhos de cima",
+          },
+        ],
+      },
+    ],
+  },
 } as const
 
 export const yearCopy = {

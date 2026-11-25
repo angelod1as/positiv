@@ -6,6 +6,8 @@ import { canSeeLikert } from "~/business/profile/likert-answers.server"
 import { Copy } from "~/components/atoms/copy/copy"
 import { buildLikertFlow } from "~/components/forms/custom/likert/build-likert-flow"
 import { buildLikertQuestions } from "~/components/forms/custom/likert/build-likert-questions"
+import { LikertKeyboardHelp } from "~/components/forms/custom/likert/likert-keyboard-help"
+import { LikertOneAtATime } from "~/components/forms/custom/likert/likert-one-at-a-time"
 import {
   clearLikertOrder,
   likertOrder,
@@ -18,7 +20,6 @@ import {
   readRuntimeState,
   runtimeStorageKey,
 } from "~/components/forms/runtime/persistence"
-import { OneAtATime } from "~/components/forms/runtime/presentations/one-at-a-time"
 import type { Answers } from "~/components/forms/runtime/question.types"
 import { Skeleton } from "~/components/ui/skeleton"
 import { likertPageCopy as copy } from "~/copy/account"
@@ -96,7 +97,9 @@ const LikertAnswerPage = ({ loaderData }: Route.ComponentProps) => {
   const questions = useMemo(() => {
     if (!statements || !order) return []
 
-    const byKey = new Map(statements.map((statement) => [statement.key, statement]))
+    const byKey = new Map(
+      statements.map((statement) => [statement.key, statement]),
+    )
     return buildLikertQuestions(order.flatMap((key) => byKey.get(key) ?? []))
   }, [statements, order])
 
@@ -117,13 +120,15 @@ const LikertAnswerPage = ({ loaderData }: Route.ComponentProps) => {
 
       {statements ? (
         <>
-          <Copy>{copy.answerIntro}</Copy>
+          <p>
+            <Copy inline>{copy.answerIntro}</Copy> <LikertKeyboardHelp />
+          </p>
           {order ? (
             <FormRunner
               key={draftScope}
               questions={questions}
               flow={flow}
-              presentation={OneAtATime}
+              presentation={LikertOneAtATime}
               persistence={{
                 formId: FORM_ID,
                 scopeId: draftScope,
