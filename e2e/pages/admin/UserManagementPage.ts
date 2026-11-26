@@ -270,40 +270,6 @@ export class UserManagementPage extends BasePage {
   }
 
   // WhatsApp integration methods
-  async clickWhatsAppButton(row: Locator): Promise<void> {
-    // Get the row-index from the row element
-    const rowIndex = await row.getAttribute("row-index")
-    if (!rowIndex) {
-      throw new Error("Could not get row-index attribute from row")
-    }
-
-    // Find the WhatsApp button in the same row (using row-index)
-    const whatsappButton = this.participantsTable
-      .locator(`.ag-row[row-index="${rowIndex}"] button:has(img[alt="WhatsApp"])`)
-      .first()
-    await whatsappButton.waitFor({ state: "visible" })
-
-    // Intercept the window.open call to prevent actual navigation
-    await this.page.evaluate(() => {
-      const win = window as unknown as Window & {
-        lastOpenedUrl: string | null
-        originalOpen: typeof window.open
-      }
-      win.lastOpenedUrl = null
-      win.originalOpen = window.open
-      window.open = (
-        url?: string | URL,
-        _target?: string,
-        _features?: string,
-      ) => {
-        win.lastOpenedUrl = url?.toString() || null
-        return null
-      }
-    })
-
-    await whatsappButton.click()
-  }
-
   async getLastOpenedUrl(): Promise<string | null> {
     return await this.page.evaluate(() => {
       const win = window as Window & { lastOpenedUrl?: string | null }
@@ -311,26 +277,6 @@ export class UserManagementPage extends BasePage {
     })
   }
 
-  async verifyWhatsAppUrl(expectedPhone: string): Promise<boolean> {
-    const url = await this.getLastOpenedUrl()
-    if (!url) return false
-
-    const cleanedPhone = expectedPhone
-      .toString()
-      .replace(" ", "")
-      .replace("-", "")
-    let expectedUrl: string
-
-    if (cleanedPhone.length === 11) {
-      expectedUrl = `https://wa.me/55${expectedPhone}`
-    } else {
-      expectedUrl = `https://wa.me/${expectedPhone}`
-    }
-
-    return url === expectedUrl
-  }
-
-  // Google Contacts integration methods
   async clickGoogleContactsButton(): Promise<void> {
     await this.googleContactsButton.waitFor({ state: "visible" })
 

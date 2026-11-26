@@ -230,6 +230,10 @@ test.describe("Admin User Management", () => {
       userManagement.editDetailField("flag", "Flag amarela"),
     )
     await expect(page.locator("#flag")).toContainText("Sem flag")
+
+    await page.reload()
+    await userManagement.waitForDetailView()
+    await expect(page.locator("#flag")).toContainText("Sem flag")
   })
 
   test("a flag with notes is saved", async ({ page }) => {
@@ -287,15 +291,6 @@ test.describe("Admin User Management", () => {
     await expect(page.locator("#attendance_status")).toContainText("Desistiu")
   })
 
-  /**
-   * POS-362: navigating between events via participant history must update
-   * the displayed status data (it used to show stale data).
-   *
-   * Uses seed data:
-   * - User3 (user3@example.com / social_name: "user3")
-   * - "Evento Com Inscrições Abertas 1": application_status='sent_payment_data', attendance_status='pending'
-   * - "Evento Concluído 1": application_status='finalised', attendance_status='attended'
-   */
   const OPEN_SEED_EVENT = "Evento Com Inscrições Abertas 1"
 
   async function openUser3OnOpenEvent(page: Page) {
@@ -373,6 +368,15 @@ test.describe("Admin User Management", () => {
     await expect(attendanceStatus(page)).toContainText("Pendente")
   })
 
+  /**
+   * POS-362: navigating between events via participant history must update
+   * the displayed status data (it used to show stale data).
+   *
+   * Uses seed data:
+   * - User3 (user3@example.com / social_name: "user3")
+   * - "Evento Com Inscrições Abertas 1": application_status='sent_payment_data', attendance_status='pending'
+   * - "Evento Concluído 1": application_status='finalised', attendance_status='attended'
+   */
   test("a history link shows the other event's statuses (POS-362)", async ({
     page,
   }) => {
