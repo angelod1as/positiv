@@ -1,3 +1,5 @@
+import { applyToEvent } from '../../app/business/application/apply-to-event.server'
+import { cancelApplicationToEvent } from '../../app/business/application/cancel-application-to-event.server'
 import { createSupabaseAdminClient } from './db-cleanup'
 import { readSetupUser } from './setup-user'
 
@@ -315,4 +317,50 @@ export async function ensureTestUserProfileExists(): Promise<string> {
   }
   
   return testProfile.id
+}
+
+// Goes through the same function the application form's route calls, so the
+// application a test starts from is exactly the row the site itself would
+// write. Applies as a participant, with no confirmation e-mail.
+export async function applyAsParticipant(profileId: string, eventId: string): Promise<void> {
+  const supabase = createSupabaseAdminClient()
+
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', profileId)
+    .single()
+
+  if (error || !profile?.user_id) {
+    throw new Error(`No profile ${profileId}: ${error?.message}`)
+  }
+
+  const result = await applyToEvent(
+    {
+      applicationDate: new Date(),
+      eventId,
+      referred: 'ninguém',
+      skipEmail: true,
+    },
+    {
+      supabase,
+      supabaseHeaders: new Headers(),
+      currentUser: { id: profile.user_id },
+      currentProfile: { ...profile, roles: [], permissions: [] },
+      host: null,
+    },
+  )
+
+  if (!result.success) {
+    throw new Error(`Failed to apply: ${result.errors.map((e) => e.message).join(', ')}`)
+  }
+}
+
+// The function the dashboard's cancel button calls.
+export async function cancelAsParticipant(profileId: string, eventId: string, reason?: string): Promise<void> {
+  const result = await cancelApplicationToEvent({ profileId, eventId, reason })
+
+  if (!result.success) {
+    throw new Error(`Failed to cancel: ${result.errors.map((e) => e.message).join(', ')}`)
+  }
 }

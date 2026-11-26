@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { completeOnboarding } from '../../fixtures/auth'
 import { MyApplicationsPage } from '../../pages/MyApplicationsPage'
 import { EventApplicationPage } from '../../pages/EventApplicationPage'
@@ -11,7 +11,9 @@ import {
   ensureEventIsOpen,
   ensureEventIsClosed,
   getApplicationState,
-  ensureTestUserProfileExists
+  ensureTestUserProfileExists,
+  applyAsParticipant,
+  cancelAsParticipant
 } from '../../utils/application-helpers'
 import { ensureMinimumOpenEvents } from '../../utils/test-event-helpers'
 import { createClosedEventSoon, seedInvite } from '../../utils/invite-helpers'
@@ -59,66 +61,74 @@ test.describe('POS-191: Application Management Tests', () => {
     createdApplications.length = 0
   })
 
-  test('Complete application lifecycle: view → cancel → verify → reapply', async ({ page: _page }) => {
-    // Check prerequisites
+  test('an application shows as applied on the dashboard', async ({ page: _page }) => {
     expect(profileId).toBeTruthy()
     expect(testEvent).toBeTruthy()
     if (!profileId || !testEvent) return
-    
-    // Setup: Create an application directly in the database
-    await createTestApplication(profileId, testEvent.id)
+
+    await applyAsParticipant(profileId, testEvent.id)
     createdApplications.push({ profileId, eventId: testEvent.id })
 
-    // Navigate to dashboard and wait for UI to reflect application status
     await myApplicationsPage.goto()
     await myApplicationsPage.waitForApplicationStatusChange(testEvent.title, 'applied')
 
-    // Step 1: Verify the event shows as applied
-    const initialStatus = await myApplicationsPage.getApplicationStatus(testEvent.title)
-    expect(initialStatus).toBe('applied')
-    
-    // Verify application exists in database
-    const initialAppExists = await verifyApplicationExists(profileId, testEvent.id)
-    expect(initialAppExists).toBe(true)
-    
-    // Step 2: Cancel the application, saying why
+    const status = await myApplicationsPage.getApplicationStatus(testEvent.title)
+    expect(status).toBe('applied')
+
+    const appExists = await verifyApplicationExists(profileId, testEvent.id)
+    expect(appExists).toBe(true)
+  })
+
+  test('cancelling with a reason withdraws the application and keeps the reason', async ({ page: _page }) => {
+    expect(profileId).toBeTruthy()
+    expect(testEvent).toBeTruthy()
+    if (!profileId || !testEvent) return
+
+    await applyAsParticipant(profileId, testEvent.id)
+    createdApplications.push({ profileId, eventId: testEvent.id })
+
+    await myApplicationsPage.goto()
+    await myApplicationsPage.waitForApplicationStatusChange(testEvent.title, 'applied')
+
     await myApplicationsPage.cancelApplication(testEvent.title, { reason: 'Vou viajar nesse fim de semana' })
-    
-    // Verify UI shows not applied
+
     await myApplicationsPage.waitForApplicationStatusChange(testEvent.title, 'not-applied')
     const canceledStatus = await myApplicationsPage.getApplicationStatus(testEvent.title)
     expect(canceledStatus).toBe('not-applied')
-    
-    // Step 3: Verify canceled in database
+
     const isCanceled = await verifyApplicationCanceled(profileId, testEvent.id)
     expect(isCanceled).toBe(true)
-    
-    // Verify the cancellation date is set
+
     const canceledApp = await getApplicationState(profileId, testEvent.id)
     expect(canceledApp?.cancellation_date).toBeTruthy()
     expect(canceledApp?.is_user_applied).toBe(false)
     expect(canceledApp?.cancellation_reason).toBe('Vou viajar nesse fim de semana')
-    
-    // Step 4: Reapply to the same event
-    // For simplicity, we'll update the database directly instead of going through the complex form
-    await createTestApplication(profileId, testEvent.id)
-    
-    // Refresh the dashboard
+  })
+
+  test('an event applied to again after a cancellation shows as applied', async ({ page: _page }) => {
+    expect(profileId).toBeTruthy()
+    expect(testEvent).toBeTruthy()
+    if (!profileId || !testEvent) return
+
+    await applyAsParticipant(profileId, testEvent.id)
+    createdApplications.push({ profileId, eventId: testEvent.id })
+    await cancelAsParticipant(profileId, testEvent.id, 'Vou viajar nesse fim de semana')
+
+    // Applying is walked on screen by the account-vs-event-registration spec;
+    // here only what the dashboard makes of a second application is at stake.
+    await applyAsParticipant(profileId, testEvent.id)
+
     await myApplicationsPage.goto()
-    
-    // Step 5: Verify reapplied in UI
+
     await myApplicationsPage.waitForApplicationStatusChange(testEvent.title, 'applied')
     const reappliedStatus = await myApplicationsPage.getApplicationStatus(testEvent.title)
     expect(reappliedStatus).toBe('applied')
-    
-    // Step 6: Verify reapplied in database
+
     const reappliedAppExists = await verifyApplicationExists(profileId, testEvent.id)
     expect(reappliedAppExists).toBe(true)
-    
-    // Verify the application is active again
+
     const reappliedApp = await getApplicationState(profileId, testEvent.id)
     expect(reappliedApp?.is_user_applied).toBe(true)
-    // The cancellation date might still be there from history, that's ok
   })
 
   test('Handle multiple applications', async ({ page: _page }) => {
@@ -163,68 +173,84 @@ test.describe('POS-191: Application Management Tests', () => {
     expect(newStatus2).toBe('applied')
   })
 
-  test('Cannot apply to closed event', async ({ page }) => {
-    // The invited leg walks the whole rules quiz, one round trip per screen.
-    test.setTimeout(120_000)
+  const eventCard = (page: Page, title: string) =>
+    page.locator('[data-testid^="event-card"]').filter({ hasText: title })
 
-    // Check prerequisites
-    expect(profileId).toBeTruthy()
-    if (!profileId) return
-
+  test('a closed event offers no application on its card', async ({ page }) => {
     // The dashboard lists the twelve nearest events still to come, so the
-    // closed event has to start in the future to be on the page at all. The
-    // same event then proves an invite is the one way past it.
-    const invitedEvent = await createClosedEventSoon(`Invite ${Date.now()}`)
+    // closed event has to start in the future to be on the page at all.
+    const closedEvent = await createClosedEventSoon(`Closed ${Date.now()}`)
 
     await page.goto('/dashboard')
     await page.waitForLoadState('networkidle')
 
-    const invitedCard = page
-      .locator('[data-testid^="event-card"]')
-      .filter({ hasText: invitedEvent.title })
-    await expect(invitedCard).toBeVisible({ timeout: 30000 })
+    const card = eventCard(page, closedEvent.title)
+    await expect(card).toBeVisible({ timeout: 30000 })
     // The card says it twice: once as the status badge, once as the dead
     // button. The button is the one this is about.
     await expect(
-      invitedCard.getByRole('button', { name: 'Candidaturas encerradas' }),
+      card.getByRole('button', { name: 'Candidaturas encerradas' }),
     ).toBeDisabled()
     await expect(
-      invitedCard.getByRole('link', { name: 'Me candidatar' }),
+      card.getByRole('link', { name: 'Me candidatar' }),
     ).toHaveCount(0)
+  })
 
+  test('an invite to a closed event opens its rules', async ({ page }) => {
+    expect(profileId).toBeTruthy()
+    if (!profileId) return
+
+    const invitedEvent = await createClosedEventSoon(`Invite ${Date.now()}`)
     const token = await seedInvite(invitedEvent.id, profileId)
+
     await page.goto(`/convite/${token}`)
 
     await expect(page).toHaveURL(
       new RegExp(`/dashboard/${invitedEvent.id}/regras`),
       { timeout: 30000 },
     )
+  })
 
-    // And the card that refused a moment ago now offers the application. It is
-    // clicked rather than merely looked at: the event page cannot see a closed
-    // event through RLS, so a card pointing there would bounce the invited
-    // person straight back here.
+  test('an invited person is offered the application on the closed event card', async ({ page }) => {
+    expect(profileId).toBeTruthy()
+    if (!profileId) return
+
+    const invitedEvent = await createClosedEventSoon(`Invite ${Date.now()}`)
+    await seedInvite(invitedEvent.id, profileId)
+
     await page.goto('/dashboard')
     await page.waitForLoadState('networkidle')
 
-    const invitedApply = page
-      .locator('[data-testid^="event-card"]')
-      .filter({ hasText: invitedEvent.title })
-      .getByRole('link', { name: 'Me candidatar' })
+    const invitedCard = eventCard(page, invitedEvent.title)
+    const invitedApply = invitedCard.getByRole('link', { name: 'Me candidatar' })
     await expect(invitedApply).toBeVisible({ timeout: 30000 })
 
     await expect(
       invitedCard.getByRole('button', { name: 'Candidaturas encerradas' }),
     ).toHaveCount(0)
 
+    // Clicked rather than merely looked at: the event page cannot see a closed
+    // event through RLS, so a card pointing there would bounce the invited
+    // person straight back to the dashboard.
     await invitedApply.click()
     await expect(page).toHaveURL(
       new RegExp(`/dashboard/${invitedEvent.id}/regras`),
       { timeout: 30000 },
     )
+  })
 
-    // Through the quiz and the form to an application the closed event takes.
+  test('an invited person applies to a closed event through the quiz and the form', async ({ page }) => {
+    // The whole rules quiz, one round trip per screen.
+    test.setTimeout(120_000)
+
+    expect(profileId).toBeTruthy()
+    if (!profileId) return
+
+    const invitedEvent = await createClosedEventSoon(`Invite ${Date.now()}`)
+    await seedInvite(invitedEvent.id, profileId)
     createdApplications.push({ profileId, eventId: invitedEvent.id })
+
+    await page.goto(`/dashboard/${invitedEvent.id}/regras`)
 
     const applicationPage = new EventApplicationPage(page)
     await applicationPage.fillRulesForm()
