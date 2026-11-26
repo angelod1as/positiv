@@ -17,7 +17,12 @@ export const RulesText = ({ rules }: RulesTextProps) => {
         ruleParts.map(
           (part) =>
             rules[part].rules.length > 0 && (
-              <RulesPart key={part} {...rules[part]} />
+              <RulesPart
+                key={part}
+                title={rules[part].title}
+                subtitle={rules[part].subtitle}
+                rules={rules[part].rules}
+              />
             ),
         )
       ) : (
