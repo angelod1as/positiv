@@ -52,6 +52,9 @@ export const metaCopy = {
   paymentThanks: {
     title: "Recebemos sua escolha",
   },
+  rules: {
+    title: "Regras e Acordos",
+  },
   agreeToTerms: {
     title: "Termos e Condições",
   },

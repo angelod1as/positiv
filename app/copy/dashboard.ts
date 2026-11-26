@@ -15,6 +15,7 @@ export const dashboardCopy = {
     failed: "Sua candidatura teve um erro, tente novamente.",
   },
   emptyApplied: "Você não tem nenhuma candidatura no momento.",
+  rulesLink: "Ler regras e acordos",
   emptyAvailable: "Nenhum evento por aqui no momento.",
   calendarFailed:
     "Erro ao gerar evento no calendário, tente novamente mais tarde",
@@ -90,4 +91,10 @@ export const agreeToTermsCopy = {
     "Suas escolhas foram salvas, mas não conseguimos atualizar suas listas de e-mail. Por favor, entre em contato: partypositiv@gmail.com",
   successToast: "Escolhas salvas com sucesso",
   validation: agreeToTermsValidation,
+} as const
+
+export const rulesPageCopy = {
+  title: "Regras e Acordos",
+  rulesHeading: "Regras",
+  agreementsHeading: "Acordos",
 } as const

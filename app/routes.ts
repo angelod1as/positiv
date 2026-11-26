@@ -103,6 +103,7 @@ export default [
     ...prefix("dashboard", [
       layout("pages/dashboard/layout.tsx", [
         index("pages/dashboard/dashboard-page.tsx"),
+        route("regras", "pages/dashboard/rules-page.tsx"),
       ]),
       layout("pages/events/layout.tsx", [
         // Root
