@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { E2E_ASAAS_API_KEY, E2E_ASAAS_WEBHOOK_TOKEN } from '../mocks/asaas-mock-server'
+import { registerManualPayment } from '../../app/business/payment/manual-payment.server'
 import { createSupabaseAdminClient } from './db-cleanup'
 import { getAsaasMockUrl, getBaseUrl } from './run-context'
 
@@ -135,6 +136,34 @@ export async function getParticipantPayments(profileId: string, eventId: string)
   if (error) throw new Error(`Failed to read payments: ${error.message}`)
 
   return data
+}
+
+// Goes through the same function the admin's form calls, so the payment the
+// refund tests start from is exactly the row the site itself would write.
+export async function recordManualPayment(profileId: string, eventId: string, amount: number) {
+  const supabase = createSupabaseAdminClient()
+
+  const { data: participant, error: participantError } = await supabase
+    .from('event_participants')
+    .select('id')
+    .eq('profile_id', profileId)
+    .eq('event_id', eventId)
+    .single()
+
+  if (participantError || !participant) {
+    throw new Error(`No participant for profile ${profileId}: ${participantError?.message}`)
+  }
+
+  const result = await registerManualPayment({
+    eventParticipantId: participant.id,
+    amount,
+    method: 'pix',
+    paidAt: '2026-08-20',
+  })
+
+  if (!result.success) {
+    throw new Error(`Failed to record a payment: ${result.errors.map((e) => e.message).join(', ')}`)
+  }
 }
 
 // Enrols an existing account on an event as a regular spot, the only kind a
