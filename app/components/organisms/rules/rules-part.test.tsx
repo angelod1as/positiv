@@ -74,14 +74,17 @@ describe("RulesPart", () => {
     ).toBeInTheDocument()
   })
 
-  it("divides the rules from each other, leaving the heading's own rule as the only line above the first", () => {
+  it("separates the rules with space only, drawing no line", () => {
     const { container } = renderWithRouter(
       <RulesPart title="Regras Gerais" rules={rules} />,
     )
 
     expect(
       container.querySelectorAll('[data-slot="separator-root"]'),
-    ).toHaveLength(rules.length - 1)
+    ).toHaveLength(0)
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Regras Gerais" }),
+    ).toHaveClass("border-b-0")
   })
 
   it("shows a rule's highlight in an alert", () => {

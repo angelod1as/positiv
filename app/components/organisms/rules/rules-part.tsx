@@ -1,7 +1,6 @@
 import type { Rule } from "~/business/cms/rules.schema"
 import { LongRichText } from "~/components/atoms/rich-text/rich-text"
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
-import { Separator } from "~/components/ui/separator"
 
 type RulesPartProps = {
   title?: string | null
@@ -10,16 +9,15 @@ type RulesPartProps = {
 }
 
 export const RulesPart = ({ title, subtitle, rules }: RulesPartProps) => (
-  <div className="flex flex-col gap-8">
+  <div className="flex flex-col gap-12">
     {(title || subtitle) && (
       <div className="flex flex-col gap-2">
-        {title && <h2>{title}</h2>}
+        {title && <h2 className="border-b-0 pb-0">{title}</h2>}
         {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
       </div>
     )}
-    {rules.map((rule, index) => (
+    {rules.map((rule) => (
       <div key={rule._key} className="flex flex-col gap-4">
-        {index > 0 && <Separator />}
         <h3>{rule.title}</h3>
         <LongRichText value={rule.body} />
         {rule.highlight && (
