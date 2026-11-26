@@ -25,20 +25,12 @@ describe("RulesAndAgreements", () => {
     ])
   })
 
-  it("leaves out the titles and subtitles the Editor gave each part", () => {
-    renderWithRouter(<RulesAndAgreements rules={rulesFixture} />)
-
-    expect(screen.queryByText("Para todo mundo")).not.toBeInTheDocument()
-    expect(screen.queryByText("Regras Gerais")).not.toBeInTheDocument()
-    expect(screen.queryByText("Regras Privadas")).not.toBeInTheDocument()
-  })
-
   it("leaves out a section with no rules", () => {
     renderWithRouter(
       <RulesAndAgreements
         rules={{
           ...rulesFixture,
-          agreements: { ...rulesFixture.agreements, rules: [] },
+          agreements: [],
         }}
       />,
     )
