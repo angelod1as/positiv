@@ -253,6 +253,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       fail-fast: false
+      # The total in `--shard=N/2` below has to match the shard list's length.
       matrix:
         shard: [1, 2]
 

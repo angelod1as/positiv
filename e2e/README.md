@@ -96,6 +96,10 @@ machine.
    access: sign-up → application → payment, and the admin approving and
    charging. They are the safety net for what breaks between screens. A
    journey is the exception, kept only when each step needs the one before.
+   The ones that stay: the card and Pix payments in
+   `admin-asaas-payment.spec.ts` and the charge paid after the switch goes off
+   in `admin-online-payments-switch.spec.ts`, each walking a payment from the
+   offer to the ledger.
 5. **No waiting for what is not there.** Each test starts in a fresh browser
    context, already logged out or already logged in through its project's
    storage state. A hook that logs out "to be safe" waits for a timeout on
