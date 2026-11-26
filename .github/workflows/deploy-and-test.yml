@@ -129,13 +129,135 @@ jobs:
             VITE_UMAMI_URL=https://umami.example.com
             VITE_GTM_ID=GTM-PLACEHOLDER
 
-  # Deliberately ungated. Waiting on validate-schema and unit-test saved a
-  # runner when they failed, but it cost every green pull request their three
-  # and a half minutes in series before e2e could start. All three are required
-  # checks either way, so a failure still blocks the merge.
-  e2e-test:
+  # integration-test and e2e-shard are deliberately ungated. Waiting on
+  # validate-schema and unit-test saved a runner when they failed, but it cost
+  # every green pull request their three and a half minutes in series before
+  # the database suites could start. validate-schema, unit-test and e2e-test
+  # (which needs both of these) are required checks either way, so a failure
+  # still blocks the merge.
+  integration-test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Setup Supabase CLI and start local instance
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          check-latest: true
+          package-manager-cache: false
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 3.1.0
+
+      - name: Start Supabase local instance
+        run: |
+          for attempt in 1 2 3 4 5; do
+            supabase start -x studio,logflare,vector,edge-runtime,imgproxy && exit 0
+            echo "supabase start failed (attempt $attempt/5), retrying in 30s"
+            supabase stop --no-backup || true
+            sleep 30
+          done
+          exit 1
+
+      - name: Verify Supabase is running
+        run: |
+          max_attempts=30
+          attempt=1
+          while [ $attempt -le $max_attempts ]; do
+            if supabase status --output json > /dev/null 2>&1; then
+              echo "Supabase is running successfully"
+              exit 0
+            fi
+            echo "Attempt $attempt/$max_attempts: Waiting for Supabase to be ready..."
+            sleep 2
+            attempt=$((attempt + 1))
+          done
+          echo "Supabase failed to start after $max_attempts attempts"
+          exit 1
+
+      - name: Get Supabase local credentials
+        id: supabase-creds
+        run: |
+          echo "api_url=$(supabase status --output json | jq -r '.API_URL')" >> $GITHUB_OUTPUT
+          echo "anon_key=$(supabase status --output json | jq -r '.ANON_KEY')" >> $GITHUB_OUTPUT
+          echo "service_role_key=$(supabase status --output json | jq -r '.SERVICE_ROLE_KEY')" >> $GITHUB_OUTPUT
+          echo "db_url=$(supabase status --output json | jq -r '.DB_URL')" >> $GITHUB_OUTPUT
+
+      # Setup Node and dependencies
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          check-latest: true
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install
+      # Fail here, with a readable message, when a value is malformed or a
+      # required variable has no declaration. APP_ENV=production is what reaches
+      # the @required=forEnv(production) items at all; under any other value an
+      # empty COOKIE_SECRET or service role key would pass.
+      #
+      # Read what this does and does not prove. Every value below is supplied
+      # here, so the check says the schema is satisfiable — not that the
+      # production deploy satisfies it. Production's values live in Coolify and
+      # in GitHub secrets, and nothing in this workflow can read Coolify. A
+      # variable that is required and missing from the deploy passes here and
+      # fails at boot, which is what happened with APP_URL. The guards for that
+      # are the Dockerfile healthcheck, the smoke job in production.yml, and the
+      # "production value:" lines the schema test requires.
+      - name: Validate environment against .env.schema
+        run: pnpm env:check
+        env:
+          APP_ENV: production
+          CI: true
+          # Not a secret — it is the address the site answers on. It is here
+          # because the check runs as production, and production is the shape
+          # worth exercising: the origin of a password reset link comes from
+          # APP_URL, and production refuses to substitute the request's own Host
+          # header for it.
+          APP_URL: https://www.positivparty.com
+          VITE_SUPABASE_URL: ${{ steps.supabase-creds.outputs.api_url }}
+          VITE_SUPABASE_ANON_KEY: ${{ steps.supabase-creds.outputs.anon_key }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ steps.supabase-creds.outputs.service_role_key }}
+          SUPABASE_CONNECT_URL: ${{ steps.supabase-creds.outputs.db_url }}
+          COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
+
+      # The only place the integration suite runs on every pull request: the
+      # pre-push hook no longer reaches the database. It has its own job and its
+      # own database (WEB-81), so it no longer holds the e2e job back.
+      #
+      # APP_URL is what a developer's .env supplies: the payment links are built
+      # from it. No Listmonk credentials, ever: without them the client refuses
+      # before any request, so the suite cannot reach a real Listmonk.
+      - name: Run integration tests
+        run: pnpm test:integration
+        env:
+          CI: true
+          APP_URL: http://localhost:5173
+          VITE_SUPABASE_URL: ${{ steps.supabase-creds.outputs.api_url }}
+          VITE_SUPABASE_ANON_KEY: ${{ steps.supabase-creds.outputs.anon_key }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ steps.supabase-creds.outputs.service_role_key }}
+          SUPABASE_CONNECT_URL: ${{ steps.supabase-creds.outputs.db_url }}
+
+      - name: Stop Supabase local instance
+        if: always()
+        run: supabase stop
+
+  # WEB-81: the suite ran on one machine, one test at a time. Each shard has
+  # its own runner and its own fresh database, so no shard can touch another's
+  # data, and Playwright runs the login setup project in every shard.
+  e2e-shard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      # The total in `--shard=N/2` below has to match the shard list's length.
+      matrix:
+        shard: [1, 2]
 
     steps:
       - uses: actions/checkout@v7
@@ -242,29 +364,11 @@ jobs:
           SUPABASE_CONNECT_URL: ${{ steps.supabase-creds.outputs.db_url }}
           COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
 
-      # The only place the integration suite runs on every pull request: the
-      # pre-push hook no longer reaches the database. It goes first because the
-      # database is already migrated here, and its global setup restores the
-      # seeded tables it touches, so e2e starts from the same data.
-      #
-      # APP_URL is what a developer's .env supplies: the payment links are built
-      # from it. No Listmonk credentials, ever: without them the client refuses
-      # before any request, so the suite cannot reach a real Listmonk.
-      - name: Run integration tests
-        run: pnpm test:integration
-        env:
-          CI: true
-          APP_URL: http://localhost:5173
-          VITE_SUPABASE_URL: ${{ steps.supabase-creds.outputs.api_url }}
-          VITE_SUPABASE_ANON_KEY: ${{ steps.supabase-creds.outputs.anon_key }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ steps.supabase-creds.outputs.service_role_key }}
-          SUPABASE_CONNECT_URL: ${{ steps.supabase-creds.outputs.db_url }}
-
       # Run E2E tests against local Supabase. No Listmonk credentials either:
       # E2E_MODE short-circuits the subscriber and list calls, and the client
       # refuses any non-reserved host during a test run.
       - name: Run E2E tests
-        run: pnpm test:e2e
+        run: pnpm test:e2e --shard=${{ matrix.shard }}/2
         env:
           CI: true
           VITE_SUPABASE_URL: ${{ steps.supabase-creds.outputs.api_url }}
@@ -284,13 +388,13 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: playwright-report/
           retention-days: 30
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: playwright-test-results
+          name: playwright-test-results-${{ matrix.shard }}
           path: test-results/
           retention-days: 30
 
@@ -298,3 +402,17 @@ jobs:
       - name: Stop Supabase local instance
         if: always()
         run: supabase stop
+
+  # The check the ruleset on main requires. The work moved to integration-test
+  # and e2e-shard; this job only says whether all of it passed.
+  e2e-test:
+    needs: [integration-test, e2e-shard]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Require integration and every e2e shard to pass
+        run: |
+          test "${{ needs.integration-test.result }}" = success
+          test "${{ needs.e2e-shard.result }}" = success

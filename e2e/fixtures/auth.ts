@@ -233,22 +233,6 @@ export async function logout(page: Page): Promise<void> {
   await page.waitForLoadState("domcontentloaded")
 }
 
-export async function ensureLoggedOut(page: Page): Promise<void> {
-  await page.goto("/")
-  await page.waitForLoadState("domcontentloaded")
-
-  const isLoggedIn = await isAuthenticated(page)
-  if (isLoggedIn) {
-    await logout(page)
-  }
-
-  await page.context().clearCookies()
-  await page.evaluate(() => {
-    localStorage.clear()
-    sessionStorage.clear()
-  })
-}
-
 export async function isAuthenticated(page: Page): Promise<boolean> {
   const loginPage = new LoginPage(page)
   return await loginPage.isLoggedIn()

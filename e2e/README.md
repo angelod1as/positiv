@@ -20,6 +20,11 @@ The setup automatically detects CI environments (`process.env.CI`) and:
 - Disables build caching
 - Ensures all environment variables are available
 
+In the pull request workflow the suite runs in two shards (`e2e-shard`), each
+on its own runner with its own fresh database, and the integration suite runs
+in a job of its own. `e2e-test`, the required check, passes only when all of
+them do. Each shard uploads its report as `playwright-report-<shard>`.
+
 ## One Run At A Time
 
 Every worktree shares one local Supabase instance and one machine, so runs must
@@ -63,14 +68,42 @@ belongs to no run and will never be cleaned up.
 
 ## Testing Philosophy
 
-Our E2E tests prioritize **realistic user journeys** over isolated atomic tests. We compose tests that flow naturally from one state to another, reducing test execution time while maintaining reliability.
+One behaviour per test. A test says in its name what it proves, and when it
+fails, that name is the behaviour that broke. A long journey stops at its first
+failure and hides every step after it.
+
+This used to read the other way: combine related features into journeys, to
+save time. WEB-81 measured that in CI. A new test costs about 0.5 to 1 s
+(a clean browser context and one page load), so splitting every long journey
+would add 35 to 45 s to a suite of about five minutes. The real cost was
+elsewhere: hooks waiting for things that never come, and running on one
+machine.
 
 ### Key Principles
 
-1. **Sequential Flows Over Isolation**: When testing related features, combine them into logical user journeys
-2. **Reliability First**: While we merge tests, each step must be reliable and properly handle timing/state
-3. **Smart Test Organization**: Use Playwright's project configuration to separate concerns (authenticated vs unauthenticated)
-4. **Avoid Redundancy**: Don't test the same functionality multiple times across different user types
+1. **The action under test goes through the screen.** Clicking, typing and
+   reading the result is what an E2E test is for. Never replace it with an API
+   call.
+2. **Only the precondition takes a shortcut.** What has to exist before the
+   action (an event, a participant, a payment already recorded) is created by
+   API or database, through the same function the site uses to write it, so
+   the row matches what the site writes. `recordManualPayment` in
+   `utils/payment-helpers.ts` calls `registerManualPayment`, the function the
+   admin's form calls.
+3. **Every shortcut has its screen test.** If a test starts from a payment
+   created by a helper, another test records a payment on screen.
+4. **A few end-to-end journeys stay**, through the flows that handle money or
+   access: sign-up → application → payment, and the admin approving and
+   charging. They are the safety net for what breaks between screens. A
+   journey is the exception, kept only when each step needs the one before.
+   The ones that stay: the card and Pix payments in
+   `admin-asaas-payment.spec.ts` and the charge paid after the switch goes off
+   in `admin-online-payments-switch.spec.ts`, each walking a payment from the
+   offer to the ledger.
+5. **No waiting for what is not there.** Each test starts in a fresh browser
+   context, already logged out or already logged in through its project's
+   storage state. A hook that logs out "to be safe" waits for a timeout on
+   every test.
 
 ## Directory Structure
 
@@ -98,64 +131,40 @@ e2e/
     └── db-cleanup.ts       # Database cleanup helpers
 ```
 
-## When to Merge vs Separate Tests
-
-### Merge Tests When
-
-- Features naturally flow into each other (e.g., homepage → login → dashboard)
-- Testing the same page with different validations (empty fields → invalid data → valid data)
-- The combined flow represents a realistic user journey
-- Setup/teardown overhead is significant
-
-### Keep Tests Separate When
-
-- Testing completely different user states (new user onboarding vs existing user)
-- Features are unrelated and combining would create confusion
-- Failure in one area shouldn't block testing of another
-- Different authentication contexts are required
-
 ## Examples
 
-### Good: Sequential Flow Test
+### Good: One Behaviour Per Test
 
 ```typescript
-test('complete login flow from validation to logout', async ({ page }) => {
-  // Test empty fields
-  await submitButton.click()
-  await expect(emailError).toBeVisible()
-  
-  // Test invalid credentials (reusing same form)
-  await emailInput.fill('wrong@example.com')
-  await passwordInput.fill('wrong')
-  await submitButton.click()
-  await expect(errorAlert).toBeVisible()
-  
-  // Test successful login (clearing and reusing form)
-  await emailInput.clear()
-  await passwordInput.clear()
-  await emailInput.fill(validEmail)
-  await passwordInput.fill(validPassword)
-  await submitButton.click()
-  await expect(page).toHaveURL('/dashboard')
-  
-  // Continue with session tests...
+test('wrong credentials are refused', async ({ page }) => {
+  const loginPage = new LoginPage(page)
+  await loginPage.goto()
+
+  await loginPage.emailInput.fill('wrong@example.com')
+  await loginPage.passwordInput.fill('wrongpassword')
+  await page.getByRole('button', { name: 'Entrar' }).click()
+
+  await expect(loginPage.generalErrorAlert).toBeVisible()
+})
+
+test('admin refunds part of a payment', async ({ page }) => {
+  // Precondition by shortcut: recording on screen has its own test.
+  const { event, participant } = await participantWithPayment('Partial refund')
+  const { modal } = await openPaymentModal(page, participant.socialName, event.id)
+
+  // The action under test, on screen.
+  await refund(page, modal, '50')
+
+  await expect(modal.getByRole('row', { name: /pix/i })).toContainText('Reembolsado em parte')
 })
 ```
 
-### Bad: Over-Isolated Tests
+### Bad: One Test Walking Several Behaviours
 
 ```typescript
-// DON'T DO THIS - Too many separate tests for the same flow
-test('login with empty email shows error', async ({ page }) => {
-  // Full setup just to test one validation...
-})
-
-test('login with empty password shows error', async ({ page }) => {
-  // Another full setup for similar validation...
-})
-
-test('login with invalid credentials shows error', async ({ page }) => {
-  // Yet another full setup...
+// DON'T DO THIS - a failure at step 2 hides steps 3 to 6
+test('complete login flow from validation to logout', async ({ page }) => {
+  // empty fields → wrong credentials → login → admin refused → logout
 })
 ```
 
@@ -207,7 +216,7 @@ pnpm test:e2e --ui
    test.use({ storageState: 'e2e/.auth/user.json' })
    ```
 
-4. **Monitor Errors**: Track console errors throughout journeys
+4. **Monitor Errors**: Track console errors throughout a test
 
    ```typescript
    page.on('console', (msg) => {
@@ -232,8 +241,8 @@ pnpm test:e2e --ui
 
 ## Adding New Tests
 
-1. Determine if the test fits into an existing journey or needs its own.
-   Extend an existing spec that already walks the same page and fixtures, even
+1. Determine if the test fits into an existing spec or needs its own.
+   Add the test to an existing spec that already walks the same page and fixtures, even
    when the ticket asks for a new one: every new spec adds setup time to a
    suite that holds the shared database lock. Add a spec only when folding the
    coverage in is impossible, and say why in the PR
