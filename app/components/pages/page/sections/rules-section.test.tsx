@@ -78,6 +78,25 @@ describe("RulesSection", () => {
     ).toBeInTheDocument()
   })
 
+  it("takes a private part's rules from the loader, never from the block", () => {
+    renderWithRouter(
+      <RulesSection
+        content={content({ part: "privateRules" })}
+        privateRules={[rule("🥡 A Positiv não é marmitaria 🥡")]}
+      />,
+    )
+
+    expect(
+      screen.queryByRole("heading", { level: 3, name: "👍 Apenas SIM é SIM 👍" }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole("heading", {
+        level: 3,
+        name: "🥡 A Positiv não é marmitaria 🥡",
+      }),
+    ).toBeInTheDocument()
+  })
+
   it("shows nothing of the Regras Privadas without rules from the loader", () => {
     const { container } = renderWithRouter(
       <RulesSection
