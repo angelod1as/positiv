@@ -8,8 +8,8 @@ type RulesAndAgreementsProps = { rules: Rules | null }
 
 const Section = ({ heading, rules }: { heading: string; rules: Rule[] }) =>
   rules.length > 0 && (
-    <section className="flex flex-col gap-8">
-      <h2>{heading}</h2>
+    <section className="flex flex-col gap-12">
+      <h2 className="border-b-0 pb-0">{heading}</h2>
       <RulesPart rules={rules} />
     </section>
   )
