@@ -35,7 +35,7 @@ test.describe('POS-525: managing a payment from the admin grid', () => {
     const event = await createSoonOpenEvent(`${label} ${Date.now()}`)
     const [participant] = await createTestEventWithParticipants(event.id, 1)
     created.push(participant)
-    await recordManualPayment(participant.profileId, event.id, 150)
+    await recordManualPayment(participant.profileId, event.id, 15000)
     return { event, participant }
   }
 

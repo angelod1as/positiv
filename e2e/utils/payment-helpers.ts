@@ -137,7 +137,7 @@ export async function getParticipantPayments(profileId: string, eventId: string)
   return data
 }
 
-export async function recordManualPayment(profileId: string, eventId: string, amount: number) {
+export async function recordManualPayment(profileId: string, eventId: string, amountInCents: number) {
   const supabase = createSupabaseAdminClient()
 
   const { data: participant, error: participantError } = await supabase
@@ -157,8 +157,8 @@ export async function recordManualPayment(profileId: string, eventId: string, am
     kind: 'manual',
     status: 'paid',
     method: 'pix',
-    base_amount: amount,
-    amount,
+    base_amount: amountInCents,
+    amount: amountInCents,
     paid_at: paidAt,
     due_at: paidAt,
   })
