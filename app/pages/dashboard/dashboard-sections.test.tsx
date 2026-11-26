@@ -47,6 +47,14 @@ const renderContent = (props: {
 }
 
 describe("Dashboard sections", () => {
+  it("links to the Rules from the applied events heading", () => {
+    renderContent({ events: [], hasEverApplied: true })
+
+    expect(
+      screen.getByRole("link", { name: "Ler regras e acordos" }),
+    ).toHaveAttribute("href", "/dashboard/regras")
+  })
+
   it("shows the banner to someone who never applied to an event", () => {
     renderContent({ events: [], hasEverApplied: false })
 

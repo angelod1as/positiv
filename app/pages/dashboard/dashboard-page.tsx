@@ -8,6 +8,7 @@ import { applyToEvent } from "~/business/application/apply-to-event.server"
 import { cancelApplicationToEvent } from "~/business/application/cancel-application-to-event.server"
 import { hasEverApplied } from "~/business/application/has-ever-applied.server"
 import { isCardPaymentsEnabled } from "~/business/settings/app-settings.server"
+import { Button } from "~/components/atoms/button/button"
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
 import { EventCard } from "~/components/organisms/event-card/event-card"
 import { EventListSkeleton } from "~/components/organisms/event-list/event-list-skeleton"
@@ -30,7 +31,7 @@ export function meta({}: Route.MetaArgs) {
 
 const {
   dash: {
-    participant: { AGREE_TO_TERMS },
+    participant: { AGREE_TO_TERMS, RULES },
   },
 } = paths
 
@@ -188,7 +189,12 @@ export const EventsContent: FC<{
       )}
 
       <div className="flex flex-col gap-4">
-        <h2>{eventListCopy.appliedHeading}</h2>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h2>{eventListCopy.appliedHeading}</h2>
+          <Button to={RULES} variant="outline">
+            {dashboardCopy.rulesLink}
+          </Button>
+        </div>
         {applied.length ? (
           <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
             {applied.map((event) => (
