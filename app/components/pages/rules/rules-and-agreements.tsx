@@ -29,11 +29,11 @@ export const RulesAndAgreements = ({ rules }: RulesAndAgreementsProps) => (
       <>
         <Section
           heading={rulesPageCopy.rulesHeading}
-          rules={[...rules.generalRules.rules, ...rules.privateRules.rules]}
+          rules={[...rules.generalRules, ...rules.privateRules]}
         />
         <Section
           heading={rulesPageCopy.agreementsHeading}
-          rules={rules.agreements.rules}
+          rules={rules.agreements}
         />
       </>
     ) : (
