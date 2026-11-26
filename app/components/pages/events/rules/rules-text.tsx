@@ -4,6 +4,7 @@ import { Copy } from "~/components/atoms/copy/copy"
 import { RulesPart } from "~/components/organisms/rules/rules-part"
 import { Alert, AlertDescription } from "~/components/ui/alert"
 import { rulesCopy } from "~/copy/events"
+import { rulesPartCopy } from "~/copy/rules"
 
 type RulesTextProps = { rules: Rules | null }
 
@@ -16,12 +17,11 @@ export const RulesText = ({ rules }: RulesTextProps) => {
       {rules ? (
         ruleParts.map(
           (part) =>
-            rules[part].rules.length > 0 && (
+            rules[part].length > 0 && (
               <RulesPart
                 key={part}
-                title={rules[part].title}
-                subtitle={rules[part].subtitle}
-                rules={rules[part].rules}
+                title={rulesPartCopy[part]}
+                rules={rules[part]}
               />
             ),
         )

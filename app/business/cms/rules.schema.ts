@@ -16,15 +16,7 @@ export const ruleSchema = zod.object({
 
 export const ruleListSchema = zod.array(ruleSchema)
 
-export const ruleHeadingFields = {
-  title: zod.string().nullish(),
-  subtitle: zod.string().nullish(),
-}
-
-const partSchema = zod.object({
-  ...ruleHeadingFields,
-  rules: ruleListSchema.nullish().transform((rules) => rules ?? []),
-})
+const partSchema = ruleListSchema.nullish().transform((rules) => rules ?? [])
 
 export const rulesSchema = zod.object({
   generalRules: partSchema,
@@ -33,5 +25,4 @@ export const rulesSchema = zod.object({
 })
 
 export type Rule = z.output<typeof ruleSchema>
-export type RulesPartContent = z.output<typeof partSchema>
 export type Rules = z.output<typeof rulesSchema>

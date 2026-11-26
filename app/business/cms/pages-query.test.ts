@@ -12,15 +12,10 @@ describe("pagesQuery", () => {
     )
   })
 
-  it("joins the title and the subtitle the Editor wrote for that part", () => {
-    for (const part of ["generalRules", "agreements"]) {
-      expect(pagesQuery).toContain(
-        `part == "${part}" => *[_id == "rules"][0].${part}Title`,
-      )
-      expect(pagesQuery).toContain(
-        `part == "${part}" => *[_id == "rules"][0].${part}Subtitle`,
-      )
-    }
+  it("reads the title and subtitle the Editor wrote on the Regras Section", () => {
+    expect(pagesQuery).toMatch(
+      /_type == "rulesSection" => \{\s*part,\s*title,\s*subtitle,/,
+    )
   })
 
   // The snapshot is cached for every visitor and, in draft mode, sent to the

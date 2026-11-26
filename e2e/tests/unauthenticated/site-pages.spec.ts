@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 import { homepageCopy } from '../../../app/copy/homepage'
 import { errorsCopy } from '../../../app/copy/errors'
 import { analyticsOptOutCopy } from '../../../app/copy/privacy'
+import { rulesPartCopy } from '../../../app/copy/rules'
 import { testPageContent } from '../../fixtures/test-page-content'
 import { SitePage } from '../../pages/SitePage'
 
@@ -62,10 +63,15 @@ test.describe('Pages from Sanity', () => {
     await expect(
       page.getByRole('heading', { level: 3, name: RULE_TITLE }),
     ).toBeVisible()
+    // The title and subtitle come from the Regras Section itself
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'Regras Gerais' }),
+    ).toBeVisible()
+    await expect(page.getByText('[Exemplo] Para todo mundo')).toBeVisible()
     // The test Page holds a Regras Privadas Section too: a visitor who is not
     // signed in gets nothing of it.
     await expect(
-      page.getByRole('heading', { name: 'Regras Privadas' }),
+      page.getByRole('heading', { name: rulesPartCopy.privateRules }),
     ).toHaveCount(0)
   })
 

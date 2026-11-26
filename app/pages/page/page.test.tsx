@@ -237,11 +237,7 @@ describe("Page loader", () => {
   })
 
   describe("Regras Privadas", () => {
-    const privateRules = {
-      title: "Regras Privadas",
-      subtitle: null,
-      rules: docSections.rulesSection.rules,
-    } as Rules["privateRules"]
+    const privateRules = docSections.rulesSection.rules as Rules["privateRules"]
 
     const withRulesPage = (part: string) =>
       withPages({

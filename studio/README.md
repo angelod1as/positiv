@@ -126,12 +126,12 @@ Regras Gerais and Acordos need at least one rule; Regras Privadas may stay
 empty while they are written, and an empty part is left out wherever it would
 show.
 
-Each part also has an optional title and subtitle, shown above its rules on
-the site and in the application's Rules step. A part without a title shows its
-rules with no heading.
-
-A Page shows one part through a Regras Section, which picks the part and holds
-no text of its own, so editing the Rules changes every Page that shows them.
+A Page shows one part through a Regras Section, which picks the part and may
+carry its own optional title and subtitle, so the same part can be headed
+differently on each Page. The rules themselves stay in the Rules, so editing
+them changes every Page that shows them. A Section without a title shows its
+rules with no heading. The application's Rules step heads each part with the
+fixed names in `app/copy/rules.ts`.
 The Page query joins Regras Gerais and Acordos into the snapshot. It never
 reads the Regras Privadas: the Page loader reads them per request, only for a
 signed-in visitor, so anyone else gets nothing of that Section.

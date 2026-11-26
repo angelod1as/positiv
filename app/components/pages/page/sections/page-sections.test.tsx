@@ -102,7 +102,10 @@ describe("PageSections", () => {
     )
 
     expect(
-      screen.getByRole("heading", { level: 2, name: "Regras Privadas" }),
+      screen.getByRole("heading", {
+        level: 3,
+        name: "🥡 A Positiv não é marmitaria 🥡",
+      }),
     ).toBeInTheDocument()
   })
 

@@ -17,6 +17,25 @@ describe("rulesSection", () => {
     },
   )
 
+  it("accepts a title and a subtitle", async () => {
+    expect(
+      await validateValueOf("rulesSection", {
+        ...rulesSection,
+        title: "Regras da casa",
+        subtitle: "Para todo mundo",
+      }),
+    ).toEqual([])
+  })
+
+  it("offers an optional title and subtitle", () => {
+    const fields = rulesSectionType.fields.filter((field) =>
+      ["title", "subtitle"].includes(field.name),
+    )
+
+    expect(fields.map((field) => field.name)).toEqual(["title", "subtitle"])
+    for (const field of fields) expect(field).not.toHaveProperty("validation")
+  })
+
   it("requires a part", async () => {
     const errors = await validateValueOf("rulesSection", {
       ...rulesSection,
