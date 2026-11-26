@@ -124,6 +124,8 @@ export default [
         ),
       ]),
 
+      route("regras", "pages/dashboard/rules-page.tsx"),
+
       route(
         "/download-calendar/:eventId",
         "pages/dashboard/download-calendar.route.tsx",

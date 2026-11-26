@@ -20,6 +20,7 @@ const EMAILS_COMMIT = "/api/emails"
 // PRIVATE
 ////////
 const DASHBOARD = "/dashboard"
+const RULES = `${DASHBOARD}/regras`
 const DOWNLOAD_CALENDAR = (eventId: string) =>
   `${DASHBOARD}/download-calendar/${eventId}`
 
@@ -173,6 +174,7 @@ const paths = {
       DASHBOARD,
       DOWNLOAD_CALENDAR,
       AGREE_TO_TERMS,
+      RULES,
     },
   },
 }

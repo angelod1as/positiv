@@ -8,6 +8,7 @@ test.describe('Authentication Required Routes', () => {
     // Test protected routes redirect to login
     const protectedRoutes = [
       '/dashboard',
+      '/dashboard/regras',
       '/admin',
       '/conta',
       // An invite arrives by message and is opened signed out more often than

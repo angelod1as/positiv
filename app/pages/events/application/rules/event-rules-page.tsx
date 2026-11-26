@@ -7,7 +7,7 @@ import {
 } from "react-router"
 import { ENV } from "varlock/env"
 import { getUserContext } from "~/business/auth/auth.server"
-import { rulesCache } from "~/business/cms/rules-cache.server"
+import { loadRules } from "~/business/cms/load-rules.server"
 import type { Rules } from "~/business/cms/rules.schema"
 import { findVisibleEvent } from "~/business/event/find-visible-event.server"
 import { isVeteran } from "~/business/profile/is-veteran.server"
@@ -43,7 +43,6 @@ import {
 } from "~/components/ui/card"
 import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
-import { logger } from "~/lib/logger/logger.server"
 import type { FCC } from "~types/utils/utils.types"
 import type { Route } from "./+types/event-rules-page"
 import { rulesQuizCopy, rulesStatusNoticeCopy } from "~/copy/events"
@@ -78,17 +77,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     isVeteran: veteran,
     profileId: currentProfile?.id ?? "",
     rules,
-  }
-}
-
-async function loadRules(): Promise<Rules | null> {
-  try {
-    return await rulesCache.get()
-  } catch (error) {
-    logger.error("Could not load the Rules", {
-      error: error instanceof Error ? error.message : String(error),
-    })
-    return null
   }
 }
 
