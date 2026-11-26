@@ -59,27 +59,55 @@ describe("deploy-and-test workflow", () => {
   })
 
   it("keeps the downloaded browser between runs", () => {
-    const e2e = jobBlock("e2e-test")
+    const e2e = jobBlock("e2e-shard")
 
     expect(e2e).toContain("actions/cache")
     expect(e2e).toContain("~/.cache/ms-playwright")
   })
 
   it("keys that cache on the Playwright version, so a bump downloads afresh", () => {
-    const key = jobBlock("e2e-test").match(/key: (.+)/)?.[1] ?? ""
+    const key = jobBlock("e2e-shard").match(/key: (.+)/)?.[1] ?? ""
 
     expect(key).toContain("steps.playwright-version.outputs.version")
   })
 
-  it("runs the integration suite in the e2e job, once the database is up and before playwright", () => {
-    const e2e = jobBlock("e2e-test")
-    const position = (step: string) => e2e.indexOf(`- name: ${step}\n`)
-    const steps = [
-      "Get Supabase local credentials",
-      "Install dependencies",
-      "Run integration tests",
-      "Run E2E tests",
-    ]
+  // WEB-81: the suite ran on one machine, one test at a time, about five minutes
+  // of a nine-minute job. Each shard gets its own runner and its own fresh
+  // database, so the shards cannot touch each other's data.
+  it("splits the e2e suite across machines, each with its own database", () => {
+    const shard = jobBlock("e2e-shard")
+
+    expect(shard).toMatch(/matrix:\n +shard: \[1, 2\]/)
+    expect(shard).toContain("- name: Start Supabase local instance\n")
+    expect(runCommand("Run E2E tests")).toBe("pnpm test:e2e --shard=${{ matrix.shard }}/2")
+  })
+
+  it("names each shard's reports apart, so one upload does not overwrite another", () => {
+    const shard = jobBlock("e2e-shard")
+
+    expect(shard).toContain("name: playwright-report-${{ matrix.shard }}")
+    expect(shard).toContain("name: playwright-test-results-${{ matrix.shard }}")
+  })
+
+  it("lets one shard finish even when the other fails, so its report is not lost", () => {
+    expect(jobBlock("e2e-shard")).toMatch(/fail-fast: false/)
+  })
+
+  // e2e-test is the check the ruleset on main requires. It stays, as the job
+  // that says whether integration and every shard passed.
+  it("keeps e2e-test as the required check, green only when integration and every shard are", () => {
+    const gate = jobBlock("e2e-test")
+
+    expect(gate).toMatch(/^ {4}needs: \[integration-test, e2e-shard\]$/m)
+    expect(gate).toMatch(/^ {4}if: always\(\)$/m)
+    expect(gate).toContain("needs.integration-test.result")
+    expect(gate).toContain("needs.e2e-shard.result")
+  })
+
+  it("runs the integration suite in its own job, once the database is up", () => {
+    const job = jobBlock("integration-test")
+    const position = (step: string) => job.indexOf(`- name: ${step}\n`)
+    const steps = ["Get Supabase local credentials", "Install dependencies", "Run integration tests"]
 
     for (const step of steps) {
       expect(position(step), `step "${step}" not found`).toBeGreaterThanOrEqual(0)
@@ -87,36 +115,37 @@ describe("deploy-and-test workflow", () => {
     expect(runCommand("Run integration tests")).toBe("pnpm test:integration")
     expect(position("Run integration tests")).toBeGreaterThan(position("Get Supabase local credentials"))
     expect(position("Run integration tests")).toBeGreaterThan(position("Install dependencies"))
-    expect(position("Run integration tests")).toBeLessThan(position("Run E2E tests"))
+    expect(job).not.toContain("playwright")
   })
 
   it("lets a red integration suite fail the job", () => {
-    const step = stepBlock("e2e-test", "Run integration tests")
+    const step = stepBlock("integration-test", "Run integration tests")
 
     expect(step).not.toContain("continue-on-error")
     expect(step).toContain("SUPABASE_CONNECT_URL: ${{ steps.supabase-creds.outputs.db_url }}")
   })
 
   it("gives the integration suite the APP_URL a developer's .env supplies", () => {
-    const step = stepBlock("e2e-test", "Run integration tests")
+    const step = stepBlock("integration-test", "Run integration tests")
 
     expect(step).toMatch(/APP_URL: http:\/\/localhost:\d+/)
   })
 
   it("never hands the integration suite Listmonk credentials", () => {
-    const step = stepBlock("e2e-test", "Run integration tests")
+    const step = stepBlock("integration-test", "Run integration tests")
 
     expect(step).not.toContain("LISTMONK")
   })
 
   it("never hands the e2e suite Listmonk credentials", () => {
-    const step = stepBlock("e2e-test", "Run E2E tests")
+    const step = stepBlock("e2e-shard", "Run E2E tests")
 
     expect(step).not.toContain("LISTMONK")
   })
 
-  it("runs e2e alongside the other checks rather than queued behind them", () => {
-    expect(jobBlock("e2e-test")).not.toMatch(/^ {4}needs:/m)
+  it("runs integration and e2e alongside the other checks rather than queued behind them", () => {
+    expect(jobBlock("integration-test")).not.toMatch(/^ {4}needs:/m)
+    expect(jobBlock("e2e-shard")).not.toMatch(/^ {4}needs:/m)
   })
 
   it("builds the Studio in every pull request, so a broken schema never merges", () => {
@@ -142,7 +171,8 @@ describe("deploy-and-test workflow", () => {
   })
 
   it("reads no secret of the deleted staging project", () => {
-    expect(jobBlock("e2e-test")).not.toContain("secrets.STAGING_")
+    expect(jobBlock("e2e-shard")).not.toContain("secrets.STAGING_")
+    expect(jobBlock("integration-test")).not.toContain("secrets.STAGING_")
   })
 })
 
