@@ -189,8 +189,8 @@ export const EventsContent: FC<{
       )}
 
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h2>{eventListCopy.appliedHeading}</h2>
+        <div className="flex flex-col gap-4 border-b pb-2 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="border-b-0 pb-0">{eventListCopy.appliedHeading}</h2>
           <Button to={RULES} variant="outline">
             {dashboardCopy.rulesLink}
           </Button>
