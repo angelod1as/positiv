@@ -295,6 +295,17 @@ describe("seedDocuments", () => {
       }
     })
 
+    // The e2e suite finds each part by these headings.
+    it("titles every part, and gives one a subtitle", () => {
+      const heading = rules as unknown as Record<string, string | undefined>
+      expect([
+        heading?.generalRulesTitle,
+        heading?.agreementsTitle,
+        heading?.privateRulesTitle,
+      ]).toEqual(["Regras Gerais", "Acordos", "Regras Privadas"])
+      expect(heading?.generalRulesSubtitle).toMatch(/^\[Exemplo\]/)
+    })
+
     it("seeds a rule with a highlight", () => {
       expect(
         Object.values(rules ?? {})

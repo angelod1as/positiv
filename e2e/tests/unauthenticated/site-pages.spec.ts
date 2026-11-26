@@ -2,7 +2,6 @@ import { test, expect } from '@playwright/test'
 import { homepageCopy } from '../../../app/copy/homepage'
 import { errorsCopy } from '../../../app/copy/errors'
 import { analyticsOptOutCopy } from '../../../app/copy/privacy'
-import { rulesPartCopy } from '../../../app/copy/rules'
 import { testPageContent } from '../../fixtures/test-page-content'
 import { SitePage } from '../../pages/SitePage'
 
@@ -66,7 +65,7 @@ test.describe('Pages from Sanity', () => {
     // The test Page holds a Regras Privadas Section too: a visitor who is not
     // signed in gets nothing of it.
     await expect(
-      page.getByRole('heading', { name: rulesPartCopy.privateRules }),
+      page.getByRole('heading', { name: 'Regras Privadas' }),
     ).toHaveCount(0)
   })
 

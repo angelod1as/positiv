@@ -75,6 +75,14 @@ export const pagesQuery = `*[_type == "page"]{
     _type == "systemComponent" => { component },
     _type == "rulesSection" => {
       part,
+      "title": select(
+        part == "generalRules" => *[_id == "rules"][0].generalRulesTitle,
+        part == "agreements" => *[_id == "rules"][0].agreementsTitle
+      ),
+      "subtitle": select(
+        part == "generalRules" => *[_id == "rules"][0].generalRulesSubtitle,
+        part == "agreements" => *[_id == "rules"][0].agreementsSubtitle
+      ),
       "rules": select(
         part == "generalRules" => *[_id == "rules"][0].generalRules[]${ruleProjection},
         part == "agreements" => *[_id == "rules"][0].agreements[]${ruleProjection}

@@ -1,5 +1,5 @@
 import type { Page } from "~/business/cms/page.schema"
-import type { Rule } from "~/business/cms/rules.schema"
+import type { RulesPartContent } from "~/business/cms/rules.schema"
 import { FloatingWhatsAppButton } from "~/components/atoms/floating-whatsapp-button/floating-whatsapp-button"
 import { PageHeader } from "~/components/pages/page/header/page-header"
 import { PageSections } from "~/components/pages/page/sections/page-sections"
@@ -11,7 +11,7 @@ type PageContentProps = {
   page: Page
   events: Promise<Event[] | undefined> | undefined
   isLoggedIn: boolean
-  privateRules?: Rule[] | null
+  privateRules?: RulesPartContent | null
 }
 
 export function PageContent({

@@ -168,6 +168,10 @@ function rules() {
   return {
     _id: RULES_ID,
     _type: "rules",
+    generalRulesTitle: "Regras Gerais",
+    generalRulesSubtitle: "[Exemplo] Para todo mundo",
+    agreementsTitle: "Acordos",
+    privateRulesTitle: "Regras Privadas",
     generalRules: [
       rule("consentimento", "Regra geral 1", "Um destaque de exemplo"),
       rule("privacidade", "Regra geral 2"),

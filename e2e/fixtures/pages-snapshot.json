@@ -812,7 +812,9 @@
             "highlight": null,
             "title": "[Exemplo] Regra geral 2"
           }
-        ]
+        ],
+        "subtitle": "[Exemplo] Para todo mundo",
+        "title": "Regras Gerais"
       }
     ],
     "seo": {
@@ -2495,13 +2497,17 @@
             "highlight": null,
             "title": "[Exemplo] Regra geral 2"
           }
-        ]
+        ],
+        "subtitle": "[Exemplo] Para todo mundo",
+        "title": "Regras Gerais"
       },
       {
         "_key": "private-rules",
         "_type": "rulesSection",
         "part": "privateRules",
-        "rules": null
+        "rules": null,
+        "subtitle": null,
+        "title": null
       }
     ],
     "seo": {
