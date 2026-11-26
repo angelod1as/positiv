@@ -318,6 +318,7 @@ export async function ensureTestUserProfileExists(): Promise<string> {
   
   return testProfile.id
 }
+
 // Goes through the same function the application form's route calls, so the
 // application a test starts from is exactly the row the site itself would
 // write. Applies as a participant, with no confirmation e-mail.

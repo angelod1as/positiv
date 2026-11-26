@@ -105,7 +105,7 @@ test.describe('POS-191: Application Management Tests', () => {
     expect(canceledApp?.cancellation_reason).toBe('Vou viajar nesse fim de semana')
   })
 
-  test('applying again after a cancellation shows the event as applied', async ({ page: _page }) => {
+  test('an event applied to again after a cancellation shows as applied', async ({ page: _page }) => {
     expect(profileId).toBeTruthy()
     expect(testEvent).toBeTruthy()
     if (!profileId || !testEvent) return
@@ -173,12 +173,12 @@ test.describe('POS-191: Application Management Tests', () => {
     expect(newStatus2).toBe('applied')
   })
 
-  // The dashboard lists the twelve nearest events still to come, so a closed
-  // event has to start in the future to be on the page at all.
   const eventCard = (page: Page, title: string) =>
     page.locator('[data-testid^="event-card"]').filter({ hasText: title })
 
   test('a closed event offers no application on its card', async ({ page }) => {
+    // The dashboard lists the twelve nearest events still to come, so the
+    // closed event has to start in the future to be on the page at all.
     const closedEvent = await createClosedEventSoon(`Closed ${Date.now()}`)
 
     await page.goto('/dashboard')

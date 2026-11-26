@@ -50,6 +50,8 @@ test.describe('Account signup versus event registration', () => {
       .first()
       .getByRole('link', { name: 'Me candidatar' })
 
+    const eventTitle = await applyableCards.first().locator('h3').innerText()
+
     await applyButton.click()
     await page.waitForURL(/\/dashboard\/.+/)
 
@@ -61,6 +63,10 @@ test.describe('Account signup versus event registration', () => {
     const applicationPage = new EventApplicationPage(page)
     await applicationPage.completeFullApplication()
     await page.waitForURL('/dashboard')
+
+    await expect(
+      page.getByTestId('event-card-applied').filter({ hasText: eventTitle }),
+    ).toHaveCount(1)
   })
 
   test('an applied event appears once, in the applied section, and the banner is gone', async ({ page }) => {
