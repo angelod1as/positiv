@@ -141,6 +141,19 @@ describe("seedDocuments", () => {
     expect(JSON.stringify(testPage)).toContain(E2E_TEST_SENTINEL)
   })
 
+  it("titles the test page's Regras Sections on the block", () => {
+    const testPage = pages.find((page) => page._id === E2E_TEST_PAGE_ID)
+    const rulesSections = testPage?.sections?.filter(
+      (section) => section._type === "rulesSection",
+    ) as { title?: string; subtitle?: string }[]
+
+    expect(rulesSections.map(({ title, subtitle }) => ({ title, subtitle })))
+      .toEqual([
+        { title: "Regras Gerais", subtitle: "[Exemplo] Para todo mundo" },
+        { title: "Regras Privadas", subtitle: undefined },
+      ])
+  })
+
   it("seeds a Callout showcase: every colour, with and without title or emoji, and Lado-a-lado of 2, 3 and 4", () => {
     const showcase = pages.find((page) => page._id === CALLOUTS_PAGE_ID)
     type Callout = { title?: string; emoji?: string; color: string }
@@ -293,17 +306,6 @@ describe("seedDocuments", () => {
           expect(rule.title).toMatch(/^\[Exemplo\]/)
         }
       }
-    })
-
-    // The e2e suite finds each part by these headings.
-    it("titles every part, and gives one a subtitle", () => {
-      const heading = rules as unknown as Record<string, string | undefined>
-      expect([
-        heading?.generalRulesTitle,
-        heading?.agreementsTitle,
-        heading?.privateRulesTitle,
-      ]).toEqual(["Regras Gerais", "Acordos", "Regras Privadas"])
-      expect(heading?.generalRulesSubtitle).toMatch(/^\[Exemplo\]/)
     })
 
     it("seeds a rule with a highlight", () => {

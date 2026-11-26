@@ -19,20 +19,10 @@ const rule = (key: string) => ({
   highlight: null,
 })
 
-const part = (rules: unknown[], heading: object = {}) => ({
-  title: null,
-  subtitle: null,
-  rules,
-  ...heading,
-})
-
 const valid = {
-  generalRules: part([rule("g1")], {
-    title: "Regras Gerais",
-    subtitle: "Para todo mundo",
-  }),
-  agreements: part([rule("a1")], { title: "Acordos" }),
-  privateRules: part([
+  generalRules: [rule("g1")],
+  agreements: [rule("a1")],
+  privateRules: [
     {
       ...rule("p1"),
       highlight: {
@@ -40,7 +30,7 @@ const valid = {
         body: paragraph("Ser encarade pode ser muito ruim."),
       },
     },
-  ]),
+  ],
 }
 
 describe("rulesSchema", () => {
@@ -52,16 +42,9 @@ describe("rulesSchema", () => {
     expect(rulesSchema.parse(rulesFixture)).toEqual(rulesFixture)
   })
 
-  it("reads a part without a title or a subtitle", () => {
-    expect(rulesSchema.parse({ ...valid, agreements: part([rule("a1")]) })).toEqual({
-      ...valid,
-      agreements: { title: null, subtitle: null, rules: [rule("a1")] },
-    })
-  })
-
   it("accepts a highlight without a title", () => {
     const highlight = { title: null, body: paragraph("Só o texto.") }
-    const rules = { ...valid, agreements: part([{ ...rule("a1"), highlight }]) }
+    const rules = { ...valid, agreements: [{ ...rule("a1"), highlight }] }
 
     expect(rulesSchema.parse(rules)).toEqual(rules)
   })
@@ -70,31 +53,27 @@ describe("rulesSchema", () => {
   // being rewritten must not take the other two down with it.
   it.each(["generalRules", "agreements", "privateRules"])(
     "accepts an empty %s",
-    (name) => {
-      expect(
-        rulesSchema.safeParse({ ...valid, [name]: part([]) }).success,
-      ).toBe(true)
+    (part) => {
+      expect(rulesSchema.safeParse({ ...valid, [part]: [] }).success).toBe(true)
     },
   )
 
   // Sanity drops an array field emptied in the Studio, so it arrives as null.
   it("reads a part Sanity dropped as no rules", () => {
-    expect(
-      rulesSchema.parse({
-        ...valid,
-        agreements: { title: null, subtitle: null, rules: null },
-      }),
-    ).toEqual({ ...valid, agreements: part([]) })
+    expect(rulesSchema.parse({ ...valid, agreements: null })).toEqual({
+      ...valid,
+      agreements: [],
+    })
   })
 
   it("rejects a rule without a title", () => {
-    const rules = { ...valid, generalRules: part([{ ...rule("g1"), title: null }]) }
+    const rules = { ...valid, generalRules: [{ ...rule("g1"), title: null }] }
 
     expect(rulesSchema.safeParse(rules).success).toBe(false)
   })
 
   it("rejects a rule without a text", () => {
-    const rules = { ...valid, generalRules: part([{ ...rule("g1"), body: null }]) }
+    const rules = { ...valid, generalRules: [{ ...rule("g1"), body: null }] }
 
     expect(rulesSchema.safeParse(rules).success).toBe(false)
   })

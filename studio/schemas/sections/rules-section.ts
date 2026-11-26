@@ -33,6 +33,18 @@ export const rulesSection = defineType({
       },
       validation: (rule) => rule.required(),
     }),
+    defineField({
+      name: "title",
+      title: "Título",
+      description: "Aparece acima das regras. Opcional.",
+      type: "string",
+    }),
+    defineField({
+      name: "subtitle",
+      title: "Subtítulo",
+      description: "Aparece logo abaixo do título. Opcional.",
+      type: "string",
+    }),
   ],
   preview: {
     select: { part: "part" },

@@ -18,36 +18,38 @@ const content = (fields: Partial<Content>): Content => ({
   _type: "rulesSection",
   _key: "rules",
   part: "generalRules",
-  title: "Regras Gerais",
-  subtitle: "Para todo mundo",
   rules: [rule("👍 Apenas SIM é SIM 👍")],
   ...fields,
 })
 
 describe("RulesSection", () => {
+  it("shows the title and subtitle the Editor wrote on the block", () => {
+    renderWithRouter(
+      <RulesSection
+        content={content({ title: "Regras da casa", subtitle: "Leia antes" })}
+        privateRules={null}
+      />,
+    )
+
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Regras da casa" }),
+    ).toBeInTheDocument()
+    expect(screen.getByText("Leia antes")).toBeInTheDocument()
+  })
+
+  it("shows no heading when the block has no title", () => {
+    renderWithRouter(
+      <RulesSection content={content({})} privateRules={null} />,
+    )
+
+    expect(screen.queryByRole("heading", { level: 2 })).not.toBeInTheDocument()
+  })
+
   it("shows the rules the snapshot joined for a public part", () => {
     renderWithRouter(
       <RulesSection content={content({})} privateRules={null} />,
     )
 
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Regras Gerais" }),
-    ).toBeInTheDocument()
-    expect(screen.getByText("Para todo mundo")).toBeInTheDocument()
-    expect(
-      screen.getByRole("heading", { level: 3, name: "👍 Apenas SIM é SIM 👍" }),
-    ).toBeInTheDocument()
-  })
-
-  it("shows the rules without a heading when the Editor left the title out", () => {
-    renderWithRouter(
-      <RulesSection
-        content={content({ title: null, subtitle: null })}
-        privateRules={null}
-      />,
-    )
-
-    expect(screen.queryByRole("heading", { level: 2 })).not.toBeInTheDocument()
     expect(
       screen.getByRole("heading", { level: 3, name: "👍 Apenas SIM é SIM 👍" }),
     ).toBeInTheDocument()
@@ -58,15 +60,10 @@ describe("RulesSection", () => {
       <RulesSection
         content={content({
           part: "privateRules",
-          title: null,
-          subtitle: null,
           rules: null,
-        })}
-        privateRules={{
           title: "Regras Privadas",
-          subtitle: null,
-          rules: [rule("🥡 A Positiv não é marmitaria 🥡")],
-        }}
+        })}
+        privateRules={[rule("🥡 A Positiv não é marmitaria 🥡")]}
       />,
     )
 

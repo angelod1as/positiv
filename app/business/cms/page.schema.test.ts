@@ -72,6 +72,31 @@ describe("pageDocumentSchema", () => {
       accepts(page({ sections: [{ ...sections.rulesSection, rules: [] }] }))
     })
 
+    it("keeps the title and subtitle the Editor wrote on a Regras Section", () => {
+      const parsed = pageDocumentSchema.parse(
+        page({
+          sections: [
+            { ...sections.rulesSection, title: "Regras", subtitle: "Leia" },
+          ],
+        }),
+      )
+
+      expect(parsed.sections[0]).toMatchObject({
+        title: "Regras",
+        subtitle: "Leia",
+      })
+    })
+
+    it("accepts a Regras Section without a title or subtitle", () => {
+      accepts(
+        page({
+          sections: [
+            { ...sections.rulesSection, title: null, subtitle: null },
+          ],
+        }),
+      )
+    })
+
     it("accepts a Regras Section before the Rules are first published", () => {
       accepts(page({ sections: [{ ...sections.rulesSection, rules: null }] }))
     })

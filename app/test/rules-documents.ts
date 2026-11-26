@@ -16,25 +16,13 @@ const rule = (key: string, title: string, text: string): Rule => ({
 })
 
 export const rulesFixture: Rules = {
-  generalRules: {
-    title: "Regras Gerais",
-    subtitle: "Para todo mundo",
-    rules: [
-      rule("sim", "👍 Apenas SIM é SIM 👍", "Essa é nossa regra de ouro do rolê."),
-    ],
-  },
-  agreements: {
-    title: "Acordos",
-    subtitle: null,
-    rules: [
-      rule("pontualidade", "⏰ Pontualidade 🕐", "Por favor, seja pontual."),
-    ],
-  },
-  privateRules: {
-    title: "Regras Privadas",
-    subtitle: null,
-    rules: [
-      rule("marmitaria", "🥡 A Positiv não é marmitaria 🥡", "Respeito, por favor."),
-    ],
-  },
+  generalRules: [
+    rule("sim", "👍 Apenas SIM é SIM 👍", "Essa é nossa regra de ouro do rolê."),
+  ],
+  agreements: [
+    rule("pontualidade", "⏰ Pontualidade 🕐", "Por favor, seja pontual."),
+  ],
+  privateRules: [
+    rule("marmitaria", "🥡 A Positiv não é marmitaria 🥡", "Respeito, por favor."),
+  ],
 }

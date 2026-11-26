@@ -1,143 +1,131 @@
 {
-  "agreements": {
-    "rules": [
-      {
-        "_key": "pontualidade",
-        "body": [
-          {
-            "_key": "p0",
-            "_type": "block",
-            "children": [
-              {
-                "_key": "s0",
-                "_type": "span",
-                "marks": [],
-                "text": "Texto de exemplo do ambiente de desenvolvimento."
-              }
-            ],
-            "markDefs": [],
-            "style": "normal"
-          }
-        ],
-        "highlight": null,
-        "title": "[Exemplo] Acordo 1"
-      },
-      {
-        "_key": "comida",
-        "body": [
-          {
-            "_key": "p0",
-            "_type": "block",
-            "children": [
-              {
-                "_key": "s0",
-                "_type": "span",
-                "marks": [],
-                "text": "Texto de exemplo do ambiente de desenvolvimento."
-              }
-            ],
-            "markDefs": [],
-            "style": "normal"
-          }
-        ],
-        "highlight": null,
-        "title": "[Exemplo] Acordo 2"
-      }
-    ],
-    "subtitle": null,
-    "title": "Acordos"
-  },
-  "generalRules": {
-    "rules": [
-      {
-        "_key": "consentimento",
-        "body": [
-          {
-            "_key": "p0",
-            "_type": "block",
-            "children": [
-              {
-                "_key": "s0",
-                "_type": "span",
-                "marks": [],
-                "text": "Texto de exemplo do ambiente de desenvolvimento."
-              }
-            ],
-            "markDefs": [],
-            "style": "normal"
-          }
-        ],
-        "highlight": {
-          "body": [
+  "agreements": [
+    {
+      "_key": "pontualidade",
+      "body": [
+        {
+          "_key": "p0",
+          "_type": "block",
+          "children": [
             {
-              "_key": "p0",
-              "_type": "block",
-              "children": [
-                {
-                  "_key": "s0",
-                  "_type": "span",
-                  "marks": [],
-                  "text": "Destaque de exemplo."
-                }
-              ],
-              "markDefs": [],
-              "style": "normal"
+              "_key": "s0",
+              "_type": "span",
+              "marks": [],
+              "text": "Texto de exemplo do ambiente de desenvolvimento."
             }
           ],
-          "title": "Um destaque de exemplo"
-        },
-        "title": "[Exemplo] Regra geral 1"
+          "markDefs": [],
+          "style": "normal"
+        }
+      ],
+      "highlight": null,
+      "title": "[Exemplo] Acordo 1"
+    },
+    {
+      "_key": "comida",
+      "body": [
+        {
+          "_key": "p0",
+          "_type": "block",
+          "children": [
+            {
+              "_key": "s0",
+              "_type": "span",
+              "marks": [],
+              "text": "Texto de exemplo do ambiente de desenvolvimento."
+            }
+          ],
+          "markDefs": [],
+          "style": "normal"
+        }
+      ],
+      "highlight": null,
+      "title": "[Exemplo] Acordo 2"
+    }
+  ],
+  "generalRules": [
+    {
+      "_key": "consentimento",
+      "body": [
+        {
+          "_key": "p0",
+          "_type": "block",
+          "children": [
+            {
+              "_key": "s0",
+              "_type": "span",
+              "marks": [],
+              "text": "Texto de exemplo do ambiente de desenvolvimento."
+            }
+          ],
+          "markDefs": [],
+          "style": "normal"
+        }
+      ],
+      "highlight": {
+        "body": [
+          {
+            "_key": "p0",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Destaque de exemplo."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          }
+        ],
+        "title": "Um destaque de exemplo"
       },
-      {
-        "_key": "privacidade",
-        "body": [
-          {
-            "_key": "p0",
-            "_type": "block",
-            "children": [
-              {
-                "_key": "s0",
-                "_type": "span",
-                "marks": [],
-                "text": "Texto de exemplo do ambiente de desenvolvimento."
-              }
-            ],
-            "markDefs": [],
-            "style": "normal"
-          }
-        ],
-        "highlight": null,
-        "title": "[Exemplo] Regra geral 2"
-      }
-    ],
-    "subtitle": "[Exemplo] Para todo mundo",
-    "title": "Regras Gerais"
-  },
-  "privateRules": {
-    "rules": [
-      {
-        "_key": "privada",
-        "body": [
-          {
-            "_key": "p0",
-            "_type": "block",
-            "children": [
-              {
-                "_key": "s0",
-                "_type": "span",
-                "marks": [],
-                "text": "Texto de exemplo do ambiente de desenvolvimento."
-              }
-            ],
-            "markDefs": [],
-            "style": "normal"
-          }
-        ],
-        "highlight": null,
-        "title": "[Exemplo] Regra privada 1"
-      }
-    ],
-    "subtitle": null,
-    "title": "Regras Privadas"
-  }
+      "title": "[Exemplo] Regra geral 1"
+    },
+    {
+      "_key": "privacidade",
+      "body": [
+        {
+          "_key": "p0",
+          "_type": "block",
+          "children": [
+            {
+              "_key": "s0",
+              "_type": "span",
+              "marks": [],
+              "text": "Texto de exemplo do ambiente de desenvolvimento."
+            }
+          ],
+          "markDefs": [],
+          "style": "normal"
+        }
+      ],
+      "highlight": null,
+      "title": "[Exemplo] Regra geral 2"
+    }
+  ],
+  "privateRules": [
+    {
+      "_key": "privada",
+      "body": [
+        {
+          "_key": "p0",
+          "_type": "block",
+          "children": [
+            {
+              "_key": "s0",
+              "_type": "span",
+              "marks": [],
+              "text": "Texto de exemplo do ambiente de desenvolvimento."
+            }
+          ],
+          "markDefs": [],
+          "style": "normal"
+        }
+      ],
+      "highlight": null,
+      "title": "[Exemplo] Regra privada 1"
+    }
+  ]
 }
