@@ -5,13 +5,15 @@ import { createSupabaseAdminClient } from './db-cleanup'
 import { runEventTitle } from './run-context'
 
 // The admin's session, as the event routes hand it to the business functions.
-function adminContext(eventId?: string) {
+// They write through Kysely and never touch the Supabase client.
+export function adminContext(eventId?: string) {
   return {
-    supabase: createSupabaseAdminClient(),
+    supabase: undefined as never,
     supabaseHeaders: new Headers(),
     currentUser: { id: '00000000-0000-4000-8000-000000000001' },
     currentProfile: {
       id: '00000000-0000-4000-8000-000000000002',
+      basic_data_filled: true,
       created_at: new Date().toISOString(),
       permissions: ['admin.panel', 'events.manage'],
     },
