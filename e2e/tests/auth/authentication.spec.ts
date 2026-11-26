@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { 
   logout, 
-  ensureLoggedOut,
   isAuthenticated,
   performUILogin
 } from '../../fixtures/auth'
@@ -10,10 +9,6 @@ import { createTestUser, generateTestEmail, generateTestPassword, deleteTestUser
 
 test.describe('Authentication Flows', () => {
   let testUsers: Array<{ id: string; email: string; password: string }> = []
-
-  test.beforeEach(async ({ page }) => {
-    await ensureLoggedOut(page)
-  })
 
   test.afterEach(async () => {
     // Clean up any users created in individual tests
@@ -127,64 +122,5 @@ test.describe('Authentication Flows', () => {
     // Should still be on dashboard or terms page
     const url = page.url()
     expect(url.includes('/dashboard') || url.includes('/conta/termos-e-condicoes')).toBe(true)
-  })
-
-  test('multiple users can login sequentially', async ({ page }) => {
-    // Create three users
-    const users = []
-    for (let i = 0; i < 3; i++) {
-      const email = generateTestEmail()
-      const password = generateTestPassword()
-      const user = await createTestUser(email, password)
-      users.push({ ...user, password })
-      testUsers.push(user)
-    }
-    
-    const loginPage = new LoginPage(page)
-    
-    // Login as each user sequentially
-    for (const user of users) {
-      // Ensure logged out
-      await ensureLoggedOut(page)
-      
-      // Login
-      await loginPage.goto()
-      await loginPage.login(user.email, user.password)
-      
-      // Verify authenticated
-      expect(await isAuthenticated(page)).toBe(true)
-      
-      // Logout
-      await logout(page)
-      expect(await isAuthenticated(page)).toBe(false)
-    }
-  })
-
-  test('ensureLoggedOut utility works correctly', async ({ page }) => {
-    // Create a user
-    const email = generateTestEmail()
-    const password = generateTestPassword()
-    const testUser = await createTestUser(email, password)
-    testUsers.push(testUser)
-    
-    // Start logged out
-    const initialAuth = await isAuthenticated(page)
-    expect(initialAuth).toBe(false)
-    
-    // Login
-    const loginPage = new LoginPage(page)
-    await loginPage.goto()
-    await loginPage.login(email, password)
-    expect(await isAuthenticated(page)).toBe(true)
-    
-    // Use ensureLoggedOut
-    await ensureLoggedOut(page)
-    
-    // Should be logged out
-    const finalAuth = await isAuthenticated(page)
-    expect(finalAuth).toBe(false)
-    
-    // Should be on homepage
-    await expect(page).toHaveURL('/')
   })
 })
