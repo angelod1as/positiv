@@ -5,6 +5,7 @@ import { EventManagementPage } from '../../pages/admin/EventManagementPage'
 import { adminInvitesCopy } from '../../../app/copy/admin/invites'
 import { runEventTitle } from '../../utils/run-context'
 import { readSetupUser } from '../../utils/setup-user'
+import { createEventAsAdmin, setEventStatusAsAdmin } from '../../utils/admin-event-helpers'
 
 test.describe('Admin Event Management', () => {
   test.use({ storageState: path.resolve(import.meta.dirname, '../../.auth/admin.json') })
@@ -12,28 +13,19 @@ test.describe('Admin Event Management', () => {
   // Note: Test events are cleaned up in global teardown to avoid
   // interfering with other tests that may need them
 
-  test('admin can navigate to dashboard and manage events', async ({ page }) => {
+  test('admin creates an event from the dashboard', async ({ page }) => {
     const adminDashboard = new AdminDashboardPage(page)
     const eventManagement = new EventManagementPage(page)
-    
-    // Generate unique event name
-    const timestamp = Date.now()
-    const eventTitle = runEventTitle(`Event ${timestamp}`)
-    const updatedEventTitle = runEventTitle(`Updated Event ${timestamp}`)
-    
-    // Navigate to admin dashboard
+    const eventTitle = runEventTitle(`Event ${Date.now()}`)
+
     await adminDashboard.navigate()
     await expect(page).toHaveURL('/admin')
-    
-    // Verify admin dashboard content
     await adminDashboard.verifyAdminAccess()
     await expect(adminDashboard.eventsTable).toBeVisible({ timeout: 10000 })
-    
-    // Click create event button
+
     await adminDashboard.clickCreateEvent()
     await expect(page).toHaveURL('/admin/eventos/novo')
-    
-    // Fill event creation form
+
     await eventManagement.fillBasicEventInfo({
       title: eventTitle,
       emoji: '🎉',
@@ -41,73 +33,96 @@ test.describe('Admin Event Management', () => {
       price: '100',
       capacity: '50'
     })
-    
-    // Set event start date
     const eventDate = new Date()
-    eventDate.setMonth(eventDate.getMonth() + 2) // 2 months from now
+    eventDate.setMonth(eventDate.getMonth() + 2)
     await eventManagement.setEventStartDate(eventDate)
-    
-    // Click auto-calculate dates button
     await eventManagement.clickCalculateDates()
-    
-    // Verify all date fields are filled
+    await eventManagement.saveEvent()
+
+    await expect(page).toHaveURL(/\/admin\/eventos\/[\w-]+$/)
+    await expect(eventManagement.eventHeading).toContainText(eventTitle)
+  })
+
+  test('calculating the dates fills every date field', async ({ page }) => {
+    const eventManagement = new EventManagementPage(page)
+
+    await page.goto('/admin/eventos/novo')
+
+    const eventDate = new Date()
+    eventDate.setMonth(eventDate.getMonth() + 2)
+    await eventManagement.setEventStartDate(eventDate)
+    await eventManagement.clickCalculateDates()
+
     const allDatesFilled = await eventManagement.verifyAllDatesAreFilled()
     expect(allDatesFilled).toBeTruthy()
-    
-    // Save the event
-    await eventManagement.saveEvent()
-    
-    // Should redirect to view event page
-    await expect(page).toHaveURL(/\/admin\/eventos\/[\w-]+$/)
-    
-    // Verify we're on the view event page with the created event
-    await expect(eventManagement.eventHeading).toContainText(eventTitle)
+  })
 
-    // The sheet is produced here, on the event page itself, rather than on a
-    // page of its own
+  test('an event opens from the dashboard', async ({ page }) => {
+    const adminDashboard = new AdminDashboardPage(page)
+    const eventManagement = new EventManagementPage(page)
+    const event = await createEventAsAdmin(`Listed ${Date.now()}`)
+
+    await adminDashboard.navigate()
+    await adminDashboard.eventsTable.waitFor({ state: 'visible' })
+    await adminDashboard.waitForEventInList(event.title)
+    await adminDashboard.clickViewEvent(event.title)
+
+    await expect(page).toHaveURL(`/admin/eventos/${event.id}`)
+    await expect(eventManagement.eventHeading).toContainText(event.title)
+  })
+
+  // The sheet is produced on the event page itself, rather than on a page of
+  // its own
+  test('the event page downloads the participants sheet', async ({ page }) => {
+    const eventManagement = new EventManagementPage(page)
+    const event = await createEventAsAdmin(`Sheet ${Date.now()}`)
+
+    await page.goto(`/admin/eventos/${event.id}`)
+    await expect(eventManagement.eventHeading).toContainText(event.title)
+
     const downloadPromise = page.waitForEvent('download')
     await eventManagement.clickDownloadData()
     expect((await downloadPromise).suggestedFilename()).toBe('planilha.csv')
-    
-    // Go back to dashboard
-    await adminDashboard.navigate()
-    
-    // Wait for table to load and wait for the new event to appear
-    await adminDashboard.eventsTable.waitFor({ state: 'visible' })
-    await adminDashboard.waitForEventInList(eventTitle)
-    
-    // Click to view the event
-    await adminDashboard.clickViewEvent(eventTitle)
-    
-    // Wait for event view page to load
-    await expect(page).toHaveURL(/\/admin\/eventos\/[\w-]+$/)
-    await expect(eventManagement.eventHeading).toContainText(eventTitle)
-    
-    // Edit the event
+  })
+
+  test('admin edits an event title and price', async ({ page }) => {
+    const eventManagement = new EventManagementPage(page)
+    const event = await createEventAsAdmin(`Edit ${Date.now()}`)
+    const updatedEventTitle = runEventTitle(`Updated Event ${Date.now()}`)
+
+    await page.goto(`/admin/eventos/${event.id}`)
     await eventManagement.clickEdit()
     await expect(page).toHaveURL(/\/admin\/eventos\/novo\/[\w-]+$/)
-    
-    // Change some fields
+
     await eventManagement.updateTitle(updatedEventTitle)
     await eventManagement.updatePrice('150')
-    
-    // Save changes
     await eventManagement.saveEvent()
-    
-    // Verify update success - check we're back on view page with updated title
+
     await expect(page).toHaveURL(/\/admin\/eventos\/[\w-]+$/)
     await expect(eventManagement.eventHeading).toContainText(updatedEventTitle)
-    
-    // Test status transitions
+  })
+
+  test('an event moves through scheduled, open and closed', async ({ page }) => {
+    const eventManagement = new EventManagementPage(page)
+    const event = await createEventAsAdmin(`Status ${Date.now()}`)
+
+    await page.goto(`/admin/eventos/${event.id}`)
+
     await eventManagement.changeStatus('Scheduled')
     await eventManagement.changeStatus('Registration Open')
     await eventManagement.changeStatus('Registration Closed')
+  })
 
-    // The event is closed and we are already standing on its page, which is
-    // where an invite is generated. Searched by e-mail: it is the one thing
-    // about the setup user no other suite can be using at the same time.
+  // A closed event's page is where an invite is generated. Searched by e-mail:
+  // it is the one thing about the setup user no other suite can be using at
+  // the same time.
+  test('admin generates an invite and revokes it', async ({ page }) => {
+    const event = await createEventAsAdmin(`Invite ${Date.now()}`)
+    await setEventStatusAsAdmin(event.id, 'Registration Closed')
     const { modal } = adminInvitesCopy
     const invitee = await readSetupUser()
+
+    await page.goto(`/admin/eventos/${event.id}`)
 
     await page.getByRole('button', { name: adminInvitesCopy.trigger }).click()
     await page.getByLabel(modal.searchLabel).fill(invitee.email)
@@ -132,12 +147,17 @@ test.describe('Admin Event Management', () => {
       modal.status.revoked,
       { timeout: 15000 },
     )
+  })
 
-    await page.keyboard.press('Escape')
+  test('a closed event is marked completed', async ({ page }) => {
+    const eventManagement = new EventManagementPage(page)
+    const event = await createEventAsAdmin(`Completed ${Date.now()}`)
+    await setEventStatusAsAdmin(event.id, 'Registration Closed')
+
+    await page.goto(`/admin/eventos/${event.id}`)
 
     await eventManagement.changeStatus('Completed')
-    
-    // Verify final status
+
     const finalStatus = await eventManagement.getCurrentStatus()
     expect(finalStatus).toBe('Completed')
   })

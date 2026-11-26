@@ -1,9 +1,8 @@
-import { expect, test } from "@playwright/test"
+import { expect, test, type Page } from "@playwright/test"
 import path from "path"
 import { AdminDashboardPage } from "../../pages/admin/AdminDashboardPage"
-import { EventManagementPage } from "../../pages/admin/EventManagementPage"
 import { UserManagementPage } from "../../pages/admin/UserManagementPage"
-import { getBaseUrl, runEventTitle } from "../../utils/run-context"
+import { getBaseUrl } from "../../utils/run-context"
 import {
   getProfileId,
   readLikertStatements,
@@ -20,6 +19,11 @@ import {
   createTestEventWithParticipants,
   type TestParticipant,
 } from "../../utils/event-helpers"
+import {
+  createEventAsAdmin,
+  findSeedEventId,
+  findSeedProfileId,
+} from "../../utils/admin-event-helpers"
 
 test.describe("Admin User Management", () => {
   test.use({
@@ -28,15 +32,11 @@ test.describe("Admin User Management", () => {
 
   let userManagement: UserManagementPage
   let adminDashboard: AdminDashboardPage
-  let eventManagement: EventManagementPage
   let testParticipants: TestParticipant[] = []
-  let testEventId: string = ""
-  let testEventIdDetail: string = ""
 
   test.beforeEach(async ({ page }) => {
     userManagement = new UserManagementPage(page)
     adminDashboard = new AdminDashboardPage(page)
-    eventManagement = new EventManagementPage(page)
   })
 
   test.afterEach(async () => {
@@ -53,211 +53,120 @@ test.describe("Admin User Management", () => {
     // interfering with other tests that may need them
   })
 
-  test("table inline editing operations", async ({ page }) => {
-    // Navigate to admin dashboard
-    await adminDashboard.navigate()
-    await adminDashboard.verifyAdminAccess()
+  // An event of its own with fixture participants: Participant 1 starts
+  // flagged yellow with notes, Participant 3 unflagged without any
+  async function eventWithParticipants(count: number) {
+    const event = await createEventAsAdmin(`Event ${Date.now()}`, 30)
+    testParticipants = await createTestEventWithParticipants(event.id, count)
+    return event
+  }
 
-    // Create a test event with participants
-    const timestamp = Date.now()
-    const eventTitle = runEventTitle(`Event ${timestamp}`)
+  async function openParticipant(page: Page, eventId: string, profileId: string) {
+    await page.goto(`/admin/eventos/${eventId}/participantes/${profileId}`)
+    await userManagement.waitForHydration()
+    await userManagement.waitForDetailView()
+  }
 
-    await adminDashboard.clickCreateEvent()
-    await expect(page).toHaveURL("/admin/eventos/novo")
+  test("the participants table lists the event's participants", async ({
+    page,
+  }) => {
+    const event = await eventWithParticipants(3)
 
-    // Fill event creation form
-    await eventManagement.fillBasicEventInfo({
-      title: eventTitle,
-      emoji: "🎭",
-      location: "Test Location",
-      price: "100",
-      capacity: "50",
-    })
+    await userManagement.navigate(event.id)
+    await expect(page).toHaveURL(`/admin/eventos/${event.id}`)
 
-    // Set event start date (one month from now)
-    const eventDate = new Date()
-    eventDate.setDate(eventDate.getDate() + 30) // Add 30 days instead of adding a month
-    await eventManagement.setEventStartDate(eventDate)
-
-    // Click auto-calculate dates button
-    await eventManagement.clickCalculateDates()
-
-    // Save the event (this will wait for navigation)
-    await eventManagement.saveEvent()
-
-    // Should redirect to view event page
-    await expect(page).toHaveURL(/\/admin\/eventos\/[\w-]+$/)
-
-    // Get the event ID from URL - ensure it's not "novo"
-    const url = page.url()
-    testEventId = url.split("/").pop() || ""
-    expect(testEventId).not.toBe("novo")
-    expect(testEventId).toMatch(/^[\w-]+$/)
-
-    // Create test participants
-    testParticipants = await createTestEventWithParticipants(testEventId, 3)
-
-    // Navigate to user management page
-    await userManagement.navigate(testEventId)
-    await expect(page).toHaveURL(`/admin/eventos/${testEventId}`)
-
-    // Verify the participants table is visible
     await expect(userManagement.participantsTable).toBeVisible()
     await userManagement.waitForTableToLoad()
+    expect(await userManagement.tableRows.count()).toBe(3)
+  })
 
-    // Verify participant count
-    const participantCount = await userManagement.tableRows.count()
-    expect(participantCount).toBe(3)
+  test("an application status edited in the table is saved", async ({
+    page,
+  }) => {
+    const event = await eventWithParticipants(1)
 
-    // Test 1: Inline editing - Select cell (application_status)
-    const firstParticipant = testParticipants[0]
-    const firstRow = await userManagement.findRowByParticipantName(
-      firstParticipant.socialName,
+    await userManagement.navigate(event.id)
+    const row = await userManagement.findRowByParticipantName(
+      testParticipants[0].socialName,
     )
-
-    // Edit application status - use display name that appears in dropdown
     await userManagement.editSelectCell(
-      firstRow,
+      row,
       "application_status",
       "Regras enviadas",
     )
 
-    // Verify the change shows immediately - look for the cell in the grid that has our value
-    // AG Grid renders rows in multiple containers, so we search the whole grid for the status
-    const firstParticipantStatusCell = userManagement.participantsTable
+    // AG Grid renders rows in multiple containers, so the whole grid is
+    // searched for the value
+    const statusCell = userManagement.participantsTable
       .locator('.ag-cell[col-id="application_status"]')
       .filter({ hasText: "Regras enviadas" })
       .first()
-    await expect(firstParticipantStatusCell).toBeVisible()
+    await expect(statusCell).toBeVisible()
 
-    // Test 2: Inline editing - Another select cell (attendance_status)
-    const secondParticipant = testParticipants[1]
-    const secondRow = await userManagement.findRowByParticipantName(
-      secondParticipant.socialName,
-    )
-
-    await userManagement.editSelectCell(
-      secondRow,
-      "attendance_status",
-      "Compareceu",
-    )
-
-    // Test 3: Data persistence - Refresh page and verify changes persist
     await page.reload()
     await userManagement.waitForTableToLoad()
+    await expect(statusCell).toBeVisible()
+  })
 
-    // Verify first participant changes persisted - search for cell with our value
-    const persistedFirstStatusCell = userManagement.participantsTable
-      .locator('.ag-cell[col-id="application_status"]')
-      .filter({ hasText: "Regras enviadas" })
-      .first()
-    await expect(persistedFirstStatusCell).toBeVisible()
+  test("an attendance status edited in the table is saved", async ({
+    page,
+  }) => {
+    const event = await eventWithParticipants(2)
 
-    // Verify second participant changes persisted
-    const persistedSecondStatusCell = userManagement.participantsTable
+    await userManagement.navigate(event.id)
+    const row = await userManagement.findRowByParticipantName(
+      testParticipants[1].socialName,
+    )
+    await userManagement.editSelectCell(row, "attendance_status", "Compareceu")
+
+    await page.reload()
+    await userManagement.waitForTableToLoad()
+    const attendanceCell = userManagement.participantsTable
       .locator('.ag-cell[col-id="attendance_status"]')
       .filter({ hasText: "Compareceu" })
       .first()
-    await expect(persistedSecondStatusCell).toBeVisible()
+    await expect(attendanceCell).toBeVisible()
   })
 
-  test("detail view and external integrations", async ({ page }) => {
-    // Navigate to admin dashboard
-    await adminDashboard.navigate()
-    await adminDashboard.verifyAdminAccess()
+  test("the WhatsApp button in the table links to the participant's number", async () => {
+    const event = await eventWithParticipants(1)
 
-    // Create a new test event for detail view testing
-    const timestamp = Date.now()
-    const eventTitle = runEventTitle(`Event Detail View ${timestamp}`)
+    await userManagement.navigate(event.id)
+    const row = await userManagement.findRowByParticipantName("Participant 1")
 
-    await adminDashboard.clickCreateEvent()
-    await expect(page).toHaveURL("/admin/eventos/novo")
+    await expect(
+      row.locator('a:has(img[alt="WhatsApp"])').first(),
+    ).toHaveAttribute("href", /^https:\/\/wa\.me\//)
+  })
 
-    // Fill event creation form
-    await eventManagement.fillBasicEventInfo({
-      title: eventTitle,
-      emoji: "🎯",
-      location: "Test Location",
-      price: "50",
-      capacity: "30",
-    })
+  test("the view button opens the participant's detail page", async ({
+    page,
+  }) => {
+    const event = await eventWithParticipants(1)
 
-    // Set event start date (one month from now)
-    const eventDate = new Date()
-    eventDate.setDate(eventDate.getDate() + 30)
-    await eventManagement.setEventStartDate(eventDate)
-
-    // Click auto-calculate dates button
-    await eventManagement.clickCalculateDates()
-
-    // Save the event (this will wait for navigation)
-    await eventManagement.saveEvent()
-
-    // Should redirect to view event page
-    await expect(page).toHaveURL(/\/admin\/eventos\/[\w-]+$/)
-
-    // Get the event ID from URL - ensure it's not "novo"
-    const url = page.url()
-    testEventIdDetail = url.split("/").pop() || ""
-    expect(testEventIdDetail).not.toBe("novo")
-    expect(testEventIdDetail).toMatch(/^[\w-]+$/)
-
-    // Create test participants with minimal data for speed
-    testParticipants = await createTestEventWithParticipants(
-      testEventIdDetail,
-      2,
-    )
-
-    // Navigate back to the event page to see participants
-    await userManagement.navigate(testEventIdDetail)
-    await userManagement.waitForTableToLoad()
-
-    // Always Participant 1: the row order changes between runs, and this one
-    // starts with a flag and notes, so it takes every step below
-    const firstRow = await userManagement.findRowByParticipantName("Participant 1")
-    const rowIndex = await firstRow.getAttribute("row-index")
-    // social_name is in the left pinned section, so we need to look there
-    const participantName =
-      (await userManagement.participantsTable
-        .locator(
-          `.ag-pinned-left-cols-container .ag-row[row-index="${rowIndex}"] .ag-cell[col-id="social_name"]`,
-        )
-        .textContent()) || "Unknown"
-
-    // Test WhatsApp button if available
-    const whatsappButton = firstRow
-      .locator('button:has(img[alt="WhatsApp"])')
-      .first()
-    const hasWhatsApp = (await whatsappButton.count()) > 0
-
-    if (hasWhatsApp) {
-      await userManagement.clickWhatsAppButton(firstRow)
-      const openedUrl = await userManagement.getLastOpenedUrl()
-      expect(openedUrl).toMatch(/^https:\/\/wa\.me\//)
-    }
-
-    // Test detail view
-    await userManagement.clickViewParticipantButton(firstRow)
+    await userManagement.navigate(event.id)
+    const row = await userManagement.findRowByParticipantName("Participant 1")
+    await userManagement.clickViewParticipantButton(row)
     await userManagement.waitForDetailView()
 
-    // Verify we're on the detail page
     await expect(page).toHaveURL(
-      new RegExp(`/admin/eventos/${testEventIdDetail}/participantes/[\\w-]+$`),
+      new RegExp(`/admin/eventos/${event.id}/participantes/[\\w-]+$`),
     )
-    await expect(page.locator("h2").first()).toContainText(
-      participantName.split(" ")[0],
-    )
+    await expect(page.locator("h2").first()).toContainText("Participant")
 
-    // Verify important participant fields are displayed
     await expect(page.getByText("Indicações:")).toBeVisible()
     await expect(page.getByText("Indicade por:")).toBeVisible()
     await expect(page.getByText("Vai acompanhade?")).toBeVisible()
     await expect(page.getByText("Notas (Participante):")).toBeVisible()
-
-    // Verify the referred field value is displayed
     await expect(page.getByText("João Test - indicação formal")).toBeVisible()
+  })
 
-    // Edit a field in detail view (use display name for Radix UI Select).
+  test("an application status edited on the detail page shows in the table", async ({
+    page,
+  }) => {
+    const event = await eventWithParticipants(1)
+    await openParticipant(page, event.id, testParticipants[0].profileId)
+
     // Neither fixture participant starts with this status, so it is a real save
     await userManagement.saveDetailField(() =>
       userManagement.editDetailField("application_status", "Pensar melhor"),
@@ -266,26 +175,36 @@ test.describe("Admin User Management", () => {
       "Pensar melhor",
     )
 
-    // Test Google Contacts integration if visible
-    const googleContactsVisible =
-      await userManagement.googleContactsButton.isVisible()
-    if (googleContactsVisible) {
-      await userManagement.clickGoogleContactsButton()
+    await userManagement.navigate(event.id)
+    await userManagement.waitForTableToLoad()
+    const updatedStatusCell = userManagement.participantsTable
+      .locator('.ag-cell[col-id="application_status"]')
+      .filter({ hasText: "Pensar melhor" })
+      .first()
+    await expect(updatedStatusCell).toBeVisible()
+  })
 
-      const { copiedText, openedUrl } =
-        await userManagement.verifyGoogleContactsIntegration()
+  test("the Google Contacts button copies the name and opens Google Contacts", async ({
+    page,
+  }) => {
+    const event = await eventWithParticipants(1)
+    await openParticipant(page, event.id, testParticipants[0].profileId)
 
-      // Verify clipboard content was copied
-      expect(copiedText).toBeTruthy()
-      expect(copiedText).toContain(participantName.split(" ")[0])
+    await userManagement.clickGoogleContactsButton()
+    const { copiedText, openedUrl } =
+      await userManagement.verifyGoogleContactsIntegration()
 
-      // Verify Google Contacts URL was opened
-      expect(openedUrl).toBeTruthy()
-      expect(openedUrl).toContain("contacts.google.com")
-    }
+    expect(copiedText).toBeTruthy()
+    expect(copiedText).toContain("Participant")
+    expect(openedUrl).toBeTruthy()
+    expect(openedUrl).toContain("contacts.google.com")
+  })
 
-    // Participant 1 starts flagged, with notes. Each save waits for the
-    // reloaded data on screen: the next edit reads it
+  test("removing a flag and its notes is saved", async ({ page }) => {
+    const event = await eventWithParticipants(1)
+    await openParticipant(page, event.id, testParticipants[0].profileId)
+
+    // Each save waits for the reloaded data on screen: the next edit reads it
     await userManagement.saveDetailField(() =>
       userManagement.editDetailField("flag", "Sem flag"),
     )
@@ -296,13 +215,32 @@ test.describe("Admin User Management", () => {
     })
     await expect(page.locator("#flag_notes")).toHaveValue("")
 
-    // A flag needs notes: without them nothing is saved
+    await page.reload()
+    await userManagement.waitForDetailView()
+    await expect(page.locator("#flag")).toContainText("Sem flag")
+    await expect(page.locator("#flag_notes")).toHaveValue("")
+  })
+
+  test("a flag without notes is not saved", async ({ page }) => {
+    const event = await eventWithParticipants(3)
+    await openParticipant(page, event.id, testParticipants[2].profileId)
+    await expect(page.locator("#flag")).toContainText("Sem flag")
+
     await userManagement.expectToastAfter("warning", () =>
       userManagement.editDetailField("flag", "Flag amarela"),
     )
     await expect(page.locator("#flag")).toContainText("Sem flag")
 
-    const flagNotes = `E2E flag notes ${timestamp}`
+    await page.reload()
+    await userManagement.waitForDetailView()
+    await expect(page.locator("#flag")).toContainText("Sem flag")
+  })
+
+  test("a flag with notes is saved", async ({ page }) => {
+    const event = await eventWithParticipants(3)
+    await openParticipant(page, event.id, testParticipants[2].profileId)
+
+    const flagNotes = `E2E flag notes ${Date.now()}`
     await userManagement.saveDetailField(async () => {
       await userManagement.editDetailField("flag_notes", flagNotes)
       await page.locator("#flag_notes").blur()
@@ -312,6 +250,16 @@ test.describe("Admin User Management", () => {
     )
     await expect(page.locator("#flag")).toContainText("Flag amarela")
 
+    await page.reload()
+    await userManagement.waitForDetailView()
+    await expect(page.locator("#flag")).toContainText("Flag amarela")
+    await expect(page.locator("#flag_notes")).toHaveValue(flagNotes)
+  })
+
+  test("the veteran checkbox is saved", async ({ page }) => {
+    const event = await eventWithParticipants(1)
+    await openParticipant(page, event.id, testParticipants[0].profileId)
+
     const wasVeteran = await userManagement.veteranCheckbox.isChecked()
     await userManagement.saveDetailField(() =>
       userManagement.veteranLabel.click(),
@@ -320,60 +268,75 @@ test.describe("Admin User Management", () => {
       checked: !wasVeteran,
     })
 
+    await page.reload()
+    await userManagement.waitForDetailView()
+    await expect(userManagement.veteranCheckbox).toBeChecked({
+      checked: !wasVeteran,
+    })
+  })
+
+  test("an attendance status edited on the detail page is saved", async ({
+    page,
+  }) => {
+    const event = await eventWithParticipants(1)
+    await openParticipant(page, event.id, testParticipants[0].profileId)
+
     await userManagement.saveDetailField(() =>
       userManagement.editDetailField("attendance_status", "Desistiu"),
     )
     await expect(page.locator("#attendance_status")).toContainText("Desistiu")
 
-    // One reload proves every save above reached the database
     await page.reload()
     await userManagement.waitForDetailView()
-    await expect(page.locator("#flag")).toContainText("Flag amarela")
-    await expect(page.locator("#flag_notes")).toHaveValue(flagNotes)
-    await expect(userManagement.veteranCheckbox).toBeChecked({
-      checked: !wasVeteran,
-    })
     await expect(page.locator("#attendance_status")).toContainText("Desistiu")
-
-    // Navigate back to table
-    await userManagement.navigate(testEventIdDetail)
-    await userManagement.waitForTableToLoad()
-
-    // Verify detail view change reflected in table - search for cell with our value
-    const updatedStatusCell = userManagement.participantsTable
-      .locator('.ag-cell[col-id="application_status"]')
-      .filter({ hasText: "Pensar melhor" })
-      .first()
-    await expect(updatedStatusCell).toBeVisible()
   })
 
-  /**
-   * POS-362: Test that navigating between events via participant history
-   * correctly updates the displayed status data (fixes stale data bug).
-   *
-   * Uses seed data:
-   * - User3 (user3@example.com / social_name: "user3")
-   * - "Evento Com Inscrições Abertas 1": application_status='sent_payment_data', attendance_status='pending'
-   * - "Evento Concluído 1": application_status='finalised', attendance_status='attended'
-   */
-  test("participant history navigation shows correct data (POS-362)", async ({
+  const OPEN_SEED_EVENT = "Evento Com Inscrições Abertas 1"
+
+  async function openUser3OnOpenEvent(page: Page) {
+    const eventId = await findSeedEventId(OPEN_SEED_EVENT)
+    const profileId = await findSeedProfileId("user3@example.com")
+    await openParticipant(page, eventId, profileId)
+    return eventId
+  }
+
+  async function followHistoryToCompletedEvent(page: Page, eventId: string) {
+    const historySection = page.getByRole("heading", {
+      name: "Histórico de candidaturas",
+    })
+    await expect(historySection).toBeVisible({ timeout: 5000 })
+
+    // first(): the pattern also matches "Evento Concluído 10", "11" and so on
+    const historyEventLink = page
+      .getByRole("link", { name: /Evento Concluído 1/i })
+      .first()
+    await expect(historyEventLink).toBeVisible()
+    await historyEventLink.click()
+
+    await page.waitForFunction(
+      (oldEventId) => {
+        const match = window.location.href.match(/\/eventos\/([^/]+)/)
+        return match && match[1] !== oldEventId
+      },
+      eventId,
+      { timeout: 10000 },
+    )
+    await page.waitForLoadState("networkidle")
+  }
+
+  const applicationStatus = (page: Page) =>
+    page.locator('[id="application_status"]')
+  const attendanceStatus = (page: Page) =>
+    page.locator('[id="attendance_status"]')
+
+  test("a participant opened from the table shows that event's statuses", async ({
     page,
   }) => {
-    // Navigate to the Registration Open event using seed data
-    await adminDashboard.navigate()
-    await adminDashboard.verifyAdminAccess()
-
-    // Click on "Evento Com Inscrições Abertas 1" in the events table
-    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
-
-    // Wait for participants table to load
+    await userManagement.navigate(await findSeedEventId(OPEN_SEED_EVENT))
     await userManagement.waitForTableToLoad()
 
-    // Navigate to user3's detail page via the name link in the pinned-left column.
-    // user3 may be on page 2+ due to default sort, so we first filter with the
-    // search box to bring them into view, then click their name link directly.
-    // This avoids row-index-based navigation which is fragile in large paginated tables
-    // (row-indices shift when AG Grid applies the quick filter asynchronously).
+    // user3 may be on page 2+ due to default sort, so the search box brings
+    // them into view first
     const searchInput = userManagement.participantsTable.locator(
       '[aria-label="Buscar participantes"]',
     )
@@ -392,86 +355,63 @@ test.describe("Admin User Management", () => {
     }
     await page.goto(user3Href)
 
-    // Wait for navigation to participant detail page
     await page.waitForURL(/\/participantes\//)
     await userManagement.waitForDetailView()
+    expect(page.url()).toContain("/participantes/")
 
-    // Store the current URL to verify navigation later
-    const currentEventUrl = page.url()
-    expect(currentEventUrl).toContain("/participantes/")
-
-    // Verify we're on the correct event page by checking the "No evento" paragraph
     await expect(
       page.getByText(/No evento.*Evento Com Inscrições Abertas 1/),
     ).toBeVisible()
+    await expect(applicationStatus(page)).toContainText(
+      "Dados de pagto enviados",
+    )
+    await expect(attendanceStatus(page)).toContainText("Pendente")
+  })
 
-    // Verify current event's status values (Radix UI Select shows text in trigger button)
-    const applicationStatusTrigger = page.locator('[id="application_status"]')
-    const attendanceStatusTrigger = page.locator('[id="attendance_status"]')
-
-    await expect(applicationStatusTrigger).toContainText("Dados de pagto enviados")
-    await expect(attendanceStatusTrigger).toContainText("Pendente")
-
-    // Find and click on a different event in the history section
-    const historySection = page.getByRole("heading", {
-      name: "Histórico de candidaturas",
-    })
-    await expect(historySection).toBeVisible({ timeout: 5000 })
-
-    // Click on the completed event link in history and wait for navigation
-    // Use first() since regex matches multiple events (1, 10, 11, etc.)
-    const historyEventLink = page
-      .getByRole("link", {
-        name: /Evento Concluído 1/i,
-      })
-      .first()
-    await expect(historyEventLink).toBeVisible()
-
-    // Extract event ID from current URL to detect change (using URL API for robustness)
-    const currentEventId =
-      new URL(currentEventUrl).pathname.match(/\/eventos\/([^/]+)/)?.[1] ?? ""
-
-    // Click the link
-    await historyEventLink.click()
-
-    // Wait for URL to change to a different event
-    await page.waitForFunction(
-      (oldEventId) => {
-        const url = window.location.href
-        const match = url.match(/\/eventos\/([^/]+)/)
-        return match && match[1] !== oldEventId
-      },
-      currentEventId,
-      { timeout: 10000 },
+  /**
+   * POS-362: navigating between events via participant history must update
+   * the displayed status data (it used to show stale data).
+   *
+   * Uses seed data:
+   * - User3 (user3@example.com / social_name: "user3")
+   * - "Evento Com Inscrições Abertas 1": application_status='sent_payment_data', attendance_status='pending'
+   * - "Evento Concluído 1": application_status='finalised', attendance_status='attended'
+   */
+  test("a history link shows the other event's statuses (POS-362)", async ({
+    page,
+  }) => {
+    const eventId = await openUser3OnOpenEvent(page)
+    const openEventUrl = page.url()
+    await expect(applicationStatus(page)).toContainText(
+      "Dados de pagto enviados",
     )
 
-    await page.waitForLoadState("networkidle")
+    await followHistoryToCompletedEvent(page, eventId)
 
-    // Verify URL changed (different event ID)
-    const newUrl = page.url()
-    expect(newUrl).not.toEqual(currentEventUrl)
-    expect(newUrl).toContain("/participantes/")
-
-    // KEY ASSERTION: Verify the page now shows the completed event's data
-    // This is what was broken in POS-362 - it showed stale data from previous event
-    // Use the "No evento" paragraph to specifically target the header, not the history link
+    expect(page.url()).not.toEqual(openEventUrl)
+    expect(page.url()).toContain("/participantes/")
+    // The "No evento" paragraph targets the header, not the history link
     await expect(page.getByText(/No evento.*Evento Concluído 1/)).toBeVisible()
+    await expect(applicationStatus(page)).toContainText("Finalizado")
+    await expect(attendanceStatus(page)).toContainText("Compareceu")
+  })
 
-    // Verify the status values updated to the completed event's values
-    // User3 attended the completed event with finalised status
-    await expect(applicationStatusTrigger).toContainText("Finalizado")
-    await expect(attendanceStatusTrigger).toContainText("Compareceu")
+  test("going back from a history link shows the first event's statuses again", async ({
+    page,
+  }) => {
+    const eventId = await openUser3OnOpenEvent(page)
+    await followHistoryToCompletedEvent(page, eventId)
 
-    // Test browser back navigation also works correctly
     await page.goBack()
     await page.waitForLoadState("networkidle")
 
-    // Should show the original event data again
     await expect(
       page.getByText(/No evento.*Evento Com Inscrições Abertas 1/),
     ).toBeVisible()
-    await expect(applicationStatusTrigger).toContainText("Dados de pagto enviados")
-    await expect(attendanceStatusTrigger).toContainText("Pendente")
+    await expect(applicationStatus(page)).toContainText(
+      "Dados de pagto enviados",
+    )
+    await expect(attendanceStatus(page)).toContainText("Pendente")
   })
 
   test("AG Grid sorting functionality", async ({ page }) => {
