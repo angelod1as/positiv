@@ -23,51 +23,61 @@ test.describe('Authentication Flows', () => {
     testUsers = []
   })
 
-  test('complete authentication journey with form validation and POM', async ({ page }) => {
+  test('the login page shows its form', async ({ page }) => {
     const loginPage = new LoginPage(page)
-    
-    // Create a test user for this specific test
-    const email = generateTestEmail()
-    const password = generateTestPassword()
-    const testUser = await createTestUser(email, password)
-    testUsers.push(testUser)
-    
-    // Step 1: Navigate to login and verify page elements
+
     await loginPage.goto()
     await loginPage.verifyLoginPageDisplayed()
-    
-    // Step 2: Test empty field validation
+  })
+
+  test('an empty login form asks for both fields', async ({ page }) => {
+    const loginPage = new LoginPage(page)
+    await loginPage.goto()
+
     await page.getByRole('button', { name: 'Entrar' }).click()
+
     await expect(loginPage.emailError).toBeVisible()
     await expect(loginPage.passwordError).toBeVisible()
-    
-    // Step 3: Test invalid credentials
+  })
+
+  test('wrong credentials are refused', async ({ page }) => {
+    const loginPage = new LoginPage(page)
+    await loginPage.goto()
+
     await loginPage.emailInput.fill('wrong@example.com')
     await loginPage.passwordInput.fill('wrongpassword')
     await page.getByRole('button', { name: 'Entrar' }).click()
+
     await expect(loginPage.generalErrorAlert).toBeVisible()
-    
-    // Step 4: Test successful login using POM method
-    await loginPage.emailInput.clear()
-    await loginPage.passwordInput.clear()
+  })
+
+  test('a participant logs in and is kept out of the admin area', async ({ page }) => {
+    const email = generateTestEmail()
+    const password = generateTestPassword()
+    testUsers.push(await createTestUser(email, password))
+    const loginPage = new LoginPage(page)
+    await loginPage.goto()
+
     await loginPage.login(email, password)
-    
-    // Should be authenticated
-    const authenticated = await isAuthenticated(page)
-    expect(authenticated).toBe(true)
-    
-    // Should be at dashboard or terms page (if profile not complete)
+
+    expect(await isAuthenticated(page)).toBe(true)
     const currentUrl = page.url()
     expect(currentUrl.includes('/dashboard') || currentUrl.includes('/conta/termos-e-condicoes')).toBe(true)
-    
-    // Step 5: Verify user cannot access admin area
     await page.goto('/admin')
     await expect(page).not.toHaveURL('/admin')
-    
-    // Step 6: Test logout
+  })
+
+  test('a participant logs out to the homepage', async ({ page }) => {
+    const email = generateTestEmail()
+    const password = generateTestPassword()
+    testUsers.push(await createTestUser(email, password))
+    const loginPage = new LoginPage(page)
+    await loginPage.goto()
+    await loginPage.login(email, password)
+
     await logout(page)
-    const loggedOut = await isAuthenticated(page)
-    expect(loggedOut).toBe(false)
+
+    expect(await isAuthenticated(page)).toBe(false)
     await expect(page).toHaveURL('/')
   })
 
