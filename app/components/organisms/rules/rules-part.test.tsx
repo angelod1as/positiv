@@ -52,6 +52,15 @@ describe("RulesPart", () => {
     expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(2)
   })
 
+  it("shows a subtitle the Editor wrote without a title", () => {
+    renderWithRouter(
+      <RulesPart title={null} subtitle="Para todo mundo" rules={rules} />,
+    )
+
+    expect(screen.queryByRole("heading", { level: 2 })).not.toBeInTheDocument()
+    expect(screen.getByText("Para todo mundo")).toBeInTheDocument()
+  })
+
   it("shows every rule's title and text, in order", () => {
     renderWithRouter(<RulesPart title="Regras Gerais" rules={rules} />)
 

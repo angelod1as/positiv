@@ -80,7 +80,10 @@ describe("rulesSchema", () => {
   // Sanity drops an array field emptied in the Studio, so it arrives as null.
   it("reads a part Sanity dropped as no rules", () => {
     expect(
-      rulesSchema.parse({ ...valid, agreements: part(null as never) }),
+      rulesSchema.parse({
+        ...valid,
+        agreements: { title: null, subtitle: null, rules: null },
+      }),
     ).toEqual({ ...valid, agreements: part([]) })
   })
 
