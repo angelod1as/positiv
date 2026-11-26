@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { EventsPage } from '../../pages/EventsPage'
 import { EventApplicationPage } from '../../pages/EventApplicationPage'
 import { clearAllEmails, getAllEmails } from '../../utils/email-helpers'
@@ -25,7 +25,7 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
     }
   })
 
-  test('AC1: EventsPage POM - browse and interact with events', async ({ page: _page }) => {
+  test('the dashboard lists open events under the Positiv heading', async ({ page: _page }) => {
     // Navigate to events page
     await eventsPage.goto()
     
@@ -45,7 +45,7 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
     // Test passed - EventsPage POM created and functional
   })
 
-  test('AC2: the rules quiz is answered one question at a time', async ({ page }) => {
+  test('the rules quiz is answered one question at a time', async ({ page }) => {
     // Fourteen screens, each one a round trip through the runtime.
     test.setTimeout(120_000)
 
@@ -81,18 +81,12 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
     await expect(applicationPage.userDataTitle).toBeVisible({ timeout: 15000 })
   })
 
-  test('AC2c: the quiz sends the reader back and the walk still finishes', async ({ page }) => {
-    // A rejected save reopens answered screens, so this walk is longer than
-    // one screen per question.
-    test.setTimeout(120_000)
-
-    const event = await createOpenRegularEvent()
-
-    // The first save is refused the way the server refuses one, naming a
-    // multiple-choice question and a single-choice one. The runtime reopens
-    // both, with the answers already on them.
+  // The first save is refused the way the server refuses one, naming a
+  // multiple-choice question and a single-choice one. The runtime reopens
+  // both, with the answers already on them.
+  async function refuseFirstSave(page: Page, eventId: string): Promise<() => number> {
     let saves = 0
-    await page.route(`**/api/events/${event.id}/rules-quiz`, async (route) => {
+    await page.route(`**/api/events/${eventId}/rules-quiz`, async (route) => {
       saves++
 
       if (saves > 1) return route.continue()
@@ -115,6 +109,43 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
         }),
       })
     })
+    return () => saves
+  }
+
+  test('a refused save reopens a question it names, with its message', async ({ page }) => {
+    // One screen per question until the save.
+    test.setTimeout(120_000)
+
+    const event = await createOpenRegularEvent()
+    const saves = await refuseFirstSave(page, event.id)
+
+    await page.goto(`/dashboard/${event.id}/regras`)
+
+    expect(await applicationPage.isOnRulesPage()).toBe(true)
+
+    for (let screens = 0; saves() === 0 && screens < 60; screens++) {
+      await applicationPage.answerCurrentQuestionCorrectly()
+    }
+    expect(saves()).toBe(1)
+
+    const reopened = await applicationPage.currentQuestionId()
+    expect(['protection-2', 'trigger']).toContain(reopened)
+    await expect(
+      page.getByText(
+        reopened === 'trigger'
+          ? 'Você escolheu a resposta errada'
+          : 'Você não selecionou todas as respostas corretas',
+      ),
+    ).toBeVisible()
+  })
+
+  test('after a refused save, the quiz still finishes', async ({ page }) => {
+    // A rejected save reopens answered screens, so this walk is longer than
+    // one screen per question.
+    test.setTimeout(120_000)
+
+    const event = await createOpenRegularEvent()
+    const saves = await refuseFirstSave(page, event.id)
 
     await page.goto(`/dashboard/${event.id}/regras`)
 
@@ -122,11 +153,11 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
 
     await applicationPage.fillRulesForm()
 
-    expect(saves).toBeGreaterThan(1)
+    expect(saves()).toBeGreaterThan(1)
     await expect(applicationPage.userDataTitle).toBeVisible({ timeout: 15000 })
   })
 
-  test('AC2b: the quiz cannot be skipped by posting to the route', async ({ page }) => {
+  test('the quiz cannot be skipped by posting to the route', async ({ page }) => {
     const event = await createOpenRegularEvent()
 
     // Logged in, and still refused: the page holds no action, and the check
@@ -139,7 +170,7 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
     expect(response.status()).toBe(405)
   })
 
-  test('AC3: email-helpers.ts created with Mailpit integration', async () => {
+  test('the Mailpit API answers and empties the inbox', async () => {
     // Round trips through the Mailpit API so an unreachable catcher or a
     // changed payload shape fails here instead of passing silently
     await clearAllEmails()
@@ -147,7 +178,7 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
     expect(await getAllEmails()).toEqual([])
   })
 
-  test('AC4: Complete flow - navigate to event application', async ({ page }) => {
+  test('an open event\'s application link opens its page', async ({ page }) => {
     // Ensure at least one open event exists
     await ensureMinimumOpenEvents(1)
     
