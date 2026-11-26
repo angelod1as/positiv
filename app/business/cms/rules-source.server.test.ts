@@ -20,10 +20,12 @@ const rule = (key: string, title: string) => ({
   highlight: null,
 })
 
+const part = (rules: unknown[]) => ({ title: null, subtitle: null, rules })
+
 const rules = {
-  generalRules: [rule("g1", "Apenas SIM é SIM")],
-  agreements: [rule("a1", "Pontualidade")],
-  privateRules: [rule("p1", "A Positiv não é marmitaria")],
+  generalRules: part([rule("g1", "Apenas SIM é SIM")]),
+  agreements: part([rule("a1", "Pontualidade")]),
+  privateRules: part([rule("p1", "A Positiv não é marmitaria")]),
 }
 
 function clientReturning(document: unknown) {
@@ -51,7 +53,7 @@ describe("getRules", () => {
     const untitled = { ...rule("p1", "x"), title: null }
 
     expect(
-      await getRules(clientReturning({ ...rules, privateRules: [untitled] })),
+      await getRules(clientReturning({ ...rules, privateRules: part([untitled]) })),
     ).toBeNull()
     expect(logger.error).toHaveBeenCalledWith("The Rules failed validation", {
       error: expect.stringContaining("privateRules"),

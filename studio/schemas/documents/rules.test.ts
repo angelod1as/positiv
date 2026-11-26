@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import { pathsOf } from "../../test/errors"
 import { paragraphs } from "../../test/portable-text"
 import { validateDocumentOf } from "../../test/validate"
+import { rules } from "./rules"
 
 const rule = (key: string, fields: Record<string, unknown> = {}) => ({
   _type: "rule",
@@ -40,6 +41,31 @@ describe("rules", () => {
       expect(await validate({ privateRules })).toEqual([])
     },
   )
+
+  it.each(["generalRules", "agreements", "privateRules"])(
+    "accepts a title and a subtitle for %s",
+    async (part) => {
+      expect(
+        await validate({
+          [`${part}Title`]: "Regras Gerais",
+          [`${part}Subtitle`]: "Para todo mundo",
+        }),
+      ).toEqual([])
+    },
+  )
+
+  it("asks for a title and a subtitle next to each part's rules, both optional", () => {
+    const field = (name: string) =>
+      rules.fields.find((candidate) => candidate.name === name)
+
+    for (const part of ["generalRules", "agreements", "privateRules"]) {
+      for (const name of [`${part}Title`, `${part}Subtitle`]) {
+        expect(field(name)).toMatchObject({ type: "string", fieldset: part })
+        expect(field(name)).not.toHaveProperty("validation")
+      }
+      expect(field(part)).toMatchObject({ fieldset: part })
+    }
+  })
 
   it("requires a rule's title", async () => {
     expect(

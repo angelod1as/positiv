@@ -1,7 +1,7 @@
 import { type MouseEvent, Suspense } from "react"
 import { Await } from "react-router"
 import type { PageSection } from "~/business/cms/page.schema"
-import type { Rule } from "~/business/cms/rules.schema"
+import type { RulesPartContent } from "~/business/cms/rules.schema"
 import { useAnalytics } from "~/lib/hooks/use-analytics"
 import { AboutSection } from "./about-section"
 import { CalloutSection } from "./callout-section"
@@ -26,7 +26,7 @@ type PageSectionsProps = {
   sections: PageSection[]
   events: Promise<Event[] | undefined> | undefined
   isLoggedIn: boolean
-  privateRules?: Rule[] | null
+  privateRules?: RulesPartContent | null
 }
 
 const linkLabel = (link: HTMLAnchorElement) =>
@@ -75,7 +75,7 @@ const renderSection = (
   events: PageSectionsProps["events"],
   isLoggedIn: boolean,
   followsCallout: boolean,
-  privateRules: Rule[] | null,
+  privateRules: RulesPartContent | null,
 ) => {
   switch (section._type) {
     case "nextEvents":

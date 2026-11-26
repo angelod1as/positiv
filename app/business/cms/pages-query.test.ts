@@ -12,6 +12,17 @@ describe("pagesQuery", () => {
     )
   })
 
+  it("joins the title and the subtitle the Editor wrote for that part", () => {
+    for (const part of ["generalRules", "agreements"]) {
+      expect(pagesQuery).toContain(
+        `part == "${part}" => *[_id == "rules"][0].${part}Title`,
+      )
+      expect(pagesQuery).toContain(
+        `part == "${part}" => *[_id == "rules"][0].${part}Subtitle`,
+      )
+    }
+  })
+
   // The snapshot is cached for every visitor and, in draft mode, sent to the
   // browser: the Regras Privadas are read per request, only for a signed-in
   // visitor.

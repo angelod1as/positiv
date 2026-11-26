@@ -12,6 +12,12 @@ describe("RulesText", () => {
     expect(container.querySelector("pre")).toBeNull()
   })
 
+  it("shows the subtitle the Editor wrote under a part's title", () => {
+    renderWithRouter(<RulesText rules={rulesFixture} />)
+
+    expect(screen.getByText("Para todo mundo")).toBeInTheDocument()
+  })
+
   it("shows Regras Gerais, Acordos and Regras Privadas, in that order", () => {
     renderWithRouter(<RulesText rules={rulesFixture} />)
 
@@ -33,7 +39,12 @@ describe("RulesText", () => {
 
   it("leaves out a part with no rules", () => {
     renderWithRouter(
-      <RulesText rules={{ ...rulesFixture, privateRules: [] }} />,
+      <RulesText
+        rules={{
+          ...rulesFixture,
+          privateRules: { ...rulesFixture.privateRules, rules: [] },
+        }}
+      />,
     )
 
     expect(

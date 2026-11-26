@@ -13,7 +13,7 @@ import {
   sectionsFields,
 } from "./content.schema"
 import { ruleParts } from "./rule-parts"
-import { ruleListSchema } from "./rules.schema"
+import { ruleHeadingFields, ruleListSchema } from "./rules.schema"
 
 export function isReservedAddress(address: string) {
   return reservedAddresses.includes(address.split("/")[1])
@@ -138,6 +138,7 @@ const sharedSections = [
   }),
   section("rulesSection", {
     part: zod.enum(ruleParts),
+    ...ruleHeadingFields,
     rules: ruleListSchema.nullish(),
   }),
 ] as const

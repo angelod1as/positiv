@@ -32,16 +32,28 @@ const rules: Rule[] = [
 ]
 
 describe("RulesPart", () => {
-  it("names the part above its rules", () => {
-    renderWithRouter(<RulesPart part="agreements" rules={rules} />)
+  it("shows the title and the subtitle the Editor wrote above the rules", () => {
+    renderWithRouter(
+      <RulesPart title="Acordos" subtitle="Para todo mundo" rules={rules} />,
+    )
 
     expect(
       screen.getByRole("heading", { level: 2, name: "Acordos" }),
     ).toBeInTheDocument()
+    expect(screen.getByText("Para todo mundo")).toBeInTheDocument()
+  })
+
+  it("shows the rules without a heading when the Editor left the title out", () => {
+    renderWithRouter(
+      <RulesPart title={null} subtitle={null} rules={rules} />,
+    )
+
+    expect(screen.queryByRole("heading", { level: 2 })).not.toBeInTheDocument()
+    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(2)
   })
 
   it("shows every rule's title and text, in order", () => {
-    renderWithRouter(<RulesPart part="generalRules" rules={rules} />)
+    renderWithRouter(<RulesPart title="Regras Gerais" rules={rules} />)
 
     expect(
       screen
@@ -55,7 +67,7 @@ describe("RulesPart", () => {
 
   it("divides the rules from each other, leaving the heading's own rule as the only line above the first", () => {
     const { container } = renderWithRouter(
-      <RulesPart part="generalRules" rules={rules} />,
+      <RulesPart title="Regras Gerais" rules={rules} />,
     )
 
     expect(
@@ -64,7 +76,7 @@ describe("RulesPart", () => {
   })
 
   it("shows a rule's highlight in an alert", () => {
-    renderWithRouter(<RulesPart part="privateRules" rules={rules} />)
+    renderWithRouter(<RulesPart title="Regras Gerais" rules={rules} />)
 
     const alert = screen.getByRole("alert")
     expect(alert).toHaveTextContent("👀 Olhar tira pedaço, sim! 👀")
