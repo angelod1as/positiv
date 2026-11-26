@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { dashboardCopy } from '../../../app/copy/dashboard'
 import { EventApplicationPage } from '../../pages/EventApplicationPage'
-import { ensureTestUserProfileExists } from '../../utils/application-helpers'
+import { applyAsParticipant, ensureTestUserProfileExists } from '../../utils/application-helpers'
 import { cleanupEventParticipations } from '../../utils/db-cleanup'
 import { ensureMinimumOpenEvents } from '../../utils/test-event-helpers'
 
@@ -36,7 +36,7 @@ test.describe('Account signup versus event registration', () => {
     ).toBeVisible()
   })
 
-  test('an event moves to the applied section after registration and appears once', async ({ page }) => {
+  test('applying from a dashboard card walks the quiz and the form back to the dashboard', async ({ page }) => {
     await ensureMinimumOpenEvents(1)
 
     await page.goto('/dashboard')
@@ -50,8 +50,6 @@ test.describe('Account signup versus event registration', () => {
       .first()
       .getByRole('link', { name: 'Me candidatar' })
 
-    const eventTitle = await applyableCards.first().locator('h3').innerText()
-
     await applyButton.click()
     await page.waitForURL(/\/dashboard\/.+/)
 
@@ -63,6 +61,34 @@ test.describe('Account signup versus event registration', () => {
     const applicationPage = new EventApplicationPage(page)
     await applicationPage.completeFullApplication()
     await page.waitForURL('/dashboard')
+  })
+
+  test('an applied event appears once, in the applied section, and the banner is gone', async ({ page }) => {
+    // Starts from no application at all, so the card the application is
+    // written for is still offering one, and the banner is there to go.
+    const profileId = await ensureTestUserProfileExists()
+    await cleanupEventParticipations(profileId, true)
+    await ensureMinimumOpenEvents(1)
+
+    await page.goto('/dashboard')
+
+    const applyableCards = page
+      .locator('[data-testid^="event-card"]')
+      .filter({ has: page.getByRole('link', { name: 'Me candidatar' }) })
+    await expect(applyableCards.first()).toBeVisible()
+
+    const eventTitle = await applyableCards.first().locator('h3').innerText()
+    const href = await applyableCards
+      .first()
+      .getByRole('link', { name: 'Me candidatar' })
+      .getAttribute('href')
+    const eventId = href?.match(/\/dashboard\/([^/]+)/)?.[1]
+    expect(eventId).toBeTruthy()
+    if (!eventId) return
+
+    await applyAsParticipant(profileId, eventId)
+
+    await page.reload()
 
     const appliedCard = page.getByTestId('event-card-applied').filter({ hasText: eventTitle })
     await expect(appliedCard).toHaveCount(1)
