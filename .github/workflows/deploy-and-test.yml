@@ -129,10 +129,12 @@ jobs:
             VITE_UMAMI_URL=https://umami.example.com
             VITE_GTM_ID=GTM-PLACEHOLDER
 
-  # Deliberately ungated. Waiting on validate-schema and unit-test saved a
-  # runner when they failed, but it cost every green pull request their three
-  # and a half minutes in series before e2e could start. All three are required
-  # checks either way, so a failure still blocks the merge.
+  # integration-test and e2e-shard are deliberately ungated. Waiting on
+  # validate-schema and unit-test saved a runner when they failed, but it cost
+  # every green pull request their three and a half minutes in series before
+  # the database suites could start. validate-schema, unit-test and e2e-test
+  # (which needs both of these) are required checks either way, so a failure
+  # still blocks the merge.
   integration-test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
