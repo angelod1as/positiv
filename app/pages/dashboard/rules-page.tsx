@@ -8,7 +8,7 @@ export function meta({}: Route.MetaArgs) {
   return createMetaArray(metaCopy.rules.title)
 }
 
-export async function loader(_: Route.LoaderArgs) {
+export async function loader() {
   return { rules: await loadRules() }
 }
 

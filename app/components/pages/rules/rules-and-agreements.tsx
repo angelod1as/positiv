@@ -7,12 +7,12 @@ import { rulesCopy } from "~/copy/events"
 type RulesAndAgreementsProps = { rules: Rules | null }
 
 const Section = ({ heading, rules }: { heading: string; rules: Rule[] }) =>
-  rules.length > 0 && (
+  rules.length > 0 ? (
     <section className="flex flex-col gap-12">
       <h2 className="border-b-0 pb-0">{heading}</h2>
       <RulesPart rules={rules} />
     </section>
-  )
+  ) : null
 
 export const RulesAndAgreements = ({ rules }: RulesAndAgreementsProps) => (
   <>

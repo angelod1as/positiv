@@ -9,11 +9,7 @@ import { rulesFixture } from "~/test/rules-documents"
 import { loader, meta } from "./rules-page"
 import type { Route } from "./+types/rules-page"
 
-const runLoader = () =>
-  loader({
-    request: new Request("http://localhost/dashboard/regras"),
-    params: {},
-  } as Route.LoaderArgs)
+const runLoader = () => loader()
 
 describe("Rules page", () => {
   beforeEach(() => {
