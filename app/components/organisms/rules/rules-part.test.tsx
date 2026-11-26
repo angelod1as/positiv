@@ -53,6 +53,16 @@ describe("RulesPart", () => {
     ).toBeInTheDocument()
   })
 
+  it("divides the rules from each other, leaving the heading's own rule as the only line above the first", () => {
+    const { container } = renderWithRouter(
+      <RulesPart part="generalRules" rules={rules} />,
+    )
+
+    expect(
+      container.querySelectorAll('[data-slot="separator-root"]'),
+    ).toHaveLength(rules.length - 1)
+  })
+
   it("shows a rule's highlight in an alert", () => {
     renderWithRouter(<RulesPart part="privateRules" rules={rules} />)
 

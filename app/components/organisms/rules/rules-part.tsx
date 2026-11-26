@@ -10,9 +10,9 @@ type RulesPartProps = { part: RulePart; rules: Rule[] }
 export const RulesPart = ({ part, rules }: RulesPartProps) => (
   <div className="flex flex-col gap-8">
     <h2>{rulesPartCopy[part]}</h2>
-    {rules.map((rule) => (
+    {rules.map((rule, index) => (
       <div key={rule._key} className="flex flex-col gap-4">
-        <Separator />
+        {index > 0 && <Separator />}
         <h3>{rule.title}</h3>
         <LongRichText value={rule.body} />
         {rule.highlight && (
