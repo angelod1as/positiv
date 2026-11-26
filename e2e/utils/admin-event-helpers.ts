@@ -81,14 +81,14 @@ export async function findSeedEventId(title: string): Promise<string> {
   return data.id
 }
 
-export async function findSeedProfileId(socialName: string): Promise<string> {
+export async function findSeedProfileId(email: string): Promise<string> {
   const { data, error } = await createSupabaseAdminClient()
     .from('profiles')
     .select('id')
-    .eq('social_name', socialName)
+    .eq('email', email)
     .single()
 
-  if (error || !data) throw new Error(`No seed profile "${socialName}": ${error?.message}`)
+  if (error || !data) throw new Error(`No seed profile "${email}": ${error?.message}`)
 
   return data.id
 }
