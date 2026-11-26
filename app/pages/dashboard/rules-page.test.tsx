@@ -9,8 +9,6 @@ import { rulesFixture } from "~/test/rules-documents"
 import { loader, meta } from "./rules-page"
 import type { Route } from "./+types/rules-page"
 
-const runLoader = () => loader()
-
 describe("Rules page", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -19,13 +17,13 @@ describe("Rules page", () => {
   it("hands the page the Rules", async () => {
     vi.mocked(loadRules).mockResolvedValue(rulesFixture)
 
-    await expect(runLoader()).resolves.toEqual({ rules: rulesFixture })
+    await expect(loader()).resolves.toEqual({ rules: rulesFixture })
   })
 
   it("hands the page no Rules when they cannot be loaded", async () => {
     vi.mocked(loadRules).mockResolvedValue(null)
 
-    await expect(runLoader()).resolves.toEqual({ rules: null })
+    await expect(loader()).resolves.toEqual({ rules: null })
   })
 
   it("is titled Regras e Acordos", () => {
