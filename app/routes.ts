@@ -103,7 +103,6 @@ export default [
     ...prefix("dashboard", [
       layout("pages/dashboard/layout.tsx", [
         index("pages/dashboard/dashboard-page.tsx"),
-        route("regras", "pages/dashboard/rules-page.tsx"),
       ]),
       layout("pages/events/layout.tsx", [
         // Root
@@ -124,6 +123,8 @@ export default [
           "pages/events/application/confirmation/event-application-confirmation-page.tsx",
         ),
       ]),
+
+      route("regras", "pages/dashboard/rules-page.tsx"),
 
       route(
         "/download-calendar/:eventId",

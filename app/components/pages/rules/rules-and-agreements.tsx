@@ -1,22 +1,29 @@
 import type { Rule, Rules } from "~/business/cms/rules.schema"
 import { RulesPart } from "~/components/organisms/rules/rules-part"
+import { PageTitle } from "~/components/pages/page/header/page-title"
 import { Alert, AlertDescription } from "~/components/ui/alert"
 import { rulesPageCopy } from "~/copy/dashboard"
 import { rulesCopy } from "~/copy/events"
+import type { FCC } from "~types/utils/utils.types"
 
 type RulesAndAgreementsProps = { rules: Rules | null }
 
+const Column: FCC = ({ children }) => (
+  <section className="w-full px-4 py-8 md:px-6">
+    <div className="mx-auto max-w-3xl">{children}</div>
+  </section>
+)
+
 const Section = ({ heading, rules }: { heading: string; rules: Rule[] }) =>
   rules.length > 0 ? (
-    <section className="flex flex-col gap-12">
-      <h2 className="border-b-0 pb-0">{heading}</h2>
-      <RulesPart rules={rules} />
-    </section>
+    <Column>
+      <RulesPart title={heading} rules={rules} />
+    </Column>
   ) : null
 
 export const RulesAndAgreements = ({ rules }: RulesAndAgreementsProps) => (
-  <>
-    <h1>{rulesPageCopy.title}</h1>
+  <div>
+    <PageTitle content={{ _type: "pageTitle", title: rulesPageCopy.title }} />
 
     {rules ? (
       <>
@@ -30,9 +37,11 @@ export const RulesAndAgreements = ({ rules }: RulesAndAgreementsProps) => (
         />
       </>
     ) : (
-      <Alert>
-        <AlertDescription>{rulesCopy.unavailable}</AlertDescription>
-      </Alert>
+      <Column>
+        <Alert>
+          <AlertDescription>{rulesCopy.unavailable}</AlertDescription>
+        </Alert>
+      </Column>
     )}
-  </>
+  </div>
 )
