@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test'
 import path from 'path'
+import { AdminSettingsPage } from '../../pages/admin/AdminSettingsPage'
+import { setLikertSettings } from '../../utils/likert-helpers'
 
 test.describe('Admin Access Control', () => {
   test.use({ storageState: path.resolve(import.meta.dirname, '../../.auth/admin.json') })
@@ -76,5 +78,44 @@ test.describe('Admin Access Control', () => {
     // Navigate back to admin area
     await page.goto('/admin')
     await expect(page).toHaveURL('/admin')
+  })
+
+  test('admin sees the Likert scale whatever the switches say, and turns them in Configurações', async ({ page }) => {
+    const settings = new AdminSettingsPage(page)
+    const likertLink = () => page.getByRole('link', { name: 'Escala de Likert' })
+
+    try {
+      await setLikertSettings({ enabled: false, required: false })
+
+      await page.goto('/conta/escala/responder')
+      await expect(page).toHaveURL('/conta/escala/responder')
+      await expect(page.getByRole('progressbar')).toBeVisible()
+
+      await settings.navigate()
+      await expect(settings.likertAccessSwitch()).not.toBeChecked()
+      await expect(settings.likertRequiredSwitch()).not.toBeChecked()
+
+      await settings.setLikertSwitch('access', true)
+      await settings.setLikertSwitch('required', true)
+      await settings.navigate()
+      await expect(settings.likertAccessSwitch()).toBeChecked()
+      await expect(settings.likertRequiredSwitch()).toBeChecked()
+
+      await page.goto('/conta')
+      await expect(likertLink()).toBeVisible()
+
+      await settings.navigate()
+      await settings.setLikertSwitch('access', false)
+      await settings.setLikertSwitch('required', false)
+      await settings.navigate()
+      await expect(settings.likertAccessSwitch()).not.toBeChecked()
+      await expect(settings.likertRequiredSwitch()).not.toBeChecked()
+
+      await page.goto('/conta')
+      await expect(page.getByRole('link', { name: 'Mudar senha' })).toBeVisible()
+      await expect(likertLink()).toHaveCount(0)
+    } finally {
+      await setLikertSettings({ enabled: false, required: false })
+    }
   })
 })

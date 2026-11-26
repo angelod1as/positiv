@@ -1,7 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 import { createSanityClient, SANITY_API_VERSION } from "../../app/business/cms/sanity-client.server"
+import { likertScaleQuery } from "../../app/business/cms/likert-scale-query"
 import { rulesQuery } from "../../app/business/cms/rules-query"
 import { siteSnapshotQuery } from "../../app/business/cms/site-snapshot-query"
+import likertScaleFixture from "../fixtures/likert-scale.json"
 import rulesFixture from "../fixtures/rules.json"
 import pagesFixture from "../fixtures/pages-snapshot.json"
 import siteSettingsFixture from "../fixtures/site-settings.json"
@@ -47,6 +49,13 @@ describe("sanity mock server", () => {
 
     expect(response.status).toBe(200)
     expect((await response.json()).result).toEqual(rulesFixture)
+  })
+
+  it("answers the Likert scale query with the Likert scale fixture", async () => {
+    const response = await fetch(queryUrl(likertScaleQuery))
+
+    expect(response.status).toBe(200)
+    expect((await response.json()).result).toEqual(likertScaleFixture)
   })
 
   it("leaves the query out of the envelope when asked to, as the client does", async () => {
