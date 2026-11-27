@@ -101,14 +101,15 @@ describe('with-db-lock', () => {
     const longAgo = new Date(Date.now() - 60_000)
     utimesSync(lockDir, longAgo, longAgo)
 
-    const result = await runLocked('echo ran', {
+    const result = await runLocked('echo SHOULD_NOT_RUN', {
       DB_LOCK_CLAIM_GRACE: '1',
+      DB_LOCK_STALE_AFTER: '1800',
       DB_LOCK_WAIT_TIMEOUT: '2',
       DB_LOCK_POLL_INTERVAL: '1',
     })
 
     expect(result.code).not.toBe(0)
-    expect(result.stdout).not.toContain('ran')
+    expect(result.stdout).not.toContain('SHOULD_NOT_RUN')
   })
 
   it.each([
@@ -117,10 +118,10 @@ describe('with-db-lock', () => {
     ['DB_LOCK_POLL_INTERVAL', '0'],
     ['DB_LOCK_WAIT_TIMEOUT', '99999999999999999999'],
   ])('refuses %s=%s', async (name, value) => {
-    const result = await runLocked('echo ran', { [name]: value })
+    const result = await runLocked('echo SHOULD_NOT_RUN', { [name]: value })
 
     expect(result.code).not.toBe(0)
-    expect(result.stdout).not.toContain('ran')
+    expect(result.stdout).not.toContain('SHOULD_NOT_RUN')
     expect(result.stderr).toContain(name)
   })
 
