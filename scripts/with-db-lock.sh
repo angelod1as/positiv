@@ -14,6 +14,25 @@ POLL_INTERVAL="${DB_LOCK_POLL_INTERVAL:-2}"
 CLAIM_GRACE="${DB_LOCK_CLAIM_GRACE:-10}"
 FIRST_PORT="${E2E_FIRST_PORT:-5273}"
 
+is_whole_number() {
+  case "$1" in
+    '' | *[!0-9]* | 0?* | ???????????*) return 1 ;;
+    *) return 0 ;;
+  esac
+}
+
+for setting in DB_LOCK_WAIT_TIMEOUT DB_LOCK_STALE_AFTER DB_LOCK_POLL_INTERVAL DB_LOCK_CLAIM_GRACE E2E_FIRST_PORT; do
+  if [ -n "${!setting:-}" ] && ! is_whole_number "${!setting}"; then
+    echo "⛔ ${setting} must be a whole number without leading zeros, got '${!setting}'" >&2
+    exit 1
+  fi
+done
+
+if [ "$POLL_INTERVAL" -lt 1 ]; then
+  echo "⛔ DB_LOCK_POLL_INTERVAL must be at least 1, got '$POLL_INTERVAL'" >&2
+  exit 1
+fi
+
 if [ -n "${DB_LOCK_DIR:-}" ]; then
   LOCK_DIR="$DB_LOCK_DIR"
 else
@@ -34,26 +53,29 @@ trap release_lock EXIT INT TERM
 
 owner_field() {
   [ -f "$OWNER_FILE" ] || return 1
-  sed -n "s/^$1=//p" "$OWNER_FILE"
+  local value
+  value="$(sed -n "s/^$1=//p" "$OWNER_FILE")"
+  is_whole_number "$value" || return 1
+  echo "$value"
 }
 
 lock_dir_age() {
   local mtime
-  mtime="$(stat -f %m "$LOCK_DIR" 2>/dev/null || stat -c %Y "$LOCK_DIR" 2>/dev/null || true)"
-  [ -n "$mtime" ] || return 1
+  mtime="$(stat -c %Y "$LOCK_DIR" 2>/dev/null || stat -f %m "$LOCK_DIR" 2>/dev/null || true)"
+  is_whole_number "$mtime" || return 1
   echo $(( $(date +%s) - mtime ))
 }
 
 # A lock is abandoned when the process that took it is gone or when it is older
 # than any real run could be. An owner file that is not there yet usually means
 # the winner has not written it, so that only counts once the grace period has
-# passed.
+# passed. A live owner without a readable start time is aged by its directory.
 lock_is_abandoned() {
   local pid started age dir_age
   pid="$(owner_field pid || true)"
   started="$(owner_field started || true)"
 
-  if [ -z "$pid" ] || [ -z "$started" ]; then
+  if [ -z "$pid" ]; then
     dir_age="$(lock_dir_age)" || return 1
     [ "$dir_age" -gt "$CLAIM_GRACE" ]
     return
@@ -63,7 +85,11 @@ lock_is_abandoned() {
     return 0
   fi
 
-  age=$(( $(date +%s) - started ))
+  if [ -n "$started" ]; then
+    age=$(( $(date +%s) - started ))
+  else
+    age="$(lock_dir_age)" || return 1
+  fi
   [ "$age" -gt "$STALE_AFTER" ]
 }
 
@@ -106,7 +132,8 @@ acquire_lock() {
   done
 
   holds_lock=1
-  printf 'pid=%s\nworktree=%s\nstarted=%s\n' "$$" "$(pwd)" "$(date +%s)" > "$OWNER_FILE"
+  printf 'pid=%s\nworktree=%s\nstarted=%s\n' "$$" "$(pwd)" "$(date +%s)" > "$OWNER_FILE.$$"
+  mv "$OWNER_FILE.$$" "$OWNER_FILE"
 }
 
 port_is_free() {
@@ -129,6 +156,12 @@ first_free_port() {
 }
 
 acquire_lock
+
+if [ "$holds_lock" != "1" ] || [ "$(owner_field pid || true)" != "$$" ]; then
+  echo "⛔ Could not confirm this run holds the database lock; not running unlocked" >&2
+  holds_lock=0
+  exit 1
+fi
 
 # Kept short: the id is spent from the 50 character event title budget
 export E2E_RUN_ID="${E2E_RUN_ID:-$(printf '%04x%04x' "$(( $(date +%s) % 65536 ))" "$(( $$ % 65536 ))")}"

@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync, utimesSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
@@ -83,6 +83,46 @@ describe('with-db-lock', () => {
     const result = await runLocked('echo took-over', { DB_LOCK_WAIT_TIMEOUT: '10' })
 
     expect(result.stdout).toContain('took-over')
+  })
+
+  it('takes over a lock nobody claimed once the grace period is over', async () => {
+    mkdirSync(lockDir, { recursive: true })
+    const longAgo = new Date(Date.now() - 60_000)
+    utimesSync(lockDir, longAgo, longAgo)
+
+    const result = await runLocked('echo took-over', { DB_LOCK_CLAIM_GRACE: '5', DB_LOCK_WAIT_TIMEOUT: '10' })
+
+    expect(result.stdout).toContain('took-over')
+  })
+
+  it('keeps waiting for a live holder whose start time is unreadable', async () => {
+    mkdirSync(lockDir, { recursive: true })
+    writeFileSync(join(lockDir, 'owner'), `pid=${process.pid}\nworktree=/elsewhere\nstarted=12abc\n`)
+    const longAgo = new Date(Date.now() - 60_000)
+    utimesSync(lockDir, longAgo, longAgo)
+
+    const result = await runLocked('echo SHOULD_NOT_RUN', {
+      DB_LOCK_CLAIM_GRACE: '1',
+      DB_LOCK_STALE_AFTER: '1800',
+      DB_LOCK_WAIT_TIMEOUT: '2',
+      DB_LOCK_POLL_INTERVAL: '1',
+    })
+
+    expect(result.code).not.toBe(0)
+    expect(result.stdout).not.toContain('SHOULD_NOT_RUN')
+  })
+
+  it.each([
+    ['DB_LOCK_POLL_INTERVAL', '0.5'],
+    ['DB_LOCK_POLL_INTERVAL', '08'],
+    ['DB_LOCK_POLL_INTERVAL', '0'],
+    ['DB_LOCK_WAIT_TIMEOUT', '99999999999999999999'],
+  ])('refuses %s=%s', async (name, value) => {
+    const result = await runLocked('echo SHOULD_NOT_RUN', { [name]: value })
+
+    expect(result.code).not.toBe(0)
+    expect(result.stdout).not.toContain('SHOULD_NOT_RUN')
+    expect(result.stderr).toContain(name)
   })
 
   it('gives up rather than waiting forever on a live holder', async () => {
