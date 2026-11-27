@@ -17,7 +17,8 @@ type ProportionBarProps = {
 const LABEL_INSIDE_FROM = 0.08
 
 // One thick bar of the whole, split into its parts: lying down on wider
-// screens, standing up at nearly the height of the screen on a phone.
+// screens, standing up at nearly the height of the screen on a phone, where
+// every label sits beside the bar, level with its segment.
 export const ProportionBar = ({ parts, format }: ProportionBarProps) => {
   const total = parts.reduce((sum, part) => sum + Math.max(part.value, 0), 0)
   const drawn = parts.map((part, index) => ({
@@ -28,7 +29,7 @@ export const ProportionBar = ({ parts, format }: ProportionBarProps) => {
   const outside = drawn.filter((part) => part.share < LABEL_INSIDE_FROM)
 
   return (
-    <div className="flex gap-4 md:flex-col">
+    <div className="flex justify-center gap-4 md:flex-col">
       <div className="flex h-[80svh] w-24 shrink-0 flex-col overflow-hidden rounded-xl md:h-20 md:w-full md:flex-row">
         {drawn.map((part) => (
           <div
@@ -42,16 +43,43 @@ export const ProportionBar = ({ parts, format }: ProportionBarProps) => {
             }}
           >
             {part.share >= LABEL_INSIDE_FROM && (
-              <>
+              <span className="hidden md:contents">
                 <span className="font-semibold">{part.label}</span>
                 <span className="tabular-nums">{format(part.value)}</span>
-              </>
+              </span>
             )}
           </div>
         ))}
       </div>
+      <ul
+        data-legend="beside"
+        className="flex h-[80svh] min-w-0 flex-col text-sm leading-tight md:hidden"
+      >
+        {drawn.map((part) => (
+          <li
+            key={part.key}
+            className="flex items-center gap-2"
+            style={{ flexBasis: `${Math.round(part.share * 1000) / 10}%` }}
+          >
+            <span
+              data-swatch
+              className="size-3 shrink-0 rounded-sm"
+              style={{ backgroundColor: part.color }}
+            />
+            <span>
+              {part.label}{" "}
+              <span className="font-bold whitespace-nowrap tabular-nums">
+                {format(part.value)}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
       {outside.length > 0 && (
-        <ul className="flex flex-col justify-center gap-2 text-sm md:flex-row md:flex-wrap md:justify-start md:gap-x-6">
+        <ul
+          data-legend="below"
+          className="hidden flex-col justify-center gap-2 text-sm md:flex md:flex-row md:flex-wrap md:justify-start md:gap-x-6"
+        >
           {outside.map((part) => (
             <li key={part.key} className="flex items-center gap-2">
               <span
@@ -60,7 +88,7 @@ export const ProportionBar = ({ parts, format }: ProportionBarProps) => {
                 style={{ backgroundColor: part.color }}
               />
               <span>{part.label}</span>
-              <span className="font-bold tabular-nums">
+              <span className="font-bold whitespace-nowrap tabular-nums">
                 {format(part.value)}
               </span>
             </li>
