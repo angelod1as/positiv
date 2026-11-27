@@ -9,7 +9,10 @@ import {
 } from "~/business/settings/app-settings.server"
 import { likertPageCopy } from "~/copy/account"
 import { buildLikertSubmission } from "./build-likert-submission"
-import { saveLikertSubmission } from "./likert-submissions.server"
+import {
+  hasAnsweredLikert,
+  saveLikertSubmission,
+} from "./likert-submissions.server"
 
 type Viewer = Pick<z.infer<typeof currentProfileSchema>, "id" | "permissions">
 
@@ -25,6 +28,14 @@ export async function canSeeLikert(
 
 export async function showsLikertEntryPoints(): Promise<boolean> {
   return isLikertRequired()
+}
+
+// Once is enough: an answer from any time lets the person apply.
+export async function mustAnswerLikertBeforeApplying(
+  viewer: Viewer,
+): Promise<boolean> {
+  if (!(await isLikertRequired())) return false
+  return !(await hasAnsweredLikert(viewer))
 }
 
 export async function submitLikertAnswers({
