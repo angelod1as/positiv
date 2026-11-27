@@ -1,4 +1,5 @@
 import { NoResultError, type QueryNode } from "kysely"
+import { getToast } from "remix-toast"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { getEventParticipantBasic } from "~/business/application/event-participants.server"
 import { getParticipantLikert } from "~/business/profile/participant-likert.server"
@@ -7,6 +8,7 @@ import { getPaymentsForParticipant } from "~/business/payment/payment-totals.ser
 import { isOnlinePaymentsEnabled } from "~/business/payment/online-payments.server"
 import { getAdminContext } from "~/business/auth/admin-context.server"
 import { PERMISSIONS } from "~/business/auth/permissions"
+import { adminEventsCopy } from "~/copy/admin/events"
 import { loader } from "./view-event-participant"
 
 const { logger } = vi.hoisted(() => ({
@@ -64,11 +66,31 @@ const currentProfile = {
   permissions: ["admin.panel", "profiles.manage", "payments.manage"],
 }
 
-const runLoader = () =>
+const runLoader = (
+  params: { eventId?: string; profileId?: string } = {
+    eventId: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c",
+    profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",
+  },
+) =>
   loader({
     request: new Request(`http://localhost/admin/eventos/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c/participantes/7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f`),
-    params: { eventId: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c", profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f" },
+    params,
   } as Parameters<typeof loader>[0])
+
+const EVENT_PAGE = "/admin/eventos/3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c"
+
+const landingOf = async (response: unknown) => {
+  const redirect = response as Response
+  const cookie = (redirect.headers.get("Set-Cookie") ?? "").split(";")[0]
+  const toast = await getToast(
+    new Request("http://localhost", { headers: { Cookie: cookie } }),
+  )
+  return {
+    location: redirect.headers.get("Location"),
+    message: toast.toast?.message,
+    type: toast.toast?.type,
+  }
+}
 
 describe("view event participant loader", () => {
   beforeEach(() => {
@@ -98,6 +120,55 @@ describe("view event participant loader", () => {
     expect(getProfileById).not.toHaveBeenCalled()
     expect(getEventParticipantBasic).not.toHaveBeenCalled()
     expect(getParticipantLikert).not.toHaveBeenCalled()
+  })
+
+  it("sends the admin to the events list when the event id is missing", async () => {
+    const landing = await landingOf(
+      await runLoader({ profileId: "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f" }),
+    )
+
+    expect(landing).toEqual({
+      location: "/admin/eventos",
+      message: adminEventsCopy.eventNotFound,
+      type: "error",
+    })
+  })
+
+  it("sends the admin back to the event when the profile id is missing", async () => {
+    const landing = await landingOf(
+      await runLoader({ eventId: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" }),
+    )
+
+    expect(landing).toEqual({
+      location: EVENT_PAGE,
+      message: adminEventsCopy.viewParticipant.participantNotFound,
+      type: "error",
+    })
+  })
+
+  it("sends the admin back to the event when the profile does not exist", async () => {
+    vi.mocked(getProfileById).mockResolvedValue({
+      success: false,
+      errors: [new NoResultError({} as QueryNode)],
+    } as ProfileResult)
+
+    const landing = await landingOf(await runLoader())
+
+    expect(landing).toEqual({
+      location: EVENT_PAGE,
+      message: adminEventsCopy.viewParticipant.profileNotFound,
+      type: "error",
+    })
+  })
+
+  it("sends the admin back to the event when the person has not applied to it", async () => {
+    const landing = await landingOf(await runLoader())
+
+    expect(landing).toEqual({
+      location: EVENT_PAGE,
+      message: adminEventsCopy.viewParticipant.notAppliedToEvent,
+      type: "error",
+    })
   })
 
   it("warns, without alerting, when the profile does not exist", async () => {

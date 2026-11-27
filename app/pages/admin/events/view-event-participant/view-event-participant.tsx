@@ -109,12 +109,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const { eventId, profileId } = params
 
   if (!eventId) {
-    return redirectWithError(adminEventsCopy.eventNotFound, ADMIN_EVENTS)
+    return redirectWithError(ADMIN_EVENTS, adminEventsCopy.eventNotFound)
   }
   if (!profileId) {
     return redirectWithError(
-      adminEventsCopy.viewParticipant.participantNotFound,
       ADMIN_VIEW_EVENT(eventId),
+      adminEventsCopy.viewParticipant.participantNotFound,
     )
   }
 
@@ -135,8 +135,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       })
     }
     return redirectWithError(
-      adminEventsCopy.viewParticipant.profileNotFound,
       ADMIN_VIEW_EVENT(eventId),
+      adminEventsCopy.viewParticipant.profileNotFound,
     )
   }
 
@@ -156,8 +156,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       })
     }
     return redirectWithError(
-      adminEventsCopy.viewParticipant.notAppliedToEvent,
       ADMIN_VIEW_EVENT(eventId),
+      adminEventsCopy.viewParticipant.notAppliedToEvent,
     )
   }
 
