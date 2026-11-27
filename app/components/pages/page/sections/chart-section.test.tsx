@@ -178,7 +178,7 @@ describe("ChartSection", () => {
     it("draws the parts without loading the chart library", () => {
       const { container } = render(<ChartSection content={budget} />)
 
-      expect(screen.getAllByText("Equipe").length).toBeGreaterThan(0)
+      expect(screen.getAllByText("Equipe")).toHaveLength(2)
       expect(chartFrame(container)).not.toBeInTheDocument()
     })
   })

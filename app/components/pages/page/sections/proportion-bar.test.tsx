@@ -94,6 +94,11 @@ describe("ProportionBar", () => {
       "Espaço R$ 35",
       "Gorjetas R$ 5",
     ])
+    for (const item of items) {
+      expect(item.lastElementChild?.lastElementChild).toHaveClass(
+        "whitespace-nowrap",
+      )
+    }
     expect(items.map((item) => item.style.flexBasis)).toEqual(
       segments(container).map((part) => part.style.flexBasis),
     )

@@ -68,7 +68,7 @@ export const ProportionBar = ({ parts, format }: ProportionBarProps) => {
             />
             <span>
               {part.label}{" "}
-              <span className="font-bold tabular-nums">
+              <span className="font-bold whitespace-nowrap tabular-nums">
                 {format(part.value)}
               </span>
             </span>
@@ -88,7 +88,7 @@ export const ProportionBar = ({ parts, format }: ProportionBarProps) => {
                 style={{ backgroundColor: part.color }}
               />
               <span>{part.label}</span>
-              <span className="font-bold tabular-nums">
+              <span className="font-bold whitespace-nowrap tabular-nums">
                 {format(part.value)}
               </span>
             </li>
