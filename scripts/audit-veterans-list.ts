@@ -46,8 +46,11 @@ async function readProfiles(projectRef: string): Promise<AuditProfile[]> {
       `Failed to read profiles: ${response.status} ${response.statusText}`,
     )
   }
-  const rows = (await response.json()) as ProfileRow[]
-  return rows.map((row) => ({
+  const rows: unknown = await response.json()
+  if (!Array.isArray(rows)) {
+    throw new Error("Failed to read profiles: the response is not a list of rows")
+  }
+  return (rows as ProfileRow[]).map((row) => ({
     id: row.id,
     email: row.email,
     isVeteran: row.is_veteran === true,
@@ -91,7 +94,7 @@ async function readSubscribers() {
 
 async function main() {
   const projectRef = process.argv[2]
-  if (!projectRef) {
+  if (!projectRef || !/^[a-z0-9]{20}$/.test(projectRef)) {
     console.error(
       "Usage: pnpm audit:veterans <production-project-ref>\n\nRead-only: SELECTs through the Supabase read-only query endpoint and GETs to Listmonk. Prints counts only.",
     )
