@@ -39,7 +39,7 @@ owner_field() {
 
 lock_dir_age() {
   local mtime
-  mtime="$(stat -f %m "$LOCK_DIR" 2>/dev/null || stat -c %Y "$LOCK_DIR" 2>/dev/null || true)"
+  mtime="$(stat -c %Y "$LOCK_DIR" 2>/dev/null || stat -f %m "$LOCK_DIR" 2>/dev/null || true)"
   [ -n "$mtime" ] || return 1
   echo $(( $(date +%s) - mtime ))
 }

@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync, utimesSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
@@ -81,6 +81,16 @@ describe('with-db-lock', () => {
     writeFileSync(join(lockDir, 'owner'), 'pid=999999\nworktree=/gone\nstarted=1\n')
 
     const result = await runLocked('echo took-over', { DB_LOCK_WAIT_TIMEOUT: '10' })
+
+    expect(result.stdout).toContain('took-over')
+  })
+
+  it('takes over a lock nobody claimed once the grace period is over', async () => {
+    mkdirSync(lockDir, { recursive: true })
+    const longAgo = new Date(Date.now() - 60_000)
+    utimesSync(lockDir, longAgo, longAgo)
+
+    const result = await runLocked('echo took-over', { DB_LOCK_CLAIM_GRACE: '5', DB_LOCK_WAIT_TIMEOUT: '10' })
 
     expect(result.stdout).toContain('took-over')
   })
