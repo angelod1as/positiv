@@ -216,7 +216,11 @@ describe("LikertAnswerPage", () => {
   it("says why a save was refused", async () => {
     const user = userEvent.setup()
     answers({ ok: false, errors: [], message: "A escala mudou." }, { status: 422 })
-    renderPage({ statements: statements.slice(0, 1), profileId: "profile-1", eventId: null })
+    renderPage({
+      statements: statements.slice(0, 1),
+      profileId: "profile-1",
+      eventId: null,
+    })
 
     await answerScreen(user, "Depende")
 
@@ -231,7 +235,11 @@ describe("LikertAnswerPage", () => {
     await answerScreen(user, "Concordo")
     unmount()
 
-    renderPage({ statements: statements.slice(1), profileId: "profile-1", eventId: null })
+    renderPage({
+      statements: statements.slice(1),
+      profileId: "profile-1",
+      eventId: null,
+    })
     await answerScreen(user, "Depende")
 
     await waitFor(() => expect(fetch).toHaveBeenCalled())
@@ -252,7 +260,11 @@ describe("LikertAnswerPage", () => {
       { key: "ciume", text: "Sinto ciúme e falo sobre isso." },
       statements[1],
     ]
-    renderPage({ statements: reworded, profileId: "profile-1", eventId: null })
+    renderPage({
+      statements: reworded,
+      profileId: "profile-1",
+      eventId: null,
+    })
 
     expect(
       await screen.findByRole("heading", {
@@ -270,7 +282,11 @@ describe("LikertAnswerPage", () => {
       url: "http://localhost/entrar",
       json: async () => ({}),
     } as Response)
-    renderPage({ statements: statements.slice(0, 1), profileId: "profile-1", eventId: null })
+    renderPage({
+      statements: statements.slice(0, 1),
+      profileId: "profile-1",
+      eventId: null,
+    })
 
     await answerScreen(user, "Depende")
 
@@ -287,7 +303,11 @@ describe("LikertAnswerPage", () => {
         headers: { "Content-Type": "text/html" },
       }),
     )
-    renderPage({ statements: statements.slice(0, 1), profileId: "profile-1", eventId: null })
+    renderPage({
+      statements: statements.slice(0, 1),
+      profileId: "profile-1",
+      eventId: null,
+    })
 
     await answerScreen(user, "Depende")
 
@@ -325,7 +345,11 @@ describe("LikertAnswerPage", () => {
     sessionStorage.clear()
 
     vi.mocked(Math.random).mockReturnValue(0)
-    renderPage({ statements: three, profileId: "profile-1", eventId: null })
+    renderPage({
+      statements: three,
+      profileId: "profile-1",
+      eventId: null,
+    })
 
     expect(
       await screen.findByRole("heading", { name: "Falo dos meus limites." }),
@@ -360,7 +384,11 @@ describe("LikertAnswerPage", () => {
     )
     unmount()
 
-    renderPage({ statements: three, profileId: "profile-1", eventId: null })
+    renderPage({
+      statements: three,
+      profileId: "profile-1",
+      eventId: null,
+    })
 
     expect(
       await screen.findByRole("heading", { name: "Pergunto antes de tocar." }),
@@ -470,7 +498,11 @@ describe("LikertAnswerPage", () => {
   })
 
   it("says the scale is unavailable when nothing is published", () => {
-    renderPage({ statements: null, profileId: "profile-1", eventId: null })
+    renderPage({
+      statements: null,
+      profileId: "profile-1",
+      eventId: null,
+    })
 
     expect(
       screen.getByText(

@@ -30,12 +30,16 @@ export async function showsLikertEntryPoints(): Promise<boolean> {
   return isLikertRequired()
 }
 
-// Once is enough: an answer from any time lets the person apply.
+// A scale nobody can answer, unpublished or out of reach, must not close every
+// application.
 export async function mustAnswerLikertBeforeApplying(
   viewer: Viewer,
 ): Promise<boolean> {
   if (!(await isLikertRequired())) return false
-  return !(await hasAnsweredLikert(viewer))
+  if (await hasAnsweredLikert(viewer)) return false
+
+  const scale = await likertScaleCache.get().catch(() => null)
+  return Boolean(scale?.statements.length)
 }
 
 export async function submitLikertAnswers({

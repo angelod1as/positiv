@@ -99,6 +99,7 @@ describe("showsLikertEntryPoints", () => {
 describe("mustAnswerLikertBeforeApplying", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(likertScaleCache.get).mockResolvedValue(scale)
   })
 
   it("lets everyone apply while the scale is not required", async () => {
@@ -125,6 +126,22 @@ describe("mustAnswerLikertBeforeApplying", () => {
   it("lets someone who answered once apply", async () => {
     vi.mocked(isLikertRequired).mockResolvedValue(true)
     vi.mocked(hasAnsweredLikert).mockResolvedValue(true)
+
+    expect(await mustAnswerLikertBeforeApplying(person)).toBe(false)
+  })
+
+  it("lets everyone apply while no scale is published to answer", async () => {
+    vi.mocked(isLikertRequired).mockResolvedValue(true)
+    vi.mocked(hasAnsweredLikert).mockResolvedValue(false)
+    vi.mocked(likertScaleCache.get).mockResolvedValue(null)
+
+    expect(await mustAnswerLikertBeforeApplying(person)).toBe(false)
+  })
+
+  it("lets everyone apply while Sanity cannot give the scale", async () => {
+    vi.mocked(isLikertRequired).mockResolvedValue(true)
+    vi.mocked(hasAnsweredLikert).mockResolvedValue(false)
+    vi.mocked(likertScaleCache.get).mockRejectedValue(new Error("down"))
 
     expect(await mustAnswerLikertBeforeApplying(person)).toBe(false)
   })
