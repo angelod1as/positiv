@@ -74,10 +74,12 @@ describe("ChartSection", () => {
   it("hides the drawing from screen readers", () => {
     render(<ChartSection content={budget} />)
 
-    expect(screen.getByText("Espaço").closest("[aria-hidden]")).toHaveAttribute(
-      "aria-hidden",
-      "true",
-    )
+    for (const label of screen.getAllByText("Espaço")) {
+      expect(label.closest("[aria-hidden]")).toHaveAttribute(
+        "aria-hidden",
+        "true",
+      )
+    }
   })
 
   it("leaves nothing in the drawing for the keyboard to reach", async () => {
@@ -176,7 +178,7 @@ describe("ChartSection", () => {
     it("draws the parts without loading the chart library", () => {
       const { container } = render(<ChartSection content={budget} />)
 
-      expect(screen.getByText("Equipe")).toBeInTheDocument()
+      expect(screen.getAllByText("Equipe").length).toBeGreaterThan(0)
       expect(chartFrame(container)).not.toBeInTheDocument()
     })
   })
