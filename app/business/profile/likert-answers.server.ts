@@ -9,7 +9,10 @@ import {
 } from "~/business/settings/app-settings.server"
 import { likertPageCopy } from "~/copy/account"
 import { buildLikertSubmission } from "./build-likert-submission"
-import { saveLikertSubmission } from "./likert-submissions.server"
+import {
+  hasAnsweredLikert,
+  saveLikertSubmission,
+} from "./likert-submissions.server"
 
 type Viewer = Pick<z.infer<typeof currentProfileSchema>, "id" | "permissions">
 
@@ -25,6 +28,18 @@ export async function canSeeLikert(
 
 export async function showsLikertEntryPoints(): Promise<boolean> {
   return isLikertRequired()
+}
+
+// A scale nobody can answer, unpublished or out of reach, must not close every
+// application.
+export async function mustAnswerLikertBeforeApplying(
+  viewer: Viewer,
+): Promise<boolean> {
+  if (!(await isLikertRequired())) return false
+  if (await hasAnsweredLikert(viewer)) return false
+
+  const scale = await likertScaleCache.get().catch(() => null)
+  return Boolean(scale?.statements.length)
 }
 
 export async function submitLikertAnswers({

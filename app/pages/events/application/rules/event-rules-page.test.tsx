@@ -16,6 +16,10 @@ vi.mock("~/business/profile/is-veteran.server", () => ({
   isVeteran: vi.fn(),
 }))
 
+vi.mock("~/business/profile/likert-answers.server", () => ({
+  mustAnswerLikertBeforeApplying: vi.fn(),
+}))
+
 vi.mock("~/business/cms/rules-cache.server", () => ({
   rulesCache: { get: vi.fn() },
 }))
@@ -36,6 +40,7 @@ vi.mock("react-router", async (importOriginal) => {
 import { getUserContext } from "~/business/auth/auth.server"
 import { findVisibleEvent } from "~/business/event/find-visible-event.server"
 import { isVeteran } from "~/business/profile/is-veteran.server"
+import { mustAnswerLikertBeforeApplying } from "~/business/profile/likert-answers.server"
 import { rulesCache } from "~/business/cms/rules-cache.server"
 import type { Rules } from "~/business/cms/rules.schema"
 import { rulesFixture } from "~/test/rules-documents"
@@ -45,6 +50,7 @@ const mockGetUserContext = vi.mocked(getUserContext)
 const mockFindVisibleEvent = vi.mocked(findVisibleEvent)
 const mockIsVeteran = vi.mocked(isVeteran)
 const mockRedirect = vi.mocked(redirect)
+const mockMustAnswerLikert = vi.mocked(mustAnswerLikertBeforeApplying)
 
 const eventLookupReturns = (
   event: { id: string; event_status: EventStatus } | undefined,
@@ -67,6 +73,22 @@ describe("event-rules-page loader", () => {
     signedInAs("profile-1")
     mockIsVeteran.mockResolvedValue(false)
     vi.mocked(rulesCache.get).mockResolvedValue(rulesFixture)
+    mockMustAnswerLikert.mockResolvedValue(false)
+  })
+
+  it("sends someone who still has to answer the Likert scale to it, to come back here", async () => {
+    eventExists()
+    mockMustAnswerLikert.mockResolvedValue(true)
+
+    await loader({
+      request: new Request("http://localhost"),
+      params: { id: "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c" },
+    } as Route.LoaderArgs)
+
+    expect(mockMustAnswerLikert).toHaveBeenCalledWith({ id: "profile-1" })
+    expect(mockRedirect).toHaveBeenCalledWith(
+      "/conta/escala/responder?evento=3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c",
+    )
   })
 
   it("should redirect to dashboard if no id param", async () => {

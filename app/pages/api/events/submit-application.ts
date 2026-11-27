@@ -5,7 +5,9 @@ import {
   hasPassedRulesQuiz,
   rulesSessionStorage,
 } from "~/business/application/rules-session.server"
+import { mustAnswerLikertBeforeApplying } from "~/business/profile/likert-answers.server"
 import { buildApplicationQuestions } from "~/components/forms/custom/application/build-application-questions"
+import { eventApplicationCopy } from "~/copy/events"
 import { participantCopy } from "~/copy/participant"
 import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import paths from "~/lib/paths"
@@ -35,6 +37,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   if (!hasPassedRulesQuiz(session, params.id)) {
     return Response.json({ ok: false, errors: [] }, { status: 403 })
+  }
+
+  if (
+    context.currentProfile &&
+    (await mustAnswerLikertBeforeApplying(context.currentProfile))
+  ) {
+    return Response.json(
+      {
+        ok: false,
+        errors: [],
+        message: eventApplicationCopy.likertRequired,
+      },
+      { status: 409 },
+    )
   }
 
   let body: unknown

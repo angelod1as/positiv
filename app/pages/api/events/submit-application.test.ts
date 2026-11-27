@@ -18,11 +18,18 @@ vi.mock("~/business/application/apply-to-event.server", () => ({
   applyToEvent: vi.fn(),
 }))
 
+vi.mock("~/business/profile/likert-answers.server", () => ({
+  mustAnswerLikertBeforeApplying: vi.fn(),
+}))
+
 import { applyToEvent } from "~/business/application/apply-to-event.server"
+import { mustAnswerLikertBeforeApplying } from "~/business/profile/likert-answers.server"
+import { eventApplicationCopy } from "~/copy/events"
 import { rulesSessionStorage } from "~/business/application/rules-session.server"
 
 const mockApplyToEvent = vi.mocked(applyToEvent)
 const mockGetSession = vi.mocked(rulesSessionStorage.getSession)
+const mockMustAnswerLikert = vi.mocked(mustAnswerLikertBeforeApplying)
 
 const filledIn = {
   referred: "ninguém",
@@ -75,6 +82,22 @@ describe("the event application submit", () => {
       success: true,
       data: { emailSent: true },
     } as never)
+    mockMustAnswerLikert.mockResolvedValue(false)
+  })
+
+  it("turns down someone who still has to answer the Likert scale", async () => {
+    mockMustAnswerLikert.mockResolvedValue(true)
+
+    const { response, body } = await submit()
+
+    expect(response.status).toBe(409)
+    expect(body).toEqual({
+      ok: false,
+      errors: [],
+      message: eventApplicationCopy.likertRequired,
+    })
+    expect(mockMustAnswerLikert).toHaveBeenCalledWith({ id: "me" })
+    expect(mockApplyToEvent).not.toHaveBeenCalled()
   })
 
   it("turns down a browser that passed no quiz", async () => {

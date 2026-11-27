@@ -8,10 +8,14 @@ import { PERMISSIONS } from "~/business/auth/permissions"
 import { likertPageCopy } from "~/copy/account"
 import {
   canSeeLikert,
+  mustAnswerLikertBeforeApplying,
   showsLikertEntryPoints,
   submitLikertAnswers,
 } from "./likert-answers.server"
-import { saveLikertSubmission } from "./likert-submissions.server"
+import {
+  hasAnsweredLikert,
+  saveLikertSubmission,
+} from "./likert-submissions.server"
 
 vi.mock("~/business/cms/likert-scale-cache.server", () => ({
   likertScaleCache: { get: vi.fn() },
@@ -23,6 +27,7 @@ vi.mock("~/business/settings/app-settings.server", () => ({
 }))
 
 vi.mock("./likert-submissions.server", () => ({
+  hasAnsweredLikert: vi.fn(),
   saveLikertSubmission: vi.fn(),
 }))
 
@@ -88,6 +93,57 @@ describe("showsLikertEntryPoints", () => {
     vi.mocked(isLikertRequired).mockResolvedValue(false)
 
     expect(await showsLikertEntryPoints()).toBe(false)
+  })
+})
+
+describe("mustAnswerLikertBeforeApplying", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(likertScaleCache.get).mockResolvedValue(scale)
+  })
+
+  it("lets everyone apply while the scale is not required", async () => {
+    vi.mocked(isLikertRequired).mockResolvedValue(false)
+    vi.mocked(hasAnsweredLikert).mockResolvedValue(false)
+
+    expect(await mustAnswerLikertBeforeApplying(person)).toBe(false)
+  })
+
+  it("holds back someone who never answered once it is required", async () => {
+    vi.mocked(isLikertRequired).mockResolvedValue(true)
+    vi.mocked(hasAnsweredLikert).mockResolvedValue(false)
+
+    expect(await mustAnswerLikertBeforeApplying(person)).toBe(true)
+  })
+
+  it("holds back an admin who never answered too", async () => {
+    vi.mocked(isLikertRequired).mockResolvedValue(true)
+    vi.mocked(hasAnsweredLikert).mockResolvedValue(false)
+
+    expect(await mustAnswerLikertBeforeApplying(admin)).toBe(true)
+  })
+
+  it("lets someone who answered once apply", async () => {
+    vi.mocked(isLikertRequired).mockResolvedValue(true)
+    vi.mocked(hasAnsweredLikert).mockResolvedValue(true)
+
+    expect(await mustAnswerLikertBeforeApplying(person)).toBe(false)
+  })
+
+  it("lets everyone apply while no scale is published to answer", async () => {
+    vi.mocked(isLikertRequired).mockResolvedValue(true)
+    vi.mocked(hasAnsweredLikert).mockResolvedValue(false)
+    vi.mocked(likertScaleCache.get).mockResolvedValue(null)
+
+    expect(await mustAnswerLikertBeforeApplying(person)).toBe(false)
+  })
+
+  it("lets everyone apply while Sanity cannot give the scale", async () => {
+    vi.mocked(isLikertRequired).mockResolvedValue(true)
+    vi.mocked(hasAnsweredLikert).mockResolvedValue(false)
+    vi.mocked(likertScaleCache.get).mockRejectedValue(new Error("down"))
+
+    expect(await mustAnswerLikertBeforeApplying(person)).toBe(false)
   })
 })
 

@@ -25,6 +25,7 @@ vi.mock("react-router", async (importOriginal) => {
 import { getUserContext } from "~/business/auth/auth.server"
 import { likertScaleCache } from "~/business/cms/likert-scale-cache.server"
 import { canSeeLikert } from "~/business/profile/likert-answers.server"
+import { likertPageCopy } from "~/copy/account"
 import LikertAnswerPage, { loader } from "./likert-answer-page"
 
 type PageProps = Parameters<typeof LikertAnswerPage>[0]
@@ -37,9 +38,11 @@ const statements = [
 
 const currentProfile = { id: "profile-1", permissions: [] }
 
-const runLoader = () =>
+const EVENT_ID = "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c"
+
+const runLoader = (search = "") =>
   loader({
-    request: new Request("http://localhost/conta/escala/responder"),
+    request: new Request(`http://localhost/conta/escala/responder${search}`),
     params: {},
   } as unknown as LoaderArgs)
 
@@ -47,6 +50,7 @@ const renderPage = (
   loaderData: PageProps["loaderData"] = {
     statements,
     profileId: "profile-1",
+    eventId: null,
   },
 ) =>
   render(
@@ -80,7 +84,31 @@ describe("LikertAnswerPage loader", () => {
     vi.mocked(canSeeLikert).mockResolvedValue(true)
     vi.mocked(likertScaleCache.get).mockResolvedValue({ statements })
 
-    expect(await runLoader()).toEqual({ statements, profileId: "profile-1" })
+    expect(await runLoader()).toEqual({
+      statements,
+      profileId: "profile-1",
+      eventId: null,
+    })
+  })
+
+  it("hands the page the event the person was applying to", async () => {
+    vi.mocked(canSeeLikert).mockResolvedValue(true)
+    vi.mocked(likertScaleCache.get).mockResolvedValue({ statements })
+
+    expect(await runLoader(`?evento=${EVENT_ID}`)).toEqual({
+      statements,
+      profileId: "profile-1",
+      eventId: EVENT_ID,
+    })
+  })
+
+  it("turns away an event that is not an id", async () => {
+    vi.mocked(canSeeLikert).mockResolvedValue(true)
+    vi.mocked(likertScaleCache.get).mockResolvedValue({ statements })
+
+    await expect(runLoader("?evento=nope")).rejects.toMatchObject({
+      status: 404,
+    })
   })
 
   it("hands no statements when the scale is not published", async () => {
@@ -90,6 +118,7 @@ describe("LikertAnswerPage loader", () => {
     expect(await runLoader()).toEqual({
       statements: null,
       profileId: "profile-1",
+      eventId: null,
     })
   })
 
@@ -156,10 +185,42 @@ describe("LikertAnswerPage", () => {
     })
   })
 
+  it("says why the scale comes before the application", async () => {
+    renderPage({ statements, profileId: "profile-1", eventId: EVENT_ID })
+
+    expect(
+      await screen.findByText(likertPageCopy.beforeApplying),
+    ).toBeVisible()
+  })
+
+  it("keeps quiet about applications when nobody was applying", async () => {
+    renderPage()
+
+    await screen.findByRole("heading", { name: "Sinto ciúme e tudo bem." })
+    expect(screen.queryByText(likertPageCopy.beforeApplying)).toBeNull()
+  })
+
+  it("returns to the application once the answers are sent", async () => {
+    const user = userEvent.setup()
+    answers({ ok: true })
+    renderPage({ statements, profileId: "profile-1", eventId: EVENT_ID })
+
+    await answerScreen(user, "Concordo")
+    await answerScreen(user, "Discordo totalmente")
+
+    await waitFor(() =>
+      expect(navigate).toHaveBeenCalledWith(`/dashboard/${EVENT_ID}/regras`),
+    )
+  })
+
   it("says why a save was refused", async () => {
     const user = userEvent.setup()
     answers({ ok: false, errors: [], message: "A escala mudou." }, { status: 422 })
-    renderPage({ statements: statements.slice(0, 1), profileId: "profile-1" })
+    renderPage({
+      statements: statements.slice(0, 1),
+      profileId: "profile-1",
+      eventId: null,
+    })
 
     await answerScreen(user, "Depende")
 
@@ -174,7 +235,11 @@ describe("LikertAnswerPage", () => {
     await answerScreen(user, "Concordo")
     unmount()
 
-    renderPage({ statements: statements.slice(1), profileId: "profile-1" })
+    renderPage({
+      statements: statements.slice(1),
+      profileId: "profile-1",
+      eventId: null,
+    })
     await answerScreen(user, "Depende")
 
     await waitFor(() => expect(fetch).toHaveBeenCalled())
@@ -195,7 +260,11 @@ describe("LikertAnswerPage", () => {
       { key: "ciume", text: "Sinto ciúme e falo sobre isso." },
       statements[1],
     ]
-    renderPage({ statements: reworded, profileId: "profile-1" })
+    renderPage({
+      statements: reworded,
+      profileId: "profile-1",
+      eventId: null,
+    })
 
     expect(
       await screen.findByRole("heading", {
@@ -213,7 +282,11 @@ describe("LikertAnswerPage", () => {
       url: "http://localhost/entrar",
       json: async () => ({}),
     } as Response)
-    renderPage({ statements: statements.slice(0, 1), profileId: "profile-1" })
+    renderPage({
+      statements: statements.slice(0, 1),
+      profileId: "profile-1",
+      eventId: null,
+    })
 
     await answerScreen(user, "Depende")
 
@@ -230,7 +303,11 @@ describe("LikertAnswerPage", () => {
         headers: { "Content-Type": "text/html" },
       }),
     )
-    renderPage({ statements: statements.slice(0, 1), profileId: "profile-1" })
+    renderPage({
+      statements: statements.slice(0, 1),
+      profileId: "profile-1",
+      eventId: null,
+    })
 
     await answerScreen(user, "Depende")
 
@@ -258,6 +335,7 @@ describe("LikertAnswerPage", () => {
     const { unmount } = renderPage({
       statements: three,
       profileId: "profile-1",
+      eventId: null,
     })
     await answerScreen(user, "Concordo")
     await answerScreen(user, "Depende")
@@ -267,7 +345,11 @@ describe("LikertAnswerPage", () => {
     sessionStorage.clear()
 
     vi.mocked(Math.random).mockReturnValue(0)
-    renderPage({ statements: three, profileId: "profile-1" })
+    renderPage({
+      statements: three,
+      profileId: "profile-1",
+      eventId: null,
+    })
 
     expect(
       await screen.findByRole("heading", { name: "Falo dos meus limites." }),
@@ -293,6 +375,7 @@ describe("LikertAnswerPage", () => {
     const { unmount } = renderPage({
       statements: three,
       profileId: "profile-1",
+      eventId: null,
     })
     await answerScreen(user, "Concordo")
     await user.type(
@@ -301,7 +384,11 @@ describe("LikertAnswerPage", () => {
     )
     unmount()
 
-    renderPage({ statements: three, profileId: "profile-1" })
+    renderPage({
+      statements: three,
+      profileId: "profile-1",
+      eventId: null,
+    })
 
     expect(
       await screen.findByRole("heading", { name: "Pergunto antes de tocar." }),
@@ -318,6 +405,7 @@ describe("LikertAnswerPage", () => {
     const { rerender } = renderPage({
       statements: three,
       profileId: "profile-1",
+      eventId: null,
     })
     await answerScreen(user, "Concordo")
     await user.click(screen.getByRole("button", { name: "Voltar" }))
@@ -410,7 +498,11 @@ describe("LikertAnswerPage", () => {
   })
 
   it("says the scale is unavailable when nothing is published", () => {
-    renderPage({ statements: null, profileId: "profile-1" })
+    renderPage({
+      statements: null,
+      profileId: "profile-1",
+      eventId: null,
+    })
 
     expect(
       screen.getByText(

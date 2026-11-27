@@ -84,7 +84,7 @@ export const likertSettingCopy = {
     "Ligada, quem tiver o link (/conta/escala) consegue responder a escala. Nenhum link aparece no site. Desligada, só a equipe admin vê a escala.",
   requiredLabel: "Obrigatória",
   requiredHelp:
-    "Ligada, a escala aparece em Minha conta para todo mundo, mesmo com o acesso por link desligado.",
+    "Ligada, a escala aparece em Minha conta para todo mundo, mesmo com o acesso por link desligado, e quem nunca respondeu precisa responder antes de se inscrever em um evento.",
 } as const
 
 export const adminFeedbacksCopy = {

@@ -113,6 +113,8 @@ Ao clicar no botão "Enviar candidatura", sua candidatura será enviada (óbvio)
   submitLabel: "🎉 Enviar candidatura!",
   quizExpired:
     "Faz um tempo que você respondeu o quiz de regras. Responda de novo e sua candidatura segue daqui.",
+  likertRequired:
+    "Antes de se inscrever, responda a Escala de Likert. Levando você até ela…",
   toasts: {
     success: {
       message: "Candidatura enviada com sucesso",
