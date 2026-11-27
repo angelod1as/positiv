@@ -20,7 +20,7 @@ export interface AuditSubscriber {
 }
 
 type NotAptReason =
-  | "missing_in_listmonk"
+  | "not_on_audited_lists"
   | "email_mismatch"
   | "blocklisted"
   | "left_veterans_list"
@@ -81,7 +81,7 @@ export function auditVeteransList({
   const consented = veterans.filter((profile) => profile.newsletter === true)
 
   const consentedNotApt: Record<NotAptReason, number> = {
-    missing_in_listmonk: 0,
+    not_on_audited_lists: 0,
     email_mismatch: 0,
     blocklisted: 0,
     left_veterans_list: 0,
@@ -97,7 +97,7 @@ export function auditVeteransList({
         consentedNotApt,
         linkedSubscribers(profile).length > 0
           ? "email_mismatch"
-          : "missing_in_listmonk",
+          : "not_on_audited_lists",
       )
     } else if (subscriber.status === "blocklisted") {
       increment(consentedNotApt, "blocklisted")

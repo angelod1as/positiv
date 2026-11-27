@@ -43,7 +43,7 @@ async function readProfiles(projectRef: string): Promise<AuditProfile[]> {
   )
   if (!response.ok) {
     throw new Error(
-      `Failed to read profiles: ${response.status} ${await response.text()}`,
+      `Failed to read profiles: ${response.status} ${response.statusText}`,
     )
   }
   const rows = (await response.json()) as ProfileRow[]
@@ -95,6 +95,15 @@ async function main() {
     console.error(
       "Usage: pnpm audit:veterans <production-project-ref>\n\nRead-only: SELECTs through the Supabase read-only query endpoint and GETs to Listmonk. Prints counts only.",
     )
+    process.exit(1)
+  }
+
+  if (ENV.E2E_MODE) {
+    console.error("E2E_MODE is on: the Listmonk reads would return nothing.")
+    process.exit(1)
+  }
+  if (!ENV.SUPABASE_ACCESS_TOKEN) {
+    console.error("SUPABASE_ACCESS_TOKEN is not set.")
     process.exit(1)
   }
 

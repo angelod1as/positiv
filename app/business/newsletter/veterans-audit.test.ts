@@ -53,6 +53,15 @@ describe("auditVeteransList", () => {
     })
   })
 
+  it("matches e-mails regardless of case on either side", () => {
+    const result = auditVeteransList({
+      profiles: [profile({ id: "a", email: " Someone@Example.com" })],
+      subscribers: [subscriber({ id: 1, email: "someone@EXAMPLE.com" })],
+    })
+
+    expect(result.apt).toBe(1)
+  })
+
   it("splits veterans by consent: yes, refused, no record", () => {
     const result = auditVeteransList({
       profiles: [
@@ -106,7 +115,7 @@ describe("auditVeteransList", () => {
 
     expect(result.apt).toBe(0)
     expect(result.consentedNotApt).toEqual({
-      missing_in_listmonk: 1,
+      not_on_audited_lists: 1,
       email_mismatch: 1,
       blocklisted: 1,
       left_veterans_list: 1,
