@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { render, screen, within } from "~/test/test-utils"
+import { render, within } from "~/test/test-utils"
 import { ProportionBar } from "./proportion-bar"
 
 const format = (value: number) => `R$ ${value}`
@@ -12,6 +12,9 @@ const parts = [
 
 const segments = (container: HTMLElement) =>
   Array.from(container.querySelectorAll<HTMLElement>("[data-part]"))
+
+const legend = (container: HTMLElement, where: "beside" | "below") =>
+  container.querySelector<HTMLElement>(`[data-legend="${where}"]`)
 
 describe("ProportionBar", () => {
   it("sizes each part by its share of the whole", () => {
@@ -51,12 +54,14 @@ describe("ProportionBar", () => {
     expect(within(venue).getByText("Espaço")).toBeInTheDocument()
   })
 
-  it("lists a part under 8% beside the bar, with its colour and value", () => {
+  it("lists a part under 8% below the bar, with its colour and value", () => {
     const { container } = render(<ProportionBar parts={parts} format={format} />)
     const [, , tips] = segments(container)
 
     expect(tips).toBeEmptyDOMElement()
-    const item = screen.getByRole("listitem")
+    const below = legend(container, "below")
+    if (!below) throw new Error("no list below the bar")
+    const item = within(below).getByRole("listitem")
     expect(item).toHaveTextContent("Gorjetas")
     expect(item).toHaveTextContent("R$ 5")
     expect(
@@ -64,8 +69,8 @@ describe("ProportionBar", () => {
     ).toBe("var(--chart-3)")
   })
 
-  it("leaves the list out when every part fits inside the bar", () => {
-    render(
+  it("leaves the list below out when every part fits inside the bar", () => {
+    const { container } = render(
       <ProportionBar
         parts={[
           { key: "a", label: "A", value: 1 },
@@ -75,7 +80,47 @@ describe("ProportionBar", () => {
       />,
     )
 
-    expect(screen.queryByRole("list")).not.toBeInTheDocument()
+    expect(legend(container, "below")).toBeNull()
+  })
+
+  it("on a phone, lists every part beside the bar, level with its segment", () => {
+    const { container } = render(<ProportionBar parts={parts} format={format} />)
+    const beside = legend(container, "beside")
+    if (!beside) throw new Error("no list beside the bar")
+    const items = within(beside).getAllByRole("listitem")
+
+    expect(items.map((item) => item.textContent)).toEqual([
+      "Bar R$ 60",
+      "Espaço R$ 35",
+      "Gorjetas R$ 5",
+    ])
+    for (const item of items) {
+      expect(item.lastElementChild?.lastElementChild).toHaveClass(
+        "whitespace-nowrap",
+      )
+    }
+    expect(items.map((item) => item.style.flexBasis)).toEqual(
+      segments(container).map((part) => part.style.flexBasis),
+    )
+    expect(
+      items.map(
+        (item) =>
+          item.querySelector<HTMLElement>("[data-swatch]")?.style
+            .backgroundColor,
+      ),
+    ).toEqual(["var(--chart-1)", "var(--chart-highlight)", "var(--chart-3)"])
+  })
+
+  it("on a phone, shows the labels only beside the bar, not inside or below it", () => {
+    const { container } = render(<ProportionBar parts={parts} format={format} />)
+    const [bar] = segments(container)
+
+    expect(legend(container, "beside")).toHaveClass("md:hidden")
+    expect(legend(container, "below")).toHaveClass("hidden", "md:flex")
+    expect(within(bar).getByText("Bar").parentElement).toHaveClass(
+      "hidden",
+      "md:contents",
+    )
   })
 
   it("draws a negative part as nothing rather than breaking the whole", () => {
