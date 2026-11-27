@@ -11,6 +11,7 @@ import { loadRules } from "~/business/cms/load-rules.server"
 import type { Rules } from "~/business/cms/rules.schema"
 import { findVisibleEvent } from "~/business/event/find-visible-event.server"
 import { isVeteran } from "~/business/profile/is-veteran.server"
+import { mustAnswerLikertBeforeApplying } from "~/business/profile/likert-answers.server"
 import { buildCorrectRulesAnswers } from "~/components/forms/custom/rules/build-correct-rules-answers"
 import {
   buildRulesFlow,
@@ -50,6 +51,7 @@ import { rulesQuizCopy, rulesStatusNoticeCopy } from "~/copy/events"
 const {
   dash: {
     DASHBOARD,
+    account: { LIKERT_ANSWER_BEFORE_APPLYING },
     events: { EVENT_DATA, EVENT_RULES_QUIZ_CHECK },
   },
 } = paths
@@ -64,6 +66,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const event = await findVisibleEvent(params.id)
 
   if (!event) return redirect(DASHBOARD)
+
+  if (
+    currentProfile &&
+    (await mustAnswerLikertBeforeApplying(currentProfile))
+  ) {
+    return redirect(LIKERT_ANSWER_BEFORE_APPLYING(params.id))
+  }
 
   // Asked here rather than taken from the browser: the quiz is a gate, and the
   // shorter run behind it has to be earned against the database.

@@ -32,6 +32,8 @@ const AGREE_TO_TERMS = `${ACCOUNT}/termos-e-condicoes`
 const ACCOUNT_READY = `${ACCOUNT}/tudo-pronto`
 const LIKERT = `${ACCOUNT}/escala`
 const LIKERT_ANSWER = `${LIKERT}/responder`
+const LIKERT_ANSWER_BEFORE_APPLYING = (eventId: string) =>
+  `${LIKERT_ANSWER}?evento=${eventId}`
 const LIKERT_SUBMISSION = (id: string) => `${LIKERT}/${id}`
 
 //// USER
@@ -159,6 +161,7 @@ const paths = {
       ACCOUNT_READY,
       LIKERT,
       LIKERT_ANSWER,
+      LIKERT_ANSWER_BEFORE_APPLYING,
       LIKERT_SUBMISSION,
       LIKERT_COMMIT,
     },

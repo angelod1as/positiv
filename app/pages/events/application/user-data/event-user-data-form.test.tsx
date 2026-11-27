@@ -211,6 +211,32 @@ describe("the event application form", () => {
     ).not.toBeInTheDocument()
   })
 
+  it("takes someone who still has to answer the Likert scale to it", async () => {
+    vi.stubGlobal(
+      "fetch",
+      answered(
+        {
+          ok: false,
+          errors: [],
+          message: eventApplicationCopy.likertRequired,
+        },
+        409,
+      ),
+    )
+
+    renderForm()
+    await fillAndSend()
+
+    expect(
+      await screen.findByText(eventApplicationCopy.likertRequired),
+    ).toBeInTheDocument()
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith(
+        `/conta/escala/responder?evento=${EVENT}`,
+      )
+    })
+  })
+
   it("keeps the person on the form when the application is refused", async () => {
     vi.stubGlobal(
       "fetch",

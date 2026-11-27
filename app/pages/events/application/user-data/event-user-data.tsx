@@ -20,6 +20,7 @@ import type { Route } from "./+types/event-user-data"
 
 const {
   dash: {
+    account: { LIKERT_ANSWER_BEFORE_APPLYING },
     events: {
       EVENT_APPLICATION_COMMIT,
       EVENT_APPLICATION_SENT,
@@ -83,6 +84,11 @@ const EventUserInfo = ({ params }: Route.ComponentProps) => {
       }
 
       const result = (await response.json()) as ApplicationAnswer
+
+      if (response.status === 409) {
+        void navigate(LIKERT_ANSWER_BEFORE_APPLYING(eventId))
+        return result
+      }
 
       // A refusal the form cannot pin on any question — registration closed
       // between the quiz and the button, say — travels as the result's own
