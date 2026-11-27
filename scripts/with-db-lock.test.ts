@@ -95,22 +95,33 @@ describe('with-db-lock', () => {
     expect(result.stdout).toContain('took-over')
   })
 
-  it('waits for a live holder whose owner record is unreadable', async () => {
+  it('keeps waiting for a live holder whose start time is unreadable', async () => {
     mkdirSync(lockDir, { recursive: true })
     writeFileSync(join(lockDir, 'owner'), `pid=${process.pid}\nworktree=/elsewhere\nstarted=12abc\n`)
+    const longAgo = new Date(Date.now() - 60_000)
+    utimesSync(lockDir, longAgo, longAgo)
 
-    const result = await runLocked('echo ran', { DB_LOCK_WAIT_TIMEOUT: '1', DB_LOCK_POLL_INTERVAL: '1' })
+    const result = await runLocked('echo ran', {
+      DB_LOCK_CLAIM_GRACE: '1',
+      DB_LOCK_WAIT_TIMEOUT: '2',
+      DB_LOCK_POLL_INTERVAL: '1',
+    })
 
     expect(result.code).not.toBe(0)
     expect(result.stdout).not.toContain('ran')
   })
 
-  it('refuses a setting that is not a whole number of seconds', async () => {
-    const result = await runLocked('echo ran', { DB_LOCK_POLL_INTERVAL: '0.5' })
+  it.each([
+    ['DB_LOCK_POLL_INTERVAL', '0.5'],
+    ['DB_LOCK_POLL_INTERVAL', '08'],
+    ['DB_LOCK_POLL_INTERVAL', '0'],
+    ['DB_LOCK_WAIT_TIMEOUT', '99999999999999999999'],
+  ])('refuses %s=%s', async (name, value) => {
+    const result = await runLocked('echo ran', { [name]: value })
 
     expect(result.code).not.toBe(0)
     expect(result.stdout).not.toContain('ran')
-    expect(result.stderr).toContain('DB_LOCK_POLL_INTERVAL')
+    expect(result.stderr).toContain(name)
   })
 
   it('gives up rather than waiting forever on a live holder', async () => {

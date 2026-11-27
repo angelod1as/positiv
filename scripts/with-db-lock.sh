@@ -16,17 +16,22 @@ FIRST_PORT="${E2E_FIRST_PORT:-5273}"
 
 is_whole_number() {
   case "$1" in
-    '' | *[!0-9]*) return 1 ;;
+    '' | *[!0-9]* | 0?* | ???????????*) return 1 ;;
     *) return 0 ;;
   esac
 }
 
 for setting in DB_LOCK_WAIT_TIMEOUT DB_LOCK_STALE_AFTER DB_LOCK_POLL_INTERVAL DB_LOCK_CLAIM_GRACE E2E_FIRST_PORT; do
   if [ -n "${!setting:-}" ] && ! is_whole_number "${!setting}"; then
-    echo "⛔ ${setting} must be a whole number of seconds or a port, got '${!setting}'" >&2
+    echo "⛔ ${setting} must be a whole number without leading zeros, got '${!setting}'" >&2
     exit 1
   fi
 done
+
+if [ "$POLL_INTERVAL" -lt 1 ]; then
+  echo "⛔ DB_LOCK_POLL_INTERVAL must be at least 1, got '$POLL_INTERVAL'" >&2
+  exit 1
+fi
 
 if [ -n "${DB_LOCK_DIR:-}" ]; then
   LOCK_DIR="$DB_LOCK_DIR"
@@ -64,13 +69,13 @@ lock_dir_age() {
 # A lock is abandoned when the process that took it is gone or when it is older
 # than any real run could be. An owner file that is not there yet usually means
 # the winner has not written it, so that only counts once the grace period has
-# passed.
+# passed. A live owner without a readable start time is aged by its directory.
 lock_is_abandoned() {
   local pid started age dir_age
   pid="$(owner_field pid || true)"
   started="$(owner_field started || true)"
 
-  if [ -z "$pid" ] || [ -z "$started" ]; then
+  if [ -z "$pid" ]; then
     dir_age="$(lock_dir_age)" || return 1
     [ "$dir_age" -gt "$CLAIM_GRACE" ]
     return
@@ -80,7 +85,11 @@ lock_is_abandoned() {
     return 0
   fi
 
-  age=$(( $(date +%s) - started ))
+  if [ -n "$started" ]; then
+    age=$(( $(date +%s) - started ))
+  else
+    age="$(lock_dir_age)" || return 1
+  fi
   [ "$age" -gt "$STALE_AFTER" ]
 }
 
