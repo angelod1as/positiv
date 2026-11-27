@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { likertPageCopy } from '../../../app/copy/account'
 import { performUILogin } from '../../fixtures/auth'
 import { EventApplicationPage } from '../../pages/EventApplicationPage'
 import { LikertAnswerPage } from '../../pages/LikertAnswerPage'
@@ -36,7 +37,7 @@ test.describe('WEB-67: the Likert scale comes before the first application', () 
       await page.goto(`/dashboard/${event.id}/regras`)
 
       await expect(page).toHaveURL(`/conta/escala/responder?evento=${event.id}`)
-      await expect(page.getByText('Antes de se inscrever, responda a escala.')).toBeVisible()
+      await expect(page.getByText(likertPageCopy.beforeApplying)).toBeVisible()
       await expect(likert.statement()).toBeVisible()
       await likert.waitForHydration()
 
