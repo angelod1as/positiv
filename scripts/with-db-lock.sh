@@ -14,6 +14,13 @@ POLL_INTERVAL="${DB_LOCK_POLL_INTERVAL:-2}"
 CLAIM_GRACE="${DB_LOCK_CLAIM_GRACE:-10}"
 FIRST_PORT="${E2E_FIRST_PORT:-5273}"
 
+is_whole_number() {
+  case "$1" in
+    '' | *[!0-9]*) return 1 ;;
+    *) return 0 ;;
+  esac
+}
+
 if [ -n "${DB_LOCK_DIR:-}" ]; then
   LOCK_DIR="$DB_LOCK_DIR"
 else
@@ -34,13 +41,16 @@ trap release_lock EXIT INT TERM
 
 owner_field() {
   [ -f "$OWNER_FILE" ] || return 1
-  sed -n "s/^$1=//p" "$OWNER_FILE"
+  local value
+  value="$(sed -n "s/^$1=//p" "$OWNER_FILE")"
+  is_whole_number "$value" || return 1
+  echo "$value"
 }
 
 lock_dir_age() {
   local mtime
   mtime="$(stat -c %Y "$LOCK_DIR" 2>/dev/null || stat -f %m "$LOCK_DIR" 2>/dev/null || true)"
-  [ -n "$mtime" ] || return 1
+  is_whole_number "$mtime" || return 1
   echo $(( $(date +%s) - mtime ))
 }
 
@@ -106,7 +116,8 @@ acquire_lock() {
   done
 
   holds_lock=1
-  printf 'pid=%s\nworktree=%s\nstarted=%s\n' "$$" "$(pwd)" "$(date +%s)" > "$OWNER_FILE"
+  printf 'pid=%s\nworktree=%s\nstarted=%s\n' "$$" "$(pwd)" "$(date +%s)" > "$OWNER_FILE.$$"
+  mv "$OWNER_FILE.$$" "$OWNER_FILE"
 }
 
 port_is_free() {
@@ -129,6 +140,12 @@ first_free_port() {
 }
 
 acquire_lock
+
+if [ "$holds_lock" != "1" ] || [ "$(owner_field pid || true)" != "$$" ]; then
+  echo "⛔ Could not confirm this run holds the database lock; not running unlocked" >&2
+  holds_lock=0
+  exit 1
+fi
 
 # Kept short: the id is spent from the 50 character event title budget
 export E2E_RUN_ID="${E2E_RUN_ID:-$(printf '%04x%04x' "$(( $(date +%s) % 65536 ))" "$(( $$ % 65536 ))")}"

@@ -95,6 +95,16 @@ describe('with-db-lock', () => {
     expect(result.stdout).toContain('took-over')
   })
 
+  it('waits for a live holder whose owner record is unreadable', async () => {
+    mkdirSync(lockDir, { recursive: true })
+    writeFileSync(join(lockDir, 'owner'), `pid=${process.pid}\nworktree=/elsewhere\nstarted=12abc\n`)
+
+    const result = await runLocked('echo ran', { DB_LOCK_WAIT_TIMEOUT: '1', DB_LOCK_POLL_INTERVAL: '1' })
+
+    expect(result.code).not.toBe(0)
+    expect(result.stdout).not.toContain('ran')
+  })
+
   it('gives up rather than waiting forever on a live holder', async () => {
     const blocker = runLocked('sleep 3')
     await new Promise(resolve => setTimeout(resolve, 300))
