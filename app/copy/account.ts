@@ -61,6 +61,8 @@ export const likertPageCopy = {
   answerIntro:
     "Uma afirmação por vez: escolha o quanto você concorda com cada uma. O comentário é opcional. Se sair no meio, o que você já respondeu fica guardado neste navegador até você enviar.",
   sending: "Enviando...",
+  beforeApplying:
+    "Antes de se inscrever, responda a escala. Basta uma vez: quando terminar, você volta direto para a sua inscrição.",
   historyIntro:
     "A equipe da Positiv lê suas respostas. Cada envio fica guardado com as afirmações como estavam quando você respondeu, e você pode responder de novo quando quiser.",
   empty: "Você ainda não respondeu a escala.",

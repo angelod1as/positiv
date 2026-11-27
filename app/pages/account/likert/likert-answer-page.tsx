@@ -25,6 +25,7 @@ import type { Answers } from "~/components/forms/runtime/question.types"
 import { Skeleton } from "~/components/ui/skeleton"
 import { likertPageCopy as copy } from "~/copy/account"
 import { metaCopy } from "~/copy/meta"
+import { assertUuidParams } from "~/lib/helpers/assert-uuid-params"
 import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
 import type { CommitResult } from "~types/forms/commit.types"
@@ -33,6 +34,7 @@ import type { Route } from "./+types/likert-answer-page"
 const {
   dash: {
     account: { ACCOUNT, LIKERT, LIKERT_COMMIT },
+    events: { EVENT_RULES },
   },
 } = paths
 
@@ -46,11 +48,15 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     return redirect(ACCOUNT)
   }
 
+  const eventId = new URL(request.url).searchParams.get("evento")
+  assertUuidParams(eventId ?? undefined)
+
   const scale = await likertScaleCache.get()
 
   return {
     statements: scale?.statements ?? null,
     profileId: currentProfile.id,
+    eventId,
   }
 }
 
@@ -65,7 +71,7 @@ function fingerprint(statements: { key: string; text: string }[]): string {
 const FORM_ID = "likert"
 
 const LikertAnswerPage = ({ loaderData }: Route.ComponentProps) => {
-  const { statements, profileId } = loaderData
+  const { statements, profileId, eventId } = loaderData
   const navigate = useNavigate()
 
   // A draft kept against other statements, or other wording, would save
@@ -124,6 +130,8 @@ const LikertAnswerPage = ({ loaderData }: Route.ComponentProps) => {
     <>
       <h1>{copy.title}</h1>
 
+      {eventId ? <Copy>{copy.beforeApplying}</Copy> : null}
+
       {statements ? (
         <>
           <p>
@@ -144,7 +152,7 @@ const LikertAnswerPage = ({ loaderData }: Route.ComponentProps) => {
               pendingLabel={copy.sending}
               onDone={() => {
                 clearLikertOrder(draftScope)
-                void navigate(LIKERT)
+                void navigate(eventId ? EVENT_RULES(eventId) : LIKERT)
               }}
             />
           ) : (
