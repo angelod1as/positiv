@@ -21,6 +21,13 @@ is_whole_number() {
   esac
 }
 
+for setting in DB_LOCK_WAIT_TIMEOUT DB_LOCK_STALE_AFTER DB_LOCK_POLL_INTERVAL DB_LOCK_CLAIM_GRACE E2E_FIRST_PORT; do
+  if [ -n "${!setting:-}" ] && ! is_whole_number "${!setting}"; then
+    echo "⛔ ${setting} must be a whole number of seconds or a port, got '${!setting}'" >&2
+    exit 1
+  fi
+done
+
 if [ -n "${DB_LOCK_DIR:-}" ]; then
   LOCK_DIR="$DB_LOCK_DIR"
 else

@@ -105,6 +105,14 @@ describe('with-db-lock', () => {
     expect(result.stdout).not.toContain('ran')
   })
 
+  it('refuses a setting that is not a whole number of seconds', async () => {
+    const result = await runLocked('echo ran', { DB_LOCK_POLL_INTERVAL: '0.5' })
+
+    expect(result.code).not.toBe(0)
+    expect(result.stdout).not.toContain('ran')
+    expect(result.stderr).toContain('DB_LOCK_POLL_INTERVAL')
+  })
+
   it('gives up rather than waiting forever on a live holder', async () => {
     const blocker = runLocked('sleep 3')
     await new Promise(resolve => setTimeout(resolve, 300))
